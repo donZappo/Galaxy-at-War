@@ -11,9 +11,10 @@ using static Logger;
 public class Core
 {
     #region Init
+
     internal static ModSettings Settings;
 
-   public static void Init(string modDir, string settings)
+    public static void Init(string modDir, string settings)
     {
         var harmony = HarmonyInstance.Create("ca.gnivler.BattleTech.DevMod");
         harmony.PatchAll(Assembly.GetExecutingAssembly());
@@ -27,16 +28,17 @@ public class Core
         {
             Settings = new ModSettings();
         }
+
         // blank the logfile
         Clear();
         PrintObjectFields(Settings, "Settings");
     }
-    
+
     // logs out all the settings and their values at runtime
     internal static void PrintObjectFields(object obj, string name)
     {
         LogDebug($"[START {name}]");
-            
+
         var settingsFields = typeof(Settings)
             .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
         foreach (var field in settingsFields)
@@ -58,8 +60,20 @@ public class Core
 
         LogDebug($"[END {name}]");
     }
+
     #endregion
-    
+
+    [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
+    public class testpatch
+    {
+        public static void Postfix(SimGameState __instance)
+        {
+            var temporaryResultTracker = Traverse.Create(__instance).Field("TemporaryResultTracker").GetValue<List<TemporarySimGameResult>>();
+            temporaryResultTracker.Add("something");
+            //Traverse.Create(__instance).Method("AddOrRemoveTempTags").GetValue(__instance, needTemporarySimGameResult, needBool);
+        }
+    }
+
     public static void RefreshResources(SimGameState Sim)
     {
         try
