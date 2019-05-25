@@ -7,6 +7,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
+using System.Linq;
 
 public class Core
 {
@@ -63,69 +64,90 @@ public class Core
 
     #endregion
 
-    [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
-    public class testpatch
+    public static int GetTotalResources(StarSystem system)
     {
-        public static void Postfix(SimGameState __instance)
+        int result = 0;
+        if (system.Tags.Contains("planet_industry_poor"))
+            result += ModSettings.planet_industry_poor;
+        if (system.Tags.Contains("planet_industry_mining"))
+            result += ModSettings.planet_industry_mining;
+        if (system.Tags.Contains("planet_industry_rich"))
+            result += ModSettings.planet_industry_rich;
+        if (system.Tags.Contains("planet_other_comstar"))
+            result += ModSettings.planet_other_comstar;
+        if (system.Tags.Contains("planet_industry_manufacturing"))
+            result += ModSettings.planet_industry_manufacturing;
+        if (system.Tags.Contains("planet_industry_research"))
+            result += ModSettings.planet_industry_research;
+        if (system.Tags.Contains("planet_other_starleague"))
+            result += ModSettings.planet_other_starleague;
+        return result;
+    }
+    public class FactionResources
+    {
+        public int resources;
+        public Faction faction;
+
+        public FactionResources(Faction faction, int resources)
         {
-            var temporaryResultTracker = Traverse.Create(__instance).Field("TemporaryResultTracker").GetValue<List<TemporarySimGameResult>>();
-            temporaryResultTracker.Add("something");
-            //Traverse.Create(__instance).Method("AddOrRemoveTempTags").GetValue(__instance, needTemporarySimGameResult, needBool);
+            this.faction = faction;
+            this.resources = resources;
         }
     }
 
     public static void RefreshResources(SimGameState Sim)
     {
-        try
+        foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
         {
-            foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
+            if (ModSettings.FactionResources.ContainsKey(pair.Key.ToString()))
             {
-                if (!IsExcluded(pair.Key))
+                if (ModSettings.FactionResourcesHolder.Find(x => x.faction == pair.Key) == null)
                 {
-                    if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
-                    {
-                        Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
-                    }
-                    else
-                    {
-                        FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
-                        resources.offence = 0;
-                        resources.defence = 0;
-                    }
+                    int StartingResources = ModSettings.FactionResources[pair.Key.ToString()];
+                    ModSettings.FactionResourcesHolder.Add(new FactionResources(pair.Key, StartingResources));
                 }
-            }
-
-            if (Sim.Starmap != null)
-            {
-                foreach (StarSystem system in Sim.StarSystems)
+                else
                 {
-                    FactionResources resources = Fields.factionResources.Find(x => x.faction == system.Owner);
-                    if (resources != null)
-                    {
-                        if (!IsExcluded(resources.faction))
-                        {
-                            resources.offence += Mathf.RoundToInt(GetOffenceValue(system) * (1 - (Fields.WarFatique[system.Owner] / 100)));
-                            resources.defence += Mathf.RoundToInt(GetDefenceValue(system) * (1 - (Fields.WarFatique[system.Owner] / 100)));
-                        }
-                    }
-                }
-            }
-
-            if (Fields.settings.debug)
-            {
-                foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
-                {
-                    if (!IsExcluded(pair.Key))
-                    {
-                        FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
-                        Logger.LogMonthlyReport(Helper.GetFactionName(pair.Key, Sim.DataManager) + " Exhaustion:" + Fields.WarFatique[pair.Key] + " Attack:" + resources.offence + " Defence:" + resources.defence);
-                    }
+                    FactionResources factionresources = ModSettings.FactionResourcesHolder.Find(x => x.faction == pair.Key);
+                    factionresources.resources = ModSettings.FactionResources[pair.Key.ToString()];
                 }
             }
         }
-        catch (Exception ex)
+        if (Sim.Starmap != null)
         {
-            Logger.LogError(ex);
+            foreach (StarSystem system in Sim.StarSystems)
+            {
+                int resources = GetTotalResources(system);
+                Faction owner = system.Owner;
+                try
+                {
+                    FactionResources factionresources = ModSettings.FactionResourcesHolder.Find(x => x.faction == owner);
+                    factionresources.resources += resources;
+                }
+                catch (Exception)
+                {
+
+                }
+            }
         }
+
+
+        //try
+        //{
+        //    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
+        //    {
+        //        {
+        //            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
+        //            {
+        //                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
+        //            }
+        //            else
+        //            {
+        //                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
+        //                resources.offence = 0;
+        //                resources.defence = 0;
+        //            }
+        //        }
+        //    }
     }
 }
