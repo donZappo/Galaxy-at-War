@@ -84,12 +84,12 @@ public class Core
         return result;
     }
 
-    public class FactionResources
+    public class WarFaction
     {
         public int resources;
         public readonly Faction faction;
 
-        public FactionResources(Faction faction, int resources)
+        public WarFaction(Faction faction, int resources)
         {
             this.faction = faction;
             this.resources = resources;
@@ -103,15 +103,16 @@ public class Core
         {
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
-                if (Settings.FactionResourcesHolder.Find(x => x.faction == faction) == null)
+                // initialize resources from the ResourceMap
+                if (Settings.FactionTracker.Find(x => x.faction == faction) == null)
                 {
                     int StartingResources = Settings.ResourceMap[faction.ToString()];
-                    Settings.FactionResourcesHolder.Add(new FactionResources(faction, StartingResources));
+                    Settings.FactionTracker.Add(new WarFaction(faction, StartingResources));
                 }
                 else
                 {
-                    FactionResources factionresources = Settings.FactionResourcesHolder.Find(x => x.faction == faction);
-                    factionresources.resources = Settings.ResourceMap[faction.ToString()];
+                    WarFaction warFaction = Settings.FactionTracker.Find(x => x.faction == faction);
+                    warFaction.resources = Settings.ResourceMap[faction.ToString()];
                 }
             }
         }
@@ -124,7 +125,7 @@ public class Core
                 Faction owner = system.Owner;
                 try
                 {
-                    FactionResources factionresources = Settings.FactionResourcesHolder.Find(x => x.faction == owner);
+                    WarFaction factionresources = Settings.FactionTracker.Find(x => x.faction == owner);
                     factionresources.resources += resources;
                 }
                 catch (Exception)

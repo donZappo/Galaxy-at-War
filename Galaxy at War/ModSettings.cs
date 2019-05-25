@@ -24,7 +24,7 @@ public class ModSettings
         {"AuriganPirates", 10}
     };
 
-    public List<FactionResources> FactionResourcesHolder = new List<FactionResources>();
+    public List<WarFaction> FactionTracker = new List<WarFaction>();
 
     public bool Debug = true;
     public string ModDirectory;
