@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using BattleTech;
 using Harmony;
 using System.Reflection;
@@ -9,11 +10,16 @@ using UnityEngine;
 using static Logger;
 using System.Linq;
 
+// ReSharper disable MemberCanBePrivate.Global
+
+// ReSharper disable InconsistentNaming
+
 public class Core
 {
     #region Init
 
     internal static ModSettings Settings;
+    internal static WarStatus WarStatus;
 
     public static void Init(string modDir, string settings)
     {
@@ -40,7 +46,7 @@ public class Core
     {
         LogDebug($"[START {name}]");
 
-        var settingsFields = typeof(Settings)
+        var settingsFields = typeof(ModSettings)
             .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
         foreach (var field in settingsFields)
         {
@@ -70,17 +76,31 @@ public class Core
         static void Prefix(SimGameState __instance, int timeLapse)
         {
             RefreshResources(__instance);
-            foreach(WarFaction faction in Settings.FactionTracker)
+            foreach (WarFaction faction in Settings.FactionTracker)
             {
-                Logger.Log(faction.faction.ToString());
-                Logger.Log(faction.resources.ToString());
+                Log($"{faction.faction}: {faction.resources}");
             }
+
+            // initialize here?
+            if (File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
+            {
+                Log("Deserializing");
+                DeserializeWar();
+            }
+
+            if (WarStatus == null)
+            {
+                Log("Initializing WarStatus");
+                WarStatus = new WarStatus();
+            }
+
+            Log("Serializing");
+            SerializeWar();
+            LogDebug(WarStatus.Planets.Select(x => x.InfluenceMap["Davion"]).FirstOrDefault().ToString());
         }
     }
 
-
-
-            public static int GetTotalResources(StarSystem system)
+    public static int GetTotalResources(StarSystem system)
     {
         int result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
@@ -150,25 +170,35 @@ public class Core
                 }
             }
         }
-
-
-
-        //try
-        //{
-        //    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
-        //    {
-        //        {
-        //            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
-        //            {
-        //                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
-        //            }
-        //            else
-        //            {
-        //                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
-        //                resources.offence = 0;
-        //                resources.defence = 0;
-        //            }
-        //        }
-        //    }
     }
+
+    internal static void SerializeWar()
+    {
+        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\WarStatus.json"))
+            writer.Write(JsonConvert.SerializeObject(WarStatus.Planets));
+    }
+
+    internal static void DeserializeWar()
+    {
+        using (var reader = new StreamReader("Mods\\GalaxyAtWar\\WarStatus.json"))
+            WarStatus.Planets = JsonConvert.DeserializeObject<HashSet<PlanetStatus>>(reader.ReadToEnd());
+    }
+
+    //try
+    //{
+    //    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
+    //    {
+    //        {
+    //            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
+    //            {
+    //                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
+    //            }
+    //            else
+    //            {
+    //                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
+    //                resources.offence = 0;
+    //                resources.defence = 0;
+    //            }
+    //        }
+    //    }
 }
