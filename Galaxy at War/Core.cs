@@ -64,7 +64,23 @@ public class Core
 
     #endregion
 
-    public static int GetTotalResources(StarSystem system)
+    [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
+    public static class SimGameState_OnDayPassed_Patch
+    {
+        static void Prefix(SimGameState __instance, int timeLapse)
+        {
+            RefreshResources(__instance);
+            foreach(WarFaction faction in Settings.FactionTracker)
+            {
+                Logger.Log(faction.faction.ToString());
+                Logger.Log(faction.resources.ToString());
+            }
+        }
+    }
+
+
+
+            public static int GetTotalResources(StarSystem system)
     {
         int result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
@@ -101,6 +117,7 @@ public class Core
         // no point iterating over a KVP if you aren't using the values
         foreach (var faction in Sim.FactionsDict.Select(x => x.Key))
         {
+            Logger.Log(faction.ToString());
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
                 // initialize resources from the ResourceMap
@@ -133,6 +150,8 @@ public class Core
                 }
             }
         }
+
+
 
         //try
         //{
