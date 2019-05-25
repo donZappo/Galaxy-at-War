@@ -68,25 +68,26 @@ public class Core
     {
         int result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
-            result += ModSettings.planet_industry_poor;
+            result += Settings.planet_industry_poor;
         if (system.Tags.Contains("planet_industry_mining"))
-            result += ModSettings.planet_industry_mining;
+            result += Settings.planet_industry_mining;
         if (system.Tags.Contains("planet_industry_rich"))
-            result += ModSettings.planet_industry_rich;
+            result += Settings.planet_industry_rich;
         if (system.Tags.Contains("planet_other_comstar"))
-            result += ModSettings.planet_other_comstar;
+            result += Settings.planet_other_comstar;
         if (system.Tags.Contains("planet_industry_manufacturing"))
-            result += ModSettings.planet_industry_manufacturing;
+            result += Settings.planet_industry_manufacturing;
         if (system.Tags.Contains("planet_industry_research"))
-            result += ModSettings.planet_industry_research;
+            result += Settings.planet_industry_research;
         if (system.Tags.Contains("planet_other_starleague"))
-            result += ModSettings.planet_other_starleague;
+            result += Settings.planet_other_starleague;
         return result;
     }
+
     public class FactionResources
     {
         public int resources;
-        public Faction faction;
+        public readonly Faction faction;
 
         public FactionResources(Faction faction, int resources)
         {
@@ -97,22 +98,24 @@ public class Core
 
     public static void RefreshResources(SimGameState Sim)
     {
-        foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
+        // no point iterating over a KVP if you aren't using the values
+        foreach (var faction in Sim.FactionsDict.Select(x => x.Key))
         {
-            if (ModSettings.FactionResources.ContainsKey(pair.Key.ToString()))
+            if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
-                if (ModSettings.FactionResourcesHolder.Find(x => x.faction == pair.Key) == null)
+                if (Settings.FactionResourcesHolder.Find(x => x.faction == faction) == null)
                 {
-                    int StartingResources = ModSettings.FactionResources[pair.Key.ToString()];
-                    ModSettings.FactionResourcesHolder.Add(new FactionResources(pair.Key, StartingResources));
+                    int StartingResources = Settings.ResourceMap[faction.ToString()];
+                    Settings.FactionResourcesHolder.Add(new FactionResources(faction, StartingResources));
                 }
                 else
                 {
-                    FactionResources factionresources = ModSettings.FactionResourcesHolder.Find(x => x.faction == pair.Key);
-                    factionresources.resources = ModSettings.FactionResources[pair.Key.ToString()];
+                    FactionResources factionresources = Settings.FactionResourcesHolder.Find(x => x.faction == faction);
+                    factionresources.resources = Settings.ResourceMap[faction.ToString()];
                 }
             }
         }
+
         if (Sim.Starmap != null)
         {
             foreach (StarSystem system in Sim.StarSystems)
@@ -121,16 +124,14 @@ public class Core
                 Faction owner = system.Owner;
                 try
                 {
-                    FactionResources factionresources = ModSettings.FactionResourcesHolder.Find(x => x.faction == owner);
+                    FactionResources factionresources = Settings.FactionResourcesHolder.Find(x => x.faction == owner);
                     factionresources.resources += resources;
                 }
                 catch (Exception)
                 {
-
                 }
             }
         }
-
 
         //try
         //{
