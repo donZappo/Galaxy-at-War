@@ -27,6 +27,48 @@ public class ModSettings
         {"AuriganPirates", 10}
     };
 
+    public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>
+    {
+        {Faction.Liao,  "planet_faction_liao"},
+        {Faction.Steiner, "planet_faction_steiner" },
+        {Faction.Marik, "planet_faction_marik" },
+        {Faction.Davion, "planet_faction_davion" },
+        {Faction.Kurita, "planet_faction_kurita" },
+        {Faction.AuriganDirectorate, "planet_faction_directorate" },
+        {Faction.TaurianConcordat, "planet_faction_taurian"},
+        {Faction.MagistracyOfCanopus, "planet_faction_magistracy" },
+        {Faction.NoFaction, "planet_faction_nofaction" },
+        {Faction.Locals, "planet_faction_independent" },
+        {Faction.AuriganRestoration, "planet_faction_restoration" }
+    };
+
+    public Dictionary<Faction, string> FactionShops = new Dictionary<Faction, string>
+    {
+        {Faction.Liao,  "itemCollection_minor_Liao"},
+        {Faction.Marik, "itemCollection_minor_Marik" },
+        {Faction.Davion, "itemCollection_minor_Davion" },
+        {Faction.AuriganDirectorate, "itemCollection_minor_AuriganDirectorate" },
+        {Faction.TaurianConcordat, "itemCollection_minor_TaurianConcordat"},
+        {Faction.MagistracyOfCanopus, "itemCollection_minor_MagistracyOfCanopus" },
+        {Faction.NoFaction, "itemCollection_minor_Locals" },
+        {Faction.Locals, "itemCollection_minor_Locals" },
+        {Faction.AuriganRestoration, "itemCollection_minor_AuriganRestoration" }
+    };
+
+    public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>
+    {
+        {Faction.Liao,  "itemCollection_faction_Liao"},
+        {Faction.Marik, "itemCollection_faction_Marik" },
+        {Faction.Davion, "itemCollection_faction_Davion" },
+        {Faction.AuriganDirectorate, null },
+        {Faction.TaurianConcordat, "itemCollection_faction_TaurianConcordat"},
+        {Faction.MagistracyOfCanopus, "itemCollection_faction_MagistracyOfCanopus" },
+        {Faction.NoFaction, null },
+        {Faction.Locals, null },
+        {Faction.AuriganRestoration, null }
+    };
+
+
     public List<WarFaction> FactionTracker = new List<WarFaction>();
 
     public bool Debug = true;

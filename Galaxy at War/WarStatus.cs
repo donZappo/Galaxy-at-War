@@ -19,6 +19,7 @@ public class WarStatus
         foreach (var planet in sim.StarSystems)
         {
             Systems.Add(new SystemStatus(planet.Name));
+            Core.ChangeSystemOwnership(sim, planet, planet.Owner, true);
         }
     }
 }

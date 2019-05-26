@@ -69,6 +69,49 @@ public class Core
     internal static ModSettings Settings;
     internal static WarStatus WarStatus;
 
+    public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
+    {
+        if(faction != system.Owner || ForceFlip)
+        {
+            system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
+            system.Def.Tags.Add(Settings.FactionTags[faction]);
+            system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
+            if (system.Def.FactionShopItems != null)
+            {
+                system.Def.FactionShopOwner = faction;
+                system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
+                system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
+            }
+
+            system.Def.ContractEmployers.Clear();
+            system.Def.ContractTargets.Clear();
+            List<Faction> ContractEmployers = new List<Faction>();
+            ContractEmployers.Add(system.Owner);
+
+            foreach (var SystemNeighbor in sim.Starmap.GetAvailableNeighborSystem(system))
+            {
+                if (!ContractEmployers.Contains(SystemNeighbor.Owner))
+                    ContractEmployers.Add(SystemNeighbor.Owner);
+            }
+
+            system.Def.ContractEmployers = ContractEmployers;
+
+            if (ContractEmployers.Count() > 1)
+            {
+                system.Def.ContractTargets = ContractEmployers;
+            }
+            else
+            {
+                FactionDef FactionEnemies;
+                FactionEnemies = sim.FactionsDict[faction];
+                system.Def.ContractTargets = FactionEnemies.Enemies.ToList();
+            }
+            system.Def.Owner = faction;
+        }
+    }
+
+
+
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
@@ -89,7 +132,7 @@ public class Core
 
             // initialize here?
             // TEMPORARY file delete
-            File.Delete("Mods\\GalaxyAtWar\\WarStatus.json");
+            //File.Delete("Mods\\GalaxyAtWar\\WarStatus.json");
             
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
