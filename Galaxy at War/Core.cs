@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using BattleTech;
 using Harmony;
 using System.Reflection;
@@ -9,11 +10,12 @@ using UnityEngine;
 using static Logger;
 using System.Linq;
 
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable InconsistentNaming
+
 public class Core
 {
     #region Init
-
-    internal static ModSettings Settings;
 
     public static void Init(string modDir, string settings)
     {
@@ -23,7 +25,7 @@ public class Core
         try
         {
             Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
-            Settings.ModDirectory = modDir;
+            Settings.modDirectory = modDir;
         }
         catch (Exception)
         {
@@ -40,7 +42,7 @@ public class Core
     {
         LogDebug($"[START {name}]");
 
-        var settingsFields = typeof(Settings)
+        var settingsFields = typeof(ModSettings)
             .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
         foreach (var field in settingsFields)
         {
@@ -64,23 +66,105 @@ public class Core
 
     #endregion
 
-    [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
-    public static class SimGameState_OnDayPassed_Patch
+    internal static ModSettings Settings;
+    public static WarStatus WarStatus;
+    
+    public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
     {
-        static void Prefix(SimGameState __instance, int timeLapse)
+        if (faction != system.Owner || ForceFlip)
         {
-            RefreshResources(__instance);
-            foreach(WarFaction faction in Settings.FactionTracker)
+            system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
+            system.Def.Tags.Add(Settings.FactionTags[faction]);
+            system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
+            if (system.Def.FactionShopItems != null)
             {
-                Logger.Log(faction.faction.ToString());
-                Logger.Log(faction.resources.ToString());
+                Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
+                system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
+                system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
             }
+
+            system.Def.ContractEmployers.Clear();
+            system.Def.ContractTargets.Clear();
+            List<Faction> ContractEmployers = new List<Faction>();
+            ContractEmployers.Add(system.Owner);
+
+            foreach (var SystemNeighbor in sim.Starmap.GetAvailableNeighborSystem(system))
+            {
+                if (!ContractEmployers.Contains(SystemNeighbor.Owner))
+                    ContractEmployers.Add(SystemNeighbor.Owner);
+            }
+
+            Traverse.Create(system.Def).Property("ContractEmployers").SetValue(ContractEmployers);
+
+            if (ContractEmployers.Count() > 1)
+            {
+                Traverse.Create(system.Def).Property("ContractTargets").SetValue(ContractEmployers);
+            }
+            else
+            {
+                FactionDef FactionEnemies;
+                FactionEnemies = sim.FactionsDict[faction];
+
+                Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
+            }
+
+            Traverse.Create(system.Def).Property("Owner").SetValue(faction);
         }
     }
 
+    [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
+    public static class SimGameState_OnDayPassed_Patch
+    {
+        internal static SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
+        static void Prefix(SimGameState __instance, int timeLapse)
+        {
+            if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
+                return;
+            RefreshResources(__instance);
 
-            public static int GetTotalResources(StarSystem system)
+            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
+            {
+                WarStatus = new WarStatus();
+                DeserializeWar();
+            }
+
+            if (WarStatus == null)
+            {
+                WarStatus = new WarStatus();
+            }
+            
+            SerializeWar();
+
+            // testing crap
+            //var someReturn = WarStatus.RelationTracker.Factions.Find(f => f.Keys.Any(k => k == Faction.Liao));
+            //
+            //Log("Liao relations");
+            //foreach (var kvp in someReturn)
+            //{
+            //    LogDebug($"{kvp.Key.ToString()} - {kvp.Value}");
+            //}
+            //
+            //var system = WarStatus.Systems.First(p => p.name == "Lindsay");
+            //Log("foreach influenceMap PoC!");
+            //foreach (var faction in system.InfluenceTracker)
+            //{
+            //    Log($"{faction.Key}: {faction.Value}");
+            //}
+            //
+            //Log("DOMINANT FACTION: " + system.owner);
+            //
+            //Log($"=== Neighbours ===");
+            //foreach (var neighbour in system.neighbourSystems)
+            //{
+            //    Log($"{neighbour.Key}: {neighbour.Value}");
+            //}
+            //
+            //Log($"===");
+        }
+    }
+
+    public static int GetTotalResources(StarSystem system)
     {
         int result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
@@ -115,7 +199,7 @@ public class Core
     public static void RefreshResources(SimGameState Sim)
     {
         // no point iterating over a KVP if you aren't using the values
-        foreach (var faction in Sim.FactionsDict.Select(x => x.Key))
+        foreach (var faction in Sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
             Logger.Log(faction.ToString());
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
@@ -150,25 +234,35 @@ public class Core
                 }
             }
         }
-
-
-
-        //try
-        //{
-        //    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
-        //    {
-        //        {
-        //            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
-        //            {
-        //                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
-        //            }
-        //            else
-        //            {
-        //                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
-        //                resources.offence = 0;
-        //                resources.defence = 0;
-        //            }
-        //        }
-        //    }
     }
+
+    internal static void SerializeWar()
+    {
+        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\WarStatus.json"))
+            writer.Write(JsonConvert.SerializeObject(WarStatus));
+    }
+
+    internal static void DeserializeWar()
+    {
+        using (var reader = new StreamReader("Mods\\GalaxyAtWar\\WarStatus.json"))
+            WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
+    }
+
+    //try
+    //{
+    //    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
+    //    {
+    //        {
+    //            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
+    //            {
+    //                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
+    //            }
+    //            else
+    //            {
+    //                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
+    //                resources.offence = 0;
+    //                resources.defence = 0;
+    //            }
+    //        }
+    //    }
 }
