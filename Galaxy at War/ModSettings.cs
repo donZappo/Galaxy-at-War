@@ -67,6 +67,13 @@ public class ModSettings
         {Faction.AuriganRestoration, null }
     };
 
+    public Dictionary<Faction, List<StarSystem>> AttackTargets = new Dictionary<Faction, List<StarSystem>>
+    {
+    };
+
+    public Dictionary<Faction, List<StarSystem>> DefenseTargets = new Dictionary<Faction, List<StarSystem>>
+    {
+    };
 
     public List<WarFaction> FactionTracker = new List<WarFaction>();
 

@@ -125,13 +125,13 @@ public class Core
 
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
-                WarStatus = new WarStatus();
+                WarStatus = new WarStatus(true);
                 DeserializeWar();
             }
 
             if (WarStatus == null)
             {
-                WarStatus = new WarStatus();
+                WarStatus = new WarStatus(true);
             }
             
             SerializeWar();
@@ -163,6 +163,7 @@ public class Core
             //Log($"===");
         }
     }
+
 
     public static int GetTotalResources(StarSystem system)
     {

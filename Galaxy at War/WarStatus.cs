@@ -15,12 +15,12 @@ public class WarStatus
     public RelationTracker RelationTracker = new RelationTracker();
 
     // initialize a collection of all planets
-    public WarStatus()
+    public WarStatus(bool distribute)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         foreach (var planet in sim.StarSystems)
         {
-            Systems.Add(new SystemStatus(planet.Name));
+            Systems.Add(new SystemStatus(planet.Name, distribute));
             Core.ChangeSystemOwnership(sim, planet, planet.Owner, true);
         }
     }
@@ -29,6 +29,7 @@ public class WarStatus
 public class SystemStatus
 {
     public readonly string name;
+    internal static ModSettings Settings;
 
     // Dictionary to hold each faction's numerical influence
     public Dictionary<string, float> InfluenceTracker = new Dictionary<string, float>();
@@ -38,14 +39,15 @@ public class SystemStatus
     public readonly Faction owner;
     public string ownerName;
 
-    public SystemStatus(string systemName)
+    public SystemStatus(string systemName, bool InitialDistribution)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         name = systemName;
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
         ownerName = owner.ToString();
-        CalculateNeighbours(sim);
-        DistributeResources();
+        CalculateNeighbours(sim, InitialDistribution);
+        if(InitialDistribution)
+            DistributeResources();
     }
 
     private void DistributeResources()
@@ -84,16 +86,55 @@ public class SystemStatus
 
     // Find how many friendly and opposing neighbors are present for the star system.
     // thanks to WarTech by Morphyum
-    public void CalculateNeighbours(SimGameState sim)
+    public void CalculateNeighbours(SimGameState sim, bool InitialDistribution)
     {
-        var thisSystem = sim.StarSystems.First(s => s.Name == name);
+        var OriginalSystem = sim.StarSystems.First(s => s.Name == name);
         neighbourSystems = new Dictionary<Faction, int>();
-        foreach (var system in sim.Starmap.GetAvailableNeighborSystem(thisSystem))
+        foreach (var neighborsystem in sim.Starmap.GetAvailableNeighborSystem(OriginalSystem))
         {
-            if (neighbourSystems.ContainsKey(system.Owner))
-                neighbourSystems[system.Owner] += 1;
+            if (neighbourSystems.ContainsKey(neighborsystem.Owner))
+            {
+                neighbourSystems[neighborsystem.Owner] += 1;
+            }
             else
-                neighbourSystems.Add(system.Owner, 1);
+                neighbourSystems.Add(neighborsystem.Owner, 1);
+
+            if (!InitialDistribution && !Settings.AttackTargets.ContainsKey(neighborsystem.Owner) &&
+                    (neighborsystem.Owner != OriginalSystem.Owner))
+            {
+                List<StarSystem> TempList = new List<StarSystem>();
+                TempList.Add(OriginalSystem);
+                Settings.AttackTargets.Add(neighborsystem.Owner, TempList);
+                }
+            else if (!InitialDistribution && !Settings.AttackTargets[neighborsystem.Owner].Contains(OriginalSystem) &&
+                (neighborsystem.Owner != OriginalSystem.Owner))
+            {
+                Settings.AttackTargets[neighborsystem.Owner].Add(OriginalSystem);
+            }
+
+            if (!InitialDistribution && !Settings.DefenseTargets.ContainsKey(OriginalSystem.Owner) &&
+                    (neighborsystem.Owner != OriginalSystem.Owner))
+            {
+                List<StarSystem> TempList = new List<StarSystem>();
+                TempList.Add(OriginalSystem);
+                Settings.DefenseTargets.Add(OriginalSystem.Owner, TempList);
+            }
+            else if (!InitialDistribution && !Settings.DefenseTargets[OriginalSystem.Owner].Contains(OriginalSystem) &&
+                (neighborsystem.Owner != OriginalSystem.Owner))
+            {
+                Settings.DefenseTargets[OriginalSystem.Owner].Add(OriginalSystem);
+            }
         }
+    }
+}
+
+public class WarProgress
+{
+    internal static ModSettings Settings;
+    public static WarStatus WarStatus;
+    public void PotentialTargets(Faction faction)
+    {
+        Settings.AttackTargets.Clear();
+        WarStatus = new WarStatus(false);
     }
 }
