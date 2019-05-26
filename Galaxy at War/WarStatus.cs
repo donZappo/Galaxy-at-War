@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
+using static Logger;
+using static Core;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -22,32 +25,59 @@ public class WarStatus
 
 public class SystemStatus
 {
-    // Dictionary to hold each faction's numerical influence
-    public readonly Dictionary<string, int> InfluenceMap =
-        new Dictionary<string, int>
-        {
-            {"Steiner", 10},
-            {"Kurita", 10},
-            {"Davion", 10},
-            {"Liao", 10},
-            {"Marik", 10},
-            {"TaurianConcordat", 10},
-            {"MagistracyOfCanopus", 10},
-            {"AuriganPirates", 10}
-        };
-
     public readonly string name;
-    
-    // why the hell is the serializer ignoring these two members?
-    internal Dictionary<Faction, int> neighbourSystems;
-    internal readonly Faction owner;
 
-    public SystemStatus(string name)
+    // Dictionary to hold each faction's numerical influence
+    public Dictionary<string, float> InfluenceTracker = new Dictionary<string, float>();
+
+    // why the hell is the serializer ignoring these two members?
+    public Dictionary<Faction, int> neighbourSystems;
+    public readonly Faction owner;
+    public string ownerName;
+
+    public SystemStatus(string systemName)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        this.name = name;
+        name = systemName;
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
+        ownerName = owner.ToString();
         CalculateNeighbours(sim);
+        DistributeResources();
+    }
+
+    private void DistributeResources()
+    {
+        InfluenceTracker.Add(owner.ToString(), Core.Settings.DominantInfluence);
+        int remainingInfluence = Core.Settings.MinorInfluencePool;
+        Log("\nremainingInfluence: " + remainingInfluence);
+        Log("=====================================================");
+        while (remainingInfluence > 0)
+        {
+            foreach (var faction in neighbourSystems.Keys)
+            {
+                // ceiling against remainingInfluence
+                var influenceDelta = Math.Min(neighbourSystems[faction], remainingInfluence);
+                remainingInfluence -= influenceDelta;
+                LogDebug($"{faction.ToString(), -30} gains {influenceDelta, 2}, leaving {remainingInfluence}");
+                if (InfluenceTracker.ContainsKey(faction.ToString()))
+                    InfluenceTracker[faction.ToString()] += influenceDelta;
+                else
+                    InfluenceTracker.Add(faction.ToString(), influenceDelta);
+            }
+        }
+
+        var totalInfluence = InfluenceTracker.Values.Sum();
+        Log($"\ntotalInfluence for {name}: {totalInfluence}");
+        Log("=====================================================");
+        // need percentages from InfluenceTracker data 
+        var tempDict = new Dictionary<string, float>();
+        foreach (var kvp in InfluenceTracker)
+        {
+            Log($"{kvp.Key}: {kvp.Value}");
+            tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
+        }
+
+        InfluenceTracker = tempDict;
     }
 
     //Find how many friendly and opposing neighbors are present for the star system.

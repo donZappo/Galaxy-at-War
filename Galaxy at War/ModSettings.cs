@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BattleTech;
 using static Core;
 
 public class ModSettings
@@ -11,7 +12,7 @@ public class ModSettings
     public int planet_other_starleague = 6;
     public int planet_other_comstar = 0;
 
-    public int warFrequency = 6;
+    public int WarFrequency = 6;
 
     // have to come up with something better than two variables starting with FactionResources
     public Dictionary<string, int> ResourceMap = new Dictionary<string, int>
@@ -29,5 +30,13 @@ public class ModSettings
     public List<WarFaction> FactionTracker = new List<WarFaction>();
 
     public bool Debug = true;
-    public string ModDirectory;
+    public string modDirectory;
+    public int DominantInfluence = 50;
+    public int MinorInfluencePool = 50;
+
+    public List<Faction> ExcludedFactions = new List<Faction>()
+    {
+        Faction.Locals, Faction.Unknown,
+        Faction.SelfEmployed, Faction.NoFaction,
+    };
 }

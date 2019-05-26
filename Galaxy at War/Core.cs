@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -25,7 +25,7 @@ public class Core
         try
         {
             Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
-            Settings.ModDirectory = modDir;
+            Settings.modDirectory = modDir;
         }
         catch (Exception)
         {
@@ -76,35 +76,38 @@ public class Core
 
         static void Prefix(SimGameState __instance, int timeLapse)
         {
-            if (sim.DayRemainingInQuarter % Settings.warFrequency != 0)
+            if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
                 return;
             RefreshResources(__instance);
-            foreach (WarFaction faction in Settings.FactionTracker)
-            {
-                Log($"{faction.faction}: {faction.resources}");
-            }
+            //Log("FactionTracker\n===");
+            //foreach (WarFaction faction in Settings.FactionTracker)
+            //{
+            //    Log($"{faction.faction}: {faction.resources}");
+            //}
+            //
+            //Log("===");
 
             // initialize here?
+            // TEMPORARY file delete
+            File.Delete("Mods\\GalaxyAtWar\\WarStatus.json");
+            
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
-                //Log("Deserializing");
                 WarStatus = new WarStatus();
                 DeserializeWar();
             }
 
             if (WarStatus == null)
             {
-                //Log("Initializing WarStatus");
                 WarStatus = new WarStatus();
             }
 
-            //Log("Serializing");
             SerializeWar();
-            
+
             // testing crap
             var system = WarStatus.Systems.First(p => p.name == "Lindsay");
             Log("foreach influenceMap PoC!");
-            foreach (var faction in system.InfluenceMap)
+            foreach (var faction in system.InfluenceTracker)
             {
                 Log($"{faction.Key}: {faction.Value}");
             }
@@ -116,6 +119,7 @@ public class Core
             {
                 Log($"{neighbour.Key}: {neighbour.Value}");
             }
+
             Log($"===");
         }
     }
@@ -155,7 +159,7 @@ public class Core
     public static void RefreshResources(SimGameState Sim)
     {
         // no point iterating over a KVP if you aren't using the values
-        foreach (var faction in Sim.FactionsDict.Select(x => x.Key))
+        foreach (var faction in Sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
             Logger.Log(faction.ToString());
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
