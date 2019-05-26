@@ -56,9 +56,9 @@ public class SystemStatus
             foreach (var faction in neighbourSystems.Keys)
             {
                 // ceiling against remainingInfluence
-                var influenceDelta = Math.Min(neighbourSystems[faction], remainingInfluence);
+                var influenceDelta = neighbourSystems[faction];// Math.Min(neighbourSystems[faction], remainingInfluence);
                 remainingInfluence -= influenceDelta;
-                LogDebug($"{faction.ToString(), -30} gains {influenceDelta, 2}, leaving {remainingInfluence}");
+                LogDebug($"{faction.ToString(), -20} gains {influenceDelta, 2}, leaving {remainingInfluence}");
                 if (InfluenceTracker.ContainsKey(faction.ToString()))
                     InfluenceTracker[faction.ToString()] += influenceDelta;
                 else
@@ -77,6 +77,11 @@ public class SystemStatus
             tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
         }
 
+        Log("=====================================================");
+        foreach (var kvp in tempDict)
+        {
+            Log($"{kvp.Key}: {kvp.Value}");
+        }
         InfluenceTracker = tempDict;
     }
 
