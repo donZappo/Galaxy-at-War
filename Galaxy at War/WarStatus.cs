@@ -102,16 +102,19 @@ public class SystemStatus
             if (!InitialDistribution && !Settings.AttackTargets.ContainsKey(neighborsystem.Owner) &&
                     (neighborsystem.Owner != OriginalSystem.Owner))
             {
+                Logger.Log("Inside");
                 List<StarSystem> TempList = new List<StarSystem>();
+                Logger.Log("Outside");
                 TempList.Add(OriginalSystem);
+                Logger.Log("Upside");
                 Settings.AttackTargets.Add(neighborsystem.Owner, TempList);
-                }
+                Logger.Log("Down");
+            }
             else if (!InitialDistribution && !Settings.AttackTargets[neighborsystem.Owner].Contains(OriginalSystem) &&
                 (neighborsystem.Owner != OriginalSystem.Owner))
             {
                 Settings.AttackTargets[neighborsystem.Owner].Add(OriginalSystem);
             }
-
             if (!InitialDistribution && !Settings.DefenseTargets.ContainsKey(OriginalSystem.Owner) &&
                     (neighborsystem.Owner != OriginalSystem.Owner))
             {
@@ -134,7 +137,25 @@ public class WarProgress
     public static WarStatus WarStatus;
     public void PotentialTargets(Faction faction)
     {
-        Settings.AttackTargets.Clear();
+        Logger.Log("A");
         WarStatus = new WarStatus(false);
+        Logger.Log("B");
+        foreach (Faction attackfaction in Settings.AttackTargets.Keys)
+        { 
+            Logger.Log("------------------------------------------------------");
+            Logger.Log(attackfaction.ToString());
+            Logger.Log("Attack Targets");
+            foreach(StarSystem attackedsystem in Settings.AttackTargets[faction])
+                Logger.Log(Settings.AttackTargets[faction].ToString());
+        }
+        Logger.Log("C");
+        foreach (Faction defensefaction in Settings.DefenseTargets.Keys)
+        {
+            Logger.Log("------------------------------------------------------");
+            Logger.Log(defensefaction.ToString());
+            Logger.Log("Defense Targets");
+            foreach (StarSystem defensedsystem in Settings.DefenseTargets[faction])
+                Logger.Log(Settings.DefenseTargets[faction].ToString());
+        }
     }
 }
