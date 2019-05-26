@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
 using System.Linq;
+using System.Runtime.Remoting.Proxies;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
