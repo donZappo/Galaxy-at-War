@@ -11,6 +11,8 @@ public class ModSettings
     public int planet_other_starleague = 6;
     public int planet_other_comstar = 0;
 
+    public int warFrequency = 6;
+
     // have to come up with something better than two variables starting with FactionResources
     public Dictionary<string, int> ResourceMap = new Dictionary<string, int>
     {

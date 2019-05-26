@@ -58,9 +58,6 @@
     <Compile Include="TargetSystem.cs" />
     <Compile Include="WarStatus.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Patch\" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\BATTLETECH\Mods\GalaxyAtWar" /Y</PostBuildEvent>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,15 +11,11 @@ using static Logger;
 using System.Linq;
 
 // ReSharper disable MemberCanBePrivate.Global
-
 // ReSharper disable InconsistentNaming
 
 public class Core
 {
     #region Init
-
-    internal static ModSettings Settings;
-    internal static WarStatus WarStatus;
 
     public static void Init(string modDir, string settings)
     {
@@ -70,11 +66,18 @@ public class Core
 
     #endregion
 
+    internal static ModSettings Settings;
+    internal static WarStatus WarStatus;
+
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
+        internal static SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+
         static void Prefix(SimGameState __instance, int timeLapse)
         {
+            if (sim.DayRemainingInQuarter % Settings.warFrequency != 0)
+                return;
             RefreshResources(__instance);
             foreach (WarFaction faction in Settings.FactionTracker)
             {
@@ -82,21 +85,38 @@ public class Core
             }
 
             // initialize here?
-            if (File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
+            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
-                Log("Deserializing");
+                //Log("Deserializing");
+                WarStatus = new WarStatus();
                 DeserializeWar();
             }
 
             if (WarStatus == null)
             {
-                Log("Initializing WarStatus");
+                //Log("Initializing WarStatus");
                 WarStatus = new WarStatus();
             }
 
-            Log("Serializing");
+            //Log("Serializing");
             SerializeWar();
-            LogDebug(WarStatus.Planets.Select(x => x.InfluenceMap["Davion"]).FirstOrDefault().ToString());
+            
+            // testing crap
+            var system = WarStatus.Systems.First(p => p.name == "Lindsay");
+            Log("foreach influenceMap PoC!");
+            foreach (var faction in system.InfluenceMap)
+            {
+                Log($"{faction.Key}: {faction.Value}");
+            }
+
+            Log("DOMINANT FACTION: " + system.owner);
+
+            Log($"=== Neighbours ===");
+            foreach (var neighbour in system.neighbourSystems)
+            {
+                Log($"{neighbour.Key}: {neighbour.Value}");
+            }
+            Log($"===");
         }
     }
 
@@ -175,13 +195,13 @@ public class Core
     internal static void SerializeWar()
     {
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\WarStatus.json"))
-            writer.Write(JsonConvert.SerializeObject(WarStatus.Planets));
+            writer.Write(JsonConvert.SerializeObject(WarStatus.Systems));
     }
 
     internal static void DeserializeWar()
     {
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\WarStatus.json"))
-            WarStatus.Planets = JsonConvert.DeserializeObject<HashSet<PlanetStatus>>(reader.ReadToEnd());
+            WarStatus.Systems = JsonConvert.DeserializeObject<HashSet<SystemStatus>>(reader.ReadToEnd());
     }
 
     //try
