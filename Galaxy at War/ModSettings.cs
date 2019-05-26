@@ -14,7 +14,6 @@ public class ModSettings
 
     public int WarFrequency = 6;
 
-    // have to come up with something better than two variables starting with FactionResources
     public Dictionary<string, int> ResourceMap = new Dictionary<string, int>
     {
         {"Steiner", 10},

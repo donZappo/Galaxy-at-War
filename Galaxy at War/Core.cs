@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -67,18 +67,18 @@ public class Core
     #endregion
 
     internal static ModSettings Settings;
-    internal static WarStatus WarStatus;
-
+    public static WarStatus WarStatus;
+    
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
     {
-        if(faction != system.Owner || ForceFlip)
+        if (faction != system.Owner || ForceFlip)
         {
             system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);
             system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
             if (system.Def.FactionShopItems != null)
             {
-                system.Def.FactionShopOwner = faction;
+                Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
                 system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
                 system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
             }
@@ -94,23 +94,23 @@ public class Core
                     ContractEmployers.Add(SystemNeighbor.Owner);
             }
 
-            system.Def.ContractEmployers = ContractEmployers;
+            Traverse.Create(system.Def).Property("ContractEmployers").SetValue(ContractEmployers);
 
             if (ContractEmployers.Count() > 1)
             {
-                system.Def.ContractTargets = ContractEmployers;
+                Traverse.Create(system.Def).Property("ContractTargets").SetValue(ContractEmployers);
             }
             else
             {
                 FactionDef FactionEnemies;
                 FactionEnemies = sim.FactionsDict[faction];
-                system.Def.ContractTargets = FactionEnemies.Enemies.ToList();
+
+                Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
             }
-            system.Def.Owner = faction;
+
+            Traverse.Create(system.Def).Property("Owner").SetValue(faction);
         }
     }
-
-
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -122,18 +122,7 @@ public class Core
             if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
                 return;
             RefreshResources(__instance);
-            //Log("FactionTracker\n===");
-            //foreach (WarFaction faction in Settings.FactionTracker)
-            //{
-            //    Log($"{faction.faction}: {faction.resources}");
-            //}
-            //
-            //Log("===");
 
-            // initialize here?
-            // TEMPORARY file delete
-            //File.Delete("Mods\\GalaxyAtWar\\WarStatus.json");
-            
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
                 WarStatus = new WarStatus();
@@ -144,26 +133,34 @@ public class Core
             {
                 WarStatus = new WarStatus();
             }
-
+            
             SerializeWar();
 
             // testing crap
-            var system = WarStatus.Systems.First(p => p.name == "Lindsay");
-            Log("foreach influenceMap PoC!");
-            foreach (var faction in system.InfluenceTracker)
-            {
-                Log($"{faction.Key}: {faction.Value}");
-            }
-
-            Log("DOMINANT FACTION: " + system.owner);
-
-            Log($"=== Neighbours ===");
-            foreach (var neighbour in system.neighbourSystems)
-            {
-                Log($"{neighbour.Key}: {neighbour.Value}");
-            }
-
-            Log($"===");
+            //var someReturn = WarStatus.RelationTracker.Factions.Find(f => f.Keys.Any(k => k == Faction.Liao));
+            //
+            //Log("Liao relations");
+            //foreach (var kvp in someReturn)
+            //{
+            //    LogDebug($"{kvp.Key.ToString()} - {kvp.Value}");
+            //}
+            //
+            //var system = WarStatus.Systems.First(p => p.name == "Lindsay");
+            //Log("foreach influenceMap PoC!");
+            //foreach (var faction in system.InfluenceTracker)
+            //{
+            //    Log($"{faction.Key}: {faction.Value}");
+            //}
+            //
+            //Log("DOMINANT FACTION: " + system.owner);
+            //
+            //Log($"=== Neighbours ===");
+            //foreach (var neighbour in system.neighbourSystems)
+            //{
+            //    Log($"{neighbour.Key}: {neighbour.Value}");
+            //}
+            //
+            //Log($"===");
         }
     }
 
@@ -242,13 +239,13 @@ public class Core
     internal static void SerializeWar()
     {
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\WarStatus.json"))
-            writer.Write(JsonConvert.SerializeObject(WarStatus.Systems));
+            writer.Write(JsonConvert.SerializeObject(WarStatus));
     }
 
     internal static void DeserializeWar()
     {
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\WarStatus.json"))
-            WarStatus.Systems = JsonConvert.DeserializeObject<HashSet<SystemStatus>>(reader.ReadToEnd());
+            WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
     }
 
     //try

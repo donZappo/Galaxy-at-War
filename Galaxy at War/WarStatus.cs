@@ -5,12 +5,14 @@ using BattleTech;
 using static Logger;
 using static Core;
 
+// ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
 public class WarStatus
 {
-    internal HashSet<SystemStatus> Systems = new HashSet<SystemStatus>();
+    public HashSet<SystemStatus> Systems = new HashSet<SystemStatus>();
+    public RelationTracker RelationTracker = new RelationTracker();
 
     // initialize a collection of all planets
     public WarStatus()
@@ -56,10 +58,9 @@ public class SystemStatus
         {
             foreach (var faction in neighbourSystems.Keys)
             {
-                // ceiling against remainingInfluence
-                var influenceDelta = neighbourSystems[faction];// Math.Min(neighbourSystems[faction], remainingInfluence);
+                var influenceDelta = neighbourSystems[faction];
                 remainingInfluence -= influenceDelta;
-                LogDebug($"{faction.ToString(), -20} gains {influenceDelta, 2}, leaving {remainingInfluence}");
+                LogDebug($"{faction.ToString(),-20} gains {influenceDelta,2}, leaving {remainingInfluence}");
                 if (InfluenceTracker.ContainsKey(faction.ToString()))
                     InfluenceTracker[faction.ToString()] += influenceDelta;
                 else
@@ -74,19 +75,15 @@ public class SystemStatus
         var tempDict = new Dictionary<string, float>();
         foreach (var kvp in InfluenceTracker)
         {
-            Log($"{kvp.Key}: {kvp.Value}");
+            //Log($"{kvp.Key}: {kvp.Value}");
             tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
         }
 
-        Log("=====================================================");
-        foreach (var kvp in tempDict)
-        {
-            Log($"{kvp.Key}: {kvp.Value}");
-        }
         InfluenceTracker = tempDict;
     }
 
-    //Find how many friendly and opposing neighbors are present for the star system.
+    // Find how many friendly and opposing neighbors are present for the star system.
+    // thanks to WarTech by Morphyum
     public void CalculateNeighbours(SimGameState sim)
     {
         var thisSystem = sim.StarSystems.First(s => s.Name == name);
