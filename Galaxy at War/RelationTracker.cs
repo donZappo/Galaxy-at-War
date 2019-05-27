@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
@@ -18,11 +19,18 @@ public class RelationTracker
     {
         // we instantiate the tracker with all the factions, adding them to the list
         // set values based on enemy/neutral/ally FactionDef property
-        foreach (var kvp in sim.FactionsDict)
+        try
         {
-            if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
-            if (kvp.Value != null)
-                factions.Add(new KillListTracker(kvp.Key));
+            foreach (var kvp in sim.FactionsDict)
+            {
+                if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
+                if (kvp.Value != null)
+                    factions.Add(new KillListTracker(kvp.Key));
+            }
+        }
+        catch (Exception ex)
+        {
+            Error(ex);
         }
     }
 }

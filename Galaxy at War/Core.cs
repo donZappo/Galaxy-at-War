@@ -77,12 +77,13 @@ public class Core
         static void Prefix(SimGameState __instance, int timeLapse)
         {
             // already have a save?
-            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
+            var fileName = $"WarStatus_{sim.InstanceGUID}.json";
+            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
             {
                 Log(">>> Loading WarStatus.json");
                 //WarStatus WarStatus = new WarStatus(false, false);
-                DeserializeWar();
-
+                SaveHandling.DeserializeWar();
+               
                 WarStatus.attackTargets.Clear();
                 WarStatus.defenseTargets.Clear();
 
@@ -118,7 +119,7 @@ public class Core
 
             UpdateInfluenceFromAttacks();
 
-            SerializeWar();
+            SaveHandling.SerializeWar();
 
             // testing crap
             //var someReturn = WarStatus.RelationTracker.Factions.Find(f => f.Keys.Any(k => k == Faction.Liao));
@@ -369,17 +370,6 @@ public class Core
         }
     }
 
-    internal static void SerializeWar()
-    {
-        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\WarStatus.json"))
-            writer.Write(JsonConvert.SerializeObject(WarStatus));
-    }
-
-    internal static void DeserializeWar()
-    {
-        using (var reader = new StreamReader("Mods\\GalaxyAtWar\\WarStatus.json"))
-            WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
-    }
 
     //try
     //{
