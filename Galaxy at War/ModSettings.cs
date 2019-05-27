@@ -75,8 +75,6 @@ public class ModSettings
     {
     };
 
-    public List<WarFaction> FactionTracker = new List<WarFaction>();
-
     public bool Debug = true;
     public string modDirectory;
     public int DominantInfluence = 50;

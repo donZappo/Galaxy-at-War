@@ -13,6 +13,7 @@ public class WarStatus
 {
     public HashSet<SystemStatus> Systems = new HashSet<SystemStatus>();
     public RelationTracker RelationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
+    internal List<WarFaction> FactionTracker = new List<WarFaction>();
 
     // initialize a collection of all planets
     public WarStatus(bool distribute)

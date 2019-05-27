@@ -245,14 +245,14 @@ public class Core
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
                 // initialize resources from the ResourceMap
-                if (Settings.FactionTracker.Find(x => x.faction == faction) == null)
+                if (WarStatus.FactionTracker.Find(x => x.faction == faction) == null)
                 {
                     int StartingResources = Settings.ResourceMap[faction.ToString()];
-                    Settings.FactionTracker.Add(new WarFaction(faction, StartingResources));
+                    WarStatus.FactionTracker.Add(new WarFaction(faction, StartingResources));
                 }
                 else
                 {
-                    WarFaction warFaction = Settings.FactionTracker.Find(x => x.faction == faction);
+                    WarFaction warFaction = WarStatus.FactionTracker.Find(x => x.faction == faction);
                     warFaction.resources = Settings.ResourceMap[faction.ToString()];
                 }
             }
@@ -266,7 +266,7 @@ public class Core
                 Faction owner = system.Owner;
                 try
                 {
-                    WarFaction factionresources = Settings.FactionTracker.Find(x => x.faction == owner);
+                    WarFaction factionresources = WarStatus.FactionTracker.Find(x => x.faction == owner);
                     factionresources.resources += resources;
                 }
                 catch (Exception)
