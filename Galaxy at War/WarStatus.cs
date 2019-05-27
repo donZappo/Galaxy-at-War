@@ -29,7 +29,6 @@ public class WarStatus
 public class SystemStatus
 {
     public readonly string name;
-    internal static ModSettings Settings;
 
     // Dictionary to hold each faction's numerical influence
     public Dictionary<string, float> InfluenceTracker = new Dictionary<string, float>();
@@ -99,33 +98,29 @@ public class SystemStatus
             else
                 neighbourSystems.Add(neighborsystem.Owner, 1);
 
-            if (!InitialDistribution && !Settings.AttackTargets.ContainsKey(neighborsystem.Owner) &&
-                    (neighborsystem.Owner != OriginalSystem.Owner))
-            {
-                Logger.Log("Inside");
-                List<StarSystem> TempList = new List<StarSystem>();
-                Logger.Log("Outside");
-                TempList.Add(OriginalSystem);
-                Logger.Log("Upside");
-                Settings.AttackTargets.Add(neighborsystem.Owner, TempList);
-                Logger.Log("Down");
-            }
-            else if (!InitialDistribution && !Settings.AttackTargets[neighborsystem.Owner].Contains(OriginalSystem) &&
-                (neighborsystem.Owner != OriginalSystem.Owner))
-            {
-                Settings.AttackTargets[neighborsystem.Owner].Add(OriginalSystem);
-            }
-            if (!InitialDistribution && !Settings.DefenseTargets.ContainsKey(OriginalSystem.Owner) &&
+            if (!InitialDistribution && !Core.Settings.AttackTargets.ContainsKey(neighborsystem.Owner) &&
                     (neighborsystem.Owner != OriginalSystem.Owner))
             {
                 List<StarSystem> TempList = new List<StarSystem>();
                 TempList.Add(OriginalSystem);
-                Settings.DefenseTargets.Add(OriginalSystem.Owner, TempList);
+                Core.Settings.AttackTargets.Add(neighborsystem.Owner, TempList);
             }
-            else if (!InitialDistribution && !Settings.DefenseTargets[OriginalSystem.Owner].Contains(OriginalSystem) &&
-                (neighborsystem.Owner != OriginalSystem.Owner))
+            else if (!InitialDistribution && Core.Settings.AttackTargets.ContainsKey(neighborsystem.Owner)
+                && !Core.Settings.AttackTargets[neighborsystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
             {
-                Settings.DefenseTargets[OriginalSystem.Owner].Add(OriginalSystem);
+                Core.Settings.AttackTargets[neighborsystem.Owner].Add(OriginalSystem);
+            }
+            if (!InitialDistribution && !Core.Settings.DefenseTargets.ContainsKey(OriginalSystem.Owner) &&
+                    (neighborsystem.Owner != OriginalSystem.Owner))
+            {
+                List<StarSystem> TempList = new List<StarSystem>();
+                TempList.Add(OriginalSystem);
+                Core.Settings.DefenseTargets.Add(OriginalSystem.Owner, TempList);
+            }
+            else if (!InitialDistribution && Core.Settings.DefenseTargets.ContainsKey(neighborsystem.Owner) 
+                && !Core.Settings.DefenseTargets[OriginalSystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
+            {
+                Core.Settings.DefenseTargets[OriginalSystem.Owner].Add(OriginalSystem);
             }
         }
     }
@@ -133,29 +128,35 @@ public class SystemStatus
 
 public class WarProgress
 {
-    internal static ModSettings Settings;
     public static WarStatus WarStatus;
     public void PotentialTargets(Faction faction)
     {
-        Logger.Log("A");
         WarStatus = new WarStatus(false);
-        Logger.Log("B");
-        foreach (Faction attackfaction in Settings.AttackTargets.Keys)
-        { 
-            Logger.Log("------------------------------------------------------");
-            Logger.Log(attackfaction.ToString());
-            Logger.Log("Attack Targets");
-            foreach(StarSystem attackedsystem in Settings.AttackTargets[faction])
-                Logger.Log(Settings.AttackTargets[faction].ToString());
-        }
-        Logger.Log("C");
-        foreach (Faction defensefaction in Settings.DefenseTargets.Keys)
+        if (Core.Settings.AttackTargets.Keys.Contains(faction))
         {
             Logger.Log("------------------------------------------------------");
-            Logger.Log(defensefaction.ToString());
+            Logger.Log(faction.ToString());
+            Logger.Log("Attack Targets");
+
+            foreach (StarSystem attackedsystem in Core.Settings.AttackTargets[faction])
+                Logger.Log($"{attackedsystem.Name, -30} : {attackedsystem.Owner}");
+        }
+        else
+        {
+            Logger.Log($"No Attack Targets for {faction.ToString()}!");
+        }
+
+        if (Core.Settings.DefenseTargets.Keys.Contains(faction))
+        {
+            Logger.Log("------------------------------------------------------");
+            Logger.Log(faction.ToString());
             Logger.Log("Defense Targets");
-            foreach (StarSystem defensedsystem in Settings.DefenseTargets[faction])
-                Logger.Log(Settings.DefenseTargets[faction].ToString());
+            foreach (StarSystem defensedsystem in Core.Settings.DefenseTargets[faction])
+                Logger.Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
+        }
+        else
+        {
+            Logger.Log($"No Defense Targets for {faction.ToString()}!");
         }
     }
 }

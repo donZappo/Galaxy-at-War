@@ -132,9 +132,9 @@ public class Core
                 Settings.AttackTargets.Clear();
                 Settings.DefenseTargets.Clear();
                 Logger.Log("Here");
-                
-                //foreach (Faction faction in Settings.FactionShops.Keys.Where(x => x != null))
-                //    WarProgress.PotentialTargets(Faction.Davion);
+
+                foreach (Faction faction in sim.FactionsDict.Keys)
+                    WarProgress.PotentialTargets(faction);
                 DeserializeWar();
             }
 
@@ -144,10 +144,9 @@ public class Core
 
                 Settings.AttackTargets.Clear();
                 Settings.DefenseTargets.Clear();
-                Logger.Log("Or Here");
                 WarProgress = new WarProgress();
-                //foreach (Faction faction in Settings.FactionShops.Keys.Where(x => x != null))
-               WarProgress.PotentialTargets(Faction.Davion);
+                foreach (Faction faction in sim.FactionsDict.Keys)
+                    WarProgress.PotentialTargets(faction);
             }
             
             SerializeWar();
