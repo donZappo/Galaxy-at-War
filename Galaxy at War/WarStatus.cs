@@ -88,40 +88,38 @@ public class SystemStatus
     // thanks to WarTech by Morphyum
     public void CalculateNeighbours(SimGameState sim, bool InitialDistribution)
     {
-        var OriginalSystem = sim.StarSystems.First(s => s.Name == name);
+        var originalSystem = sim.StarSystems.First(s => s.Name == name);
         neighbourSystems = new Dictionary<Faction, int>();
-        foreach (var neighborsystem in sim.Starmap.GetAvailableNeighborSystem(OriginalSystem))
+        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(originalSystem))
         {
-            if (neighbourSystems.ContainsKey(neighborsystem.Owner))
+            if (neighbourSystems.ContainsKey(neighborSystem.Owner))
             {
-                neighbourSystems[neighborsystem.Owner] += 1;
+                neighbourSystems[neighborSystem.Owner] += 1;
             }
             else
-                neighbourSystems.Add(neighborsystem.Owner, 1);
+                neighbourSystems.Add(neighborSystem.Owner, 1);
 
-            if (!InitialDistribution && !Core.WarStatus.attackTargets.ContainsKey(neighborsystem.Owner) &&
-                    (neighborsystem.Owner != OriginalSystem.Owner))
+            if (!InitialDistribution && !Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                    (neighborSystem.Owner != originalSystem.Owner))
             {
-                List<StarSystem> TempList = new List<StarSystem>();
-                TempList.Add(OriginalSystem);
-                Core.WarStatus.attackTargets.Add(neighborsystem.Owner, TempList);
+                List<StarSystem> tempList = new List<StarSystem> {originalSystem};
+                Core.WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
             }
-            else if (!InitialDistribution && Core.WarStatus.attackTargets.ContainsKey(neighborsystem.Owner)
-                && !Core.WarStatus.attackTargets[neighborsystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
+            else if (!InitialDistribution && Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner)
+                && !Core.WarStatus.attackTargets[neighborSystem.Owner].Contains(originalSystem) && (neighborSystem.Owner != originalSystem.Owner))
             {
-                Core.WarStatus.attackTargets[neighborsystem.Owner].Add(OriginalSystem);
+                Core.WarStatus.attackTargets[neighborSystem.Owner].Add(originalSystem);
             }
-            if (!InitialDistribution && !Core.WarStatus.defenseTargets.ContainsKey(OriginalSystem.Owner) &&
-                    (neighborsystem.Owner != OriginalSystem.Owner))
+            if (!InitialDistribution && !Core.WarStatus.defenseTargets.ContainsKey(originalSystem.Owner) &&
+                    (neighborSystem.Owner != originalSystem.Owner))
             {
-                List<StarSystem> TempList = new List<StarSystem>();
-                TempList.Add(OriginalSystem);
-                Core.WarStatus.defenseTargets.Add(OriginalSystem.Owner, TempList);
+                List<StarSystem> tempList = new List<StarSystem> {originalSystem};
+                Core.WarStatus.defenseTargets.Add(originalSystem.Owner, tempList);
             }
-            else if (!InitialDistribution && Core.WarStatus.defenseTargets.ContainsKey(neighborsystem.Owner) 
-                && !Core.WarStatus.defenseTargets[OriginalSystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
+            else if (!InitialDistribution && Core.WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) 
+                && !Core.WarStatus.defenseTargets[originalSystem.Owner].Contains(originalSystem) && (neighborSystem.Owner != originalSystem.Owner))
             {
-                Core.WarStatus.defenseTargets[OriginalSystem.Owner].Add(OriginalSystem);
+                Core.WarStatus.defenseTargets[originalSystem.Owner].Add(originalSystem);
             }
         }
     }

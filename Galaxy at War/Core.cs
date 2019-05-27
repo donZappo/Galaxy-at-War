@@ -82,7 +82,7 @@ public class Core
         }
 
         RefreshResources(sim);
-        var killList = Enumerable.First(WarStatus.relationTracker.Factions, f => f.faction == faction).killList;
+        var killList = Enumerable.First(WarStatus.relationTracker.factions, f => f.faction == faction).killList;
         WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
         float resources = warFaction.resources;
         float total = Enumerable.Sum(uniqueFactions.Values);
@@ -98,12 +98,13 @@ public class Core
     public static void AllocateAttackResources(Faction faction)
     {
         Random random = new Random();
+        if (!WarStatus.attackResources.ContainsKey(faction)) return;
         foreach (Faction targetFaction in WarStatus.attackResources[faction].Keys)
         {
             List<StarSystem> attackList = new List<StarSystem>();
             foreach (StarSystem system in WarStatus.attackTargets[faction])
             {
-                if (WarStatus.attackResources[faction].ContainsKey(system.Owner))
+                if (!WarStatus.attackResources[faction].ContainsKey(system.Owner))
                     attackList.Add(system);
             }
 
@@ -112,8 +113,18 @@ public class Core
             do
             {
                 int rand = random.Next(0, attackList.Count);
-                var systemStatus = WarStatus.systems.First(f => f.name == attackList[rand].Name);
-                systemStatus.influenceTracker[faction] += 1;
+                if (attackList[rand] != null)
+                {
+                    var systemStatus = WarStatus.systems.First(f => f.name == attackList[rand].Name);
+                    if (systemStatus.influenceTracker.ContainsKey(faction))
+                        systemStatus.influenceTracker[faction] += 1;
+                }
+                else
+                {
+                    Log($"attackList[rand] was null");
+                }
+
+                Log(WarStatus.attackResources.ContainsKey(faction).ToString());
             } while (i < WarStatus.attackResources[faction][targetFaction]);
         }
     }
@@ -172,7 +183,6 @@ public class Core
         {
             if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
                 return;
-            RefreshResources(__instance);
 
             // already have a save?
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
@@ -182,7 +192,6 @@ public class Core
 
                 WarStatus.attackTargets.Clear();
                 WarStatus.defenseTargets.Clear();
-                Log("Here");
 
                 foreach (Faction faction in sim.FactionsDict.Keys)
                     WarProgress.PotentialTargets(faction);
@@ -202,6 +211,7 @@ public class Core
             }
 
             // Proc effects
+            RefreshResources(__instance);
 
             // attacking
             foreach (var faction in WarStatus.attackTargets.Keys)
@@ -209,29 +219,7 @@ public class Core
                 AllocateAttackResources(faction);
             }
 
-            // resolve resources back to faction influence
-            foreach (var faction in WarStatus.attackTargets.Keys)
-            {
-                var adjustingFaction = WarStatus.factionTracker.Find(f => f.faction == faction);
-                adjustingFaction.resources += WarStatus.attackResources[faction].Values.Sum();
-            }
-
-            // go through every system
-            foreach (var system in WarStatus.systems)
-            {
-                var attackTargets = WarStatus.attackResources;
-                // go through every attack target
-                foreach (var target in attackTargets)
-                {
-                    var faction = target.Key;
-                    // TODO verify: I do not trust the math I have written here at all
-                    // set the system's influence for that faction to increase by the resources
-                    system.influenceTracker[faction] += target.Value[faction];
-                    // attempt at converting to percentage
-                    var totalInfluence = system.influenceTracker.Values.Sum();
-                    system.influenceTracker[faction] /= totalInfluence * 100;
-                }
-            }
+            UpdateInfluenceFromAttacks();
 
             SerializeWar();
 
@@ -260,6 +248,46 @@ public class Core
             //}
             //
             //Log($"===");
+        }
+    }
+
+    private static void UpdateInfluenceFromAttacks()
+    {
+        // resolve resources back to faction influence
+        foreach (var faction in WarStatus.attackTargets.Keys)
+        {
+            var adjustingFaction = WarStatus.factionTracker.Find(f => f.faction == faction);
+            if (WarStatus.attackResources.ContainsKey(faction))
+                adjustingFaction.resources += WarStatus.attackResources[faction].Values.Sum();
+            else
+            {
+                Log($"attackResources didn't contain {faction}"); 
+            }
+        }
+
+        // go through every system
+        foreach (var system in WarStatus.systems)
+        {
+            Log($"UpdateInfluenceFromAttacks debug:");
+            var attackTargets = WarStatus.attackResources;
+            // go through every attack target
+            foreach (var target in attackTargets)
+            {
+                var faction = target.Key;
+                // TODO verify: I do not trust the math I have written here at all
+                // set the system's influence for that faction to increase by the resources
+                Log($"influenceDelta for {system}, {faction} is {target.Value[faction]}");
+                system.influenceTracker[faction] += target.Value[faction];
+                // attempt at converting to percentage
+                var totalInfluence = system.influenceTracker.Values.Sum();
+                system.influenceTracker[faction] /= totalInfluence * 100;
+            }
+
+            Log($"{system.name}");
+            foreach (var data in system.influenceTracker)
+            {
+                Log($"{data.Key}: {data.Value}");
+            }
         }
     }
 
@@ -295,12 +323,12 @@ public class Core
         }
     }
 
-    public static void RefreshResources(SimGameState Sim)
+    public static void RefreshResources(SimGameState sim)
     {
         // no point iterating over a KVP if you aren't using the values
-        foreach (var faction in Enumerable.Except(Enumerable.Select(Sim.FactionsDict, x => x.Key), Settings.ExcludedFactions))
+        foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
-            Log(faction.ToString());
+            //Log(faction.ToString());
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
                 // initialize resources from the ResourceMap
@@ -312,25 +340,31 @@ public class Core
                 else
                 {
                     WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
-                    warFaction.resources = Settings.ResourceMap[faction.ToString()];
+                    if (warFaction != null)
+                        warFaction.resources = Settings.ResourceMap[faction.ToString()];
+                    else
+                        Log($"warFaction {faction} was null");
                 }
             }
         }
 
-        if (Sim.Starmap != null)
+        if (sim.Starmap == null) return;
+
+        foreach (StarSystem system in sim.StarSystems)
         {
-            foreach (StarSystem system in Sim.StarSystems)
+            int resources = GetTotalResources(system);
+            Faction owner = system.Owner;
+            LogDebug("\nsystem.Name");
+            Log($"faction {owner + ":",-30} resources {resources}");
+            try
             {
-                int resources = GetTotalResources(system);
-                Faction owner = system.Owner;
-                try
-                {
-                    WarFaction factionresources = WarStatus.factionTracker.Find(x => x.faction == owner);
-                    factionresources.resources += resources;
-                }
-                catch (Exception)
-                {
-                }
+                WarFaction faction = WarStatus.factionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
+                if (faction != null)
+                    faction.resources += resources;
+            }
+            catch (Exception ex)
+            {
+                Error(ex);
             }
         }
     }

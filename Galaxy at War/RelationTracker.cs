@@ -12,7 +12,7 @@ public class RelationTracker
     // we want to know how any given faction feels about another one
     // each faction will have X opinions
     // we want to be able to lookup a faction and get all its opinions back
-    public List<KillListTracker> Factions = new List<KillListTracker>();
+    public List<KillListTracker> factions = new List<KillListTracker>();
 
     public RelationTracker(SimGameState sim)
     {
@@ -22,7 +22,7 @@ public class RelationTracker
         {
             if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
             if (kvp.Value != null)
-                Factions.Add(new KillListTracker(kvp.Key));
+                factions.Add(new KillListTracker(kvp.Key));
         }
     }
 }
