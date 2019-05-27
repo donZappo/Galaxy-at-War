@@ -12,7 +12,7 @@ public class RelationTracker
     // we want to know how any given faction feels about another one
     // each faction will have X opinions
     // we want to be able to lookup a faction and get all its opinions back
-    public List<FactionTracker> Factions = new List<FactionTracker>();
+    public List<KillListTracker> Factions = new List<KillListTracker>();
 
     public RelationTracker(SimGameState sim)
     {
@@ -22,39 +22,51 @@ public class RelationTracker
         {
             if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
             if (kvp.Value != null)
-                Factions.Add(new FactionTracker(kvp.Key));
+                Factions.Add(new KillListTracker(kvp.Key));
         }
     }
+}
 
-    public class FactionTracker
+public class KillListTracker
+{
+    public Faction faction;
+
+    public Dictionary<Faction, int> killList = new Dictionary<Faction, int>();
+
+    // can't serialize these so make them private
+    private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+    private FactionDef factionDef;
+
+    public KillListTracker(Faction faction)
     {
-        public Faction faction;
+        this.faction = faction;
+        factionDef = sim.FactionsDict
+            .Where(kvp => kvp.Key == faction)
+            .Select(kvp => kvp.Value).First();
 
-        public Dictionary<Faction, int> killList = new Dictionary<Faction, int>();
-
-        // can't serialize a these, make it private
-        private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-        private FactionDef factionDef;
-
-        public FactionTracker(Faction faction)
+        foreach (var def in sim.FactionsDict.Values)
         {
-            this.faction = faction;
-            factionDef = sim.FactionsDict
-                .Where(kvp => kvp.Key == faction)
-                .Select(kvp => kvp.Value).First();
-
-            foreach (var def in sim.FactionsDict.Values)
-            {
-                // necessary to skip factions here?  it does fire
-                if (Core.Settings.ExcludedFactions.Contains(def.Faction))
-                    continue;
-                if (def.Enemies.Contains(faction))
-                    killList.Add(def.Faction, 75);
-                else if (def.Allies.Contains(faction))
-                    killList.Add(def.Faction, 25);
-                else
-                    killList.Add(def.Faction, 50);
-            }
+            // necessary to skip factions here?  it does fire
+            if (Core.Settings.ExcludedFactions.Contains(def.Faction))
+                continue;
+            if (def.Enemies.Contains(faction))
+                killList.Add(def.Faction, 75);
+            else if (def.Allies.Contains(faction))
+                killList.Add(def.Faction, 25);
+            else
+                killList.Add(def.Faction, 50);
         }
     }
+}
+
+public class ResourceTacker
+{
+    public ResourceTacker(Faction faction, Dictionary<string, float> resources = null)
+    {
+        this.faction = faction;
+        this.resources = resources;
+    }
+
+    public Faction faction;
+    public Dictionary<string, float> resources;
 }

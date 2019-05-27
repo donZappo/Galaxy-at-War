@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
@@ -11,10 +10,10 @@ using static Core;
 
 public class WarStatus
 {
-    public HashSet<SystemStatus> Systems = new HashSet<SystemStatus>();
+    public List<SystemStatus> Systems = new List<SystemStatus>();
     public RelationTracker RelationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     internal List<WarFaction> FactionTracker = new List<WarFaction>();
-
+    
     // initialize a collection of all planets
     public WarStatus(bool distribute)
     {
@@ -22,7 +21,7 @@ public class WarStatus
         foreach (var planet in sim.StarSystems)
         {
             Systems.Add(new SystemStatus(planet.Name, distribute));
-            Core.ChangeSystemOwnership(sim, planet, planet.Owner, true);
+            ChangeSystemOwnership(sim, planet, planet.Owner, true);
         }
     }
 }
@@ -33,6 +32,8 @@ public class SystemStatus
 
     // Dictionary to hold each faction's numerical influence
     public Dictionary<string, float> InfluenceTracker = new Dictionary<string, float>();
+    // list of RelationTracker which holds Faction and float resources fields
+    public List<ResourceTacker> ResourceTracker = new List<ResourceTacker>();
 
     // why the hell is the serializer ignoring these two members?
     public Dictionary<Faction, int> neighbourSystems;
@@ -47,10 +48,10 @@ public class SystemStatus
         ownerName = owner.ToString();
         CalculateNeighbours(sim, InitialDistribution);
         if(InitialDistribution)
-            DistributeResources();
+            DistributeInfluence();
     }
 
-    private void DistributeResources()
+    private void DistributeInfluence()
     {
         InfluenceTracker.Add(owner.ToString(), Core.Settings.DominantInfluence);
         int remainingInfluence = Core.Settings.MinorInfluencePool;
@@ -135,29 +136,29 @@ public class WarProgress
         WarStatus = new WarStatus(false);
         if (Core.Settings.AttackTargets.Keys.Contains(faction))
         {
-            Logger.Log("------------------------------------------------------");
-            Logger.Log(faction.ToString());
-            Logger.Log("Attack Targets");
+            Log("------------------------------------------------------");
+            Log(faction.ToString());
+            Log("Attack Targets");
 
             foreach (StarSystem attackedsystem in Core.Settings.AttackTargets[faction])
-                Logger.Log($"{attackedsystem.Name, -30} : {attackedsystem.Owner}");
+                Log($"{attackedsystem.Name, -30} : {attackedsystem.Owner}");
         }
         else
         {
-            Logger.Log($"No Attack Targets for {faction.ToString()}!");
+            Log($"No Attack Targets for {faction.ToString()}!");
         }
 
         if (Core.Settings.DefenseTargets.Keys.Contains(faction))
         {
-            Logger.Log("------------------------------------------------------");
-            Logger.Log(faction.ToString());
-            Logger.Log("Defense Targets");
+            Log("------------------------------------------------------");
+            Log(faction.ToString());
+            Log("Defense Targets");
             foreach (StarSystem defensedsystem in Core.Settings.DefenseTargets[faction])
-                Logger.Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
+                Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
         }
         else
         {
-            Logger.Log($"No Defense Targets for {faction.ToString()}!");
+            Log($"No Defense Targets for {faction.ToString()}!");
         }
     }
 }

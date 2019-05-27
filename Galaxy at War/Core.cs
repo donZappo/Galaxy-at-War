@@ -2,14 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using BattleTech;
-using Harmony;
 using System.Reflection;
+using BattleTech;
+using FogOfWar;
+using Harmony;
 using Newtonsoft.Json;
-using UnityEngine;
 using static Logger;
-using System.Linq;
-using System.Runtime.Remoting.Proxies;
+using Enumerable = System.Linq.Enumerable;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -83,21 +82,21 @@ public class Core
         }
 
         RefreshResources(sim);
-        var killList = WarStatus.RelationTracker.Factions.First(f => f.faction == faction).killList;
+        var killList = Enumerable.First(WarStatus.RelationTracker.Factions, f => f.faction == faction).killList;
         WarFaction warFaction = WarStatus.FactionTracker.Find(x => x.faction == faction);
         int resources = warFaction.resources;
-        float total = UniqueFactions.Values.Sum();
+        float total = Enumerable.Sum(UniqueFactions.Values);
 
         foreach (Faction tempfaction in UniqueFactions.Keys)
         {
-            UniqueFactions[tempfaction] = (float)killList[tempfaction] * (float)resources/total;
+            UniqueFactions[tempfaction] = killList[tempfaction] * (float)resources/total;
         }
         Settings.AttackResources.Add(faction, UniqueFactions);
     }
 
     public static void AllocateAttackResources(Faction faction)
     {
-        System.Random random = new System.Random();
+        Random random = new Random();
         foreach (Faction targetfaction in Settings.AttackResources[faction].Keys)
         {
             List<StarSystem> attacklist = new List<StarSystem>();
@@ -110,9 +109,18 @@ public class Core
             do
             {
                 int rand = random.Next(0, attacklist.Count);
-                var systemStatus = WarStatus.Systems.Where(f => f.name == "foo");
-                systemStatus.
-                SystemStatus systemStatus = WarStatus.Systems. Contains(attacklist[rand].ToString())
+                //var infTracker = Enumerable.First(systemStatus.InfluenceTracker.Keys, x=> x == Faction.Liao.ToString());
+                var systemStatus = Enumerable.First(WarStatus.Systems, f => f.name == "Detroit");
+                var resTracker = systemStatus.ResourceTracker.Find(x => x.faction == Faction.Liao);
+                var factionResources = resTracker.resources;
+                var liao = factionResources["Liao"];
+                var facTracker = WarStatus.FactionTracker.Find(f=> f.faction == Faction.Liao);
+                var LiaoResources = facTracker.resources;
+                
+                LiaoResources += 10;
+                var systemResources = WarStatus.ResourceTracker.Find(f=> f.faction == Faction.Liao);
+                var influence = systemStatus.InfluenceTracker[infTracker];
+                systemStatus = WarStatus.Systems. Contains(attacklist[rand].ToString())
                 
             } while (i < Settings.AttackResources[faction][targetfaction]);
         }
@@ -146,16 +154,18 @@ public class Core
 
             Traverse.Create(system.Def).Property("ContractEmployers").SetValue(ContractEmployers);
 
-            if (ContractEmployers.Count() > 1)
+            if (Enumerable.Count(ContractEmployers) > 1)
             {
                 Traverse.Create(system.Def).Property("ContractTargets").SetValue(ContractEmployers);
             }
             else
             {
+                // TODO, not sure this generates intended result (a list of enemies?)
+                // should be enemies = sim.FactionsDict[faction].Enemies;
                 FactionDef FactionEnemies;
                 FactionEnemies = sim.FactionsDict[faction];
 
-                Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
+                Traverse.Create(system.Def).Property("ContractTargets").SetValue(Enumerable.ToList(FactionEnemies.Enemies));
             }
 
             Traverse.Create(system.Def).Property("Owner").SetValue(faction);
@@ -180,7 +190,7 @@ public class Core
 
                 Settings.AttackTargets.Clear();
                 Settings.DefenseTargets.Clear();
-                Logger.Log("Here");
+                Log("Here");
 
                 foreach (Faction faction in sim.FactionsDict.Keys)
                     WarProgress.PotentialTargets(faction);
@@ -264,9 +274,9 @@ public class Core
     public static void RefreshResources(SimGameState Sim)
     {
         // no point iterating over a KVP if you aren't using the values
-        foreach (var faction in Sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
+        foreach (var faction in Enumerable.Except(Enumerable.Select(Sim.FactionsDict, x => x.Key), Settings.ExcludedFactions))
         {
-            Logger.Log(faction.ToString());
+            Log(faction.ToString());
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
                 // initialize resources from the ResourceMap
