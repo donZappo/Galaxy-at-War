@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using BattleTech;
+using static Logger;
 
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -10,45 +12,49 @@ public class RelationTracker
     // we want to know how any given faction feels about another one
     // each faction will have X opinions
     // we want to be able to lookup a faction and get all its opinions back
-    //public SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    public List<Dictionary<Faction, int>> Factions = new List<Dictionary<Faction, int>>();
+    public List<FactionTracker> Factions = new List<FactionTracker>();
 
-    public RelationTracker()
+    public RelationTracker(SimGameState sim)
     {
         // we instantiate the tracker with all the factions, adding them to the list
-        foreach (var faction in UnityGameInstance.BattleTechGame.Simulation.FactionsDict.Keys)
+        // set values based on enemy/neutral/ally FactionDef property
+        foreach (var kvp in sim.FactionsDict)
         {
-            Factions.Add(new Dictionary<Faction, int>(RelationshipValues));
+            if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
+            if (kvp.Value != null)
+                Factions.Add(new FactionTracker(kvp.Key));
         }
     }
 
-    public Dictionary<Faction, int> RelationshipValues = new Dictionary<Faction, int>
+    public class FactionTracker
     {
-        {Faction.Liao, 0},
-        {Faction.Steiner, 0},
-        {Faction.Marik, 0},
-        {Faction.Davion, 0},
-        {Faction.Kurita, 0},
-        {Faction.AuriganDirectorate, 0},
-        {Faction.TaurianConcordat, 0},
-        {Faction.MagistracyOfCanopus, 0},
-        {Faction.NoFaction, 0},
-        {Faction.Locals, 0},
-        {Faction.AuriganRestoration, 0}
-    };
-}
+        public Faction faction;
 
-//public Dictionary<Faction, Dictionary<Faction, int>> RelationshipAttitudes = new Dictionary<Faction, Dictionary<Faction, int>>
-//{
-//    {Faction.Liao, RelationshipValues},
-//    {Faction.Steiner, RelationshipValues},
-//    {Faction.Marik, RelationshipValues},
-//    {Faction.Davion, RelationshipValues},
-//    {Faction.Kurita, RelationshipValues},
-//    {Faction.AuriganDirectorate, RelationshipValues},
-//    {Faction.TaurianConcordat, RelationshipValues},
-//    {Faction.MagistracyOfCanopus, RelationshipValues},
-//    {Faction.NoFaction, RelationshipValues},
-//    {Faction.Locals, RelationshipValues},
-//    {Faction.AuriganRestoration, RelationshipValues}
-//};
+        public Dictionary<Faction, int> killList = new Dictionary<Faction, int>();
+
+        // can't serialize a these, make it private
+        private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+        private FactionDef factionDef;
+
+        public FactionTracker(Faction faction)
+        {
+            this.faction = faction;
+            factionDef = sim.FactionsDict
+                .Where(kvp => kvp.Key == faction)
+                .Select(kvp => kvp.Value).First();
+
+            foreach (var def in sim.FactionsDict.Values)
+            {
+                // necessary to skip factions here?  it does fire
+                if (Core.Settings.ExcludedFactions.Contains(def.Faction))
+                    continue;
+                if (def.Enemies.Contains(faction))
+                    killList.Add(def.Faction, 75);
+                else if (def.Allies.Contains(faction))
+                    killList.Add(def.Faction, 25);
+                else
+                    killList.Add(def.Faction, 50);
+            }
+        }
+    }
+}
