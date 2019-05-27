@@ -59,14 +59,14 @@ public class KillListTracker
     }
 }
 
-public class ResourceTacker
-{
-    public ResourceTacker(Faction faction, Dictionary<string, float> resources = null)
-    {
-        this.faction = faction;
-        this.resources = resources;
-    }
-
-    public Faction faction;
-    public Dictionary<string, float> resources;
-}
+//public class ResourceTacker
+//{
+//    public ResourceTacker(Faction faction, Dictionary<string, float> resources = null)
+//    {
+//        this.faction = faction;
+//        this.resources = resources;
+//    }
+//
+//    public Faction faction;
+//    public Dictionary<string, float> resources;
+//}

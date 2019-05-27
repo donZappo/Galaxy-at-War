@@ -10,9 +10,12 @@ using static Core;
 
 public class WarStatus
 {
-    public List<SystemStatus> Systems = new List<SystemStatus>();
-    public RelationTracker RelationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
-    internal List<WarFaction> FactionTracker = new List<WarFaction>();
+    public List<SystemStatus> systems = new List<SystemStatus>();
+    public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
+    internal List<WarFaction> factionTracker = new List<WarFaction>();
+    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
     
     // initialize a collection of all planets
     public WarStatus(bool distribute)
@@ -20,7 +23,7 @@ public class WarStatus
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         foreach (var planet in sim.StarSystems)
         {
-            Systems.Add(new SystemStatus(planet.Name, distribute));
+            systems.Add(new SystemStatus(planet.Name, distribute));
             ChangeSystemOwnership(sim, planet, planet.Owner, true);
         }
     }
@@ -31,29 +34,25 @@ public class SystemStatus
     public readonly string name;
 
     // Dictionary to hold each faction's numerical influence
-    public Dictionary<string, float> InfluenceTracker = new Dictionary<string, float>();
-    // list of RelationTracker which holds Faction and float resources fields
-    public List<ResourceTacker> ResourceTracker = new List<ResourceTacker>();
-
-    // why the hell is the serializer ignoring these two members?
+    public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
     public Dictionary<Faction, int> neighbourSystems;
     public readonly Faction owner;
     public string ownerName;
 
-    public SystemStatus(string systemName, bool InitialDistribution)
+    public SystemStatus(string systemName, bool initialDistribution)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         name = systemName;
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
         ownerName = owner.ToString();
-        CalculateNeighbours(sim, InitialDistribution);
-        if(InitialDistribution)
+        CalculateNeighbours(sim, initialDistribution);
+        if(initialDistribution)
             DistributeInfluence();
     }
 
     private void DistributeInfluence()
     {
-        InfluenceTracker.Add(owner.ToString(), Core.Settings.DominantInfluence);
+        influenceTracker.Add(owner, Core.Settings.DominantInfluence);
         int remainingInfluence = Core.Settings.MinorInfluencePool;
         Log("\nremainingInfluence: " + remainingInfluence);
         Log("=====================================================");
@@ -64,25 +63,25 @@ public class SystemStatus
                 var influenceDelta = neighbourSystems[faction];
                 remainingInfluence -= influenceDelta;
                 LogDebug($"{faction.ToString(),-20} gains {influenceDelta,2}, leaving {remainingInfluence}");
-                if (InfluenceTracker.ContainsKey(faction.ToString()))
-                    InfluenceTracker[faction.ToString()] += influenceDelta;
+                if (influenceTracker.ContainsKey(faction))
+                    influenceTracker[faction] += influenceDelta;
                 else
-                    InfluenceTracker.Add(faction.ToString(), influenceDelta);
+                    influenceTracker.Add(faction, influenceDelta);
             }
         }
 
-        var totalInfluence = InfluenceTracker.Values.Sum();
+        var totalInfluence = influenceTracker.Values.Sum();
         Log($"\ntotalInfluence for {name}: {totalInfluence}");
         Log("=====================================================");
         // need percentages from InfluenceTracker data 
-        var tempDict = new Dictionary<string, float>();
-        foreach (var kvp in InfluenceTracker)
+        var tempDict = new Dictionary<Faction, float>();
+        foreach (var kvp in influenceTracker)
         {
             //Log($"{kvp.Key}: {kvp.Value}");
             tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
         }
 
-        InfluenceTracker = tempDict;
+        influenceTracker = tempDict;
     }
 
     // Find how many friendly and opposing neighbors are present for the star system.
@@ -100,29 +99,29 @@ public class SystemStatus
             else
                 neighbourSystems.Add(neighborsystem.Owner, 1);
 
-            if (!InitialDistribution && !Core.Settings.AttackTargets.ContainsKey(neighborsystem.Owner) &&
+            if (!InitialDistribution && !Core.WarStatus.attackTargets.ContainsKey(neighborsystem.Owner) &&
                     (neighborsystem.Owner != OriginalSystem.Owner))
             {
                 List<StarSystem> TempList = new List<StarSystem>();
                 TempList.Add(OriginalSystem);
-                Core.Settings.AttackTargets.Add(neighborsystem.Owner, TempList);
+                Core.WarStatus.attackTargets.Add(neighborsystem.Owner, TempList);
             }
-            else if (!InitialDistribution && Core.Settings.AttackTargets.ContainsKey(neighborsystem.Owner)
-                && !Core.Settings.AttackTargets[neighborsystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
+            else if (!InitialDistribution && Core.WarStatus.attackTargets.ContainsKey(neighborsystem.Owner)
+                && !Core.WarStatus.attackTargets[neighborsystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
             {
-                Core.Settings.AttackTargets[neighborsystem.Owner].Add(OriginalSystem);
+                Core.WarStatus.attackTargets[neighborsystem.Owner].Add(OriginalSystem);
             }
-            if (!InitialDistribution && !Core.Settings.DefenseTargets.ContainsKey(OriginalSystem.Owner) &&
+            if (!InitialDistribution && !Core.WarStatus.defenseTargets.ContainsKey(OriginalSystem.Owner) &&
                     (neighborsystem.Owner != OriginalSystem.Owner))
             {
                 List<StarSystem> TempList = new List<StarSystem>();
                 TempList.Add(OriginalSystem);
-                Core.Settings.DefenseTargets.Add(OriginalSystem.Owner, TempList);
+                Core.WarStatus.defenseTargets.Add(OriginalSystem.Owner, TempList);
             }
-            else if (!InitialDistribution && Core.Settings.DefenseTargets.ContainsKey(neighborsystem.Owner) 
-                && !Core.Settings.DefenseTargets[OriginalSystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
+            else if (!InitialDistribution && Core.WarStatus.defenseTargets.ContainsKey(neighborsystem.Owner) 
+                && !Core.WarStatus.defenseTargets[OriginalSystem.Owner].Contains(OriginalSystem) && (neighborsystem.Owner != OriginalSystem.Owner))
             {
-                Core.Settings.DefenseTargets[OriginalSystem.Owner].Add(OriginalSystem);
+                Core.WarStatus.defenseTargets[OriginalSystem.Owner].Add(OriginalSystem);
             }
         }
     }
@@ -134,26 +133,26 @@ public class WarProgress
     public void PotentialTargets(Faction faction)
     {
         WarStatus = new WarStatus(false);
-        if (Core.Settings.AttackTargets.Keys.Contains(faction))
+        if (Core.WarStatus.attackTargets.Keys.Contains(faction))
         {
             Log("------------------------------------------------------");
             Log(faction.ToString());
             Log("Attack Targets");
 
-            foreach (StarSystem attackedsystem in Core.Settings.AttackTargets[faction])
-                Log($"{attackedsystem.Name, -30} : {attackedsystem.Owner}");
+            foreach (StarSystem attackedSystem in Core.WarStatus.attackTargets[faction])
+                Log($"{attackedSystem.Name, -30} : {attackedSystem.Owner}");
         }
         else
         {
             Log($"No Attack Targets for {faction.ToString()}!");
         }
 
-        if (Core.Settings.DefenseTargets.Keys.Contains(faction))
+        if (Core.WarStatus.defenseTargets.Keys.Contains(faction))
         {
             Log("------------------------------------------------------");
             Log(faction.ToString());
             Log("Defense Targets");
-            foreach (StarSystem defensedsystem in Core.Settings.DefenseTargets[faction])
+            foreach (StarSystem defensedsystem in Core.WarStatus.defenseTargets[faction])
                 Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
         }
         else

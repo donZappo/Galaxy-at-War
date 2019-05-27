@@ -67,17 +67,15 @@ public class ModSettings
         {Faction.AuriganRestoration, null }
     };
 
-    public Dictionary<Faction, List<StarSystem>> AttackTargets = new Dictionary<Faction, List<StarSystem>>
-    {
-    };
+    
+    
 
-    public Dictionary<Faction, List<StarSystem>> DefenseTargets = new Dictionary<Faction, List<StarSystem>>
-    {
-    };
+    
+    
 
-    public Dictionary<Faction, Dictionary<Faction, float>> AttackResources = new Dictionary<Faction, Dictionary<Faction, float>>
-    {
-    };
+    
+    
+ 
 
     public bool Debug = true;
     public string modDirectory;

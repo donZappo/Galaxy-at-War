@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using BattleTech;
 using FogOfWar;
@@ -69,52 +70,53 @@ public class Core
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
     public static WarProgress WarProgress;
-    
+
     public static void DivideAttackResources(SimGameState sim, Faction faction)
     {
-        Dictionary<Faction, float> UniqueFactions = new Dictionary<Faction, float>();
-        
+        Dictionary<Faction, float> uniqueFactions = new Dictionary<Faction, float>();
 
-        foreach (StarSystem attacksystem in Settings.AttackTargets[faction])
+        foreach (StarSystem attackSystem in WarStatus.attackTargets[faction])
         {
-            if (!UniqueFactions.ContainsKey(attacksystem.Owner))
-                UniqueFactions.Add(attacksystem.Owner, 0f);
+            if (!uniqueFactions.ContainsKey(attackSystem.Owner))
+                uniqueFactions.Add(attackSystem.Owner, 0f);
         }
 
         RefreshResources(sim);
-        var killList = Enumerable.First(WarStatus.RelationTracker.Factions, f => f.faction == faction).killList;
-        WarFaction warFaction = WarStatus.FactionTracker.Find(x => x.faction == faction);
-        int resources = warFaction.resources;
-        float total = Enumerable.Sum(UniqueFactions.Values);
+        var killList = Enumerable.First(WarStatus.relationTracker.Factions, f => f.faction == faction).killList;
+        WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
+        float resources = warFaction.resources;
+        float total = Enumerable.Sum(uniqueFactions.Values);
 
-        foreach (Faction tempfaction in UniqueFactions.Keys)
+        foreach (Faction tempfaction in uniqueFactions.Keys)
         {
-            UniqueFactions[tempfaction] = killList[tempfaction] * (float)resources/total;
+            uniqueFactions[tempfaction] = killList[tempfaction] * (float) resources / total;
         }
-        Settings.AttackResources.Add(faction, UniqueFactions);
+
+        WarStatus.attackResources.Add(faction, uniqueFactions);
     }
 
     public static void AllocateAttackResources(Faction faction)
     {
         Random random = new Random();
-        foreach (Faction targetfaction in Settings.AttackResources[faction].Keys)
+        foreach (Faction targetFaction in WarStatus.attackResources[faction].Keys)
         {
-            List<StarSystem> attacklist = new List<StarSystem>();
-            foreach (StarSystem system in Settings.AttackTargets[faction])
+            List<StarSystem> attackList = new List<StarSystem>();
+            foreach (StarSystem system in WarStatus.attackTargets[faction])
             {
-                if (Settings.AttackResources[faction].ContainsKey(system.Owner))
-                    attacklist.Add(system);
+                if (WarStatus.attackResources[faction].ContainsKey(system.Owner))
+                    attackList.Add(system);
             }
+
+            // BUG i never increments
             int i = 0;
             do
             {
-                int rand = random.Next(0, attacklist.Count);
-                var systemStatus = Enumerable.First(WarStatus.Systems, f => f.name == attacklist[rand].Name);
-                systemStatus.InfluenceTracker[faction.ToString()] += 1;
-            } while (i < Settings.AttackResources[faction][targetfaction]);
+                int rand = random.Next(0, attackList.Count);
+                var systemStatus = WarStatus.systems.First(f => f.name == attackList[rand].Name);
+                systemStatus.influenceTracker[faction] += 1;
+            } while (i < WarStatus.attackResources[faction][targetFaction]);
         }
     }
-
 
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
     {
@@ -172,13 +174,14 @@ public class Core
                 return;
             RefreshResources(__instance);
 
+            // already have a save?
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
                 WarStatus = new WarStatus(true);
                 WarProgress = new WarProgress();
 
-                Settings.AttackTargets.Clear();
-                Settings.DefenseTargets.Clear();
+                WarStatus.attackTargets.Clear();
+                WarStatus.defenseTargets.Clear();
                 Log("Here");
 
                 foreach (Faction faction in sim.FactionsDict.Keys)
@@ -186,17 +189,50 @@ public class Core
                 DeserializeWar();
             }
 
+            // first time setup if not
             if (WarStatus == null)
             {
                 WarStatus = new WarStatus(true);
 
-                Settings.AttackTargets.Clear();
-                Settings.DefenseTargets.Clear();
+                WarStatus.attackTargets.Clear();
+                WarStatus.defenseTargets.Clear();
                 WarProgress = new WarProgress();
                 foreach (Faction faction in sim.FactionsDict.Keys)
                     WarProgress.PotentialTargets(faction);
             }
-            
+
+            // Proc effects
+
+            // attacking
+            foreach (var faction in WarStatus.attackTargets.Keys)
+            {
+                AllocateAttackResources(faction);
+            }
+
+            // resolve resources back to faction influence
+            foreach (var faction in WarStatus.attackTargets.Keys)
+            {
+                var adjustingFaction = WarStatus.factionTracker.Find(f => f.faction == faction);
+                adjustingFaction.resources += WarStatus.attackResources[faction].Values.Sum();
+            }
+
+            // go through every system
+            foreach (var system in WarStatus.systems)
+            {
+                var attackTargets = WarStatus.attackResources;
+                // go through every attack target
+                foreach (var target in attackTargets)
+                {
+                    var faction = target.Key;
+                    // TODO verify: I do not trust the math I have written here at all
+                    // set the system's influence for that faction to increase by the resources
+                    system.influenceTracker[faction] += target.Value[faction];
+                    // attempt at converting to percentage
+                    var totalInfluence = system.influenceTracker.Values.Sum();
+                    system.influenceTracker[faction] /= totalInfluence * 100;
+                }
+            }
+
             SerializeWar();
 
             // testing crap
@@ -227,7 +263,6 @@ public class Core
         }
     }
 
-
     public static int GetTotalResources(StarSystem system)
     {
         int result = 0;
@@ -250,10 +285,10 @@ public class Core
 
     public class WarFaction
     {
-        public int resources;
+        public float resources;
         public readonly Faction faction;
 
-        public WarFaction(Faction faction, int resources)
+        public WarFaction(Faction faction, float resources)
         {
             this.faction = faction;
             this.resources = resources;
@@ -269,14 +304,14 @@ public class Core
             if (Settings.ResourceMap.ContainsKey(faction.ToString()))
             {
                 // initialize resources from the ResourceMap
-                if (WarStatus.FactionTracker.Find(x => x.faction == faction) == null)
+                if (WarStatus.factionTracker.Find(x => x.faction == faction) == null)
                 {
                     int StartingResources = Settings.ResourceMap[faction.ToString()];
-                    WarStatus.FactionTracker.Add(new WarFaction(faction, StartingResources));
+                    WarStatus.factionTracker.Add(new WarFaction(faction, StartingResources));
                 }
                 else
                 {
-                    WarFaction warFaction = WarStatus.FactionTracker.Find(x => x.faction == faction);
+                    WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
                     warFaction.resources = Settings.ResourceMap[faction.ToString()];
                 }
             }
@@ -290,7 +325,7 @@ public class Core
                 Faction owner = system.Owner;
                 try
                 {
-                    WarFaction factionresources = WarStatus.FactionTracker.Find(x => x.faction == owner);
+                    WarFaction factionresources = WarStatus.factionTracker.Find(x => x.faction == owner);
                     factionresources.resources += resources;
                 }
                 catch (Exception)
