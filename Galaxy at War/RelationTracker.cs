@@ -30,7 +30,6 @@ public class RelationTracker
 public class KillListTracker
 {
     public Faction faction;
-
     public Dictionary<Faction, int> killList = new Dictionary<Faction, int>();
 
     // can't serialize these so make them private
