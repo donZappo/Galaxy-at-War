@@ -71,6 +71,29 @@ public class Core
     public static WarStatus WarStatus;
     public static WarProgress WarProgress;
     
+    public static void DivideAttackResources(SimGameState sim, Faction faction)
+    {
+        Dictionary<Faction, float> UniqueFactions = new Dictionary<Faction, float>();
+        
+        foreach (StarSystem attacksystem in Settings.AttackTargets[faction])
+        {
+            if (!UniqueFactions.ContainsKey(attacksystem.Owner))
+                UniqueFactions.Add(attacksystem.Owner, 0f);
+        }
+        var killList = WarStatus.RelationTracker.Factions.First(f => f.faction == faction).killList;
+
+        RefreshResources(sim);
+
+        float tempnumber = 1f;
+
+        float total = UniqueFactions.Values.Sum();
+        foreach (Faction tempfaction in UniqueFactions.Keys)
+        {
+            UniqueFactions[tempfaction] = (float)killList[tempfaction] * tempnumber/total;
+        }
+    }
+
+
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
     {
         if (faction != system.Owner || ForceFlip)

@@ -12,7 +12,7 @@ using static Core;
 public class WarStatus
 {
     public HashSet<SystemStatus> Systems = new HashSet<SystemStatus>();
-    public RelationTracker RelationTracker = new RelationTracker();
+    public RelationTracker RelationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
 
     // initialize a collection of all planets
     public WarStatus(bool distribute)
