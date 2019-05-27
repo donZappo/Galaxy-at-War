@@ -109,19 +109,8 @@ public class Core
             do
             {
                 int rand = random.Next(0, attacklist.Count);
-                //var infTracker = Enumerable.First(systemStatus.InfluenceTracker.Keys, x=> x == Faction.Liao.ToString());
-                var systemStatus = Enumerable.First(WarStatus.Systems, f => f.name == "Detroit");
-                var resTracker = systemStatus.ResourceTracker.Find(x => x.faction == Faction.Liao);
-                var factionResources = resTracker.resources;
-                var liao = factionResources["Liao"];
-                var facTracker = WarStatus.FactionTracker.Find(f=> f.faction == Faction.Liao);
-                var LiaoResources = facTracker.resources;
-                
-                LiaoResources += 10;
-                var systemResources = WarStatus.ResourceTracker.Find(f=> f.faction == Faction.Liao);
-                var influence = systemStatus.InfluenceTracker[infTracker];
-                systemStatus = WarStatus.Systems. Contains(attacklist[rand].ToString())
-                
+                var systemStatus = Enumerable.First(WarStatus.Systems, f => f.name == attacklist[rand].Name);
+                systemStatus.InfluenceTracker[faction.ToString()] += 1;
             } while (i < Settings.AttackResources[faction][targetfaction]);
         }
     }
