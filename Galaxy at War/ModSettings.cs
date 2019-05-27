@@ -14,16 +14,16 @@ public class ModSettings
 
     public int WarFrequency = 6;
 
-    public Dictionary<string, int> ResourceMap = new Dictionary<string, int>
+    public Dictionary<Faction, int> ResourceMap = new Dictionary<Faction, int>
     {
-        {"Steiner", 10},
-        {"Kurita", 10},
-        {"Davion", 10},
-        {"Liao", 10},
-        {"Marik", 10},
-        {"TaurianConcordat", 10},
-        {"MagistracyOfCanopus", 10},
-        {"AuriganPirates", 10}
+        {Faction.Steiner, 10},
+        {Faction.Kurita, 10},
+        {Faction.Davion, 10},
+        {Faction.Liao, 10},
+        {Faction.Marik, 10},
+        {Faction.TaurianConcordat, 10},
+        {Faction.MagistracyOfCanopus, 10},
+        {Faction.AuriganPirates, 10}
     };
 
     public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>
