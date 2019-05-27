@@ -75,21 +75,46 @@ public class Core
     {
         Dictionary<Faction, float> UniqueFactions = new Dictionary<Faction, float>();
         
+
         foreach (StarSystem attacksystem in Settings.AttackTargets[faction])
         {
             if (!UniqueFactions.ContainsKey(attacksystem.Owner))
                 UniqueFactions.Add(attacksystem.Owner, 0f);
         }
-        var killList = WarStatus.RelationTracker.Factions.First(f => f.faction == faction).killList;
 
         RefreshResources(sim);
-
-        float tempnumber = 1f;
-
+        var killList = WarStatus.RelationTracker.Factions.First(f => f.faction == faction).killList;
+        WarFaction warFaction = WarStatus.FactionTracker.Find(x => x.faction == faction);
+        int resources = warFaction.resources;
         float total = UniqueFactions.Values.Sum();
+
         foreach (Faction tempfaction in UniqueFactions.Keys)
         {
-            UniqueFactions[tempfaction] = (float)killList[tempfaction] * tempnumber/total;
+            UniqueFactions[tempfaction] = (float)killList[tempfaction] * (float)resources/total;
+        }
+        Settings.AttackResources.Add(faction, UniqueFactions);
+    }
+
+    public static void AllocateAttackResources(Faction faction)
+    {
+        System.Random random = new System.Random();
+        foreach (Faction targetfaction in Settings.AttackResources[faction].Keys)
+        {
+            List<StarSystem> attacklist = new List<StarSystem>();
+            foreach (StarSystem system in Settings.AttackTargets[faction])
+            {
+                if (Settings.AttackResources[faction].ContainsKey(system.Owner))
+                    attacklist.Add(system);
+            }
+            int i = 0;
+            do
+            {
+                int rand = random.Next(0, attacklist.Count);
+                var systemStatus = WarStatus.Systems.Where(f => f.name == "foo");
+                systemStatus.
+                SystemStatus systemStatus = WarStatus.Systems. Contains(attacklist[rand].ToString())
+                
+            } while (i < Settings.AttackResources[faction][targetfaction]);
         }
     }
 

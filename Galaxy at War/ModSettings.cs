@@ -75,6 +75,10 @@ public class ModSettings
     {
     };
 
+    public Dictionary<Faction, Dictionary<Faction, float>> AttackResources = new Dictionary<Faction, Dictionary<Faction, float>>
+    {
+    };
+
     public bool Debug = true;
     public string modDirectory;
     public int DominantInfluence = 50;
