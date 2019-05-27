@@ -69,6 +69,7 @@ public class Core
 
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
+    public static WarProgress WarProgress;
     
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
     {
@@ -126,13 +127,27 @@ public class Core
 
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\WarStatus.json"))
             {
-                WarStatus = new WarStatus();
+                WarStatus = new WarStatus(true);
+                WarProgress = new WarProgress();
+
+                Settings.AttackTargets.Clear();
+                Settings.DefenseTargets.Clear();
+                Logger.Log("Here");
+
+                foreach (Faction faction in sim.FactionsDict.Keys)
+                    WarProgress.PotentialTargets(faction);
                 DeserializeWar();
             }
 
             if (WarStatus == null)
             {
-                WarStatus = new WarStatus();
+                WarStatus = new WarStatus(true);
+
+                Settings.AttackTargets.Clear();
+                Settings.DefenseTargets.Clear();
+                WarProgress = new WarProgress();
+                foreach (Faction faction in sim.FactionsDict.Keys)
+                    WarProgress.PotentialTargets(faction);
             }
             
             SerializeWar();
@@ -164,6 +179,7 @@ public class Core
             //Log($"===");
         }
     }
+
 
     public static int GetTotalResources(StarSystem system)
     {
