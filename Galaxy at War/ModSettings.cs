@@ -12,9 +12,31 @@ public class ModSettings
     public int planet_other_starleague = 6;
     public int planet_other_comstar = 0;
 
+    public int planet_industry_agriculture = 3;
+    public int planet_industry_aquaculture = 3;
+    public int planet_other_capital = 7;
+    public int planet_other_megacity = 6;
+    public int planet_pop_large = 4;
+    public int planet_pop_medium = 2;
+    public int planet_pop_none = -1;
+    public int planet_pop_small = 1;
+    public int planet_other_hub = 5;
+
     public int WarFrequency = 6;
 
     public Dictionary<Faction, int> ResourceMap = new Dictionary<Faction, int>
+    {
+        {Faction.Steiner, 10},
+        {Faction.Kurita, 10},
+        {Faction.Davion, 10},
+        {Faction.Liao, 10},
+        {Faction.Marik, 10},
+        {Faction.TaurianConcordat, 10},
+        {Faction.MagistracyOfCanopus, 10},
+        {Faction.AuriganPirates, 10}
+    };
+
+    public Dictionary<Faction, int> DefensiveResourceMap = new Dictionary<Faction, int>
     {
         {Faction.Steiner, 10},
         {Faction.Kurita, 10},
