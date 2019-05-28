@@ -101,13 +101,16 @@ public class Core
             if (WarStatus == null)
             {
                 Log(">>> First-time initialization");
+
+                //This generates the initial distribution of Influence amongst the systems.
                 WarStatus = new WarStatus(true);
 
-                WarStatus.attackTargets.Clear();
-                WarStatus.defenseTargets.Clear();
-                WarProgress = new WarProgress();
-                foreach (Faction faction in sim.FactionsDict.Keys)
-                    WarProgress.PotentialTargets(faction);
+                //Since PotentialTargets only exists to log right now, this code block has no actual functionality. 
+                //WarStatus.attackTargets.Clear();
+                //WarStatus.defenseTargets.Clear();
+                //WarProgress = new WarProgress();
+                //foreach (Faction faction in sim.FactionsDict.Keys)
+                //    WarProgress.PotentialTargets(faction);
             }
 
             // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
@@ -390,10 +393,11 @@ public class Core
             var totalInfluence = systemstatus.influenceTracker.Values.Sum();
             var highest = 0f;
             var highestfaction = systemstatus.owner;
-
+            Logger.Log($"Attacking status for {systemstatus.name}");
             foreach (var kvp in systemstatus.influenceTracker)
             {
                 tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
+                Logger.Log($"{kvp.Key}: {tempDict[kvp.Key]}");
                 if (kvp.Value > highest)
                 {
                     highest = kvp.Value;

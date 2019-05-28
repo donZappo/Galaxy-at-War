@@ -84,14 +84,15 @@ public class SystemStatus
         }
 
         var totalInfluence = influenceTracker.Values.Sum();
-        //Log($"\ntotalInfluence for {name}: {totalInfluence}");
-        //Log("=====================================================");
+        Log($"\ntotalInfluence for {name}: {totalInfluence}");
+        Log("=====================================================");
         // need percentages from InfluenceTracker data 
         var tempDict = new Dictionary<Faction, float>();
         foreach (var kvp in influenceTracker)
         {
-            //Log($"{kvp.Key}: {kvp.Value}");
+            
             tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
+            Log($"{kvp.Key}: {tempDict[kvp.Key]}");
         }
 
         influenceTracker = tempDict;
