@@ -13,10 +13,10 @@ public class WarStatus
 {
     public List<SystemStatus> systems = new List<SystemStatus>();
     public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
-    internal List<WarFaction> factionTracker = new List<WarFaction>();
+    public List<WarFaction> factionTracker = new List<WarFaction>();
     internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
     internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
-    internal Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
+    public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 
     public WarStatus()
     {
@@ -24,9 +24,8 @@ public class WarStatus
     }
 
     // initialize a collection of all planets
-    public WarStatus(bool init, bool distribute)
+    public WarStatus(bool distribute)
     {
-        if (!init) return;
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         foreach (var planet in sim.StarSystems)
         {
@@ -38,10 +37,9 @@ public class WarStatus
 
 public class SystemStatus
 {
-    public readonly string name;
-
     // Dictionary to hold each faction's numerical influence
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
+    public readonly string name;
     public Dictionary<Faction, int> neighborSystems;
     public readonly Faction owner;
     internal StarSystem starSystem;
@@ -57,9 +55,9 @@ public class SystemStatus
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         name = systemName;
         starSystem = sim.StarSystems.Find(x => x.Name == name);
+        owner = sim.StarSystems.First(s => s.Name == name).Owner;
+        ownerName = owner.ToString();
 
-        //owner = sim.StarSystems.First(s => s.Name == name).Owner;
-        //ownerName = owner.ToString();
         CalculateNeighbours(sim, initialDistribution);
         if (initialDistribution)
             DistributeInfluence();
@@ -67,7 +65,8 @@ public class SystemStatus
 
     private void DistributeInfluence()
     {
-        Log(">>> DistributeInfluence");
+        Log(">>> DistributeInfluence: " + name);
+        // determine starting influence based on neighboring systems
         influenceTracker.Add(owner, Core.Settings.DominantInfluence);
         int remainingInfluence = Core.Settings.MinorInfluencePool;
         //Log("\nremainingInfluence: " + remainingInfluence);
@@ -104,16 +103,7 @@ public class SystemStatus
     // thanks to WarTech by Morphyum
     public void CalculateNeighbours(SimGameState sim, bool initialDistribution)
     {
-        //Log($"count of sim.StarSystems: {sim.StarSystems.Count}");
-        //var originalSystem = sim.StarSystems.FirstOrDefault(s => s.Name == name);
-        //Log($"{name}, originalSystem {originalSystem.Name}");
         neighborSystems = new Dictionary<Faction, int>();
-        if (starSystem == null)
-        {
-            Log(">>> WTF");
-            return;
-        }
-
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
         // build a list of all neighbors
         foreach (var neighborSystem in neighbors)
@@ -123,12 +113,14 @@ public class SystemStatus
             else
                 neighborSystems.Add(neighborSystem.Owner, 1);
 
-            // the rest happens only once at initial distribution
+            // the rest happens only after initial distribution
             // build list of attack targets
+            // TODO was this just to avoid exceptions?  would a single guard work
             if (!initialDistribution &&
                 !Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
+                Log(">>> Post-initialDistribution");
                 var tempList = new List<StarSystem> {starSystem};
                 Core.WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
             }
@@ -137,6 +129,7 @@ public class SystemStatus
                      !Core.WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                      (neighborSystem.Owner != starSystem.Owner))
             {
+                Log(">>> Post-initialDistribution");
                 Core.WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
             }
 
@@ -145,6 +138,7 @@ public class SystemStatus
                 !Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
+                Log(">>> Post-initialDistribution");
                 var tempList = new List<StarSystem> {starSystem};
                 Core.WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
             }
@@ -153,6 +147,7 @@ public class SystemStatus
                      !Core.WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                      neighborSystem.Owner != starSystem.Owner)
             {
+                Log(">>> Post-initialDistribution");
                 Core.WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
             }
         }
@@ -165,32 +160,32 @@ public class WarProgress
 
     public void PotentialTargets(Faction faction)
     {
-        WarStatus = new WarStatus(false, false);
-        //if (Core.WarStatus.attackTargets.Keys.Contains(faction))
-        //{
-        //    Log("------------------------------------------------------");
-        //    Log(faction.ToString());
-        //    Log("Attack Targets");
-        //
-        //    foreach (StarSystem attackedSystem in Core.WarStatus.attackTargets[faction])
-        //        Log($"{attackedSystem.Name, -30} : {attackedSystem.Owner}");
-        //}
-        //else
-        //{
-        //    Log($"No Attack Targets for {faction.ToString()}!");
-        //}
-        //
-        //if (Core.WarStatus.defenseTargets.Keys.Contains(faction))
-        //{
-        //    Log("------------------------------------------------------");
-        //    Log(faction.ToString());
-        //    Log("Defense Targets");
-        //    foreach (StarSystem defensedsystem in Core.WarStatus.defenseTargets[faction])
-        //        Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
-        //}
-        //else
-        //{
-        //    Log($"No Defense Targets for {faction.ToString()}!");
-        //}
+        WarStatus = new WarStatus();
+        if (Core.WarStatus.attackTargets.Keys.Contains(faction))
+        {
+            Log("------------------------------------------------------");
+            Log(faction.ToString());
+            Log("Attack Targets");
+
+            foreach (StarSystem attackedSystem in Core.WarStatus.attackTargets[faction])
+                Log($"{attackedSystem.Name,-30} : {attackedSystem.Owner}");
+        }
+        else
+        {
+            Log($"No Attack Targets for {faction.ToString()}!");
+        }
+
+        if (Core.WarStatus.defenseTargets.Keys.Contains(faction))
+        {
+            Log("------------------------------------------------------");
+            Log(faction.ToString());
+            Log("Defense Targets");
+            foreach (StarSystem defensedsystem in Core.WarStatus.defenseTargets[faction])
+                Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
+        }
+        else
+        {
+            Log($"No Defense Targets for {faction.ToString()}!");
+        }
     }
 }

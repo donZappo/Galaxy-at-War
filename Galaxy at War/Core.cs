@@ -3,11 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Reflection;
+using System.Runtime.Remoting.Messaging;
 using BattleTech;
 using Harmony;
 using Newtonsoft.Json;
+using UnityEngine;
 using static Logger;
+using Random = System.Random;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -78,15 +82,17 @@ public class Core
         {
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
+
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
             {
                 Log(">>> Loading WarStatus.json");
                 //WarStatus WarStatus = new WarStatus(false, false);
                 SaveHandling.DeserializeWar();
-               
+
                 WarStatus.attackTargets.Clear();
                 WarStatus.defenseTargets.Clear();
 
+                //var progress = new WarStatus(false, false);
                 WarProgress = new WarProgress();
                 foreach (Faction faction in sim.FactionsDict.Keys)
                     WarProgress.PotentialTargets(faction);
@@ -96,7 +102,7 @@ public class Core
             if (WarStatus == null)
             {
                 Log(">>> First-time initialization");
-                WarStatus = new WarStatus(true, true);
+                WarStatus = new WarStatus(true);
 
                 WarStatus.attackTargets.Clear();
                 WarStatus.defenseTargets.Clear();
@@ -111,9 +117,15 @@ public class Core
             Log(">>> PROC");
 
             // Proc effects
+            foreach (var system in WarStatus.systems)
+            {
+                system.CalculateNeighbours(sim, false);
+            }
+
             RefreshResources(__instance);
 
             // attacking
+            Log($"WarStatus.attackTargets.Keys {WarStatus.attackTargets.Keys.Count}");
             foreach (var faction in WarStatus.attackTargets.Keys)
                 AllocateAttackResources(faction);
 
@@ -152,7 +164,6 @@ public class Core
     public static void DivideAttackResources(SimGameState sim, Faction faction)
     {
         Dictionary<Faction, float> uniqueFactions = new Dictionary<Faction, float>();
-
         foreach (StarSystem attackSystem in WarStatus.attackTargets[faction])
         {
             if (!uniqueFactions.ContainsKey(attackSystem.Owner))
@@ -175,36 +186,32 @@ public class Core
 
     public static void AllocateAttackResources(Faction faction)
     {
-        Random random = new Random();
-        if (!WarStatus.attackResources.ContainsKey(faction)) return;
-        foreach (Faction targetFaction in WarStatus.attackResources[faction].Keys)
+        var random = new Random();
+        Log("AllocateAttackResources faction: " + faction);
+        try
         {
-            List<StarSystem> attackList = new List<StarSystem>();
-            foreach (StarSystem system in WarStatus.attackTargets[faction])
+            if (!WarStatus.attackResources.ContainsKey(faction)) return;
+            Log(WarStatus.attackResources.ContainsKey(faction).ToString());
+            foreach (var targetfaction in WarStatus.attackResources[faction].Keys)
             {
-                if (!WarStatus.attackResources[faction].ContainsKey(system.Owner))
-                    attackList.Add(system);
+                var attacklist = new List<StarSystem>();
+                foreach (var system in WarStatus.attackTargets[faction])
+                    if (WarStatus.attackResources[faction].ContainsKey(system.Owner))
+                        attacklist.Add(system);
+
+                var i = 0;
+                do
+                {
+                    var rand = random.Next(0, attacklist.Count);
+                    var systemStatus = Enumerable.First(WarStatus.systems, f => f.name == attacklist[rand].Name);
+                    systemStatus.influenceTracker[faction] += 1;
+                } while (i < WarStatus.attackResources[faction][targetfaction]);
             }
-
-            // BUG i never increments
-            int i = 0;
-            do
-            {
-                int rand = random.Next(0, attackList.Count);
-                if (attackList[rand] != null)
-                {
-                    var systemStatus = WarStatus.systems.First(f => f.name == attackList[rand].Name);
-                    if (systemStatus.influenceTracker.ContainsKey(faction))
-                        systemStatus.influenceTracker[faction] += 1;
-                }
-                else
-                {
-                    Log($"attackList[rand] was null");
-                }
-
-                i++; // added this
-                Log(WarStatus.attackResources.ContainsKey(faction).ToString());
-            } while (i < WarStatus.attackResources[faction][targetFaction]);
+        }
+        catch (Exception ex)
+        {
+            Error(ex);
+            Application.Quit();
         }
     }
 
@@ -242,7 +249,6 @@ public class Core
             else
             {
                 // TODO, not sure this generates intended result (a list of enemies?)
-                // should be enemies = sim.FactionsDict[faction].Enemies;
                 FactionDef FactionEnemies;
                 FactionEnemies = sim.FactionsDict[faction];
 
@@ -257,21 +263,43 @@ public class Core
     {
         Log(">>> UpdateInfluenceFromAttacks");
         // resolve resources back to faction influence
-        foreach (var faction in WarStatus.attackTargets.Keys)
+        foreach (var foo in WarStatus.attackTargets)
         {
-            var adjustingFaction = WarStatus.factionTracker.Find(f => f.faction == faction);
-            if (WarStatus.attackResources.ContainsKey(faction))
-                adjustingFaction.resources += WarStatus.attackResources[faction].Values.Sum();
-            else
+            LogDebug(foo.Key.ToString());
+            foreach (var bar in foo.Value)
             {
-                Log($"attackResources didn't contain {faction}");
+                LogDebug($"\t{bar.Name}");
             }
+        }
+
+        try
+        {
+            foreach (var faction in WarStatus.attackTargets.Keys)
+            {
+                var adjustingFaction = WarStatus.factionTracker.Find(f => f.faction == faction);
+                Log("UpdateInfluenceFromAttacks adjustingFaction: " + adjustingFaction.faction);
+                if (WarStatus.attackResources.ContainsKey(faction))
+                {
+                    Log($"adjustingFaction {adjustingFaction} ({adjustingFaction.resources}) + {WarStatus.attackResources[faction].Values.Sum()}");
+                    adjustingFaction.resources += WarStatus.attackResources[faction].Values.Sum();
+                    Log($"= {adjustingFaction.resources}");
+                }
+                else
+                {
+                    Log($"attackResources didn't contain {faction}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Error(ex);
+            Application.Quit();
         }
 
         // go through every system
         foreach (var system in WarStatus.systems)
         {
-            Log($"System: {system.name}\n====================");
+            Log($"\n{system.name}\n====================");
             var attackTargets = WarStatus.attackResources;
             // go through every attack target
             foreach (var target in attackTargets)
@@ -356,7 +384,7 @@ public class Core
         {
             var resources = GetTotalResources(system);
             var owner = system.Owner;
-            Log($"{system.Name + ":",-20} {owner, -20}, total resources: {resources}");
+            Log($"{system.Name + ":",-20} {owner,-20}, total resources: {resources}");
             try
             {
                 var faction = WarStatus.factionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
@@ -369,7 +397,6 @@ public class Core
             }
         }
     }
-
 
     //try
     //{

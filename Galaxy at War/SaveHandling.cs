@@ -16,7 +16,16 @@ public class SaveHandling
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
             Logger.Log("PostDeserialization Postfix");
             DeserializeWar();
-            
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), nameof(SimGameState.AttachUX))]
+    public static class SimGameState_AttachUX_Patch
+    {
+        public static void Postfix()
+        {
+            Logger.Log("AttachUX Postfix");
+            DeserializeWar();
         }
     }
 
