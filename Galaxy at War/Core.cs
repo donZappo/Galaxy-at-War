@@ -83,21 +83,21 @@ public class Core
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
-            {
-                Log(">>> Loading WarStatus.json");
-                WarStatus = SaveHandling.DeserializeWar();
-            
-                WarStatus.attackTargets.Clear();
-                WarStatus.defenseTargets.Clear();
-            
-                //  var progress = new WarStatus(false, false);
-                WarProgress = new WarProgress();
-                foreach (Faction faction in sim.FactionsDict.Keys)
-                    WarProgress.PotentialTargets(faction);
-            }
-
-            // first time setup if not
+            //if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
+            //{
+            //    Log(">>> Loading WarStatus.json");
+            //    WarStatus = SaveHandling.DeserializeWar();
+            //
+            //    WarStatus.attackTargets.Clear();
+            //    WarStatus.defenseTargets.Clear();
+            //
+            //    //  var progress = new WarStatus(false, false);
+            //    WarProgress = new WarProgress();
+            //    foreach (Faction faction in sim.FactionsDict.Keys)
+            //        WarProgress.PotentialTargets(faction);
+            //}
+            //
+            //// first time setup if not
             if (WarStatus == null)
             {
                 Log(">>> First-time initialization");
@@ -167,21 +167,16 @@ public class Core
             try
             {
                 // attacking
-                Log($"WarStatus.attackTargets.Keys {WarStatus.attackTargets.Keys.Count}");
-                foreach (var faction in WarStatus.attackTargets.Keys)
-                    AllocateAttackResources(faction);
-            }
-            catch (Exception ex)
-            {
-                Log("4");
-                Error(ex);
-            }
+                Log($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
+                if (WarStatus.attackTargets.Count > 0)
+                {
+                    foreach (var faction in WarStatus.attackTargets.Keys)
+                        AllocateAttackResources(faction);
 
-            try
-            {
-                //defending
-                foreach (var faction in WarStatus.attackTargets.Keys)
-                    AllocateDefensiveResources(faction);
+                    //defending
+                    foreach (var faction in WarStatus.attackTargets.Keys)
+                        AllocateDefensiveResources(faction);
+                }
             }
             catch (Exception ex)
             {
@@ -411,7 +406,14 @@ public class Core
             if (highestfaction != systemstatus.owner)
             {
                 var previousOwner = systemstatus.owner;
-                ChangeSystemOwnership(sim, systemstatus.starSystem, highestfaction, true);
+                var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
+                if (starSystem != null)
+                    ChangeSystemOwnership(sim, starSystem, highestfaction, true);
+                else
+                {
+                    Log("+=======+++== NULL");
+                }
+
                 Log(">>> Ownership changed to " + highestfaction);
                 if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
                 {
@@ -419,14 +421,16 @@ public class Core
                     continue;
                 }
 
-                // TODO we add keys now in the proc, maybe add them here?
+                // BUG NRE on deserialization
                 var WarFactionWinner = WarStatus.factionTracker.Find(x => x.faction == highestfaction);
-                WarFactionWinner.DaysSinceSystemAttacked = 0;
+                if (WarFactionWinner != null)
+                    WarFactionWinner.DaysSinceSystemAttacked = 0;
 
                 try
                 {
                     var WarFactionLoser = WarStatus.factionTracker.Find(x => x.faction == previousOwner);
-                    WarFactionLoser.DaysSinceSystemLost = 0;
+                    if (WarFactionLoser != null)
+                        WarFactionLoser.DaysSinceSystemLost = 0;
                 }
                 catch (Exception ex)
                 {
