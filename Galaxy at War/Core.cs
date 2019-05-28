@@ -393,10 +393,11 @@ public class Core
             var totalInfluence = systemstatus.influenceTracker.Values.Sum();
             var highest = 0f;
             var highestfaction = systemstatus.owner;
-
+            Logger.Log($"Attacking status for {systemstatus.name}");
             foreach (var kvp in systemstatus.influenceTracker)
             {
                 tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
+                Logger.Log($"{kvp.Key}: {tempDict[kvp.Key]}");
                 if (kvp.Value > highest)
                 {
                     highest = kvp.Value;
