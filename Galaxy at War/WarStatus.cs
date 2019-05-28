@@ -40,8 +40,9 @@ public class SystemStatus
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
     public Dictionary<Faction, int> neighborSystems;
+
     public readonly Faction owner;
-    internal StarSystem starSystem;
+    //internal StarSystem starSystem;
 
     public SystemStatus()
     {
@@ -53,7 +54,7 @@ public class SystemStatus
         Log($"new SystemStatus: {systemName} ({initialDistribution})");
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         name = systemName;
-        starSystem = sim.StarSystems.Find(x => x.Name == name);
+        //starSystem = sim.StarSystems.Find(x => x.Name == name);
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
 
         CalculateNeighbours(sim, initialDistribution);
@@ -90,7 +91,6 @@ public class SystemStatus
         var tempDict = new Dictionary<Faction, float>();
         foreach (var kvp in influenceTracker)
         {
-            
             tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
             Log($"{kvp.Key}: {tempDict[kvp.Key]}");
         }
@@ -103,6 +103,7 @@ public class SystemStatus
     public void CalculateNeighbours(SimGameState sim, bool initialDistribution)
     {
         neighborSystems = new Dictionary<Faction, int>();
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
         // build a list of all neighbors
         foreach (var neighborSystem in neighbors)
@@ -111,10 +112,20 @@ public class SystemStatus
                 neighborSystems[neighborSystem.Owner] += 1;
             else
                 neighborSystems.Add(neighborSystem.Owner, 1);
+        }
 
-            // the rest happens only after initial distribution
-            // build list of attack targets
-            if (initialDistribution) return;
+        if (initialDistribution) return;
+        CalculateAttackTargets(sim);
+        CalculateDefenseTargets(sim);
+    }
+
+    public void CalculateAttackTargets(SimGameState sim)
+    {
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        // the rest happens only after initial distribution
+        // build list of attack targets
+        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
+        {
             if (!Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
@@ -127,8 +138,15 @@ public class SystemStatus
             {
                 Core.WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
             }
+        }
+    }
 
-            // build list of defense targets
+    public void CalculateDefenseTargets(SimGameState sim)
+    {
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        // build list of defense targets
+        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
+        {
             if (!Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
