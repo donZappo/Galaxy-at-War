@@ -116,38 +116,31 @@ public class SystemStatus
             // the rest happens only after initial distribution
             // build list of attack targets
             // TODO was this just to avoid exceptions?  would a single guard work
-            if (!initialDistribution &&
-                !Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+            if (initialDistribution) return;
+            if (!Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
-            //    Log(">>> Post-initialDistribution");
                 var tempList = new List<StarSystem> {starSystem};
                 Core.WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
             }
-            else if (!initialDistribution &&
-                     Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+            else if (Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                      !Core.WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                      (neighborSystem.Owner != starSystem.Owner))
             {
-            //    Log(">>> Post-initialDistribution");
                 Core.WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
             }
 
             // build list of defense targets
-            if (!initialDistribution &&
-                !Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
+            if (!Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
-            //    Log(">>> Post-initialDistribution");
                 var tempList = new List<StarSystem> {starSystem};
                 Core.WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
             }
-            else if (!initialDistribution &&
-                     Core.WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
+            else if (Core.WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
                      !Core.WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                      neighborSystem.Owner != starSystem.Owner)
             {
-            //    Log(">>> Post-initialDistribution");
                 Core.WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
             }
         }

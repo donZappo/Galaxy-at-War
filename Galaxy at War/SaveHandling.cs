@@ -8,26 +8,26 @@ using Newtonsoft.Json;
 
 public class SaveHandling
 {
-    //[HarmonyPatch(typeof(GameInstanceSave), "PostDeserialization")]
-    //public class GameInstanceSave_PostDeserialization_Patch
-    //{
-    //    public static void Postfix()
-    //    {
-    //        if (UnityGameInstance.BattleTechGame.Simulation == null) return;
-    //        Logger.Log("PostDeserialization Postfix");
-    //        DeserializeWar();
-    //    }
-    //}
-    //
-    //[HarmonyPatch(typeof(SimGameState), nameof(SimGameState.AttachUX))]
-    //public static class SimGameState_AttachUX_Patch
-    //{
-    //    public static void Postfix()
-    //    {
-    //        Logger.Log("AttachUX Postfix");
-    //        DeserializeWar();
-    //    }
-    //}
+    [HarmonyPatch(typeof(GameInstanceSave), "PostDeserialization")]
+    public class GameInstanceSave_PostDeserialization_Patch
+    {
+        public static void Postfix()
+        {
+            if (UnityGameInstance.BattleTechGame.Simulation == null) return;
+            Logger.Log("PostDeserialization Postfix");
+            Core.WarStatus = DeserializeWar();
+        }
+    }
+
+    [HarmonyPatch(typeof(SimGameState), nameof(SimGameState.AttachUX))]
+    public static class SimGameState_AttachUX_Patch
+    {
+        public static void Postfix()
+        {
+            Logger.Log("AttachUX Postfix");
+            Core.WarStatus = DeserializeWar();
+        }
+    }
 
     [HarmonyPatch(typeof(SerializableReferenceContainer), "Save")]
     public class SerializableReferenceContainer_Save_Patch
@@ -39,7 +39,7 @@ public class SaveHandling
             SerializeWar();
         }
     }
-    
+
     // TODO when quitting - clear 
     //[HarmonyPatch(
 
@@ -51,11 +51,11 @@ public class SaveHandling
         Logger.Log(">>> Serialization complete");
     }
 
-    internal static void DeserializeWar()
+    internal static WarStatus DeserializeWar()
     {
         var fileName = $"WarStatus_{UnityGameInstance.BattleTechGame.Simulation.InstanceGUID}.json";
+        Logger.Log(">>> Deserialization");
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
-            Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
-        Logger.Log(">>> Deserialization complete");
+            return JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
     }
 }

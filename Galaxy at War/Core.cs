@@ -83,20 +83,19 @@ public class Core
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            //if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
-            //{
-            //    Log(">>> Loading WarStatus.json");
-            //    //  WarStatus WarStatus = new WarStatus(false, false);
-            //    SaveHandling.DeserializeWar();
-            //
-            //    WarStatus.attackTargets.Clear();
-            //    WarStatus.defenseTargets.Clear();
-            //
-            //    //  var progress = new WarStatus(false, false);
-            //    WarProgress = new WarProgress();
-            //    foreach (Faction faction in sim.FactionsDict.Keys)
-            //        WarProgress.PotentialTargets(faction);
-            //}
+            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
+            {
+                Log(">>> Loading WarStatus.json");
+                WarStatus = SaveHandling.DeserializeWar();
+            
+                WarStatus.attackTargets.Clear();
+                WarStatus.defenseTargets.Clear();
+            
+                //  var progress = new WarStatus(false, false);
+                WarProgress = new WarProgress();
+                foreach (Faction faction in sim.FactionsDict.Keys)
+                    WarProgress.PotentialTargets(faction);
+            }
 
             // first time setup if not
             if (WarStatus == null)
@@ -111,39 +110,94 @@ public class Core
                     WarProgress.PotentialTargets(faction);
             }
 
-            if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
-                return;
+            // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
+            //     return;
 
-            //Log(">>> PROC");
+            Log(">>> PROC");
 
             // Proc effects
+
             foreach (var system in WarStatus.systems)
             {
                 system.CalculateNeighbours(sim, false);
             }
 
             //Add resources for adjacent systems
-            foreach (var system in WarStatus.systems)
+            try
             {
-                foreach (var neighbor in system.neighborSystems)
+                foreach (var system in WarStatus.systems)
                 {
-                    system.influenceTracker[neighbor.Key] += neighbor.Value;
+                    //Log($"\n\n{system.name}");
+                    foreach (var neighbor in system.neighborSystems)
+                    {
+                        //Log(neighbor.Key.ToString());
+                        //Log("Dictionary:");
+                        //foreach (var kvp in system.influenceTracker)
+                        //    Log($"\t{kvp.Key}: {kvp.Value}");
+                        //Log(system.influenceTracker.ContainsKey(neighbor.Key).ToString());
+
+                        if (system.influenceTracker.ContainsKey(neighbor.Key))
+                            system.influenceTracker[neighbor.Key] += neighbor.Value;
+                        else
+                            system.influenceTracker.Add(neighbor.Key, neighbor.Value);
+                    }
+
+                    Log($"\n{system.name} influenceTracker:");
+                    system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                 }
             }
 
+            catch (Exception ex)
+            {
+                Log("\n2");
+                Error(ex);
+            }
+
             //Log("Refreshing Resources");
-            RefreshResources(__instance);
+            try
+            {
+                RefreshResources(__instance);
+            }
+            catch (Exception ex)
+            {
+                Log("3");
+                Error(ex);
+            }
 
-            // attacking
-            // Log($"WarStatus.attackTargets.Keys {WarStatus.attackTargets.Keys.Count}");
-            foreach (var faction in WarStatus.attackTargets.Keys)
-                AllocateAttackResources(faction);
+            try
+            {
+                // attacking
+                Log($"WarStatus.attackTargets.Keys {WarStatus.attackTargets.Keys.Count}");
+                foreach (var faction in WarStatus.attackTargets.Keys)
+                    AllocateAttackResources(faction);
+            }
+            catch (Exception ex)
+            {
+                Log("4");
+                Error(ex);
+            }
 
-            //defending
-            foreach (var faction in WarStatus.attackTargets.Keys)
-                AllocateDefensiveResources(faction);
+            try
+            {
+                //defending
+                foreach (var faction in WarStatus.attackTargets.Keys)
+                    AllocateDefensiveResources(faction);
+            }
+            catch (Exception ex)
+            {
+                Log("5");
+                Error(ex);
+            }
 
-            UpdateInfluenceFromAttacks(sim);
+            try
+            {
+                UpdateInfluenceFromAttacks(sim);
+            }
+            catch (Exception ex)
+            {
+                Log("6");
+                Error(ex);
+            }
 
             SaveHandling.SerializeWar();
 
@@ -172,6 +226,7 @@ public class Core
             //}
             //
             //Log($"===");
+            Log(">>> DONE PROC");
         }
     }
 
@@ -334,22 +389,20 @@ public class Core
 
     private static void UpdateInfluenceFromAttacks(SimGameState sim)
     {
-        foreach (SystemStatus systemstatus in WarStatus.systems)
+        foreach (var systemstatus in WarStatus.systems)
         {
             var tempDict = new Dictionary<Faction, float>();
-            Log($"systemStatus: {systemstatus.name}");
             var totalInfluence = systemstatus.influenceTracker.Values.Sum();
-            float highest = 0f;
-            Faction highestfaction = systemstatus.owner;
-            LogDebug($"highestfaction {highestfaction}");
+            var highest = 0f;
+            var highestfaction = systemstatus.owner;
 
             foreach (var kvp in systemstatus.influenceTracker)
             {
                 tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
                 if (kvp.Value > highest)
                 {
+                    highest = kvp.Value;
                     highestfaction = kvp.Key;
-                    LogDebug($"\tupdate {highestfaction}");
                 }
             }
 
@@ -366,15 +419,18 @@ public class Core
                     continue;
                 }
 
+                // TODO we add keys now in the proc, maybe add them here?
+                var WarFactionWinner = WarStatus.factionTracker.Find(x => x.faction == highestfaction);
+                WarFactionWinner.DaysSinceSystemAttacked = 0;
+
                 try
                 {
-                    var WarFactionWinner = WarStatus.factionTracker.Find(x => x.faction == highestfaction);
-                    WarFactionWinner.DaysSinceSystemAttacked = 0;
                     var WarFactionLoser = WarStatus.factionTracker.Find(x => x.faction == previousOwner);
                     WarFactionLoser.DaysSinceSystemLost = 0;
                 }
                 catch (Exception ex)
                 {
+                    Log("TWO");
                     Error(ex);
                 }
             }
@@ -446,7 +502,7 @@ public class Core
         // no point iterating over a KVP if you aren't using the values
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
-            Log(faction.ToString());
+            //Log(faction.ToString());
             if (Settings.ResourceMap.ContainsKey(faction))
             {
                 // initialize resources from the ResourceMap
