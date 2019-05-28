@@ -89,16 +89,6 @@ public class ModSettings
         {Faction.AuriganRestoration, null }
     };
 
-    
-    
-
-    
-    
-
-    
-    
- 
-
     public bool Debug = true;
     public string modDirectory;
     public int DominantInfluence = 50;
@@ -106,7 +96,7 @@ public class ModSettings
 
     public List<Faction> ExcludedFactions = new List<Faction>()
     {
-        Faction.Locals, Faction.Unknown,
-        Faction.SelfEmployed, Faction.NoFaction,
+        Faction.Unknown,
+        Faction.SelfEmployed,
     };
 }
