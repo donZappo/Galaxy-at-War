@@ -11,8 +11,6 @@ using static Logger;
 public class RelationTracker
 {
     // we want to know how any given faction feels about another one
-    // each faction will have X opinions
-    // we want to be able to lookup a faction and get all its opinions back
     public List<KillListTracker> factions = new List<KillListTracker>();
 
     public RelationTracker(SimGameState sim)

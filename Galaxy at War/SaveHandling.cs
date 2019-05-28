@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
 using BattleTech;
 using BattleTech.Save;
@@ -6,7 +7,6 @@ using BattleTech.Save.Core;
 using BattleTech.Save.Test;
 using Harmony;
 using Newtonsoft.Json;
-using ObjectDumper;
 using UnityEngine;
 
 public static class SaveHandling
@@ -18,23 +18,24 @@ public static class SaveHandling
     //{
     //    public static void Postfix()
     //    {
+    //        Logger.Log("PostDeserialization Postfix");
     //        if (UnityGameInstance.BattleTechGame.Simulation == null) return;
     //        if (!File.Exists("Mods\\GalaxyAtWar\\" + FileName)) return;
-    //        Logger.Log("PostDeserialization Postfix");
     //        Core.WarStatus = DeserializeWar();
     //    }
     //}
 
-    //[HarmonyPatch(typeof(SimGameState), nameof(SimGameState.Rehydrate))]
-    //public static class SimGameState_Rehydrate_Patch
-    //{
-    //    public static void Postfix()
-    //    {
-    //        if (!File.Exists("Mods\\GalaxyAtWar\\" + FileName)) return;
-    //        Logger.Log("Rehydrate Postfix");
-    //        Core.WarStatus = DeserializeWar();
-    //    }
-    //}
+    [HarmonyPatch(typeof(SimGameState), nameof(SimGameState.Rehydrate))]
+    public static class SimGameState_Rehydrate_Patch
+    {
+        public static void Postfix()
+        {
+            Logger.Log("Rehydrate Postfix");
+            if (UnityGameInstance.BattleTechGame.Simulation == null) return;
+            if (!File.Exists("Mods\\GalaxyAtWar\\" + FileName)) return;
+            Core.WarStatus = DeserializeWar();
+        }
+    }
 
     [HarmonyPatch(typeof(SerializableReferenceContainer), "Save")]
     public class SerializableReferenceContainer_Save_Patch
@@ -70,13 +71,12 @@ public static class SaveHandling
     internal static WarStatus DeserializeWar()
     {
         Logger.Log(">>> Deserialization");
+        WarStatus warStatus;
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + FileName))
-        {
-            var warStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
-            using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\Dump.txt"))
-                Dumper.Dump(warStatus, "WarStatus", writer);
-            return warStatus;
-        }
-
+            warStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
+        foreach (var system in warStatus.systems)
+            Logger.Log(system.name);
+        return warStatus;
     }
 }
+

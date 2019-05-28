@@ -37,13 +37,11 @@ public class WarStatus
 
 public class SystemStatus
 {
-    // Dictionary to hold each faction's numerical influence
+    public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-    public readonly string name;
     public Dictionary<Faction, int> neighborSystems;
     public readonly Faction owner;
     internal StarSystem starSystem;
-    public string ownerName;
 
     public SystemStatus()
     {
@@ -52,11 +50,11 @@ public class SystemStatus
 
     public SystemStatus(string systemName, bool initialDistribution)
     {
+        Log($"new SystemStatus: {systemName} ({initialDistribution})");
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         name = systemName;
         starSystem = sim.StarSystems.Find(x => x.Name == name);
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
-        ownerName = owner.ToString();
 
         CalculateNeighbours(sim, initialDistribution);
         if (initialDistribution)
@@ -115,7 +113,6 @@ public class SystemStatus
 
             // the rest happens only after initial distribution
             // build list of attack targets
-            // TODO was this just to avoid exceptions?  would a single guard work
             if (initialDistribution) return;
             if (!Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
