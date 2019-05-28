@@ -111,8 +111,8 @@ public class Core
                     WarProgress.PotentialTargets(faction);
             }
 
-            if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
-                return;
+            //if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
+            //    return;
 
             Log(">>> PROC");
 
@@ -129,7 +129,7 @@ public class Core
             foreach (var faction in WarStatus.attackTargets.Keys)
                 AllocateAttackResources(faction);
 
-            UpdateInfluenceFromAttacks();
+            UpdateInfluenceFromAttacks(sim);
 
             SaveHandling.SerializeWar();
 
@@ -192,13 +192,18 @@ public class Core
         {
             if (!WarStatus.attackResources.ContainsKey(faction)) return;
             Log(WarStatus.attackResources.ContainsKey(faction).ToString());
+
+            //Go through the different resources allocated from attacking faction to spend against each targetfaction
             foreach (var targetfaction in WarStatus.attackResources[faction].Keys)
             {
                 var attacklist = new List<StarSystem>();
+
+                //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetfaction
                 foreach (var system in WarStatus.attackTargets[faction])
                     if (WarStatus.attackResources[faction].ContainsKey(system.Owner))
                         attacklist.Add(system);
 
+                //Allocate all the resources against the targetfaction to systems controlled by targetfaction.
                 var i = 0;
                 do
                 {
@@ -259,65 +264,29 @@ public class Core
         }
     }
 
-    private static void UpdateInfluenceFromAttacks()
+    private static void UpdateInfluenceFromAttacks(SimGameState sim)
     {
-        Log(">>> UpdateInfluenceFromAttacks");
-        // resolve resources back to faction influence
-        foreach (var foo in WarStatus.attackTargets)
+        foreach (SystemStatus systemstatus in WarStatus.systems)
         {
-            LogDebug(foo.Key.ToString());
-            foreach (var bar in foo.Value)
-            {
-                LogDebug($"\t{bar.Name}");
-            }
-        }
+            var tempDict = new Dictionary<Faction, float>();
+            var totalInfluence = systemstatus.influenceTracker.Values.Sum();
+            float highest = 0f;
+            Faction highestfaction = systemstatus.owner;
 
-        try
-        {
-            foreach (var faction in WarStatus.attackTargets.Keys)
+            foreach (var kvp in systemstatus.influenceTracker)
             {
-                var adjustingFaction = WarStatus.factionTracker.Find(f => f.faction == faction);
-                Log("UpdateInfluenceFromAttacks adjustingFaction: " + adjustingFaction.faction);
-                if (WarStatus.attackResources.ContainsKey(faction))
-                {
-                    Log($"adjustingFaction {adjustingFaction} ({adjustingFaction.resources}) + {WarStatus.attackResources[faction].Values.Sum()}");
-                    adjustingFaction.resources += WarStatus.attackResources[faction].Values.Sum();
-                    Log($"= {adjustingFaction.resources}");
-                }
-                else
-                {
-                    Log($"attackResources didn't contain {faction}");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Error(ex);
-            Application.Quit();
-        }
+                tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
+                if (kvp.Value > highest)
+                    highestfaction = kvp.Key;
 
-        // go through every system
-        foreach (var system in WarStatus.systems)
-        {
-            Log($"\n{system.name}\n====================");
-            var attackTargets = WarStatus.attackResources;
-            // go through every attack target
-            foreach (var target in attackTargets)
+            }
+            systemstatus.influenceTracker = tempDict;
+
+            if (highestfaction != systemstatus.owner)
             {
-                var faction = target.Key;
-                // TODO verify: I do not trust the math I have written here at all
-                // set the system's influence for that faction to increase by the resources
-                Log($"influenceDelta for {system}, {faction} is {target.Value[faction]}");
-                system.influenceTracker[faction] += target.Value[faction];
-                // attempt at converting to percentage
-                var totalInfluence = system.influenceTracker.Values.Sum();
-                system.influenceTracker[faction] /= totalInfluence * 100;
+                ChangeSystemOwnership(sim, systemstatus.starSystem, highestfaction, true);
             }
 
-            foreach (var data in system.influenceTracker)
-            {
-                Log($"{data.Key,-20}: {data.Value,10}");
-            }
         }
     }
 
