@@ -536,6 +536,7 @@ public class Core
 
         if (sim.Starmap == null) return;
 
+        System.Random random = new System.Random();
         foreach (var system in sim.StarSystems)
         {
             var resources = GetTotalResources(system);
@@ -547,8 +548,8 @@ public class Core
                 var faction = WarStatus.factionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
                 if (faction != null)
                 {
-                    faction.resources += resources * (100 + faction.DaysSinceSystemAttacked) / 100;
-                    faction.DefensiveResources += DefensiveResources * (150 - faction.DaysSinceSystemLost) / 100;
+                    faction.resources += resources;
+                    faction.DefensiveResources += DefensiveResources;
                 }
             }
             catch (Exception ex)
@@ -559,6 +560,25 @@ public class Core
 
         foreach (var faction in WarStatus.factionTracker)
         {
+            float tempnum = 0f;
+            int i = 0;
+            do
+            {
+                tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
+                i++;
+            } while (i < faction.resources);
+            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+
+            tempnum = 0f;
+            i = 0;
+            do
+            {
+                tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
+                i++;
+            } while (i < faction.DefensiveResources);
+            faction.DefensiveResources = tempnum * (100f * (float)Settings.GlobalDefenseFactor
+                        - faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+
             Logger.Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
                        $"Defensive Resources: {faction.DefensiveResources}");
         }

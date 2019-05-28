@@ -95,8 +95,11 @@ public class ModSettings
 
     public bool Debug = true;
     public string modDirectory;
-    public int DominantInfluence = 50;
-    public int MinorInfluencePool = 50;
+    public int DominantInfluence = 75;
+    public int MinorInfluencePool = 25;
+    public float GlobalDefenseFactor = 0.5f;
+    public int ResourceAdjustmentPerCycle = 1;
+    public int ResourceRandomizer = 4;
 
     public List<Faction> ExcludedFactions = new List<Faction>()
     {
