@@ -39,6 +39,9 @@ public class SaveHandling
             SerializeWar();
         }
     }
+    
+    // TODO when quitting - clear 
+    //[HarmonyPatch(
 
     internal static void SerializeWar()
     {
