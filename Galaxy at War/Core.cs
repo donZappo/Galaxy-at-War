@@ -101,13 +101,16 @@ public class Core
             if (WarStatus == null)
             {
                 Log(">>> First-time initialization");
+
+                //This generates the initial distribution of Influence amongst the systems.
                 WarStatus = new WarStatus(true);
 
-                WarStatus.attackTargets.Clear();
-                WarStatus.defenseTargets.Clear();
-                WarProgress = new WarProgress();
-                foreach (Faction faction in sim.FactionsDict.Keys)
-                    WarProgress.PotentialTargets(faction);
+                //Since PotentialTargets only exists to log right now, this code block has no actual functionality. 
+                //WarStatus.attackTargets.Clear();
+                //WarStatus.defenseTargets.Clear();
+                //WarProgress = new WarProgress();
+                //foreach (Faction faction in sim.FactionsDict.Keys)
+                //    WarProgress.PotentialTargets(faction);
             }
 
             // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
