@@ -30,7 +30,7 @@ public class WarStatus
         foreach (var planet in sim.StarSystems)
         {
             systems.Add(new SystemStatus(planet.Name, distribute));
-            ChangeSystemOwnership(sim, planet, planet.Owner, true);
+            //ChangeSystemOwnership(sim, planet, planet.Owner, true);
         }
     }
 }
@@ -120,7 +120,7 @@ public class SystemStatus
                 !Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
-                Log(">>> Post-initialDistribution");
+            //    Log(">>> Post-initialDistribution");
                 var tempList = new List<StarSystem> {starSystem};
                 Core.WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
             }
@@ -129,7 +129,7 @@ public class SystemStatus
                      !Core.WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                      (neighborSystem.Owner != starSystem.Owner))
             {
-                Log(">>> Post-initialDistribution");
+            //    Log(">>> Post-initialDistribution");
                 Core.WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
             }
 
@@ -138,7 +138,7 @@ public class SystemStatus
                 !Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
-                Log(">>> Post-initialDistribution");
+            //    Log(">>> Post-initialDistribution");
                 var tempList = new List<StarSystem> {starSystem};
                 Core.WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
             }
@@ -147,7 +147,7 @@ public class SystemStatus
                      !Core.WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                      neighborSystem.Owner != starSystem.Owner)
             {
-                Log(">>> Post-initialDistribution");
+            //    Log(">>> Post-initialDistribution");
                 Core.WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
             }
         }
