@@ -375,6 +375,8 @@ public class Core
                 Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
             }
 
+            var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
+            systemStatus.owner = faction;
             Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
         }
     }
@@ -563,7 +565,7 @@ public class Core
                 i++;
             } while (i < faction.resources);
 
-            faction.resources = tempnum * (100f + (float) faction.DaysSinceSystemLost * (float) Settings.ResourceAdjustmentPerCycle) / 100f;
+            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
 
             tempnum = 0f;
             i = 0;
@@ -573,11 +575,34 @@ public class Core
                 i++;
             } while (i < faction.DefensiveResources);
 
-            faction.DefensiveResources = tempnum * (100f * (float) Settings.GlobalDefenseFactor
-                                                    - faction.DaysSinceSystemLost * (float) Settings.ResourceAdjustmentPerCycle) / 100f;
+            faction.DefensiveResources = tempnum * (100f * (float)Settings.GlobalDefenseFactor
+                                                    - faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
 
             Logger.Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
                        $"Defensive Resources: {faction.DefensiveResources}");
+        }
+    }
+
+    [HarmonyPatch(typeof(Contract), "CompleteContract")]
+    public static class CompleteContract_Patch
+    {
+        
+        public static void Postfix(Contract __instance, MissionResult result, bool IsGoodFaith, SimGameState ___simulation)
+        {
+            if(result == MissionResult.Victory)
+            {
+                var teamfaction = __instance.Override.employerTeam.faction;
+                var enemyfaction = __instance.Override.targetTeam.faction;
+                var difficulty = __instance.Difficulty;
+                var system = __instance.TargetSystem;
+
+                var warsystem = WarStatus.systems.Find(x => x.name == system);
+                warsystem.influenceTracker[teamfaction] += difficulty;
+                warsystem.influenceTracker[enemyfaction] -= difficulty;
+
+                UpdateInfluenceFromAttacks(___simulation);
+
+            }
         }
     }
 
