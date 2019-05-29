@@ -101,6 +101,7 @@ public class ModSettings
     public int ResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
+    public float TakeoverThreshhold = 20f;
 
     public List<Faction> ExcludedFactions = new List<Faction>()
     {

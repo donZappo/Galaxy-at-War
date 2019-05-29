@@ -402,8 +402,9 @@ public class Core
             }
 
             systemstatus.influenceTracker = tempDict;
+            var diffStatus = systemstatus.influenceTracker[highestfaction] - systemstatus.influenceTracker[systemstatus.owner];
             //Need to add changes to the Kill List. Here is a good spot. 
-            if (highestfaction != systemstatus.owner)
+            if (highestfaction != systemstatus.owner && (diffStatus >= Settings.TakeoverThreshhold))
             {
                 var previousOwner = systemstatus.owner;
                 var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
