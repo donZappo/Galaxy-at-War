@@ -9,6 +9,7 @@ using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
+using Error = BestHTTP.SocketIO.Error;
 using Random = System.Random;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -101,16 +102,30 @@ public class Core
                 //This generates the initial distribution of Influence amongst the systems.
                 WarStatus = new WarStatus();
 
-                Log(">>> Initialize systems");
-                foreach (var starSystem in sim.StarSystems)
+                try
                 {
-                    WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
-                    //ChangeSystemOwnership(sim, planet, planet.Owner, true);
+                    InitializeSystems();
+                }
+                catch (Exception ex)
+                {
+                    Error(ex);
                 }
 
                 foreach (var faction in sim.FactionsDict.Keys)
                     LogPotentialTargets(faction);
             }
+
+            if (WarStatus.systems.Count == 0)
+                try
+                {
+                    InitializeSystems();
+                }
+                catch (Exception ex)
+                {
+                    LogDebug("TWO");
+                    Error(ex);
+                    
+                }
 
             // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
             //     return;
@@ -118,11 +133,19 @@ public class Core
             Log(">>> PROC");
 
             // Proc effects
-
-            foreach (var system in WarStatus.systems)
-            {
-                system.CalculateNeighbours(sim);
-            }
+            if (WarStatus.systems.Count > 0)
+                foreach (var system in WarStatus.systems)
+                {
+                    try
+                    {
+                        system.CalculateNeighbours(sim);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogDebug("two");
+                        Error(ex);
+                    }
+                }
 
             //Add resources for adjacent systems
             try
@@ -198,6 +221,16 @@ public class Core
 
             SaveHandling.SerializeWar();
             Log(">>> DONE PROC");
+        }
+
+        private static void InitializeSystems()
+        {
+            Log(">>> Initialize systems");
+            foreach (var starSystem in sim.StarSystems)
+            {
+                WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
+                //ChangeSystemOwnership(sim, planet, planet.Owner, true);
+            }
         }
     }
 

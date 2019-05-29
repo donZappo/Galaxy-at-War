@@ -11,7 +11,7 @@ using static Logger;
 public class RelationTracker
 {
     // we want to know how any given faction feels about another one
-    public List<KillListTracker> factions = new List<KillListTracker>();
+    public HashSet<KillListTracker> factions = new HashSet<KillListTracker>();
 
     public RelationTracker(SimGameState sim)
     {

@@ -21,26 +21,6 @@ public class WarStatus
     internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 
-    [JsonConstructor]
-    public WarStatus()
-    {
-        // need an empty ctor for deserialization
-    }
-
-    // initialize a collection of all planets
-    public WarStatus(bool nothing = false)
-    {
-        //var sim = UnityGameInstance.BattleTechGame.Simulation;
-        //if (systems.Count == 0)
-        //{
-        //    Log(">>> Initialize systems");
-        //    foreach (var starSystem in sim.StarSystems)
-        //    {
-        //        systems.Add(new SystemStatus(starSystem.Name));
-        //        //ChangeSystemOwnership(sim, planet, planet.Owner, true);
-        //    }
-        //}
-    }
     public class SystemStatus
     {
         public string name;
@@ -61,7 +41,15 @@ public class WarStatus
             //starSystem = sim.StarSystems.Find(x => x.Name == name);
             owner = sim.StarSystems.First(s => s.Name == name).Owner;
 
-            CalculateNeighbours(sim);
+            try
+            {
+                CalculateNeighbours(sim);
+            }
+            catch (Exception ex)
+            {
+                Error(ex);
+            }
+
             DistributeInfluence();
             CalculateAttackTargets(sim);
             CalculateDefenseTargets(sim);

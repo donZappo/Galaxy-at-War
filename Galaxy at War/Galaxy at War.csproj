@@ -41,9 +41,6 @@
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
       <HintPath>C:\References\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="ObjectDumper">
-      <HintPath>..\..\..\..\..\..\References\ObjectDumper.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -69,6 +66,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\BATTLETECH\Mods\GalaxyAtWar" /Y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" N:\SteamLibrary\steamapps\common\BATTLETECH\Mods\GalaxyAtWar /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>
