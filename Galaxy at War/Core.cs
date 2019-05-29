@@ -404,7 +404,7 @@ public class Core
             systemstatus.influenceTracker = tempDict;
             var diffStatus = systemstatus.influenceTracker[highestfaction] - systemstatus.influenceTracker[systemstatus.owner];
             //Need to add changes to the Kill List. Here is a good spot. 
-            if (highestfaction != systemstatus.owner && (diffStatus >= Settings.TakeoverThreshhold))
+            if (highestfaction != systemstatus.owner && (diffStatus >= Settings.TakeoverThreshold))
             {
                 var previousOwner = systemstatus.owner;
                 var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
@@ -590,20 +590,26 @@ public class Core
         
         public static void Postfix(Contract __instance, MissionResult result, bool IsGoodFaith, SimGameState ___simulation)
         {
-            if(result == MissionResult.Victory)
-            {
-                var teamfaction = __instance.Override.employerTeam.faction;
-                var enemyfaction = __instance.Override.targetTeam.faction;
-                var difficulty = __instance.Difficulty;
-                var system = __instance.TargetSystem;
 
-                var warsystem = WarStatus.systems.Find(x => x.name == system);
+            var teamfaction = __instance.Override.employerTeam.faction;
+            var enemyfaction = __instance.Override.targetTeam.faction;
+            var difficulty = __instance.Difficulty;
+            var system = __instance.TargetSystem;
+            var warsystem = WarStatus.systems.Find(x => x.name == system);
+
+            if (result == MissionResult.Victory)
+            {
                 warsystem.influenceTracker[teamfaction] += (float)difficulty * Settings.DifficultyFactor;
                 warsystem.influenceTracker[enemyfaction] -= (float)difficulty * Settings.DifficultyFactor;
-
-                UpdateInfluenceFromAttacks(___simulation);
-
             }
+            else if(result == MissionResult.Defeat || (result != MissionResult.Victory && !IsGoodFaith))
+            {
+                warsystem.influenceTracker[teamfaction] -= (float)difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[enemyfaction] += (float)difficulty * Settings.DifficultyFactor;
+            }
+
+            UpdateInfluenceFromAttacks(___simulation);
+        }
         }
     }
 
