@@ -588,7 +588,7 @@ public class Core
     public static class CompleteContract_Patch
     {
         
-        public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort, SimGameState ___simulation)
+        public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
 
             var teamfaction = __instance.Override.employerTeam.faction;
@@ -607,8 +607,8 @@ public class Core
                 warsystem.influenceTracker[teamfaction] -= (float)difficulty * Settings.DifficultyFactor;
                 warsystem.influenceTracker[enemyfaction] += (float)difficulty * Settings.DifficultyFactor;
             }
-
-            UpdateInfluenceFromAttacks(___simulation);
+            SimGameState sim = __instance.BattleTechGame.Simulation;
+            UpdateInfluenceFromAttacks(sim);
         }
         }
     }
