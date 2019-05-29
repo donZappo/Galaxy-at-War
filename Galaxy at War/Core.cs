@@ -428,6 +428,7 @@ public class Core
                     continue;
                 }
 
+
                 // BUG NRE on deserialization
                 var WarFactionWinner = WarStatus.factionTracker.Find(x => x.faction == highestfaction);
                 if (WarFactionWinner != null)
