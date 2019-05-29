@@ -62,7 +62,6 @@ public static class SaveHandling
     {
         sim.CompanyTags.Where(tag => tag.Contains(@"{""systems"":[],""relationTracker"":")).Do(x => sim.CompanyTags.Remove(x));
         sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
-
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         Logger.Log(">>> Serialization complete");
     }
@@ -70,6 +69,6 @@ public static class SaveHandling
     internal static WarStatus DeserializeWar()
     {
         Logger.Log(">>> Deserialization");
-        return JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(11));
+        return JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15));
     }
 }
