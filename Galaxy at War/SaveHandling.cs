@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -7,6 +8,7 @@ using BattleTech;
 using BattleTech.Save;
 using BattleTech.Save.Core;
 using BattleTech.Save.Test;
+using BestHTTP.SocketIO;
 using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -62,7 +64,7 @@ public static class SaveHandling
                     }
                 }
 
-                Core.WarStatus = null;
+                //Core.WarStatus = null;
             }
 
             //sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
@@ -105,6 +107,7 @@ public static class SaveHandling
         //sim.CompanyTags.Where(tag => tag.Contains(@"{""systems"":[],""relationTracker"":")).Do(x => sim.CompanyTags.Remove(x));
         //sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         //sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
+        Logger.LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
             writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
         Logger.Log(">>> Serialization complete");
@@ -113,8 +116,21 @@ public static class SaveHandling
     internal static WarStatus DeserializeWar()
     {
         Logger.Log(">>> Deserialization");
+        WarStatus warStatus;
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
-            return JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
+        {
+            warStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
+            try
+            {
+                Logger.LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
+            }
+            catch(Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        return warStatus;
 
         //return JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15));
     }
