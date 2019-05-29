@@ -80,7 +80,7 @@ public class Core
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
+            if (WarStatus == null && sim.CompanyTags.Any(x=> x.StartsWith("GalaxyAtWarSave")))
             {
                 Log(">>> Loading " + fileName);
                 WarStatus = SaveHandling.DeserializeWar();
@@ -561,7 +561,8 @@ public class Core
                 tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
                 i++;
             } while (i < faction.resources);
-            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+
+            faction.resources = tempnum * (100f + (float) faction.DaysSinceSystemLost * (float) Settings.ResourceAdjustmentPerCycle) / 100f;
 
             tempnum = 0f;
             i = 0;
@@ -570,8 +571,9 @@ public class Core
                 tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
                 i++;
             } while (i < faction.DefensiveResources);
-            faction.DefensiveResources = tempnum * (100f * (float)Settings.GlobalDefenseFactor
-                        - faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+
+            faction.DefensiveResources = tempnum * (100f * (float) Settings.GlobalDefenseFactor
+                                                    - faction.DaysSinceSystemLost * (float) Settings.ResourceAdjustmentPerCycle) / 100f;
 
             Logger.Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
                        $"Defensive Resources: {faction.DefensiveResources}");
