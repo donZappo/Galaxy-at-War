@@ -597,8 +597,8 @@ public class Core
                 var system = __instance.TargetSystem;
 
                 var warsystem = WarStatus.systems.Find(x => x.name == system);
-                warsystem.influenceTracker[teamfaction] += difficulty;
-                warsystem.influenceTracker[enemyfaction] -= difficulty;
+                warsystem.influenceTracker[teamfaction] += (float)difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[enemyfaction] -= (float)difficulty * Settings.DifficultyFactor;
 
                 UpdateInfluenceFromAttacks(___simulation);
 

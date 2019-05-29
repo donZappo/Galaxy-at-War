@@ -100,6 +100,7 @@ public class ModSettings
     public float GlobalDefenseFactor = 0.5f;
     public int ResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
+    public float DifficultyFactor = 1f;
 
     public List<Faction> ExcludedFactions = new List<Faction>()
     {
