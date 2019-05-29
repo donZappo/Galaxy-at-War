@@ -71,12 +71,8 @@ public static class SaveHandling
     internal static WarStatus DeserializeWar()
     {
         Logger.Log(">>> Deserialization");
-        WarStatus warStatus;
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + FileName))
-            warStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
-        foreach (var system in warStatus.systems)
-            Logger.Log(system.name);
-        return warStatus;
+            return JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
     }
 }
 
