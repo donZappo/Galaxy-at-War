@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Reflection;
+using System.Runtime.Remoting.Messaging;
 using BattleTech;
 using Harmony;
 using Newtonsoft.Json;
@@ -69,6 +71,7 @@ public class Core
 
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
+    public static WarProgress WarProgress;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -80,28 +83,34 @@ public class Core
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
-            {
-                Log(">>> Loading " + fileName);
-                WarStatus = SaveHandling.DeserializeWar();
-
-                WarStatus.attackTargets.Clear();
-                WarStatus.defenseTargets.Clear();
-
-                foreach (var faction in sim.FactionsDict.Keys)
-                    LogPotentialTargets(faction);
-            }
-
+            //if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
+            //{
+            //    Log(">>> Loading WarStatus.json");
+            //    WarStatus = SaveHandling.DeserializeWar();
+            //
+            //    WarStatus.attackTargets.Clear();
+            //    WarStatus.defenseTargets.Clear();
+            //
+            //    //  var progress = new WarStatus(false, false);
+            //    WarProgress = new WarProgress();
+            //    foreach (Faction faction in sim.FactionsDict.Keys)
+            //        WarProgress.PotentialTargets(faction);
+            //}
+            //
             //// first time setup if not
             if (WarStatus == null)
             {
                 Log(">>> First-time initialization");
 
                 //This generates the initial distribution of Influence amongst the systems.
-                WarStatus = new WarStatus();
+                WarStatus = new WarStatus(true);
 
-                foreach (var faction in sim.FactionsDict.Keys)
-                    LogPotentialTargets(faction);
+                //Since PotentialTargets only exists to log right now, this code block has no actual functionality. 
+                //WarStatus.attackTargets.Clear();
+                //WarStatus.defenseTargets.Clear();
+                //WarProgress = new WarProgress();
+                //foreach (Faction faction in sim.FactionsDict.Keys)
+                //    WarProgress.PotentialTargets(faction);
             }
 
             // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
@@ -113,7 +122,7 @@ public class Core
 
             foreach (var system in WarStatus.systems)
             {
-                system.CalculateNeighbours(sim);
+                system.CalculateNeighbours(sim, false);
             }
 
             //Add resources for adjacent systems
@@ -189,36 +198,33 @@ public class Core
             }
 
             SaveHandling.SerializeWar();
+
+            // testing crap
+            //var someReturn = WarStatus.RelationTracker.Factions.Find(f => f.Keys.Any(k => k == Faction.Liao));
+            //
+            //Log("Liao relations");
+            //foreach (var kvp in someReturn)
+            //{
+            //    LogDebug($"{kvp.Key.ToString()} - {kvp.Value}");
+            //}
+            //
+            //var system = WarStatus.Systems.First(p => p.name == "Lindsay");
+            //Log("foreach influenceMap PoC!");
+            //foreach (var faction in system.InfluenceTracker)
+            //{
+            //    Log($"{faction.Key}: {faction.Value}");
+            //}
+            //
+            //Log("DOMINANT FACTION: " + system.owner);
+            //
+            //Log($"=== Neighbours ===");
+            //foreach (var neighbour in system.neighbourSystems)
+            //{
+            //    Log($"{neighbour.Key}: {neighbour.Value}");
+            //}
+            //
+            //Log($"===");
             Log(">>> DONE PROC");
-        }
-    }
-
-    public static void LogPotentialTargets(Faction faction)
-    {
-        if (WarStatus.attackTargets.Keys.Contains(faction))
-        {
-            Log("------------------------------------------------------");
-            Log(faction.ToString());
-            Log("Attack Targets");
-            foreach (StarSystem attackedSystem in WarStatus.attackTargets[faction])
-                Log($"{attackedSystem.Name,-30} : {attackedSystem.Owner}");
-        }
-        else
-        {
-            Log($"No Attack Targets for {faction.ToString()}!");
-        }
-
-        if (WarStatus.defenseTargets.Keys.Contains(faction))
-        {
-            Log("------------------------------------------------------");
-            Log(faction.ToString());
-            Log("Defense Targets");
-            foreach (StarSystem defensedsystem in WarStatus.defenseTargets[faction])
-                Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
-        }
-        else
-        {
-            Log($"No Defense Targets for {faction.ToString()}!");
         }
     }
 
@@ -232,10 +238,10 @@ public class Core
         }
 
         RefreshResources(sim);
-        var killList = WarStatus.relationTracker.factions.First(f => f.faction == faction).killList;
+        var killList = Enumerable.First(WarStatus.relationTracker.factions, f => f.faction == faction).killList;
         WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
         float resources = warFaction.resources;
-        float total = uniqueFactions.Values.Sum();
+        float total = Enumerable.Sum(uniqueFactions.Values);
 
         foreach (Faction tempfaction in uniqueFactions.Keys)
         {
@@ -269,7 +275,7 @@ public class Core
                 do
                 {
                     var rand = random.Next(0, attacklist.Count);
-                    var systemStatus = WarStatus.systems.First(f => f.name == attacklist[rand].Name);
+                    var systemStatus = Enumerable.First(WarStatus.systems, f => f.name == attacklist[rand].Name);
                     systemStatus.influenceTracker[faction] += 1;
                 } while (i < WarStatus.attackResources[faction][targetfaction]);
             }
@@ -300,7 +306,7 @@ public class Core
             float highest = 0f;
             Faction highestFaction = faction;
             var rand = random.Next(0, systems.Count());
-            var systemStatus = WarStatus.systems.First(f => f.name == systems[rand].Name);
+            var systemStatus = Enumerable.First(WarStatus.systems, f => f.name == systems[rand].Name);
 
             foreach (Faction tempfaction in systemStatus.influenceTracker.Keys)
             {
@@ -362,7 +368,7 @@ public class Core
 
             Traverse.Create(system.Def).Property("ContractEmployers").SetValue(ContractEmployers);
 
-            if (ContractEmployers.Count() > 1)
+            if (Enumerable.Count(ContractEmployers) > 1)
             {
                 Traverse.Create(system.Def).Property("ContractTargets").SetValue(ContractEmployers);
             }
@@ -372,10 +378,10 @@ public class Core
                 FactionDef FactionEnemies;
                 FactionEnemies = sim.FactionsDict[faction];
 
-                Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
+                Traverse.Create(system.Def).Property("ContractTargets").SetValue(Enumerable.ToList(FactionEnemies.Enemies));
             }
 
-            Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
+            Traverse.Create(system.Def).Property("Owner").SetValue(faction);
         }
     }
 
@@ -387,11 +393,11 @@ public class Core
             var totalInfluence = systemstatus.influenceTracker.Values.Sum();
             var highest = 0f;
             var highestfaction = systemstatus.owner;
-            Log($"Attacking status for {systemstatus.name}");
+            Logger.Log($"Attacking status for {systemstatus.name}");
             foreach (var kvp in systemstatus.influenceTracker)
             {
                 tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
-                Log($"{kvp.Key}: {tempDict[kvp.Key]}");
+                Logger.Log($"{kvp.Key}: {tempDict[kvp.Key]}");
                 if (kvp.Value > highest)
                 {
                     highest = kvp.Value;
@@ -406,7 +412,10 @@ public class Core
                 var previousOwner = systemstatus.owner;
                 var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
                 if (starSystem != null)
+                {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, true);
+                    systemstatus.owner = highestfaction;
+                }
                 else
                 {
                     Log("+=======+++== NULL");
@@ -530,6 +539,7 @@ public class Core
 
         if (sim.Starmap == null) return;
 
+        System.Random random = new System.Random();
         foreach (var system in sim.StarSystems)
         {
             var resources = GetTotalResources(system);
@@ -541,8 +551,8 @@ public class Core
                 var faction = WarStatus.factionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
                 if (faction != null)
                 {
-                    faction.resources += resources * (100 + faction.DaysSinceSystemAttacked) / 100;
-                    faction.DefensiveResources += DefensiveResources * (150 - faction.DaysSinceSystemLost) / 100;
+                    faction.resources += resources;
+                    faction.DefensiveResources += DefensiveResources;
                 }
             }
             catch (Exception ex)
@@ -553,8 +563,27 @@ public class Core
 
         foreach (var faction in WarStatus.factionTracker)
         {
-            Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
-                $"Defensive Resources: {faction.DefensiveResources}");
+            float tempnum = 0f;
+            int i = 0;
+            do
+            {
+                tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
+                i++;
+            } while (i < faction.resources);
+            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+
+            tempnum = 0f;
+            i = 0;
+            do
+            {
+                tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
+                i++;
+            } while (i < faction.DefensiveResources);
+            faction.DefensiveResources = tempnum * (100f * (float)Settings.GlobalDefenseFactor
+                        - faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+
+            Logger.Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
+                       $"Defensive Resources: {faction.DefensiveResources}");
         }
     }
 
