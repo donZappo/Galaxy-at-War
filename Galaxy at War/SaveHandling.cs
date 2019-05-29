@@ -75,4 +75,3 @@ public static class SaveHandling
             return JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
     }
 }
-

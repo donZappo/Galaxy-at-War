@@ -13,7 +13,7 @@ using static Core;
 
 public class WarStatus
 {
-    public List<SystemStatus> systems = new List<SystemStatus>();
+    public List<WarSystem> systems = new List<WarSystem>();
     public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> factionTracker = new List<WarFaction>();
     internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
@@ -26,6 +26,7 @@ public class WarStatus
         // need an empty ctor for deserialization
     }
     
+    
     // initialize a collection of all planets
     public WarStatus(bool nothing = false)
     {
@@ -35,28 +36,26 @@ public class WarStatus
             Log(">>> PUNCH IT");
             foreach (var starSystem in sim.StarSystems)
             {
-                systems.Add(new SystemStatus(starSystem.Name));
+                systems.Add(new WarSystem(starSystem.Name));
                 //ChangeSystemOwnership(sim, planet, planet.Owner, true);
             }
         }
     }
 }
 
-public class SystemStatus
+public class WarSystem
 {
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
     public Dictionary<Faction, int> neighborSystems;
     public Faction owner;
-    
-    //internal StarSystem starSystem;
 
-    public SystemStatus()
+    public WarSystem()
     {
         // don't want our ctor running at deserialization
     }
 
-    public SystemStatus(string systemName)
+    public WarSystem(string systemName)
     {
         Log($"new SystemStatus: {systemName}");
         var sim = UnityGameInstance.BattleTechGame.Simulation;
