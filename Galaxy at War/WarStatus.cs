@@ -30,16 +30,16 @@ public class WarStatus
     // initialize a collection of all planets
     public WarStatus(bool nothing = false)
     {
-        var sim = UnityGameInstance.BattleTechGame.Simulation;
-        if (systems.Count == 0)
-        {
-            Log(">>> Initialize systems");
-            foreach (var starSystem in sim.StarSystems)
-            {
-                systems.Add(new SystemStatus(starSystem.Name));
-                //ChangeSystemOwnership(sim, planet, planet.Owner, true);
-            }
-        }
+        //var sim = UnityGameInstance.BattleTechGame.Simulation;
+        //if (systems.Count == 0)
+        //{
+        //    Log(">>> Initialize systems");
+        //    foreach (var starSystem in sim.StarSystems)
+        //    {
+        //        systems.Add(new SystemStatus(starSystem.Name));
+        //        //ChangeSystemOwnership(sim, planet, planet.Owner, true);
+        //    }
+        //}
     }
     public class SystemStatus
     {
