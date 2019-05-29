@@ -119,11 +119,13 @@ public class Core
             //Add resources for adjacent systems
             try
             {
+                System.Random rand = new System.Random();
                 foreach (var system in WarStatus.systems)
                 {
                     //Log($"\n\n{system.name}");
                     foreach (var neighbor in system.neighborSystems)
                     {
+                        var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
                         //Log(neighbor.Key.ToString());
                         //Log("Dictionary:");
                         //foreach (var kvp in system.influenceTracker)
@@ -131,9 +133,9 @@ public class Core
                         //Log(system.influenceTracker.ContainsKey(neighbor.Key).ToString());
 
                         if (system.influenceTracker.ContainsKey(neighbor.Key))
-                            system.influenceTracker[neighbor.Key] += neighbor.Value;
+                            system.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
                         else
-                            system.influenceTracker.Add(neighbor.Key, neighbor.Value);
+                            system.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
                     }
 
                     Log($"\n{system.name} influenceTracker:");
@@ -609,7 +611,6 @@ public class Core
             }
             SimGameState sim = __instance.BattleTechGame.Simulation;
             UpdateInfluenceFromAttacks(sim);
-        }
         }
     }
 
