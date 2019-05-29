@@ -40,7 +40,7 @@ public class SystemStatus
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
     public Dictionary<Faction, int> neighborSystems;
-    public readonly Faction owner;
+    public Faction owner;
     internal StarSystem starSystem;
 
     public SystemStatus()

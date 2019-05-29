@@ -412,7 +412,10 @@ public class Core
                 var previousOwner = systemstatus.owner;
                 var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
                 if (starSystem != null)
+                {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, true);
+                    systemstatus.owner = highestfaction;
+                }
                 else
                 {
                     Log("+=======+++== NULL");
