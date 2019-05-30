@@ -13,25 +13,24 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> factionTracker = new List<WarFaction>();
-    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-    internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 }
 
 public class SystemStatus
 {
+   
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-    public Dictionary<Faction, int> neighborSystems;
     public Faction owner;
 
     public SystemStatus()
     {
         // don't want our ctor running at deserialization
     }
-
+    
     public SystemStatus(string systemName)
     {
+        
         Log($"new SystemStatus: {systemName}");
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         name = systemName;
@@ -40,17 +39,18 @@ public class SystemStatus
 
         try
         {
-            StaticMethods.CalculateNeighbours(sim, neighborSystems, name);
+            StaticMethods.CalculateNeighbours(sim, name);
         }
         catch (Exception ex)
         {
             Error(ex);
         }
 
+
         //LogDebug("WOOHOO!");
         //LogDebug(influenceTracker + neighborSystems.Count.ToString() + owner + name);
         //LogDebug("WOOT!");
-        StaticMethods.DistributeInfluence(influenceTracker, neighborSystems, owner, name);
+        StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
         StaticMethods.CalculateAttackTargets(sim, name);
         StaticMethods.CalculateDefenseTargets(sim, name);
     }
@@ -60,6 +60,7 @@ public class SystemStatus
 
     public void CalculateAttackTargets(SimGameState sim)
     {
+        
         Log("A");
         var starSystem = sim.StarSystems.Find(x => x.Name == name);
         Log("B");
@@ -67,24 +68,24 @@ public class SystemStatus
         // build list of attack targets
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            var warstatus = new WarStatus();
             Log("C");
             Log(neighborSystem.Name);
             Log(neighborSystem.Owner.ToString());
             Log(starSystem.Owner.ToString());
-            if (!warstatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+            if (!Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
+                
                 Log("D");
                 var tempList = new List<StarSystem> { starSystem };
-                warstatus.attackTargets.Add(neighborSystem.Owner, tempList);
+                Globals.attackTargets.Add(neighborSystem.Owner, tempList);
             }
-            else if (warstatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                        !warstatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
+            else if (Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                        !Globals.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                         (neighborSystem.Owner != starSystem.Owner))
             {
                 Log("E");
-                warstatus.attackTargets[neighborSystem.Owner].Add(starSystem);
+                Globals.attackTargets[neighborSystem.Owner].Add(starSystem);
             }
             Log("F");
         }
@@ -93,21 +94,20 @@ public class SystemStatus
     public void CalculateDefenseTargets(SimGameState sim)
     {
         var starSystem = sim.StarSystems.Find(x => x.Name == name);
-        var warstatus = new WarStatus();
         // build list of defense targets
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!warstatus.defenseTargets.ContainsKey(starSystem.Owner) &&
+            if (!Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
                 var tempList = new List<StarSystem> {starSystem};
-                warstatus.defenseTargets.Add(starSystem.Owner, tempList);
+                Globals.defenseTargets.Add(starSystem.Owner, tempList);
             }
-            else if (warstatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
-                        !warstatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
+            else if (Globals.defenseTargets.ContainsKey(neighborSystem.Owner) &&
+                        !Globals.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                         neighborSystem.Owner != starSystem.Owner)
             {
-                warstatus.defenseTargets[starSystem.Owner].Add(starSystem);
+                Globals.defenseTargets[starSystem.Owner].Add(starSystem);
             }
         }
     }

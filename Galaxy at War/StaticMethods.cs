@@ -5,7 +5,7 @@ using static Logger;
 
 public static class StaticMethods
 {
-    public static void CalculateNeighbours(SimGameState sim, Dictionary<Faction, int> neighborSystems, string name)
+    public static void CalculateNeighbours(SimGameState sim, string name)
     {
         //neighborSystems = new Dictionary<Faction, int>();
         //LogDebug(neighborSystems.Count.ToString());
@@ -17,10 +17,10 @@ public static class StaticMethods
         foreach (var neighborSystem in neighbors)
         {
             LogDebug(neighborSystem.Name);
-            if (neighborSystems.ContainsKey(neighborSystem.Owner))
-                neighborSystems[neighborSystem.Owner] += 1;
+            if (Globals.neighborSystems.ContainsKey(neighborSystem.Owner))
+                Globals.neighborSystems[neighborSystem.Owner] += 1;
             else
-                neighborSystems.Add(neighborSystem.Owner, 1);
+                Globals.neighborSystems.Add(neighborSystem.Owner, 1);
         }
     }
     
@@ -36,17 +36,17 @@ public static class StaticMethods
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
             LogDebug("\t" + neighborSystem);
-            if (!Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+            if (!Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
                 var tempList = new List<StarSystem> {starSystem};
-                Core.WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
+                Globals.attackTargets.Add(neighborSystem.Owner, tempList);
             }
-            else if (Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                     !Core.WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
+            else if (Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                     !Globals.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                      (neighborSystem.Owner != starSystem.Owner))
             {
-                Core.WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
+                Globals.attackTargets[neighborSystem.Owner].Add(starSystem);
             }
         }
     }
@@ -57,20 +57,21 @@ public static class StaticMethods
         // build list of defense targets
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
+            if (!Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
                 neighborSystem.Owner != starSystem.Owner)
             {
                 var tempList = new List<StarSystem> {starSystem};
-                Core.WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
+                Globals.defenseTargets.Add(starSystem.Owner, tempList);
             }
-            else if (Core.WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
-                     !Core.WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
+            else if (Globals.defenseTargets.ContainsKey(neighborSystem.Owner) &&
+                     !Globals.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                      neighborSystem.Owner != starSystem.Owner)
             {
-                Core.WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
+                Globals.defenseTargets[starSystem.Owner].Add(starSystem);
             }
         }
     }
+
     
     public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Dictionary<Faction, int> neighborSystems, Faction owner, string name)
     {

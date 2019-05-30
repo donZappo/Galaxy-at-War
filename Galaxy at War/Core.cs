@@ -134,7 +134,7 @@ public class Core
                     try
                     {
                         //LogDebug("Calculating neighbors for " + system.name);
-                        StaticMethods.CalculateNeighbours(sim, system.neighborSystems, system.name);
+                        StaticMethods.CalculateNeighbours(sim, system.name);
                     }
                     catch (Exception ex)
                     {
@@ -152,7 +152,7 @@ public class Core
                 foreach (var system in WarStatus.systems)
                 {
                     //Log($"\n\n{system.name}");
-                    foreach (var neighbor in system.neighborSystems)
+                    foreach (var neighbor in Globals.neighborSystems)
                     {
                         var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
                         //Log(neighbor.Key.ToString());
@@ -191,15 +191,15 @@ public class Core
 
             try
             {
-                LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
-                if (WarStatus.attackTargets.Count > 0)
+                LogDebug($"WarStatus.attackTargets {Globals.attackTargets.Count}");
+                if (Globals.attackTargets.Count > 0)
                 {
                     // attacking
-                    foreach (var faction in WarStatus.attackTargets.Keys)
+                    foreach (var faction in Globals.attackTargets.Keys)
                         AllocateAttackResources(faction);
 
                     //defending
-                    foreach (var faction in WarStatus.attackTargets.Keys)
+                    foreach (var faction in Globals.attackTargets.Keys)
                         AllocateDefensiveResources(faction);
                 }
             }
@@ -242,18 +242,18 @@ public class Core
         LogDebug(">>> Initialize systems");
         foreach (var starSystem in sim.StarSystems)
         {
-            WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
+            WarStatus.systems.Add(new SystemStatus(starSystem.Name));
         }
     }
 
     public static void LogPotentialTargets(Faction faction)
     {
-        if (WarStatus.attackTargets.Keys.Contains(faction))
+        if (Globals.attackTargets.Keys.Contains(faction))
         {
             Log("------------------------------------------------------");
             Log(faction.ToString());
             Log("Attack Targets");
-            foreach (StarSystem attackedSystem in WarStatus.attackTargets[faction])
+            foreach (StarSystem attackedSystem in Globals.attackTargets[faction])
                 Log($"{attackedSystem.Name,-30} : {attackedSystem.Owner}");
         }
         else
@@ -261,12 +261,12 @@ public class Core
             Log($"No Attack Targets for {faction.ToString()}!");
         }
 
-        if (WarStatus.defenseTargets.Keys.Contains(faction))
+        if (Globals.defenseTargets.Keys.Contains(faction))
         {
             Log("------------------------------------------------------");
             Log(faction.ToString());
             Log("Defense Targets");
-            foreach (StarSystem defensedsystem in WarStatus.defenseTargets[faction])
+            foreach (StarSystem defensedsystem in Globals.defenseTargets[faction])
                 Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
         }
         else
@@ -278,7 +278,7 @@ public class Core
     public static void DivideAttackResources(SimGameState sim, Faction faction)
     {
         Dictionary<Faction, float> uniqueFactions = new Dictionary<Faction, float>();
-        foreach (StarSystem attackSystem in WarStatus.attackTargets[faction])
+        foreach (StarSystem attackSystem in Globals.attackTargets[faction])
         {
             if (!uniqueFactions.ContainsKey(attackSystem.Owner))
                 uniqueFactions.Add(attackSystem.Owner, 0f);
@@ -313,7 +313,7 @@ public class Core
                 var attacklist = new List<StarSystem>();
 
                 //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetfaction
-                foreach (var system in WarStatus.attackTargets[faction])
+                foreach (var system in Globals.attackTargets[faction])
                     if (WarStatus.attackResources[faction].ContainsKey(system.Owner))
                         attacklist.Add(system);
 
@@ -342,10 +342,10 @@ public class Core
         WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
 
         var DefensiveResources = warFaction.DefensiveResources;
-        if (!WarStatus.defenseTargets.ContainsKey(faction))
+        if (!Globals.defenseTargets.ContainsKey(faction))
             return;
 
-        var systems = WarStatus.defenseTargets[faction];
+        var systems = Globals.defenseTargets[faction];
 
         // TODO fix so != 0
         while (DefensiveResources > 0)
