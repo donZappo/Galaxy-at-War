@@ -27,22 +27,6 @@ public class WarStatus
         // need an empty ctor for deserialization
     }
 
-    // initialize a collection of all planets
-    public WarStatus(bool ForceFlip)
-    {
-        var sim = UnityGameInstance.BattleTechGame.Simulation;
-        if (systems.Count == 0)
-        {
-            Log(">>> Initialize systems");
-            foreach (var starSystem in sim.StarSystems)
-            {
-                systems.Add(new SystemStatus(starSystem.Name));
-                attackTargets = new Dictionary<Faction, List<StarSystem>>();
-                defenseTargets = new Dictionary<Faction, List<StarSystem>>();
-                //ChangeSystemOwnership(sim, starSystem, starSystem.Owner, ForceFlip);
-            }
-        }
-    }
     public class SystemStatus
     {
         public string name;

@@ -80,10 +80,12 @@ public class Core
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            //if (WarStatus == null && sim.CompanyTags.Any(x=> x.StartsWith("GalaxyAtWarSave")))
-            //{
-            //    Log(">>> Loading " + fileName);
-            //    //WarStatus = SaveHandling.DeserializeWar();
+
+            //if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
+            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
+            {
+                Log(">>> Loading " + fileName);
+                WarStatus = SaveHandling.DeserializeWar();
 
             //        WarStatus.attackTargets.Clear();
             //        WarStatus.defenseTargets.Clear();
@@ -99,6 +101,13 @@ public class Core
 
                 //This generates the initial distribution of Influence amongst the systems.
                 WarStatus = new WarStatus(false);
+
+                Log(">>> Initialize systems");
+                foreach (var starSystem in sim.StarSystems)
+                {
+                    WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
+                    //ChangeSystemOwnership(sim, planet, planet.Owner, true);
+                }
 
                 foreach (var faction in sim.FactionsDict.Keys)
                     LogPotentialTargets(faction);
@@ -472,7 +481,6 @@ public class Core
                     continue;
                 }
 
-
                 // BUG NRE on deserialization
                 var WarFactionWinner = WarStatus.factionTracker.Find(x => x.faction == highestfaction);
                 if (WarFactionWinner != null)
@@ -698,6 +706,8 @@ public class Core
 
             faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemAttacked * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
 
+
+
             tempnum = 0f;
             i = 0;
             do
@@ -706,8 +716,8 @@ public class Core
                 i++;
             } while (i < faction.DefensiveResources);
 
-            faction.DefensiveResources = tempnum * (100f * (float)Settings.GlobalDefenseFactor
-                                                    - faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+            faction.DefensiveResources = tempnum * (100f * (float) Settings.GlobalDefenseFactor
+                                                    - faction.DaysSinceSystemLost * (float) Settings.ResourceAdjustmentPerCycle) / 100f;
 
             Logger.Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
                        $"Defensive Resources: {faction.DefensiveResources}");
@@ -717,10 +727,8 @@ public class Core
     [HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
-        
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
-
             var teamfaction = __instance.Override.employerTeam.faction;
             var enemyfaction = __instance.Override.targetTeam.faction;
             var difficulty = __instance.Difficulty;
@@ -729,34 +737,34 @@ public class Core
 
             if (result == MissionResult.Victory)
             {
-                warsystem.influenceTracker[teamfaction] += (float)difficulty * Settings.DifficultyFactor;
-                warsystem.influenceTracker[enemyfaction] -= (float)difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[teamfaction] += (float) difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[enemyfaction] -= (float) difficulty * Settings.DifficultyFactor;
             }
-            else if(result == MissionResult.Defeat || (result != MissionResult.Victory && !isGoodFaithEffort))
+            else if (result == MissionResult.Defeat || (result != MissionResult.Victory && !isGoodFaithEffort))
             {
-                warsystem.influenceTracker[teamfaction] -= (float)difficulty * Settings.DifficultyFactor;
-                warsystem.influenceTracker[enemyfaction] += (float)difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[teamfaction] -= (float) difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[enemyfaction] += (float) difficulty * Settings.DifficultyFactor;
             }
-            SimGameState sim = __instance.BattleTechGame.Simulation;
+            var sim = __instance.BattleTechGame.Simulation;
             UpdateInfluenceFromAttacks(sim);
         }
     }
-
-    //try
-    //{
-    //    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
-    //    {
-    //        {
-    //            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
-    //            {
-    //                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
-    //            }
-    //            else
-    //            {
-    //                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
-    //                resources.offence = 0;
-    //                resources.defence = 0;
-    //            }
-    //        }
-    //    }
 }
+
+//try
+//{
+//    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
+//    {
+//        {
+//            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
+//            {
+//                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
+//            }
+//            else
+//            {
+//                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
+//                resources.offence = 0;
+//                resources.defence = 0;
+//            }
+//        }
+//    }
