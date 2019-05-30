@@ -36,7 +36,8 @@ public class RelationTracker
 public class KillListTracker
 {
     public Faction faction;
-    public Dictionary<Faction, int> killList = new Dictionary<Faction, int>();
+    public Dictionary<Faction, float> killList = new Dictionary<Faction, float>();
+    public List<Faction> AttackedBy = new List<Faction>();
 
     // can't serialize these so make them private
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -55,11 +56,11 @@ public class KillListTracker
             if (Core.Settings.ExcludedFactions.Contains(def.Faction))
                 continue;
             if (def.Enemies.Contains(faction))
-                killList.Add(def.Faction, 75);
+                killList.Add(def.Faction, Core.Settings.KLValuesEnemies);
             else if (def.Allies.Contains(faction))
-                killList.Add(def.Faction, 25);
+                killList.Add(def.Faction, Core.Settings.KLValueAllies);
             else
-                killList.Add(def.Faction, 50);
+                killList.Add(def.Faction, Core.Settings.KLValuesNeutral);
         }
     }
 }

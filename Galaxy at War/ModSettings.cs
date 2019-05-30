@@ -102,6 +102,16 @@ public class ModSettings
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
     public float TakeoverThreshold = 20f;
+    public float APRPush = 1f;
+    public int APRPushRandomizer = 4;
+    public float KLValueAllies = 25f;
+    public float KLValuesNeutral = 50f;
+    public float KLValuesEnemies = 100f;
+
+    public List<Faction> LostSystem = new List<Faction>()
+    { };
+    public List<Faction> GainedSystem = new List<Faction>()
+    { };
 
     public List<Faction> ExcludedFactions = new List<Faction>()
     {
