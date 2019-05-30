@@ -2,11 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
-using fastJSON;
-using HBS.Util;
-using Newtonsoft.Json;
 using static Logger;
-using static Core;
 
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -21,11 +17,6 @@ public class WarStatus
     internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 
-    public WarStatus()
-    {
-        // need an empty ctor for deserialization
-    }
-   
     public class SystemStatus
     {
         public string name;
@@ -79,22 +70,22 @@ public class WarStatus
 
       public void CalculateAttackTargets(SimGameState sim)
         {
-            Logger.Log("A");
+            Log("A");
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
-            Logger.Log("B");
+            Log("B");
             // the rest happens only after initial distribution
             // build list of attack targets
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
                 var warstatus = new WarStatus();
-                Logger.Log("C");
-                Logger.Log(neighborSystem.Name);
-                Logger.Log(neighborSystem.Owner.ToString());
-                Logger.Log(starSystem.Owner.ToString());
+                Log("C");
+                Log(neighborSystem.Name);
+                Log(neighborSystem.Owner.ToString());
+                Log(starSystem.Owner.ToString());
                 if (!warstatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                     neighborSystem.Owner != starSystem.Owner)
                 {
-                    Logger.Log("D");
+                    Log("D");
                     var tempList = new List<StarSystem> { starSystem };
                     warstatus.attackTargets.Add(neighborSystem.Owner, tempList);
                 }
@@ -102,10 +93,10 @@ public class WarStatus
                          !warstatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                          (neighborSystem.Owner != starSystem.Owner))
                 {
-                    Logger.Log("E");
+                    Log("E");
                     warstatus.attackTargets[neighborSystem.Owner].Add(starSystem);
                 }
-                Logger.Log("F");
+                Log("F");
             }
         }
 
