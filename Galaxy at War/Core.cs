@@ -158,7 +158,7 @@ namespace GalaxyAtWar
                     foreach (var system in WarStatus.systems)
                     {
                         //Log($"\n\n{system.name}");
-                        foreach (var neighbor in system.neighborSystems)
+                        foreach (var neighbor in WarStatus.neighborSystems)
                         {
                             var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
                             //Log(neighbor.Key.ToString());
@@ -247,18 +247,7 @@ namespace GalaxyAtWar
         {
             LogDebug(">>> Initialize systems");
             foreach (var starSystem in sim.StarSystems)
-            {
-                LogDebug("Add system " + starSystem.Name);
-                //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\wtf.json"))
-                //{
-                //    writer.Write(JsonConvert.SerializeObject(starSystem.Def));
-                //}
-
-                var newSystem = new SystemStatus(sim, starSystem.Name);
-                //LogDebug(newSystem.owner.ToString());
-                //LogDebug(newSystem.name);
-                WarStatus.systems.Add(newSystem);
-            }
+                WarStatus.systems.Add(new SystemStatus(sim, starSystem.Name));
 
             foreach (var starSystem in WarStatus.systems)
             {
@@ -271,10 +260,10 @@ namespace GalaxyAtWar
                     Error(ex);
                 }
 
-                //LogDebug("WOOHOO!");
-                //LogDebug(influenceTracker + neighborSystems.Count.ToString() + owner + name);
-                //LogDebug("WOOT!");
-                StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.neighborSystems, starSystem.owner, starSystem.name);
+                LogDebug("WOOHOO!");
+                LogDebug(WarStatus.neighborSystems.Count.ToString() + starSystem.owner + starSystem.name);
+                LogDebug("WOOT!");
+                StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
                 StaticMethods.CalculateAttackTargets(sim, starSystem.name);
                 StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
             }

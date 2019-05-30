@@ -16,16 +16,15 @@ namespace GalaxyAtWar
         public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
         public List<WarFaction> factionTracker = new List<WarFaction>();
         public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
-        public static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-        public static Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
-        public static Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
+        internal static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+        internal static Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
+        internal static Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     }
 
     public class SystemStatus
     {
         public string name;
         public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-        public Dictionary<Faction, int> neighborSystems;
         public Faction owner = Faction.Unknown;
 
         [JsonConstructor]
@@ -38,24 +37,7 @@ namespace GalaxyAtWar
         {
             Log($"new SystemStatus: {systemName}");
             name = systemName;
-            //starSystem = sim.StarSystems.Find(x => x.Name == name);
             owner = sim.StarSystems.First(s => s.Name == name).Owner;
-
-            //try
-            //{
-            //    StaticMethods.CalculateNeighbours(sim, neighborSystems, name);
-            //}
-            //catch (Exception ex)
-            //{
-            //    Error(ex);
-            //}
-            //
-            ////LogDebug("WOOHOO!");
-            ////LogDebug(influenceTracker + neighborSystems.Count.ToString() + owner + name);
-            ////LogDebug("WOOT!");
-            //StaticMethods.DistributeInfluence(influenceTracker, neighborSystems, owner, name);
-            //StaticMethods.CalculateAttackTargets(sim, name);
-            //StaticMethods.CalculateDefenseTargets(sim, name);
         }
 
         // Find how many friendly and opposing neighbors are present for the star system.

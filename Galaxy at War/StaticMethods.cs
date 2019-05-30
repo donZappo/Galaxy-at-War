@@ -26,8 +26,6 @@ namespace GalaxyAtWar
             }
         }
 
-    }
-
         public static void CalculateAttackTargets(SimGameState sim, string name)
         {
             LogDebug("CalcAttack");
@@ -75,7 +73,7 @@ namespace GalaxyAtWar
             }
         }
 
-        public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Dictionary<Faction, int> neighborSystems, Faction owner, string name)
+        public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Faction owner, string name)
         {
             Log(">>> DistributeInfluence: " + name);
             // determine starting influence based on neighboring systems
@@ -85,9 +83,9 @@ namespace GalaxyAtWar
             //Log("=====================================================");
             while (remainingInfluence > 0)
             {
-                foreach (var faction in neighborSystems.Keys)
+                foreach (var faction in WarStatus.neighborSystems.Keys)
                 {
-                    var influenceDelta = neighborSystems[faction];
+                    var influenceDelta = WarStatus.neighborSystems[faction];
                     remainingInfluence -= influenceDelta;
                     //Log($"{faction.ToString(),-20} gains {influenceDelta,2}, leaving {remainingInfluence}");
                     if (influenceTracker.ContainsKey(faction))
@@ -110,6 +108,5 @@ namespace GalaxyAtWar
 
             influenceTracker = tempDict;
         }
-
     }
 }
