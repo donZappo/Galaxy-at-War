@@ -5,9 +5,30 @@ using static Logger;
 
 public static class StaticMethods
 {
+    public static void CalculateNeighbours(SimGameState sim, Dictionary<Faction, int> neighborSystems, string name)
+    {
+        //neighborSystems = new Dictionary<Faction, int>();
+        //LogDebug(neighborSystems.Count.ToString());
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        //LogDebug(starSystem.Name);
+        var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
+        //LogDebug(neighbors.Count.ToString());
+        // build a list of all neighbors
+        foreach (var neighborSystem in neighbors)
+        {
+            LogDebug(neighborSystem.Name);
+            if (neighborSystems.ContainsKey(neighborSystem.Owner))
+                neighborSystems[neighborSystem.Owner] += 1;
+            else
+                neighborSystems.Add(neighborSystem.Owner, 1);
+        }
+    }
+
     public static void CalculateAttackTargets(SimGameState sim, string name)
     {
+        LogDebug("CalcAttack");
         var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        LogDebug(starSystem.Name);
         // the rest happens only after initial distribution
         // build list of attack targets
         LogDebug("neighorSystems " + sim.Starmap.GetAvailableNeighborSystem(starSystem).Count);

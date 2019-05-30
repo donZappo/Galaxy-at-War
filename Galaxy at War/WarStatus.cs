@@ -39,13 +39,16 @@ public class WarStatus
 
             try
             {
-                CalculateNeighbours(sim);
+                StaticMethods.CalculateNeighbours(sim, neighborSystems, name);
             }
             catch (Exception ex)
             {
                 Error(ex);
             }
 
+            //LogDebug("WOOHOO!");
+            //LogDebug(influenceTracker + neighborSystems.Count.ToString() + owner + name);
+            //LogDebug("WOOT!");
             StaticMethods.DistributeInfluence(influenceTracker, neighborSystems, owner, name);
             StaticMethods.CalculateAttackTargets(sim, name);
             StaticMethods.CalculateDefenseTargets(sim, name);
@@ -53,20 +56,6 @@ public class WarStatus
 
         // Find how many friendly and opposing neighbors are present for the star system.
         // thanks to WarTech by Morphyum
-        public void CalculateNeighbours(SimGameState sim)
-        {
-            neighborSystems = new Dictionary<Faction, int>();
-            var starSystem = sim.StarSystems.Find(x => x.Name == name);
-            var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
-            // build a list of all neighbors
-            foreach (var neighborSystem in neighbors)
-            {
-                if (neighborSystems.ContainsKey(neighborSystem.Owner))
-                    neighborSystems[neighborSystem.Owner] += 1;
-                else
-                    neighborSystems.Add(neighborSystem.Owner, 1);
-            }
-        }
 
       public void CalculateAttackTargets(SimGameState sim)
         {
