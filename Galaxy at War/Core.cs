@@ -80,17 +80,17 @@ public class Core
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            if (WarStatus == null && sim.CompanyTags.Any(x=> x.StartsWith("GalaxyAtWarSave")))
-            {
-                Log(">>> Loading " + fileName);
-                WarStatus = SaveHandling.DeserializeWar();
+            //if (WarStatus == null && sim.CompanyTags.Any(x=> x.StartsWith("GalaxyAtWarSave")))
+            //{
+            //    Log(">>> Loading " + fileName);
+            //    //WarStatus = SaveHandling.DeserializeWar();
 
-                WarStatus.attackTargets.Clear();
-                WarStatus.defenseTargets.Clear();
+            //        WarStatus.attackTargets.Clear();
+            //        WarStatus.defenseTargets.Clear();
 
-                foreach (var faction in sim.FactionsDict.Keys)
-                    LogPotentialTargets(faction);
-            }
+            //    foreach (var faction in sim.FactionsDict.Keys)
+            //        LogPotentialTargets(faction);
+            //}
 
             //// first time setup if not
             if (WarStatus == null)
@@ -98,7 +98,7 @@ public class Core
                 Log(">>> First-time initialization");
 
                 //This generates the initial distribution of Influence amongst the systems.
-                WarStatus = new WarStatus();
+                WarStatus = new WarStatus(false);
 
                 foreach (var faction in sim.FactionsDict.Keys)
                     LogPotentialTargets(faction);
@@ -202,7 +202,7 @@ public class Core
             Settings.GainedSystem.Clear();
             Settings.LostSystem.Clear();
 
-            SaveHandling.SerializeWar();
+            //SaveHandling.SerializeWar();
             Log(">>> DONE PROC");
         }
     }
@@ -430,6 +430,7 @@ public class Core
 
     private static void UpdateInfluenceFromAttacks(SimGameState sim)
     {
+        Logger.Log(WarStatus.systems.Count().ToString());
         foreach (var systemstatus in WarStatus.systems)
         {
             var tempDict = new Dictionary<Faction, float>();
@@ -490,8 +491,10 @@ public class Core
                 }
             }
         }
-        foreach (var killListTracker in WarStatus.relationTracker.factions)
+        var tempRTFactions = WarStatus.relationTracker.factions;
+        foreach (var killListTracker in tempRTFactions)
         {
+            Logger.Log(killListTracker.faction.ToString());
             AdjustKillList(killListTracker, sim);
             killListTracker.AttackedBy.Clear();
         }
@@ -500,10 +503,11 @@ public class Core
     public static void AdjustKillList(KillListTracker killListTracker, SimGameState sim)
     {
         var KillList = killListTracker.killList;
+        var KL_List = new List<Faction>(KillList.Keys);
         var KillListFaction = killListTracker.faction;
-        foreach (Faction faction in KillList.Keys)
+        foreach (Faction faction in KL_List)
         {
-            //Factions go towards peace over time if not attacked. But there is diminishing returns further from 50.
+            //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
             if (!killListTracker.AttackedBy.Contains(faction))
             {
                 if (KillList[faction] > 50)
@@ -512,7 +516,6 @@ public class Core
                     KillList[faction] -= 1 - (50 - KillList[faction]) / 50;
 
             }
-
             //Ceiling and floor for faction enmity. 
             if (KillList[faction] > 99)
                 KillList[faction] = 99;
@@ -522,27 +525,10 @@ public class Core
 
             if (KillList[faction] > 75)
             {
-                if(!sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                if (!sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
                 {
                     var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
                     enemies.Add(faction);
-                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
-                }
-
-                if(sim.FactionsDict[KillListFaction].Allies.Contains(faction))
-                {
-                    var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
-                    allies.Remove(faction);
-                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
-                }
-            }
-
-            if (KillList[faction] <= 75 && KillList[faction] > 25)
-            {
-                if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
-                {
-                    var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
-                    enemies.Remove(faction);
                     Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
@@ -553,7 +539,21 @@ public class Core
                     Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
             }
-
+            if (KillList[faction] <= 75 && KillList[faction] > 25)
+            {
+                if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                    enemies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+                if (sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                    allies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+            }
 
             if (KillList[faction] <= 25)
             {
@@ -563,7 +563,6 @@ public class Core
                     allies.Add(faction);
                     Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
-
                 if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
                 {
                     var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
@@ -572,8 +571,6 @@ public class Core
                 }
             }
         }
-
-        
     }
 
     public static int GetTotalResources(StarSystem system)
