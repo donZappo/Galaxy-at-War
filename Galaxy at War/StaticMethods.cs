@@ -26,6 +26,8 @@ namespace GalaxyAtWar
             }
         }
 
+    }
+
         public static void CalculateAttackTargets(SimGameState sim, string name)
         {
             LogDebug("CalcAttack");
