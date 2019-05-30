@@ -7,6 +7,7 @@ using BattleTech.Save.Test;
 using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
+using static Logger;
 
 public static class SaveHandling
 {

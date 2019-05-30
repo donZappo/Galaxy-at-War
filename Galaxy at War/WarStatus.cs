@@ -17,13 +17,15 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> factionTracker = new List<WarFaction>();
-    public Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-    public Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 
+    public WarStatus()
     {
         // need an empty ctor for deserialization
     }
+   
     public class SystemStatus
     {
         public string name;
@@ -43,22 +45,8 @@ public class WarStatus
             name = systemName;
             //starSystem = sim.StarSystems.Find(x => x.Name == name);
             owner = sim.StarSystems.First(s => s.Name == name).Owner;
-            
-            CalculateNeighbours(sim);
-            DistributeInfluence();
-            CalculateAttackTargets(sim);
-            CalculateDefenseTargets(sim);
-        }
 
-        private void DistributeInfluence()
-        {
-            Log(">>> DistributeInfluence: " + name);
-            // determine starting influence based on neighboring systems
-            influenceTracker.Add(owner, Core.Settings.DominantInfluence);
-            int remainingInfluence = Core.Settings.MinorInfluencePool;
-            //Log("\nremainingInfluence: " + remainingInfluence);
-            //Log("=====================================================");
-            while (remainingInfluence > 0)
+            try
             {
                 CalculateNeighbours(sim);
             }

@@ -9,7 +9,6 @@ using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
-using Error = BestHTTP.SocketIO.Error;
 using Random = System.Random;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -78,9 +77,9 @@ public class Core
 
         static void Prefix(SimGameState __instance, int timeLapse)
         {
+            LogDebug("DAY PASSED");
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
-
 
             //if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
@@ -88,12 +87,13 @@ public class Core
                 LogDebug(">>> Loading " + fileName);
                 SaveHandling.DeserializeWar();
 
-            //        WarStatus.attackTargets.Clear();
-            //        WarStatus.defenseTargets.Clear();
+                //        WarStatus.attackTargets.Clear();
+                //        WarStatus.defenseTargets.Clear();
 
-            //    foreach (var faction in sim.FactionsDict.Keys)
-            //        LogPotentialTargets(faction);
-            //}
+                //    foreach (var faction in sim.FactionsDict.Keys)
+                //        LogPotentialTargets(faction);
+                //}
+            }
 
             //// first time setup if not
             if (WarStatus == null)
@@ -101,31 +101,27 @@ public class Core
                 LogDebug(">>> First-time initialization");
 
                 //This generates the initial distribution of Influence amongst the systems.
-                WarStatus = new WarStatus(false);
+                WarStatus = new WarStatus();
 
-                try
-                {
-                    InitializeSystems();
-                }
-                catch (Exception ex)
-                {
-                    Error(ex);
-                }
+                InitializeSystems(sim);
 
                 foreach (var faction in sim.FactionsDict.Keys)
                     LogPotentialTargets(faction);
             }
 
             if (WarStatus.systems.Count == 0)
+            {
+                LogDebug("NO SYSTEMS BUT NOT NULL");
                 try
                 {
-                    InitializeSystems();
+                    InitializeSystems(sim);
                 }
                 catch (Exception ex)
                 {
                     LogDebug("WarStatus.systems.Count == 0");
                     Error(ex);
                 }
+            }
 
             // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
             //     return;
@@ -223,21 +219,8 @@ public class Core
                 Error(ex);
             }
 
-//<<<<<<< maximumeffort
-            SaveHandling.SerializeWar();
-            LogDebug(">>> DONE PROC");
-        }
-
-        private static void InitializeSystems()
-        {
-            LogDebug(">>> Initialize systems");
-            foreach (var starSystem in sim.StarSystems)
-            {
-                WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
-            }
-//=======
             //Increase War Escalation of decay defenses.
-            foreach(var warfaction in WarStatus.factionTracker)
+            foreach (var warfaction in WarStatus.factionTracker)
             {
                 if (Settings.GainedSystem.Contains(warfaction.faction))
                     warfaction.DaysSinceSystemAttacked += 1;
@@ -245,12 +228,21 @@ public class Core
                 if (Settings.LostSystem.Contains(warfaction.faction))
                     warfaction.DaysSinceSystemLost += 1;
             }
+
             Settings.GainedSystem.Clear();
             Settings.LostSystem.Clear();
 
-            //SaveHandling.SerializeWar();
-            Log(">>> DONE PROC");
-//>>>>>>> master
+            SaveHandling.SerializeWar();
+            LogDebug(">>> DONE PROC");
+        }
+    }
+
+    private static void InitializeSystems(SimGameState sim)
+    {
+        LogDebug(">>> Initialize systems");
+        foreach (var starSystem in sim.StarSystems)
+        {
+            WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
         }
     }
 
@@ -296,8 +288,8 @@ public class Core
         var killList = WarStatus.relationTracker.factions.First(f => f.faction == faction).killList;
         WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
         float resources = warFaction.resources;
-        float total = uniqueFactions.Values.Sum();
 
+        float total = uniqueFactions.Values.Sum();
         foreach (Faction tempfaction in uniqueFactions.Keys)
         {
             uniqueFactions[tempfaction] = killList[tempfaction] * resources / total;
@@ -347,8 +339,8 @@ public class Core
         var random = new Random();
         if (WarStatus.factionTracker.Find(x => x.faction == faction) == null)
             return;
-
         WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
+
         var DefensiveResources = warFaction.DefensiveResources;
         if (!WarStatus.defenseTargets.ContainsKey(faction))
             return;
@@ -401,7 +393,6 @@ public class Core
         if (faction != system.Owner || ForceFlip)
         {
             Faction OldFaction = system.Owner;
-            
 
             system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);
@@ -439,7 +430,6 @@ public class Core
                 Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
             }
 
-           
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
             var oldOwner = systemStatus.owner;
             systemStatus.owner = faction;
@@ -455,7 +445,7 @@ public class Core
             factionTracker.killList[faction] += KillListDelta;
 
             //Allies are upset that their friend is being beaten up.
-            foreach(var ally in sim.FactionsDict[OldFaction].Allies)
+            foreach (var ally in sim.FactionsDict[OldFaction].Allies)
             {
                 var factionAlly = WarStatus.relationTracker.factions.Find(x => x.faction == ally);
                 factionAlly.killList[ally] += KillListDelta / 2;
@@ -467,13 +457,13 @@ public class Core
                 var factionEnemy = WarStatus.relationTracker.factions.Find(x => x.faction == enemy);
                 factionEnemy.killList[faction] -= KillListDelta / 2;
             }
+
             factionTracker.AttackedBy.Add(faction);
 
             Settings.LostSystem.Add(OldFaction);
             Settings.GainedSystem.Add(faction);
         }
     }
-
 
     private static void UpdateInfluenceFromAttacks(SimGameState sim)
     {
@@ -537,6 +527,7 @@ public class Core
                 }
             }
         }
+
         var tempRTFactions = WarStatus.relationTracker.factions;
         foreach (var killListTracker in tempRTFactions)
         {
@@ -550,6 +541,7 @@ public class Core
     {
         var KillList = killListTracker.killList;
         var KL_List = new List<Faction>(KillList.Keys);
+
         var KillListFaction = killListTracker.faction;
         foreach (Faction faction in KL_List)
         {
@@ -560,8 +552,8 @@ public class Core
                     KillList[faction] -= 1 - (KillList[faction] - 50) / 50;
                 else if (KillList[faction] <= 50)
                     KillList[faction] -= 1 - (50 - KillList[faction]) / 50;
-
             }
+
             //Ceiling and floor for faction enmity. 
             if (KillList[faction] > 99)
                 KillList[faction] = 99;
@@ -585,6 +577,7 @@ public class Core
                     Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
             }
+
             if (KillList[faction] <= 75 && KillList[faction] > 25)
             {
                 if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
@@ -593,6 +586,7 @@ public class Core
                     enemies.Remove(faction);
                     Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                 }
+
                 if (sim.FactionsDict[KillListFaction].Allies.Contains(faction))
                 {
                     var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
@@ -609,6 +603,7 @@ public class Core
                     allies.Add(faction);
                     Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
+
                 if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
                 {
                     var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
@@ -663,9 +658,9 @@ public class Core
         return result;
     }
 
-      public static void RefreshResources(SimGameState sim)
+    public static void RefreshResources(SimGameState sim)
     {
-        // no point iterating over a KVP if you aren't using the values
+// no point iterating over a KVP if you aren't using the values
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
             //Log(faction.ToString());
@@ -730,9 +725,7 @@ public class Core
                 i++;
             } while (i < faction.resources);
 
-            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemAttacked * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
-
-
+            faction.resources = tempnum * (100f + (float) faction.DaysSinceSystemAttacked * (float) Settings.ResourceAdjustmentPerCycle) / 100f;
 
             tempnum = 0f;
             i = 0;
@@ -771,6 +764,7 @@ public class Core
                 warsystem.influenceTracker[teamfaction] -= (float) difficulty * Settings.DifficultyFactor;
                 warsystem.influenceTracker[enemyfaction] += (float) difficulty * Settings.DifficultyFactor;
             }
+
             var sim = __instance.BattleTechGame.Simulation;
             UpdateInfluenceFromAttacks(sim);
         }
