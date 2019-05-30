@@ -153,77 +153,44 @@ namespace GalaxyAtWar
 
                 //Add resources for adjacent systems
                 var rand = new Random();
-                try
+
+                foreach (var system in WarStatus.systems)
                 {
-                    foreach (var system in WarStatus.systems)
+                    //Log($"\n\n{system.name}");
+                    foreach (var neighbor in WarStatus.neighborSystems)
                     {
-                        //Log($"\n\n{system.name}");
-                        foreach (var neighbor in WarStatus.neighborSystems)
-                        {
-                            var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
-                            //Log(neighbor.Key.ToString());
-                            //Log("Dictionary:");
-                            //foreach (var kvp in system.influenceTracker)
-                            //    Log($"\t{kvp.Key}: {kvp.Value}");
-                            //Log(system.influenceTracker.ContainsKey(neighbor.Key).ToString());
+                        var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
+                        //Log(neighbor.Key.ToString());
+                        //Log("Dictionary:");
+                        //foreach (var kvp in system.influenceTracker)
+                        //    Log($"\t{kvp.Key}: {kvp.Value}");
+                        //Log(system.influenceTracker.ContainsKey(neighbor.Key).ToString());
 
-                            if (system.influenceTracker.ContainsKey(neighbor.Key))
-                                system.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
-                            else
-                                system.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
-                        }
-
-                        Log($"\n{system.name} influenceTracker:");
-                        //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
+                        if (system.influenceTracker.ContainsKey(neighbor.Key))
+                            system.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
+                        else
+                            system.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
                     }
+
+                    Log($"\n{system.name} influenceTracker:");
+                    //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                 }
 
-                catch (Exception ex)
+                RefreshResources(__instance);
+
+                LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
+                if (WarStatus.attackTargets.Count > 0)
                 {
-                    LogDebug("\n2");
-                    Error(ex);
+                    // attacking
+                    foreach (var faction in WarStatus.attackTargets.Keys)
+                        AllocateAttackResources(faction);
+
+                    //defending
+                    foreach (var faction in WarStatus.attackTargets.Keys)
+                        AllocateDefensiveResources(faction);
                 }
 
-                //Log("Refreshing Resources");
-                try
-                {
-                    RefreshResources(__instance);
-                }
-                catch (Exception ex)
-                {
-                    LogDebug("3");
-                    Error(ex);
-                }
-
-                try
-                {
-                    LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
-                    if (WarStatus.attackTargets.Count > 0)
-                    {
-                        // attacking
-                        foreach (var faction in WarStatus.attackTargets.Keys)
-                            AllocateAttackResources(faction);
-
-                        //defending
-                        foreach (var faction in WarStatus.attackTargets.Keys)
-                            AllocateDefensiveResources(faction);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogDebug("5");
-                    Error(ex);
-                }
-
-                try
-                {
-                    UpdateInfluenceFromAttacks(sim);
-                }
-                catch (Exception ex)
-                {
-                    LogDebug("6");
-                    Error(ex);
-                }
+                UpdateInfluenceFromAttacks(sim);
 
                 //Increase War Escalation of decay defenses.
                 foreach (var warfaction in WarStatus.factionTracker)

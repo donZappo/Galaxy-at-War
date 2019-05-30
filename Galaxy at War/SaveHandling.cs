@@ -111,7 +111,6 @@ namespace GalaxyAtWar
                 writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
             using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\RelationTracker.json"))
                 writer.Write(JsonConvert.SerializeObject(WarStatus.relationTracker));
-            LogDebug(WarStatus.relationTracker.factions.Count.ToString());
             LogDebug(">>> Serialization complete");
         }
 
