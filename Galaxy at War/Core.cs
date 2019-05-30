@@ -77,7 +77,6 @@ public class Core
 
         static void Prefix(SimGameState __instance, int timeLapse)
         {
-            LogDebug("DAY PASSED");
             // already have a save?
             var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
@@ -134,7 +133,8 @@ public class Core
                 {
                     try
                     {
-                        system.CalculateNeighbours(sim);
+                        //LogDebug("Calculating neighbors for " + system.name);
+                        StaticMethods.CalculateNeighbours(sim, system.neighborSystems, system.name);
                     }
                     catch (Exception ex)
                     {
@@ -143,7 +143,7 @@ public class Core
                     }
                 }
             else
-                LogDebug("SYSTEMS FOUND");
+                LogDebug("NO SYSTEMS FOUND");
 
             //Add resources for adjacent systems
             try

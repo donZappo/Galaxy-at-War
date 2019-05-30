@@ -22,7 +22,7 @@ public static class SaveHandling
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
             //if (!sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave"))) return;
             if (!File.Exists("Mods\\GalaxyAtWar\\" + fileName)) return;
-            Logger.LogDebug("Rehydrate Postfix");
+            LogDebug("Rehydrate Postfix");
             DeserializeWar();
         }
     }
@@ -33,7 +33,7 @@ public static class SaveHandling
         public static void Prefix()
         {
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
-            Logger.LogDebug("Save Prefix");
+            LogDebug("Save Prefix");
             SerializeWar();
         }
     }
@@ -52,11 +52,11 @@ public static class SaveHandling
                     if (tag.StartsWith("GalaxyAtWar"))
                     {
                         sim.CompanyTags.Remove(tag);
-                        Logger.Log("removed tag");
+                        Log("removed tag");
                     }
                     else
                     {
-                        Logger.Log("left " + tag);
+                        Log("left " + tag);
                     }
                 }
 
@@ -73,17 +73,17 @@ public static class SaveHandling
             var hotkeyL = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.L);
             if (hotkeyL)
             {
-                sim.CompanyTags.Where(x => x.Contains("GalaxyAtWar")).Do(Logger.LogDebug);
+                sim.CompanyTags.Where(x => x.Contains("GalaxyAtWar")).Do(LogDebug);
 
                 var tag = sim.CompanyTags.Where(x => x.Contains("GalaxyAtWar")).First();
                 if (tag != null)
                 {
                     var dupes = Regex.Matches(tag, @"""faction"":8");
                     var num = dupes.Count == 0 ? 42 : dupes.Count;
-                    Logger.LogDebug("Dupes " + dupes.Count);
+                    LogDebug("Dupes " + dupes.Count);
                 }
                 else
-                    Logger.LogDebug("FUCK");
+                    LogDebug("FUCK");
 
                 // WTFFFFF
                 //Logger.LogDebug(Regex.Matches(sim.CompanyTags.ToList().First(x=>x.Contains("GalaxyAtWar")), @"""faction"":8").Count.ToString());
@@ -93,7 +93,7 @@ public static class SaveHandling
             if (hotkeyT)
             {
                 var tagLength = sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"))?.Length;
-                Logger.Log($"GalaxyAtWarSize {tagLength / 1024}kb");
+                Log($"GalaxyAtWarSize {tagLength / 1024}kb");
             }
         }
     }
@@ -103,25 +103,25 @@ public static class SaveHandling
         //sim.CompanyTags.Where(tag => tag.Contains(@"{""systems"":[],""relationTracker"":")).Do(x => sim.CompanyTags.Remove(x));
         //sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         //sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
-        Logger.LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
+        //LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
             writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
-        Logger.LogDebug(">>> Serialization complete");
+        LogDebug(">>> Serialization complete");
     }
 
     internal static void DeserializeWar()
     {
-        Logger.LogDebug(">>> Deserialization");
+        LogDebug(">>> Deserialization");
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
         {
             Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
             try
             {
-                Logger.LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
+                //LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
             }
             catch (Exception ex)
             {
-                Logger.Error(ex);
+                Error(ex);
             }
         }
 
