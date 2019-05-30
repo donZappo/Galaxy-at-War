@@ -17,8 +17,8 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> factionTracker = new List<WarFaction>();
-    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-    internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
+    public Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    public Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 
     [JsonConstructor]
@@ -27,20 +27,6 @@ public class WarStatus
         // need an empty ctor for deserialization
     }
 
-    // initialize a collection of all planets
-    public WarStatus(bool nothing = false)
-    {
-        //var sim = UnityGameInstance.BattleTechGame.Simulation;
-        //if (systems.Count == 0)
-        //{
-        //    Log(">>> Initialize systems");
-        //    foreach (var starSystem in sim.StarSystems)
-        //    {
-        //        systems.Add(new SystemStatus(starSystem.Name));
-        //        //ChangeSystemOwnership(sim, planet, planet.Owner, true);
-        //    }
-        //}
-    }
     public class SystemStatus
     {
         public string name;
@@ -60,7 +46,7 @@ public class WarStatus
             name = systemName;
             //starSystem = sim.StarSystems.Find(x => x.Name == name);
             owner = sim.StarSystems.First(s => s.Name == name).Owner;
-
+            
             CalculateNeighbours(sim);
             DistributeInfluence();
             CalculateAttackTargets(sim);
@@ -122,43 +108,54 @@ public class WarStatus
 
         public void CalculateAttackTargets(SimGameState sim)
         {
+            Logger.Log("A");
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
+            Logger.Log("B");
             // the rest happens only after initial distribution
             // build list of attack targets
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                if (!Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                var warstatus = new WarStatus();
+                Logger.Log("C");
+                Logger.Log(neighborSystem.Name);
+                Logger.Log(neighborSystem.Owner.ToString());
+                Logger.Log(starSystem.Owner.ToString());
+                if (!warstatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                     neighborSystem.Owner != starSystem.Owner)
                 {
-                    var tempList = new List<StarSystem> {starSystem};
-                    Core.WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
+                    Logger.Log("D");
+                    var tempList = new List<StarSystem> { starSystem };
+                    warstatus.attackTargets.Add(neighborSystem.Owner, tempList);
                 }
-                else if (Core.WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                         !Core.WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
+                else if (warstatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                         !warstatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                          (neighborSystem.Owner != starSystem.Owner))
                 {
-                    Core.WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
+                    Logger.Log("E");
+                    warstatus.attackTargets[neighborSystem.Owner].Add(starSystem);
                 }
+                Logger.Log("F");
             }
         }
 
         public void CalculateDefenseTargets(SimGameState sim)
         {
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
+            var warstatus = new WarStatus();
             // build list of defense targets
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                if (!Core.WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
+                if (!warstatus.defenseTargets.ContainsKey(starSystem.Owner) &&
                     neighborSystem.Owner != starSystem.Owner)
                 {
                     var tempList = new List<StarSystem> {starSystem};
-                    Core.WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
+                    warstatus.defenseTargets.Add(starSystem.Owner, tempList);
                 }
-                else if (Core.WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
-                         !Core.WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
+                else if (warstatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
+                         !warstatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                          neighborSystem.Owner != starSystem.Owner)
                 {
-                    Core.WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
+                    warstatus.defenseTargets[starSystem.Owner].Add(starSystem);
                 }
             }
         }
