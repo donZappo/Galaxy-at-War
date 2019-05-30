@@ -23,6 +23,7 @@ public static class StaticMethods
                 neighborSystems.Add(neighborSystem.Owner, 1);
         }
     }
+    
 
     public static void CalculateAttackTargets(SimGameState sim, string name)
     {
