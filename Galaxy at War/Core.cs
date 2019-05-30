@@ -9,6 +9,7 @@ using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
+using Error = BestHTTP.SocketIO.Error;
 using Random = System.Random;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -84,8 +85,8 @@ public class Core
             //if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
             if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
             {
-                Log(">>> Loading " + fileName);
-                WarStatus = SaveHandling.DeserializeWar();
+                LogDebug(">>> Loading " + fileName);
+                SaveHandling.DeserializeWar();
 
             //        WarStatus.attackTargets.Clear();
             //        WarStatus.defenseTargets.Clear();
@@ -97,33 +98,56 @@ public class Core
             //// first time setup if not
             if (WarStatus == null)
             {
-                Log(">>> First-time initialization");
+                LogDebug(">>> First-time initialization");
 
                 //This generates the initial distribution of Influence amongst the systems.
                 WarStatus = new WarStatus(false);
 
-                Log(">>> Initialize systems");
-                foreach (var starSystem in sim.StarSystems)
+                try
                 {
-                    WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
-                    //ChangeSystemOwnership(sim, planet, planet.Owner, true);
+                    InitializeSystems();
+                }
+                catch (Exception ex)
+                {
+                    Error(ex);
                 }
 
                 foreach (var faction in sim.FactionsDict.Keys)
                     LogPotentialTargets(faction);
             }
 
+            if (WarStatus.systems.Count == 0)
+                try
+                {
+                    InitializeSystems();
+                }
+                catch (Exception ex)
+                {
+                    LogDebug("WarStatus.systems.Count == 0");
+                    Error(ex);
+                }
+
             // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
             //     return;
 
-            Log(">>> PROC");
+            LogDebug(">>> PROC");
 
             // Proc effects
-
-            foreach (var system in WarStatus.systems)
-            {
-                system.CalculateNeighbours(sim);
-            }
+            if (WarStatus.systems.Count > 0)
+                foreach (var system in WarStatus.systems)
+                {
+                    try
+                    {
+                        system.CalculateNeighbours(sim);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogDebug("CALC NEIGHBORS");
+                        Error(ex);
+                    }
+                }
+            else
+                LogDebug("SYSTEMS FOUND");
 
             //Add resources for adjacent systems
             try
@@ -148,13 +172,13 @@ public class Core
                     }
 
                     Log($"\n{system.name} influenceTracker:");
-                    system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
+                    //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                 }
             }
 
             catch (Exception ex)
             {
-                Log("\n2");
+                LogDebug("\n2");
                 Error(ex);
             }
 
@@ -165,16 +189,16 @@ public class Core
             }
             catch (Exception ex)
             {
-                Log("3");
+                LogDebug("3");
                 Error(ex);
             }
 
             try
             {
-                // attacking
-                Log($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
+                LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
                 if (WarStatus.attackTargets.Count > 0)
                 {
+                    // attacking
                     foreach (var faction in WarStatus.attackTargets.Keys)
                         AllocateAttackResources(faction);
 
@@ -185,7 +209,7 @@ public class Core
             }
             catch (Exception ex)
             {
-                Log("5");
+                LogDebug("5");
                 Error(ex);
             }
 
@@ -195,10 +219,23 @@ public class Core
             }
             catch (Exception ex)
             {
-                Log("6");
+                LogDebug("6");
                 Error(ex);
             }
 
+//<<<<<<< maximumeffort
+            SaveHandling.SerializeWar();
+            LogDebug(">>> DONE PROC");
+        }
+
+        private static void InitializeSystems()
+        {
+            LogDebug(">>> Initialize systems");
+            foreach (var starSystem in sim.StarSystems)
+            {
+                WarStatus.systems.Add(new WarStatus.SystemStatus(starSystem.Name));
+            }
+//=======
             //Increase War Escalation of decay defenses.
             foreach(var warfaction in WarStatus.factionTracker)
             {
@@ -213,6 +250,7 @@ public class Core
 
             //SaveHandling.SerializeWar();
             Log(">>> DONE PROC");
+//>>>>>>> master
         }
     }
 
@@ -474,10 +512,10 @@ public class Core
                     Log("+=======+++== NULL");
                 }
 
-                Log(">>> Ownership changed to " + highestfaction);
+                LogDebug(">>> Ownership changed to " + highestfaction);
                 if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
                 {
-                    Log("NoFaction or Locals, continuing");
+                    LogDebug("\tNoFaction or Locals, continuing");
                     continue;
                 }
 
@@ -625,23 +663,7 @@ public class Core
         return result;
     }
 
-    public class WarFaction
-    {
-        public float DaysSinceSystemAttacked;
-        public float DaysSinceSystemLost;
-        public float DefensiveResources;
-        public float resources;
-        public Faction faction;
-
-        public WarFaction(Faction faction, float resources, float DefensiveResources)
-        {
-            this.faction = faction;
-            this.resources = resources;
-            this.DefensiveResources = DefensiveResources;
-        }
-    }
-
-    public static void RefreshResources(SimGameState sim)
+      public static void RefreshResources(SimGameState sim)
     {
         // no point iterating over a KVP if you aren't using the values
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
@@ -670,7 +692,11 @@ public class Core
             }
         }
 
-        if (sim.Starmap == null) return;
+        if (sim.Starmap == null)
+        {
+            LogDebug("wHAAAAAAAAaat");
+            return;
+        }
 
         System.Random random = new System.Random();
         foreach (var system in sim.StarSystems)

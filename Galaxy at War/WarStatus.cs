@@ -21,12 +21,9 @@ public class WarStatus
     public Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
 
-    [JsonConstructor]
-    public WarStatus()
     {
         // need an empty ctor for deserialization
     }
-
     public class SystemStatus
     {
         public string name;
@@ -63,30 +60,16 @@ public class WarStatus
             //Log("=====================================================");
             while (remainingInfluence > 0)
             {
-                foreach (var faction in neighborSystems.Keys)
-                {
-                    var influenceDelta = neighborSystems[faction];
-                    remainingInfluence -= influenceDelta;
-                    //Log($"{faction.ToString(),-20} gains {influenceDelta,2}, leaving {remainingInfluence}");
-                    if (influenceTracker.ContainsKey(faction))
-                        influenceTracker[faction] += influenceDelta;
-                    else
-                        influenceTracker.Add(faction, influenceDelta);
-                }
+                CalculateNeighbours(sim);
             }
-
-            var totalInfluence = influenceTracker.Values.Sum();
-            Log($"\ntotalInfluence for {name}: {totalInfluence}");
-            Log("=====================================================");
-            // need percentages from InfluenceTracker data 
-            var tempDict = new Dictionary<Faction, float>();
-            foreach (var kvp in influenceTracker)
+            catch (Exception ex)
             {
-                tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
-                Log($"{kvp.Key}: {tempDict[kvp.Key]}");
+                Error(ex);
             }
 
-            influenceTracker = tempDict;
+            StaticMethods.DistributeInfluence(influenceTracker, neighborSystems, owner, name);
+            StaticMethods.CalculateAttackTargets(sim, name);
+            StaticMethods.CalculateDefenseTargets(sim, name);
         }
 
         // Find how many friendly and opposing neighbors are present for the star system.
@@ -106,7 +89,7 @@ public class WarStatus
             }
         }
 
-        public void CalculateAttackTargets(SimGameState sim)
+      public void CalculateAttackTargets(SimGameState sim)
         {
             Logger.Log("A");
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
