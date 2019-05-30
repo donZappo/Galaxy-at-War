@@ -492,14 +492,15 @@ public class Core
         }
         foreach (var killListTracker in WarStatus.relationTracker.factions)
         {
-            AdjustKillList(killListTracker);
+            AdjustKillList(killListTracker, sim);
             killListTracker.AttackedBy.Clear();
         }
     }
 
-    public static void AdjustKillList(KillListTracker killListTracker)
+    public static void AdjustKillList(KillListTracker killListTracker, SimGameState sim)
     {
         var KillList = killListTracker.killList;
+        var KillListFaction = killListTracker.faction;
         foreach (Faction faction in KillList.Keys)
         {
             //Factions go towards peace over time if not attacked. But there is diminishing returns further from 50.
@@ -518,7 +519,61 @@ public class Core
 
             if (KillList[faction] < 1)
                 KillList[faction] = 1;
+
+            if (KillList[faction] > 75)
+            {
+                if(!sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                    enemies.Add(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+
+                if(sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                    allies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+            }
+
+            if (KillList[faction] <= 75 && KillList[faction] > 25)
+            {
+                if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                    enemies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+
+                if (sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                    allies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+            }
+
+
+            if (KillList[faction] <= 25)
+            {
+                if (!sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                    allies.Add(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+
+                if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                    enemies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+            }
         }
+
+        
     }
 
     public static int GetTotalResources(StarSystem system)
