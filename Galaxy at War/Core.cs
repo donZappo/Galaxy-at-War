@@ -251,18 +251,7 @@ namespace GalaxyAtWar
 
             foreach (var starSystem in WarStatus.systems)
             {
-                try
-                {
-                    StaticMethods.CalculateNeighbours(sim, starSystem.name);
-                }
-                catch (Exception ex)
-                {
-                    Error(ex);
-                }
-
-                LogDebug("WOOHOO!");
-                LogDebug(WarStatus.neighborSystems.Count.ToString() + starSystem.owner + starSystem.name);
-                LogDebug("WOOT!");
+                StaticMethods.CalculateNeighbours(sim, starSystem.name);
                 StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
                 StaticMethods.CalculateAttackTargets(sim, starSystem.name);
                 StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
@@ -308,7 +297,7 @@ namespace GalaxyAtWar
             }
 
             RefreshResources(sim);
-            var killList = WarStatus.relationTracker.factions.First(f => f.faction == faction).killList;
+            var killList = WarStatus.relationTracker.factions.First(f => f.faction == faction).deathList;
             WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
             float resources = warFaction.resources;
 
@@ -462,23 +451,23 @@ namespace GalaxyAtWar
                 var SystemValue = GetTotalResources(system) + GetTotalDefensiveResources(system);
                 var KillListDelta = Math.Max(10, SystemValue);
                 var factionTracker = WarStatus.relationTracker.factions.Find(x => x.faction == oldOwner);
-                if (factionTracker.killList[faction] < 75)
-                    factionTracker.killList[faction] = 75;
+                if (factionTracker.deathList[faction] < 75)
+                    factionTracker.deathList[faction] = 75;
 
-                factionTracker.killList[faction] += KillListDelta;
+                factionTracker.deathList[faction] += KillListDelta;
 
                 //Allies are upset that their friend is being beaten up.
                 foreach (var ally in sim.FactionsDict[OldFaction].Allies)
                 {
                     var factionAlly = WarStatus.relationTracker.factions.Find(x => x.faction == ally);
-                    factionAlly.killList[ally] += KillListDelta / 2;
+                    factionAlly.deathList[ally] += KillListDelta / 2;
                 }
 
                 //Enemies of the target faction are happy with the faction doing the beating.
                 foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
                 {
                     var factionEnemy = WarStatus.relationTracker.factions.Find(x => x.faction == enemy);
-                    factionEnemy.killList[faction] -= KillListDelta / 2;
+                    factionEnemy.deathList[faction] -= KillListDelta / 2;
                 }
 
                 factionTracker.AttackedBy.Add(faction);
@@ -551,7 +540,6 @@ namespace GalaxyAtWar
                 }
             }
 
-            LogDebug("Out of loop");
             var tempRTFactions = WarStatus.relationTracker.factions;
             foreach (var deathListTracker in tempRTFactions)
             {
@@ -561,16 +549,16 @@ namespace GalaxyAtWar
             }
         }
 
-        public static void AdjustKillList(KillListTracker killListTracker, SimGameState sim)
+        public static void AdjustKillList(DeathListTracker deathListTracker, SimGameState sim)
         {
-            var KillList = killListTracker.killList;
+            var KillList = deathListTracker.deathList;
             var KL_List = new List<Faction>(KillList.Keys);
 
-            var KillListFaction = killListTracker.faction;
+            var KillListFaction = deathListTracker.faction;
             foreach (Faction faction in KL_List)
             {
                 //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
-                if (!killListTracker.AttackedBy.Contains(faction))
+                if (!deathListTracker.AttackedBy.Contains(faction))
                 {
                     if (KillList[faction] > 50)
                         KillList[faction] -= 1 - (KillList[faction] - 50) / 50;

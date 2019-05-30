@@ -36,11 +36,10 @@ namespace GalaxyAtWar
             {
                 if (UnityGameInstance.BattleTechGame.Simulation == null) return;
                 LogDebug("Save Prefix");
-                SerializeWar();
+                if (Core.WarStatus != null)
+                    SerializeWar();
             }
         }
-        
-        
 
         [HarmonyPatch(typeof(SimGameState), "Update")]
         public static class SimGameState_Update_Patch
@@ -110,6 +109,9 @@ namespace GalaxyAtWar
             //LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
             using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
                 writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
+            using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\RelationTracker.json"))
+                writer.Write(JsonConvert.SerializeObject(WarStatus.relationTracker));
+            LogDebug(WarStatus.relationTracker.factions.Count.ToString());
             LogDebug(">>> Serialization complete");
         }
 

@@ -5,19 +5,17 @@ using BattleTech;
 using Newtonsoft.Json;
 using static Logger;
 
-namespace GalaxyAtWar
-{
 // ReSharper disable CheckNamespace
-
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
-
+namespace GalaxyAtWar
+{
     public class RelationTracker
     {
         // we want to know how any given faction feels about another one
-        public List<KillListTracker> factions = new List<KillListTracker>();
+        public List<DeathListTracker> factions = new List<DeathListTracker>();
 
         [JsonConstructor]
         public RelationTracker()
@@ -25,19 +23,22 @@ namespace GalaxyAtWar
             // NO SOUP FOR YOU
             LogDebug("Empty RelationTracker ctor");
         }
-        
+
         public RelationTracker(SimGameState sim)
         {
             // we instantiate the tracker with all the factions, adding them to the list
             // set values based on enemy/neutral/ally FactionDef property
+            // count systems because we're here during WarStatus initialized after WarStatus instantiation
+
             LogDebug(">>> Constructing RelationTracker");
             try
             {
                 foreach (var kvp in sim.FactionsDict)
                 {
                     if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
-                    if (kvp.Value != null)
-                        factions.Add(new KillListTracker(kvp.Key));
+                    if (kvp.Value == null) continue;
+                    if (factions.All(x => x.faction != kvp.Key))
+                        factions.Add(new DeathListTracker(kvp.Key));
                 }
             }
             catch (Exception ex)
@@ -47,17 +48,17 @@ namespace GalaxyAtWar
         }
     }
 
-    public class KillListTracker
+    public class DeathListTracker
     {
         public Faction faction;
-        public Dictionary<Faction, float> killList = new Dictionary<Faction, float>();
+        public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
         public List<Faction> AttackedBy = new List<Faction>();
 
         // can't serialize these so make them private
         private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
         private FactionDef factionDef;
 
-        public KillListTracker(Faction faction)
+        public DeathListTracker(Faction faction)
         {
             this.faction = faction;
             factionDef = sim.FactionsDict
@@ -70,11 +71,11 @@ namespace GalaxyAtWar
                 if (Core.Settings.ExcludedFactions.Contains(def.Faction))
                     continue;
                 if (def.Enemies.Contains(faction))
-                    killList.Add(def.Faction, Core.Settings.KLValuesEnemies);
+                    deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
                 else if (def.Allies.Contains(faction))
-                    killList.Add(def.Faction, Core.Settings.KLValueAllies);
+                    deathList.Add(def.Faction, Core.Settings.KLValueAllies);
                 else
-                    killList.Add(def.Faction, Core.Settings.KLValuesNeutral);
+                    deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
             }
         }
     }

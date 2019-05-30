@@ -9,12 +9,8 @@ namespace GalaxyAtWar
     {
         public static void CalculateNeighbours(SimGameState sim, string name)
         {
-            //neighborSystems = new Dictionary<Faction, int>();
-            //LogDebug(neighborSystems.Count.ToString());
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
-            LogDebug(starSystem.Name);
             var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
-            LogDebug(neighbors.Count.ToString());
             // build a list of all neighbors
             foreach (var neighborSystem in neighbors)
             {
@@ -28,7 +24,6 @@ namespace GalaxyAtWar
 
         public static void CalculateAttackTargets(SimGameState sim, string name)
         {
-            LogDebug("CalcAttack");
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
             LogDebug(starSystem.Name);
             // the rest happens only after initial distribution
