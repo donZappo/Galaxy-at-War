@@ -1,14 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Messaging;
 using System.Text.RegularExpressions;
 using BattleTech;
-using BattleTech.Save;
-using BattleTech.Save.Core;
 using BattleTech.Save.Test;
-using BestHTTP.SocketIO;
 using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -23,11 +18,11 @@ public static class SaveHandling
     {
         public static void Postfix()
         {
-            Logger.Log("Rehydrate Postfix");
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
             //if (!sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave"))) return;
             if (!File.Exists("Mods\\GalaxyAtWar\\" + fileName)) return;
-            Core.WarStatus = DeserializeWar();
+            Logger.LogDebug("Rehydrate Postfix");
+            DeserializeWar();
         }
     }
 
@@ -37,7 +32,7 @@ public static class SaveHandling
         public static void Prefix()
         {
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
-            Logger.Log("Save Prefix");
+            Logger.LogDebug("Save Prefix");
             SerializeWar();
         }
     }
@@ -110,27 +105,26 @@ public static class SaveHandling
         Logger.LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
             writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
-        Logger.Log(">>> Serialization complete");
+        Logger.LogDebug(">>> Serialization complete");
     }
 
-    internal static WarStatus DeserializeWar()
+    internal static void DeserializeWar()
     {
-        Logger.Log(">>> Deserialization");
-        WarStatus warStatus;
+        Logger.LogDebug(">>> Deserialization");
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
         {
-            warStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
+            Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
             try
             {
                 Logger.LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error(ex);
             }
         }
 
-        return warStatus;
+        //return warStatus;
 
         //return JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15));
     }

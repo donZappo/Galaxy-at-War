@@ -64,6 +64,21 @@ public class KillListTracker
     }
 }
 
+public class WarFaction
+{
+    public float DaysSinceSystemAttacked;
+    public float DaysSinceSystemLost;
+    public float DefensiveResources;
+    public float resources;
+    public Faction faction;
+
+    public WarFaction(Faction faction, float resources, float DefensiveResources)
+    {
+        this.faction = faction;
+        this.resources = resources;
+        this.DefensiveResources = DefensiveResources;
+    }
+}
 //public class ResourceTacker
 //{
 //    public ResourceTacker(Faction faction, Dictionary<string, float> resources = null)
