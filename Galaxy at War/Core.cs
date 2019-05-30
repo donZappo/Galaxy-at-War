@@ -190,6 +190,18 @@ public class Core
                 Error(ex);
             }
 
+            //Increase War Escalation of decay defenses.
+            foreach(var warfaction in WarStatus.factionTracker)
+            {
+                if (Settings.GainedSystem.Contains(warfaction.faction))
+                    warfaction.DaysSinceSystemAttacked += 1;
+
+                if (Settings.LostSystem.Contains(warfaction.faction))
+                    warfaction.DaysSinceSystemLost += 1;
+            }
+            Settings.GainedSystem.Clear();
+            Settings.LostSystem.Clear();
+
             SaveHandling.SerializeWar();
             Log(">>> DONE PROC");
         }
@@ -341,6 +353,9 @@ public class Core
     {
         if (faction != system.Owner || ForceFlip)
         {
+            Faction OldFaction = system.Owner;
+            
+
             system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);
             system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
@@ -377,11 +392,41 @@ public class Core
                 Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
             }
 
+           
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
+            var oldOwner = systemStatus.owner;
             systemStatus.owner = faction;
             Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
+
+            //Change the Kill List for the factions.
+            var SystemValue = GetTotalResources(system) + GetTotalDefensiveResources(system);
+            var KillListDelta = Math.Max(10, SystemValue);
+            var factionTracker = WarStatus.relationTracker.factions.Find(x => x.faction == oldOwner);
+            if (factionTracker.killList[faction] < 75)
+                factionTracker.killList[faction] = 75;
+
+            factionTracker.killList[faction] += KillListDelta;
+
+            //Allies are upset that their friend is being beaten up.
+            foreach(var ally in sim.FactionsDict[OldFaction].Allies)
+            {
+                var factionAlly = WarStatus.relationTracker.factions.Find(x => x.faction == ally);
+                factionAlly.killList[ally] += KillListDelta / 2;
+            }
+
+            //Enemies of the target faction are happy with the faction doing the beating.
+            foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
+            {
+                var factionEnemy = WarStatus.relationTracker.factions.Find(x => x.faction == enemy);
+                factionEnemy.killList[faction] -= KillListDelta / 2;
+            }
+            factionTracker.AttackedBy.Add(faction);
+
+            Settings.LostSystem.Add(OldFaction);
+            Settings.GainedSystem.Add(faction);
         }
     }
+
 
     private static void UpdateInfluenceFromAttacks(SimGameState sim)
     {
@@ -411,7 +456,9 @@ public class Core
                 var previousOwner = systemstatus.owner;
                 var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
                 if (starSystem != null)
+                {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, true);
+                }
                 else
                 {
                     Log("+=======+++== NULL");
@@ -442,6 +489,35 @@ public class Core
                     Error(ex);
                 }
             }
+        }
+        foreach (var killListTracker in WarStatus.relationTracker.factions)
+        {
+            AdjustKillList(killListTracker);
+            killListTracker.AttackedBy.Clear();
+        }
+    }
+
+    public static void AdjustKillList(KillListTracker killListTracker)
+    {
+        var KillList = killListTracker.killList;
+        foreach (Faction faction in KillList.Keys)
+        {
+            //Factions go towards peace over time if not attacked. But there is diminishing returns further from 50.
+            if (!killListTracker.AttackedBy.Contains(faction))
+            {
+                if (KillList[faction] > 50)
+                    KillList[faction] -= 1 - (KillList[faction] - 50) / 50;
+                else if (KillList[faction] <= 50)
+                    KillList[faction] -= 1 - (50 - KillList[faction]) / 50;
+
+            }
+
+            //Ceiling and floor for faction enmity. 
+            if (KillList[faction] > 99)
+                KillList[faction] = 99;
+
+            if (KillList[faction] < 1)
+                KillList[faction] = 1;
         }
     }
 
@@ -495,7 +571,7 @@ public class Core
         public float DaysSinceSystemLost;
         public float DefensiveResources;
         public float resources;
-        public readonly Faction faction;
+        public Faction faction;
 
         public WarFaction(Faction faction, float resources, float DefensiveResources)
         {
@@ -568,7 +644,7 @@ public class Core
                 i++;
             } while (i < faction.resources);
 
-            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemLost * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
+            faction.resources = tempnum * (100f + (float)faction.DaysSinceSystemAttacked * (float)Settings.ResourceAdjustmentPerCycle) / 100f;
 
             tempnum = 0f;
             i = 0;
