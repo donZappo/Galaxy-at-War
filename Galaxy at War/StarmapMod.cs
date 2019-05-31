@@ -13,14 +13,16 @@ public class StarmapMod
     [HarmonyPatch(new[] {typeof(StarSystemNode)})]
     public static class StarmapRenderer_GetSystemRenderer_Patch
     {
-        public static void Postfix(StarmapSystemRenderer __result)
+        public static void Postfix(ref StarmapSystemRenderer __result)
         {
-            var contendedSystems = Core.WarStatus.systems.Where(x => x.influenceTracker[x.owner] < 70).Select(x => x.name);
-            var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
-            var wasVisited = visitedStarSystems.Contains(__result.name);
+            var contendedSystems = Core.WarStatus.systems.Where(x => x.influenceTracker[x.owner] < 60).Select(x => x.name);
 
             if (contendedSystems.Contains(__result.name))
+            {
+                var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
+                var wasVisited = visitedStarSystems.Contains(__result.name);
                 __result.Init(__result.system, Color.magenta, __result.CanTravel, wasVisited);
+            }
         }
     }
 
