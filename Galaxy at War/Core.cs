@@ -71,6 +71,7 @@ public class Core
 
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
+    public static WarFaction WarFaction;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -425,7 +426,7 @@ public class Core
                 system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
                 system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
             }
-
+           
             system.Def.ContractEmployers.Clear();
             system.Def.ContractTargets.Clear();
             List<Faction> ContractEmployers = new List<Faction>();
@@ -461,32 +462,32 @@ public class Core
             var SystemValue = GetTotalResources(system) + GetTotalDefensiveResources(system);
             var KillListDelta = Math.Max(10, SystemValue);
             //WarStatus.factionTracker.Find(x=> x.faction == faction)
+            //LogDebug($"WarStatus.relationTracker is null: " + (WarStatus.relationTracker == null));
+            //LogDebug($"WarStatus.relationTracker.Find(x => x.faction == oldOwner): " + WarStatus.relationTracker.Find(x => x.faction == oldOwner));
+            //LogDebug(WarStatus.relationTracker.ToString());
+            var warFaction = WarStatus.factionTracker.Find(x => x.faction == oldOwner);
+            var deathListTracker = warFaction.deathListTracker.Find(x => x.faction == oldOwner);
+            if (deathListTracker.deathList[faction] < 75)
+                deathListTracker.deathList[faction] = 75;
 
-            LogDebug($"WarStatus.relationTracker is null: " + (WarStatus.relationTracker == null));
-            LogDebug($"WarStatus.relationTracker.Find(x => x.faction == oldOwner): " + WarStatus.relationTracker.Find(x => x.faction == oldOwner));
-            LogDebug(WarStatus.relationTracker.ToString());
-            var factionTracker = WarStatus.relationTracker.Find(x => x.faction == system.Owner);
-            if (factionTracker.deathList[faction] < 75)
-                factionTracker.deathList[faction] = 75;
-
-            factionTracker.deathList[faction] += KillListDelta;
+            deathListTracker.deathList[faction] += KillListDelta;
 
             //Allies are upset that their friend is being beaten up.
 
             foreach (var ally in sim.FactionsDict[OldFaction].Allies)
             {
-                var factionAlly = WarStatus.relationTracker.Find(x => x.faction == ally);
+                var factionAlly = warFaction.deathListTracker.Find(x => x.faction == ally);
                 factionAlly.deathList[ally] += KillListDelta / 2;
             }
 
             //Enemies of the target faction are happy with the faction doing the beating.
             foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
             {
-                var factionEnemy = WarStatus.relationTracker.Find(x => x.faction == enemy);
+                var factionEnemy = warFaction.deathListTracker.Find(x => x.faction == enemy);
                 factionEnemy.deathList[faction] -= KillListDelta / 2;
             }
 
-            factionTracker.AttackedBy.Add(faction);
+            //warFaction.factionTracker.AttackedBy.Add(faction);
 
             Settings.LostSystem.Add(OldFaction);
             Settings.GainedSystem.Add(faction);
@@ -502,7 +503,6 @@ public class Core
             var totalInfluence = systemstatus.influenceTracker.Values.Sum();
             var highest = 0f;
             var highestfaction = systemstatus.owner;
-            Log($"Attacking status for {systemstatus.name}");
             foreach (var kvp in systemstatus.influenceTracker)
             {
                 tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
@@ -523,7 +523,7 @@ public class Core
                 var starSystem = sim.StarSystems.Find(x => x.Name == systemstatus.name);
                 if (starSystem != null)
                 {
-                    ChangeSystemOwnership(sim, starSystem, highestfaction, true);
+                    ChangeSystemOwnership(sim, starSystem, highestfaction, false);
                 }
                 else
                 {

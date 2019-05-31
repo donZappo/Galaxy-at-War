@@ -68,14 +68,20 @@ public class DeathListTracker
         foreach (var def in sim.FactionsDict.Values)
         {
             // necessary to skip factions here?  it does fire
-            if (Core.Settings.ExcludedFactions.Contains(def.Faction))
+            if (Core.Settings.ExcludedFactions.Contains(def.Faction) || (factionDef == def))
                 continue;
-            if (def.Enemies.Contains(faction))
+            if (factionDef.Enemies.Contains(def.Faction))
+            {
                 deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
-            else if (def.Allies.Contains(faction))
+            }
+            else if (factionDef.Allies.Contains(def.Faction))
+            {
                 deathList.Add(def.Faction, Core.Settings.KLValueAllies);
+            }
             else
+            {
                 deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
+            }
         }
     }
 }
