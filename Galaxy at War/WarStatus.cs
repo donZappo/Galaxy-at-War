@@ -15,7 +15,6 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
-
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
     public static Dictionary<Faction, float> FindWarFactionResources(Faction faction)
@@ -32,6 +31,10 @@ public class SystemStatus
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
     public Faction owner = Faction.NoFaction;
+    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
+    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
     [JsonConstructor]
     public SystemStatus()
@@ -47,11 +50,122 @@ public class SystemStatus
 
         //Globals.neighborSystems.Clear();
 
-
         //StaticMethods.CalculateNeighbours(sim, systemName);
         //StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
         //StaticMethods.CalculateAttackTargets(sim, name);
         //StaticMethods.CalculateDefenseTargets(sim, name);
+    }
+
+    public void FindNeighbors()
+    {
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
+        // build a list of all neighbors
+        foreach (var neighborSystem in neighbors)
+        {
+            if (neighborSystems.ContainsKey(neighborSystem.Owner))
+                neighborSystems[neighborSystem.Owner] += 1;
+            else
+                neighborSystems.Add(neighborSystem.Owner, 1);
+        }
+    }
+
+    public void CalculateAttackTargets()
+    {
+        LogDebug("Calculate Potential Attack Targets");
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        LogDebug(starSystem.Name + ": " + starSystem.Owner);
+        // the rest happens only after initial distribution
+        // build list of attack targets
+        LogDebug("Under attack by:");
+        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
+        {
+            if (!attackTargets.ContainsKey(neighborSystem.Owner) &&
+                (neighborSystem.Owner != starSystem.Owner))
+            {
+                var tempList = new List<StarSystem> {starSystem};
+                attackTargets.Add(neighborSystem.Owner, tempList);
+                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
+            }
+            else if (attackTargets.ContainsKey(neighborSystem.Owner) &&
+                     !attackTargets[neighborSystem.Owner].Contains(starSystem) &&
+                     (neighborSystem.Owner != starSystem.Owner))
+            {
+                attackTargets[neighborSystem.Owner].Add(starSystem);
+                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
+            }
+        }
+
+        //LogDebug("Attack targets"  + Globals.attackTargets.Count);
+        //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + SaveHandling.fileName))
+        //    writer.Write(JsonConvert.SerializeObject(Globals.attackTargets));
+    }
+
+    public void CalculateDefenseTargets()
+    {
+        LogDebug("Calculate Potential Defendable Systems");
+        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        LogDebug(starSystem.Name);
+        LogDebug("Needs defense:");
+        // build list of defense targets
+        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
+        {
+            if (!defenseTargets.ContainsKey(starSystem.Owner) &&
+                (neighborSystem.Owner != starSystem.Owner))
+            {
+                var tempList = new List<StarSystem> {starSystem};
+                defenseTargets.Add(starSystem.Owner, tempList);
+                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
+            }
+            else if (defenseTargets.ContainsKey(starSystem.Owner) &&
+                     !defenseTargets[starSystem.Owner].Contains(starSystem) &&
+                     (neighborSystem.Owner != starSystem.Owner))
+            {
+                defenseTargets[starSystem.Owner].Add(starSystem);
+                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
+            }
+        }
+    }
+
+    public void CalculateSystemInfluence()
+    {
+        Log(">>> DistributeInfluence: " + name);
+        // determine starting influence based on neighboring systems
+        influenceTracker.Add(owner, Core.Settings.DominantInfluence);
+        int remainingInfluence = Core.Settings.MinorInfluencePool;
+
+        if (neighborSystems.Keys.Count() != 1)
+        {
+            while (remainingInfluence > 0)
+            {
+                foreach (var faction in neighborSystems.Keys)
+                {
+                    if (faction != owner)
+                    {
+                        var influenceDelta = neighborSystems[faction];
+                        remainingInfluence -= influenceDelta;
+                        if (influenceTracker.ContainsKey(faction))
+                            influenceTracker[faction] += influenceDelta;
+                        else
+                            influenceTracker.Add(faction, influenceDelta);
+                    }
+                }
+            }
+        }
+
+        var totalInfluence = influenceTracker.Values.Sum();
+        LogDebug($"\ntotalInfluence for {name}");
+        LogDebug("=====================================================");
+        // need percentages from InfluenceTracker data 
+        var tempDict = new Dictionary<Faction, float>();
+        foreach (var kvp in influenceTracker)
+        {
+            tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
+            LogDebug($"{kvp.Key}: {tempDict[kvp.Key]}");
+        }
+
+        LogDebug("=====================================================");
+        influenceTracker = tempDict;
     }
 }
 
@@ -100,7 +214,6 @@ public class WarFaction
     public float DefensiveResources;
     public Dictionary<Faction, float> warFactionAttackResources;
     public float AttackResources;
-
     public Faction faction;
 
     //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
