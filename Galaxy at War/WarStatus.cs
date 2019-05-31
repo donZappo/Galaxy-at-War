@@ -12,13 +12,10 @@ namespace GalaxyAtWar
 {
     public class WarStatus
     {
-        public static List<SystemStatus> systems = new List<SystemStatus>();
+        public List<SystemStatus> systems = new List<SystemStatus>();
         public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
-        public static List<WarFaction> factionTracker = new List<WarFaction>();
-        public static Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
-        internal static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-        internal static Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
-        internal static Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
+        public List<WarFaction> factionTracker = new List<WarFaction>();
+        public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
     }
 
     public class SystemStatus
@@ -38,39 +35,43 @@ namespace GalaxyAtWar
             Log($"new SystemStatus: {systemName}");
             name = systemName;
             owner = sim.StarSystems.First(s => s.Name == name).Owner;
+            Globals.neighborSystems.Clear();
+            try
+            {
+                StaticMethods.CalculateNeighbours(sim, systemName);
+            }
+            catch (Exception ex)
+            {
+                Error(ex);
+            }
+
+
+            StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
+            StaticMethods.CalculateAttackTargets(sim, name);
+            StaticMethods.CalculateDefenseTargets(sim, name);
         }
 
         // Find how many friendly and opposing neighbors are present for the star system.
         // thanks to WarTech by Morphyum
         public void CalculateAttackTargets(SimGameState sim)
         {
-            Log("A");
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
-            Log("B");
             // the rest happens only after initial distribution
             // build list of attack targets
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                Log("C");
-                Log(neighborSystem.Name);
-                Log(neighborSystem.Owner.ToString());
-                Log(starSystem.Owner.ToString());
-                if (!WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                if (!Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
                     neighborSystem.Owner != starSystem.Owner)
                 {
-                    Log("D");
                     var tempList = new List<StarSystem> {starSystem};
-                    WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
+                    Globals.attackTargets.Add(neighborSystem.Owner, tempList);
                 }
-                else if (WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                         !WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
+                else if (Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                         !Globals.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                          (neighborSystem.Owner != starSystem.Owner))
                 {
-                    Log("E");
-                    WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
+                    Globals.attackTargets[neighborSystem.Owner].Add(starSystem);
                 }
-
-                Log("F");
             }
         }
 
@@ -80,17 +81,17 @@ namespace GalaxyAtWar
             // build list of defense targets
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                if (!WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
+                if (!Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
                     neighborSystem.Owner != starSystem.Owner)
                 {
                     var tempList = new List<StarSystem> {starSystem};
-                    WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
+                    Globals.defenseTargets.Add(starSystem.Owner, tempList);
                 }
-                else if (WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
-                         !WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
+                else if (Globals.defenseTargets.ContainsKey(neighborSystem.Owner) &&
+                         !Globals.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                          neighborSystem.Owner != starSystem.Owner)
                 {
-                    WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
+                    Globals.defenseTargets[starSystem.Owner].Add(starSystem);
                 }
             }
         }

@@ -14,56 +14,65 @@ namespace GalaxyAtWar
             // build a list of all neighbors
             foreach (var neighborSystem in neighbors)
             {
-                //LogDebug(neighborSystem.Name);
-                if (WarStatus.neighborSystems.ContainsKey(neighborSystem.Owner))
-                    WarStatus.neighborSystems[neighborSystem.Owner] += 1;
+                if (Globals.neighborSystems.ContainsKey(neighborSystem.Owner))
+                    Globals.neighborSystems[neighborSystem.Owner] += 1;
                 else
-                    WarStatus.neighborSystems.Add(neighborSystem.Owner, 1);
+                    Globals.neighborSystems.Add(neighborSystem.Owner, 1);
             }
         }
 
         public static void CalculateAttackTargets(SimGameState sim, string name)
         {
+            LogDebug("Calculate Potential Attack Targets");
+
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
-            LogDebug(starSystem.Name);
+            LogDebug(starSystem.Name + ": " + starSystem.Owner.ToString());
+
             // the rest happens only after initial distribution
             // build list of attack targets
-            //LogDebug("neighorSystems " + sim.Starmap.GetAvailableNeighborSystem(starSystem).Count);
+            LogDebug("Under attack by:");
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                //LogDebug("\t" + neighborSystem);
-                if (!WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                    neighborSystem.Owner != starSystem.Owner)
+                
+                if (!Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                    (neighborSystem.Owner != starSystem.Owner))
                 {
-                    var tempList = new List<StarSystem> {starSystem};
-                    WarStatus.attackTargets.Add(neighborSystem.Owner, tempList);
+                    var tempList = new List<StarSystem> { starSystem };
+                    Globals.attackTargets.Add(neighborSystem.Owner, tempList);
+                    LogDebug("\t" + neighborSystem.Name +": " + neighborSystem.Owner.ToString());
                 }
-                else if (WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                         !WarStatus.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
+                else if (Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                         !Globals.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                          (neighborSystem.Owner != starSystem.Owner))
                 {
-                    WarStatus.attackTargets[neighborSystem.Owner].Add(starSystem);
+                    Globals.attackTargets[neighborSystem.Owner].Add(starSystem);
+                    LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner.ToString());
                 }
             }
         }
 
         public static void CalculateDefenseTargets(SimGameState sim, string name)
         {
+            LogDebug("Calculate Potential Defendable Systems");
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
+            LogDebug(starSystem.Name);
+            LogDebug("Needs defense:");
             // build list of defense targets
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                if (!WarStatus.defenseTargets.ContainsKey(starSystem.Owner) &&
-                    neighborSystem.Owner != starSystem.Owner)
+                if (!Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
+                    (neighborSystem.Owner != starSystem.Owner))
                 {
-                    var tempList = new List<StarSystem> {starSystem};
-                    WarStatus.defenseTargets.Add(starSystem.Owner, tempList);
+                    var tempList = new List<StarSystem> { starSystem };
+                    Globals.defenseTargets.Add(starSystem.Owner, tempList);
+                    LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner.ToString());
                 }
-                else if (WarStatus.defenseTargets.ContainsKey(neighborSystem.Owner) &&
-                         !WarStatus.defenseTargets[starSystem.Owner].Contains(starSystem) &&
-                         neighborSystem.Owner != starSystem.Owner)
+                else if (Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
+                         !Globals.defenseTargets[starSystem.Owner].Contains(starSystem) &&
+                         (neighborSystem.Owner != starSystem.Owner))
                 {
-                    WarStatus.defenseTargets[starSystem.Owner].Add(starSystem);
+                    Globals.defenseTargets[starSystem.Owner].Add(starSystem);
+                    LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner.ToString());
                 }
             }
         }
@@ -74,33 +83,37 @@ namespace GalaxyAtWar
             // determine starting influence based on neighboring systems
             influenceTracker.Add(owner, Core.Settings.DominantInfluence);
             int remainingInfluence = Core.Settings.MinorInfluencePool;
-            //Log("\nremainingInfluence: " + remainingInfluence);
-            //Log("=====================================================");
-            while (remainingInfluence > 0)
+
+            if (neighborSystems.Keys.Count() != 1)
             {
-                foreach (var faction in WarStatus.neighborSystems.Keys)
+                while (remainingInfluence > 0)
                 {
-                    var influenceDelta = WarStatus.neighborSystems[faction];
-                    remainingInfluence -= influenceDelta;
-                    //Log($"{faction.ToString(),-20} gains {influenceDelta,2}, leaving {remainingInfluence}");
-                    if (influenceTracker.ContainsKey(faction))
-                        influenceTracker[faction] += influenceDelta;
-                    else
-                        influenceTracker.Add(faction, influenceDelta);
+                    foreach (var faction in neighborSystems.Keys)
+                    {
+                        if (faction != owner)
+                        {
+                            var influenceDelta = neighborSystems[faction];
+                            remainingInfluence -= influenceDelta;
+                            if (influenceTracker.ContainsKey(faction))
+                                influenceTracker[faction] += influenceDelta;
+                            else
+                                influenceTracker.Add(faction, influenceDelta);
+                        }
+                    }
                 }
             }
 
             var totalInfluence = influenceTracker.Values.Sum();
-            Log($"\ntotalInfluence for {name}: {totalInfluence}");
-            Log("=====================================================");
+            LogDebug($"\ntotalInfluence for {name}");
+            LogDebug("=====================================================");
             // need percentages from InfluenceTracker data 
             var tempDict = new Dictionary<Faction, float>();
             foreach (var kvp in influenceTracker)
             {
-                tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
-                Log($"{kvp.Key}: {tempDict[kvp.Key]}");
+                tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
+                LogDebug($"{kvp.Key}: {tempDict[kvp.Key]}");
             }
-
+            LogDebug("=====================================================");
             influenceTracker = tempDict;
         }
     }
