@@ -13,7 +13,7 @@ namespace GalaxyAtWar
     public class WarStatus
     {
         public List<SystemStatus> systems = new List<SystemStatus>();
-        public RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
+        public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
         public List<WarFaction> factionTracker = new List<WarFaction>();
         public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
     }
@@ -35,7 +35,6 @@ namespace GalaxyAtWar
             Log($"new SystemStatus: {systemName}");
             name = systemName;
             owner = sim.StarSystems.First(s => s.Name == name).Owner;
-
             Globals.neighborSystems.Clear();
             try
             {
@@ -54,7 +53,6 @@ namespace GalaxyAtWar
 
         // Find how many friendly and opposing neighbors are present for the star system.
         // thanks to WarTech by Morphyum
-
         public void CalculateAttackTargets(SimGameState sim)
         {
             var starSystem = sim.StarSystems.Find(x => x.Name == name);

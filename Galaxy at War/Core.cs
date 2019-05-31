@@ -94,6 +94,8 @@ namespace GalaxyAtWar
                     LogDebug(">>> Loading " + fileName);
                     SaveHandling.DeserializeWar();
 
+                    // TODO if it deserializes something invalid, handle it
+
                     Globals.attackTargets.Clear();
                     Globals.defenseTargets.Clear();
 
@@ -156,9 +158,11 @@ namespace GalaxyAtWar
 
                 //Add resources for adjacent systems
                 var rand = new Random();
-                try
+
+                foreach (var system in WarStatus.systems)
                 {
-                    foreach (var system in WarStatus.systems)
+                    //Log($"\n\n{system.name}");
+                    foreach (var neighbor in WarStatus.neighborSystems)
                     {
                         Globals.neighborSystems.Clear();
                         StaticMethods.CalculateNeighbours(sim, system.name);
@@ -181,26 +185,15 @@ namespace GalaxyAtWar
                         Log($"\n{system.name} influenceTracker:");
                         //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                     }
+
+                    Log($"\n{system.name} influenceTracker:");
+                    //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                 }
 
-                catch (Exception ex)
-                {
-                    LogDebug("\n2");
-                    Error(ex);
-                }
+                RefreshResources(__instance);
 
-                //Log("Refreshing Resources");
-                try
-                {
-                    RefreshResources(__instance);
-                }
-                catch (Exception ex)
-                {
-                    LogDebug("3");
-                    Error(ex);
-                }
-
-                try
+                LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
+                if (WarStatus.attackTargets.Count > 0)
                 {
                     LogDebug($"Globals.attackTargets {Globals.attackTargets.Count}");
                     if (Globals.attackTargets.Count > 0)
@@ -220,15 +213,7 @@ namespace GalaxyAtWar
                     Error(ex);
                 }
 
-                try
-                {
-                    UpdateInfluenceFromAttacks(sim);
-                }
-                catch (Exception ex)
-                {
-                    LogDebug("6");
-                    Error(ex);
-                }
+                UpdateInfluenceFromAttacks(sim);
 
                 //Increase War Escalation of decay defenses.
                 foreach (var warfaction in WarStatus.factionTracker)
@@ -251,40 +236,14 @@ namespace GalaxyAtWar
         public static void InitializeSystems(SimGameState sim)
         {
             LogDebug(">>> Initialize systems");
-            foreach (var starSystem in sim.StarSystems)
-            {
-                try
-                {
-                    LogDebug("Add system " + starSystem.Name);
-                    //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\wtf.json"))
-                    //{
-                    //    writer.Write(JsonConvert.SerializeObject(starSystem.Def));
-                    //}
-
-                    var newSystem = new SystemStatus(sim, starSystem.Name);
-                    WarStatus.systems.Add(newSystem);
-                }
-                catch (Exception ex)
-                {
-                    Error(ex);
-                }
-
+            foreach (var starSystem in sim.StarSystems) {
+                LogDebug("Add system " + starSystem.Name);
+                WarStatus.systems.Add(new SystemStatus(sim, starSystem.Name));
             }
-
-
             //foreach (var starSystem in WarStatus.systems)
             //{
-            //    Globals.neighborSystems.Clear();
-            //    try
-            //    {
-            //        StaticMethods.CalculateNeighbours(sim, starSystem.name);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Error(ex);
-            //    }
-
-            //    StaticMethods.DistributeInfluence(starSystem.influenceTracker, Globals.neighborSystems, starSystem.owner, starSystem.name);
+            //    StaticMethods.CalculateNeighbours(sim, starSystem.name);
+            //    StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
             //    StaticMethods.CalculateAttackTargets(sim, starSystem.name);
             //    StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
             //}
@@ -329,7 +288,7 @@ namespace GalaxyAtWar
             }
 
             RefreshResources(sim);
-            var killList = WarStatus.relationTracker.factions.First(f => f.faction == faction).killList;
+            var killList = WarStatus.relationTracker.factions.First(f => f.faction == faction).deathList;
             WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
             float resources = warFaction.resources;
 
@@ -483,23 +442,23 @@ namespace GalaxyAtWar
                 var SystemValue = GetTotalResources(system) + GetTotalDefensiveResources(system);
                 var KillListDelta = Math.Max(10, SystemValue);
                 var factionTracker = WarStatus.relationTracker.factions.Find(x => x.faction == oldOwner);
-                if (factionTracker.killList[faction] < 75)
-                    factionTracker.killList[faction] = 75;
+                if (factionTracker.deathList[faction] < 75)
+                    factionTracker.deathList[faction] = 75;
 
-                factionTracker.killList[faction] += KillListDelta;
+                factionTracker.deathList[faction] += KillListDelta;
 
                 //Allies are upset that their friend is being beaten up.
                 foreach (var ally in sim.FactionsDict[OldFaction].Allies)
                 {
                     var factionAlly = WarStatus.relationTracker.factions.Find(x => x.faction == ally);
-                    factionAlly.killList[ally] += KillListDelta / 2;
+                    factionAlly.deathList[ally] += KillListDelta / 2;
                 }
 
                 //Enemies of the target faction are happy with the faction doing the beating.
                 foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
                 {
                     var factionEnemy = WarStatus.relationTracker.factions.Find(x => x.faction == enemy);
-                    factionEnemy.killList[faction] -= KillListDelta / 2;
+                    factionEnemy.deathList[faction] -= KillListDelta / 2;
                 }
 
                 factionTracker.AttackedBy.Add(faction);
@@ -572,88 +531,87 @@ namespace GalaxyAtWar
                 }
             }
 
-            LogDebug("Out of loop");
             var tempRTFactions = WarStatus.relationTracker.factions;
             foreach (var deathListTracker in tempRTFactions)
             {
                 Log(deathListTracker.faction.ToString());
-                AdjustKillList(deathListTracker, sim);
+                AdjustDeathList(deathListTracker, sim);
                 deathListTracker.AttackedBy.Clear();
             }
         }
 
-        public static void AdjustKillList(KillListTracker killListTracker, SimGameState sim)
+        public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim)
         {
-            var KillList = killListTracker.killList;
-            var KL_List = new List<Faction>(KillList.Keys);
+            var deathList = deathListTracker.deathList;
+            var KL_List = new List<Faction>(deathList.Keys);
 
-            var KillListFaction = killListTracker.faction;
+            var deathListFaction = deathListTracker.faction;
             foreach (Faction faction in KL_List)
             {
                 //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
-                if (!killListTracker.AttackedBy.Contains(faction))
+                if (!deathListTracker.AttackedBy.Contains(faction))
                 {
-                    if (KillList[faction] > 50)
-                        KillList[faction] -= 1 - (KillList[faction] - 50) / 50;
-                    else if (KillList[faction] <= 50)
-                        KillList[faction] -= 1 - (50 - KillList[faction]) / 50;
+                    if (deathList[faction] > 50)
+                        deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
+                    else if (deathList[faction] <= 50)
+                        deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
                 }
 
                 //Ceiling and floor for faction enmity. 
-                if (KillList[faction] > 99)
-                    KillList[faction] = 99;
+                if (deathList[faction] > 99)
+                    deathList[faction] = 99;
 
-                if (KillList[faction] < 1)
-                    KillList[faction] = 1;
+                if (deathList[faction] < 1)
+                    deathList[faction] = 1;
 
-                if (KillList[faction] > 75)
+                if (deathList[faction] > 75)
                 {
-                    if (!sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                    if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                     {
-                        var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                        var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
                         enemies.Add(faction);
-                        Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                     }
 
-                    if (sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                    if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
                     {
-                        var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                        var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
                         allies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
                     }
                 }
 
-                if (KillList[faction] <= 75 && KillList[faction] > 25)
+                if (deathList[faction] <= 75 && deathList[faction] > 25)
                 {
-                    if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                    if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                     {
-                        var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                        var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
                         enemies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                     }
 
-                    if (sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                    if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
                     {
-                        var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                        var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
                         allies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
                     }
                 }
 
-                if (KillList[faction] <= 25)
+                if (deathList[faction] <= 25)
                 {
-                    if (!sim.FactionsDict[KillListFaction].Allies.Contains(faction))
+                    if (!sim.FactionsDict[deathListFaction].Allies.Contains(faction))
                     {
-                        var allies = new List<Faction>(sim.FactionsDict[KillListFaction].Allies);
+                        var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
                         allies.Add(faction);
-                        Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Allies").SetValue(allies.ToArray());
+                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
                     }
 
-                    if (sim.FactionsDict[KillListFaction].Enemies.Contains(faction))
+                    if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                     {
-                        var enemies = new List<Faction>(sim.FactionsDict[KillListFaction].Enemies);
+                        var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
                         enemies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[KillListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                     }
                 }
             }
@@ -705,7 +663,7 @@ namespace GalaxyAtWar
 
         public static void RefreshResources(SimGameState sim)
         {
-// no point iterating over a KVP if you aren't using the values
+            // no point iterating over a KVP if you aren't using the values
             foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
             {
                 //Log(faction.ToString());

@@ -11,7 +11,6 @@ namespace GalaxyAtWar
         {
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
             var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
-
             // build a list of all neighbors
             foreach (var neighborSystem in neighbors)
             {
@@ -25,6 +24,7 @@ namespace GalaxyAtWar
         public static void CalculateAttackTargets(SimGameState sim, string name)
         {
             LogDebug("Calculate Potential Attack Targets");
+
             var starSystem = sim.StarSystems.Find(x => x.Name == name);
             LogDebug(starSystem.Name + ": " + starSystem.Owner.ToString());
 
@@ -77,7 +77,7 @@ namespace GalaxyAtWar
             }
         }
 
-        public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Dictionary<Faction, int> neighborSystems, Faction owner, string name)
+        public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Faction owner, string name)
         {
             Log(">>> DistributeInfluence: " + name);
             // determine starting influence based on neighboring systems
@@ -116,6 +116,5 @@ namespace GalaxyAtWar
             LogDebug("=====================================================");
             influenceTracker = tempDict;
         }
-
     }
 }
