@@ -38,7 +38,7 @@ namespace GalaxyAtWar
 
             // blank the logfile
             Clear();
-            PrintObjectFields(Settings, "Settings");
+            // PrintObjectFields(Settings, "Settings");
         }
 
         // logs out all the settings and their values at runtime
@@ -81,7 +81,7 @@ namespace GalaxyAtWar
                 SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
                 if (sim == null)
                 {
-                    Log("WTAF");
+                    LogDebug("WTAF");
                     return;
                 }
 
@@ -94,8 +94,8 @@ namespace GalaxyAtWar
                     LogDebug(">>> Loading " + fileName);
                     SaveHandling.DeserializeWar();
 
-                    WarStatus.attackTargets.Clear();
-                    WarStatus.defenseTargets.Clear();
+                    Globals.attackTargets.Clear();
+                    Globals.defenseTargets.Clear();
 
                     foreach (var faction in sim.FactionsDict.Keys)
                         LogPotentialTargets(faction);
@@ -134,22 +134,25 @@ namespace GalaxyAtWar
                 LogDebug(">>> PROC");
 
                 // Proc effects
-                if (WarStatus.systems.Count > 0)
-                    foreach (var system in WarStatus.systems)
-                    {
-                        try
-                        {
-                            //LogDebug("Calculating neighbors for " + system.name);
-                            StaticMethods.CalculateNeighbours(sim, system.name);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogDebug("CALC NEIGHBORS");
-                            Error(ex);
-                        }
-                    }
-                else
-                    LogDebug("NO SYSTEMS FOUND");
+                //if (WarStatus.systems.Count > 0)
+                //{
+                //    Globals.neighborSystems.Clear();
+                //    foreach (var system in WarStatus.systems)
+                //    {
+                //        try
+                //        {
+                //            //LogDebug("Calculating neighbors for " + system.name);
+                //            StaticMethods.CalculateNeighbours(sim, system.name);
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            LogDebug("CALC NEIGHBORS");
+                //            Error(ex);
+                //        }
+                //    }
+                //}
+                //else
+                //    LogDebug("NO SYSTEMS FOUND");
 
                 //Add resources for adjacent systems
                 var rand = new Random();
@@ -157,8 +160,10 @@ namespace GalaxyAtWar
                 {
                     foreach (var system in WarStatus.systems)
                     {
+                        Globals.neighborSystems.Clear();
+                        StaticMethods.CalculateNeighbours(sim, system.name);
                         //Log($"\n\n{system.name}");
-                        foreach (var neighbor in system.neighborSystems)
+                        foreach (var neighbor in Globals.neighborSystems)
                         {
                             var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
                             //Log(neighbor.Key.ToString());
@@ -197,15 +202,15 @@ namespace GalaxyAtWar
 
                 try
                 {
-                    LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
-                    if (WarStatus.attackTargets.Count > 0)
+                    LogDebug($"Globals.attackTargets {Globals.attackTargets.Count}");
+                    if (Globals.attackTargets.Count > 0)
                     {
                         // attacking
-                        foreach (var faction in WarStatus.attackTargets.Keys)
+                        foreach (var faction in Globals.attackTargets.Keys)
                             AllocateAttackResources(faction);
 
                         //defending
-                        foreach (var faction in WarStatus.attackTargets.Keys)
+                        foreach (var faction in Globals.attackTargets.Keys)
                             AllocateDefensiveResources(faction);
                     }
                 }
@@ -248,71 +253,76 @@ namespace GalaxyAtWar
             LogDebug(">>> Initialize systems");
             foreach (var starSystem in sim.StarSystems)
             {
-                LogDebug("Add system " + starSystem.Name);
-                //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\wtf.json"))
-                //{
-                //    writer.Write(JsonConvert.SerializeObject(starSystem.Def));
-                //}
-
-                var newSystem = new SystemStatus(sim, starSystem.Name);
-                //LogDebug(newSystem.owner.ToString());
-                //LogDebug(newSystem.name);
-                WarStatus.systems.Add(newSystem);
-            }
-
-            foreach (var starSystem in WarStatus.systems)
-            {
                 try
                 {
-                    StaticMethods.CalculateNeighbours(sim, starSystem.name);
+                    LogDebug("Add system " + starSystem.Name);
+                    //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\wtf.json"))
+                    //{
+                    //    writer.Write(JsonConvert.SerializeObject(starSystem.Def));
+                    //}
+
+                    var newSystem = new SystemStatus(sim, starSystem.Name);
+                    WarStatus.systems.Add(newSystem);
                 }
                 catch (Exception ex)
                 {
                     Error(ex);
                 }
 
-                //LogDebug("WOOHOO!");
-                //LogDebug(influenceTracker + neighborSystems.Count.ToString() + owner + name);
-                //LogDebug("WOOT!");
-                StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.neighborSystems, starSystem.owner, starSystem.name);
-                StaticMethods.CalculateAttackTargets(sim, starSystem.name);
-                StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
             }
+
+
+            //foreach (var starSystem in WarStatus.systems)
+            //{
+            //    Globals.neighborSystems.Clear();
+            //    try
+            //    {
+            //        StaticMethods.CalculateNeighbours(sim, starSystem.name);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Error(ex);
+            //    }
+
+            //    StaticMethods.DistributeInfluence(starSystem.influenceTracker, Globals.neighborSystems, starSystem.owner, starSystem.name);
+            //    StaticMethods.CalculateAttackTargets(sim, starSystem.name);
+            //    StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
+            //}
         }
 
         public static void LogPotentialTargets(Faction faction)
         {
-            if (WarStatus.attackTargets.Keys.Contains(faction))
+            if (Globals.attackTargets.Keys.Contains(faction))
             {
-                Log("------------------------------------------------------");
-                Log(faction.ToString());
-                Log("Attack Targets");
-                foreach (StarSystem attackedSystem in WarStatus.attackTargets[faction])
-                    Log($"{attackedSystem.Name,-30} : {attackedSystem.Owner}");
+                LogDebug("------------------------------------------------------");
+                LogDebug(faction.ToString());
+                LogDebug("Attack Targets");
+                foreach (StarSystem attackedSystem in Globals.attackTargets[faction])
+                    LogDebug($"{attackedSystem.Name,-30} : {attackedSystem.Owner}");
             }
             else
             {
-                Log($"No Attack Targets for {faction.ToString()}!");
+                LogDebug($"No Attack Targets for {faction.ToString()}!");
             }
 
-            if (WarStatus.defenseTargets.Keys.Contains(faction))
+            if (Globals.defenseTargets.Keys.Contains(faction))
             {
-                Log("------------------------------------------------------");
-                Log(faction.ToString());
-                Log("Defense Targets");
-                foreach (StarSystem defensedsystem in WarStatus.defenseTargets[faction])
-                    Log($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
+                LogDebug("------------------------------------------------------");
+                LogDebug(faction.ToString());
+                LogDebug("Defense Targets");
+                foreach (StarSystem defensedsystem in Globals.defenseTargets[faction])
+                    LogDebug($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
             }
             else
             {
-                Log($"No Defense Targets for {faction.ToString()}!");
+                LogDebug($"No Defense Targets for {faction.ToString()}!");
             }
         }
 
         public static void DivideAttackResources(SimGameState sim, Faction faction)
         {
             Dictionary<Faction, float> uniqueFactions = new Dictionary<Faction, float>();
-            foreach (StarSystem attackSystem in WarStatus.attackTargets[faction])
+            foreach (StarSystem attackSystem in Globals.attackTargets[faction])
             {
                 if (!uniqueFactions.ContainsKey(attackSystem.Owner))
                     uniqueFactions.Add(attackSystem.Owner, 0f);
@@ -347,7 +357,7 @@ namespace GalaxyAtWar
                     var attacklist = new List<StarSystem>();
 
                     //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetfaction
-                    foreach (var system in WarStatus.attackTargets[faction])
+                    foreach (var system in Globals.attackTargets[faction])
                         if (WarStatus.attackResources[faction].ContainsKey(system.Owner))
                             attacklist.Add(system);
 
@@ -376,10 +386,10 @@ namespace GalaxyAtWar
             WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
 
             var DefensiveResources = warFaction.DefensiveResources;
-            if (!WarStatus.defenseTargets.ContainsKey(faction))
+            if (!Globals.defenseTargets.ContainsKey(faction))
                 return;
 
-            var systems = WarStatus.defenseTargets[faction];
+            var systems = Globals.defenseTargets[faction];
 
             // TODO fix so != 0
             while (DefensiveResources > 0)
