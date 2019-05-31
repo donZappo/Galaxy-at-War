@@ -10,8 +10,6 @@ using static Logger;
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
-
-
 //public class RelationTracker
 //{
 //    // we want to know how any given faction feels about another one
@@ -87,21 +85,23 @@ public class WarFaction
     public float DefensiveResources;
     public float resources;
     public Faction faction;
-    public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
+    //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    
+
     public WarFaction(Faction faction, float resources, float DefensiveResources)
     {
         this.faction = faction;
         this.resources = resources;
         this.DefensiveResources = DefensiveResources;
-        
+        // get rid of a faction tracker DeathList for itself
+        //var ownFactionListEntry = deathListTracker.Find(x => faction == x.faction);
+
         foreach (var kvp in sim.FactionsDict)
         {
             if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
             if (kvp.Value == null) continue;
-            if (deathListTracker.All(x => x.faction != kvp.Key))
-                deathListTracker.Add(new DeathListTracker(kvp.Key));
+            if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
+                Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
         }
     }
 }
