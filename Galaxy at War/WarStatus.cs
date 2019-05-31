@@ -231,6 +231,7 @@ public class WarFaction
             if (kvp.Value == null) continue;
             if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
                 Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
+            
         }
     }
 }
