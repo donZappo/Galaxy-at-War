@@ -12,11 +12,9 @@ using static Logger;
 public class WarStatus
 {
     public List<SystemStatus> systems = new List<SystemStatus>();
-
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
-
-    //public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
+
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     
     public static Dictionary<Faction, float> FindWarFactionResources(Faction faction) =>
@@ -41,7 +39,7 @@ public class SystemStatus
         name = systemName;
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
 
-        Globals.neighborSystems.Clear();
+        //Globals.neighborSystems.Clear();
 
         //StaticMethods.CalculateNeighbours(sim, systemName);
         //StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
@@ -72,9 +70,9 @@ public class DeathListTracker
             // necessary to skip factions here?  it does fire
             if (Core.Settings.ExcludedFactions.Contains(def.Faction))
                 continue;
-            if (def.Enemies.Contains(faction))
+            if (factionDef.Enemies.Contains(def.Faction))
                 deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
-            else if (def.Allies.Contains(faction))
+            else if (factionDef.Allies.Contains(def.Faction))
                 deathList.Add(def.Faction, Core.Settings.KLValueAllies);
             else
                 deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
