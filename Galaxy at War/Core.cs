@@ -462,7 +462,7 @@ public class Core
             //WarStatus.factionTracker.Find(x=> x.faction == faction)
                 
                 
-            var factionTracker = WarStatus.factions.Find(x => x.faction == oldOwner);
+            var factionTracker = WarStatus.relationTracker.Find(x => x.faction == oldOwner);
             if (factionTracker.deathList[faction] < 75)
                 factionTracker.deathList[faction] = 75;
 
@@ -471,14 +471,14 @@ public class Core
             //Allies are upset that their friend is being beaten up.
             foreach (var ally in sim.FactionsDict[OldFaction].Allies)
             {
-                var factionAlly = WarStatus.factions.Find(x => x.faction == ally);
+                var factionAlly = WarStatus.relationTracker.Find(x => x.faction == ally);
                 factionAlly.deathList[ally] += KillListDelta / 2;
             }
 
             //Enemies of the target faction are happy with the faction doing the beating.
             foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
             {
-                var factionEnemy = WarStatus.factions.Find(x => x.faction == enemy);
+                var factionEnemy = WarStatus.relationTracker.Find(x => x.faction == enemy);
                 factionEnemy.deathList[faction] -= KillListDelta / 2;
             }
 
@@ -552,7 +552,7 @@ public class Core
             }
         }
 
-        var tempRTFactions = WarStatus.factions;
+        var tempRTFactions = WarStatus.relationTracker;
         foreach (var deathListTracker in tempRTFactions)
         {
             Log(deathListTracker.faction.ToString());

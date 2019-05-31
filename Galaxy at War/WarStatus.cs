@@ -12,7 +12,7 @@ using static Logger;
 public class WarStatus
 {
     public List<SystemStatus> systems = new List<SystemStatus>();
-    public List<DeathListTracker> factions = new List<DeathListTracker>();
+    public List<DeathListTracker> relationTracker = new List<DeathListTracker>();
     //public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> factionTracker = new List<WarFaction>();
     public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
