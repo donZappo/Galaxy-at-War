@@ -24,7 +24,7 @@ public class SystemStatus
 {
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-    public Faction owner = Faction.Unknown;
+    public Faction owner = Faction.NoFaction;
 
     [JsonConstructor]
     public SystemStatus()
@@ -40,9 +40,9 @@ public class SystemStatus
 
         Globals.neighborSystems.Clear();
 
-        StaticMethods.CalculateNeighbours(sim, systemName);
-        StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
-        StaticMethods.CalculateAttackTargets(sim, name);
-        StaticMethods.CalculateDefenseTargets(sim, name);
+        //StaticMethods.CalculateNeighbours(sim, systemName);
+        //StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
+        //StaticMethods.CalculateAttackTargets(sim, name);
+        //StaticMethods.CalculateDefenseTargets(sim, name);
     }
 }

@@ -74,22 +74,22 @@ public static class StaticMethods
         }
     }
 
-    public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Dictionary<Faction, int> neighborSystems, Faction owner, string name)
+    public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Faction owner, string name)
     {
         Log(">>> DistributeInfluence: " + name);
         // determine starting influence based on neighboring systems
         influenceTracker.Add(owner, Core.Settings.DominantInfluence);
         int remainingInfluence = Core.Settings.MinorInfluencePool;
 
-        if (neighborSystems.Keys.Count() != 1)
+        if (Globals.neighborSystems.Keys.Count() != 1)
         {
             while (remainingInfluence > 0)
             {
-                foreach (var faction in neighborSystems.Keys)
+                foreach (var faction in Globals.neighborSystems.Keys)
                 {
                     if (faction != owner)
                     {
-                        var influenceDelta = neighborSystems[faction];
+                        var influenceDelta = Globals.neighborSystems[faction];
                         remainingInfluence -= influenceDelta;
                         if (influenceTracker.ContainsKey(faction))
                             influenceTracker[faction] += influenceDelta;

@@ -10,6 +10,7 @@ using HBS.Util;
 using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
+using Error = BestHTTP.SocketIO.Error;
 using Random = System.Random;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -196,7 +197,7 @@ public class Core
             }
             catch (Exception ex)
             {
-                LogDebug("3");
+                LogDebug("RefreshResources");
                 Error(ex);
             }
 
@@ -216,7 +217,7 @@ public class Core
             }
             catch (Exception ex)
             {
-                LogDebug("5");
+                LogDebug("AllocateAttackResources");
                 Error(ex);
             }
 
@@ -226,7 +227,7 @@ public class Core
             }
             catch (Exception ex)
             {
-                LogDebug("6");
+                LogDebug("UpdateInfluenceFromAttacks");
                 Error(ex);
             }
 
@@ -257,13 +258,13 @@ public class Core
             WarStatus.systems.Add(new SystemStatus(sim, starSystem.Name));
         }
 
-        //foreach (var starSystem in WarStatus.systems)
-        //{
-        //    StaticMethods.CalculateNeighbours(sim, starSystem.name);
-        //    StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
-        //    StaticMethods.CalculateAttackTargets(sim, starSystem.name);
-        //    StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
-        //}
+        foreach (var starSystem in WarStatus.systems)
+        {
+            StaticMethods.CalculateNeighbours(sim, starSystem.name);
+            StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
+            StaticMethods.CalculateAttackTargets(sim, starSystem.name);
+            StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
+        }
     }
 
     public static void LogPotentialTargets(Faction faction)
@@ -306,7 +307,7 @@ public class Core
 
         RefreshResources(sim);
         // TODO VERIFY NEXT LINE
-        var killList = WarStatus.factionTracker.Find(x=> x.faction == faction).deathListTracker.First(f => f.faction == faction).deathList;
+        var killList = WarStatus.factionTracker.Find(x => x.faction == faction).deathListTracker.First(f => f.faction == faction).deathList;
         WarFaction warFaction = WarStatus.factionTracker.Find(x => x.faction == faction);
         float resources = warFaction.resources;
 
@@ -432,7 +433,7 @@ public class Core
 
             foreach (var systemNeighbor in sim.Starmap.GetAvailableNeighborSystem(system))
             {
-                if (!ContractEmployers.Contains(systemNeighbor.Owner))
+                if (!ContractEmployers.Remove(systemNeighbor.Owner))
                     ContractEmployers.Add(systemNeighbor.Owner);
             }
 
@@ -460,15 +461,18 @@ public class Core
             var SystemValue = GetTotalResources(system) + GetTotalDefensiveResources(system);
             var KillListDelta = Math.Max(10, SystemValue);
             //WarStatus.factionTracker.Find(x=> x.faction == faction)
-                
-                
-            var factionTracker = WarStatus.relationTracker.Find(x => x.faction == oldOwner);
+
+            LogDebug($"WarStatus.relationTracker is null: " + (WarStatus.relationTracker == null));
+            LogDebug($"WarStatus.relationTracker.Find(x => x.faction == oldOwner): " + WarStatus.relationTracker.Find(x => x.faction == oldOwner));
+            LogDebug(WarStatus.relationTracker.ToString());
+            var factionTracker = WarStatus.relationTracker.Find(x => x.faction == system.Owner);
             if (factionTracker.deathList[faction] < 75)
                 factionTracker.deathList[faction] = 75;
 
             factionTracker.deathList[faction] += KillListDelta;
 
             //Allies are upset that their friend is being beaten up.
+
             foreach (var ally in sim.FactionsDict[OldFaction].Allies)
             {
                 var factionAlly = WarStatus.relationTracker.Find(x => x.faction == ally);
@@ -684,7 +688,7 @@ public class Core
 
     public static void RefreshResources(SimGameState sim)
     {
-        // no point iterating over a KVP if you aren't using the values
+// no point iterating over a KVP if you aren't using the values
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
             //Log(faction.ToString());
@@ -767,7 +771,8 @@ public class Core
         }
     }
 
-    [HarmonyPatch(typeof(Contract), "CompleteContract")]
+    [
+        HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)

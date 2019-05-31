@@ -107,6 +107,7 @@ public static class SaveHandling
         //LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
         
         LogDebug("WarStatus is null: " + (Core.WarStatus == null));
+        LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
             writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
         //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\RelationTracker.json"))
