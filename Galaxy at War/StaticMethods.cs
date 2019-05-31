@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
@@ -6,7 +7,7 @@ using static Logger;
 
 public static class StaticMethods
 {
-    public static void CalculateNeighbours(SimGameState sim, string name)
+    public static void FindNeighbors(SimGameState sim, string name)
     {
         var starSystem = sim.StarSystems.Find(x => x.Name == name);
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
@@ -25,7 +26,7 @@ public static class StaticMethods
         LogDebug("Calculate Potential Attack Targets");
 
         var starSystem = sim.StarSystems.Find(x => x.Name == name);
-        LogDebug(starSystem.Name + ": " + starSystem.Owner.ToString());
+        LogDebug(starSystem.Name + ": " + starSystem.Owner);
 
         // the rest happens only after initial distribution
         // build list of attack targets
@@ -37,16 +38,20 @@ public static class StaticMethods
             {
                 var tempList = new List<StarSystem> {starSystem};
                 Globals.attackTargets.Add(neighborSystem.Owner, tempList);
-                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner.ToString());
+                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
             else if (Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
                      !Globals.attackTargets[neighborSystem.Owner].Contains(starSystem) &&
                      (neighborSystem.Owner != starSystem.Owner))
             {
                 Globals.attackTargets[neighborSystem.Owner].Add(starSystem);
-                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner.ToString());
+                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
         }
+
+        //LogDebug("Attack targets"  + Globals.attackTargets.Count);
+        //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + SaveHandling.fileName))
+        //    writer.Write(JsonConvert.SerializeObject(Globals.attackTargets));
     }
 
     public static void CalculateDefenseTargets(SimGameState sim, string name)
@@ -63,19 +68,19 @@ public static class StaticMethods
             {
                 var tempList = new List<StarSystem> {starSystem};
                 Globals.defenseTargets.Add(starSystem.Owner, tempList);
-                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner.ToString());
+                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
             }
             else if (Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
                      !Globals.defenseTargets[starSystem.Owner].Contains(starSystem) &&
                      (neighborSystem.Owner != starSystem.Owner))
             {
                 Globals.defenseTargets[starSystem.Owner].Add(starSystem);
-                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner.ToString());
+                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
             }
         }
     }
 
-    public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Faction owner, string name)
+    public static void CalculateSystemInfluence(Dictionary<Faction, float> influenceTracker, Faction owner, string name)
     {
         Log(">>> DistributeInfluence: " + name);
         // determine starting influence based on neighboring systems

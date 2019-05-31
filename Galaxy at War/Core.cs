@@ -161,10 +161,14 @@ public class Core
             var rand = new Random();
             try
             {
-                foreach (var system in WarStatus.systems)
+                foreach (var systemStatus in WarStatus.systems)
                 {
+                    Globals.attackTargets.Clear();
+                    Globals.defenseTargets.Clear();
                     Globals.neighborSystems.Clear();
-                    StaticMethods.CalculateNeighbours(sim, system.name);
+                    StaticMethods.CalculateAttackTargets(sim, systemStatus.name);
+                    StaticMethods.CalculateDefenseTargets(sim, systemStatus.name);
+                    StaticMethods.FindNeighbors(sim, systemStatus.name);
                     //Log($"\n\n{system.name}");
                     foreach (var neighbor in Globals.neighborSystems)
                     {
@@ -175,10 +179,10 @@ public class Core
                         //    Log($"\t{kvp.Key}: {kvp.Value}");
                         //Log(system.influenceTracker.ContainsKey(neighbor.Key).ToString());
 
-                        if (system.influenceTracker.ContainsKey(neighbor.Key))
-                            system.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
+                        if (systemStatus.influenceTracker.ContainsKey(neighbor.Key))
+                            systemStatus.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
                         else
-                            system.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
+                            systemStatus.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
                     }
 
                     //Log($"\n{system.name} influenceTracker:");
@@ -211,9 +215,42 @@ public class Core
                     foreach (var faction in Globals.attackTargets.Keys)
                         AllocateAttackResources(faction);
 
-                    //defending
+                    LogDebug($"=== Globals.attackTargets {Globals.attackTargets.Count}");
+                    LogDebug($"=== Globals.defenseTargets {Globals.defenseTargets.Count}");
+                }
+                else
+                {
+                    foreach (var systemStatus in WarStatus.systems)
+                    {
+                        StaticMethods.CalculateAttackTargets(sim, systemStatus.name);
+                        foreach (var faction in Globals.attackTargets.Keys)
+                            AllocateAttackResources(faction);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogDebug(">>> AllocateAttackResources");
+                Error(ex);
+            }
+
+            try
+            {
+                if (Globals.defenseTargets.Count > 0)
+                {
+                    // defending
                     foreach (var faction in Globals.attackTargets.Keys)
                         AllocateDefensiveResources(faction);
+
+                }
+                else
+                {
+                    foreach (var systemStatus in WarStatus.systems)
+                    {
+                        StaticMethods.CalculateDefenseTargets(sim, systemStatus.name);
+                        foreach (var faction in Globals.attackTargets.Keys)
+                            AllocateDefensiveResources(faction);
+                    }
                 }
             }
             catch (Exception ex)
@@ -226,7 +263,6 @@ public class Core
             {
                 LogDebug($"Globals.attackTargets {Globals.attackTargets.Count}");
                 UpdateInfluenceFromAttacks(sim);
-                LogDebug($"Globals.attackTargets {Globals.attackTargets.Count}");
             }
             catch (Exception ex)
             {
@@ -263,10 +299,8 @@ public class Core
 
         foreach (var starSystem in WarStatus.systems)
         {
-            StaticMethods.CalculateNeighbours(sim, starSystem.name);
-            StaticMethods.DistributeInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
-            StaticMethods.CalculateAttackTargets(sim, starSystem.name);
-            StaticMethods.CalculateDefenseTargets(sim, starSystem.name);
+            StaticMethods.FindNeighbors(sim, starSystem.name);
+            StaticMethods.CalculateSystemInfluence(starSystem.influenceTracker, starSystem.owner, starSystem.name);
         }
     }
 
@@ -309,7 +343,7 @@ public class Core
         RefreshResources(sim);
         var deathList = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList;
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-        var resources = warFaction.resources;
+        var resources = warFaction.AttackResources;
 
         
         // TODO unfuck the math I broke, sorry
@@ -340,11 +374,12 @@ public class Core
         if (!attackResources.ContainsKey(faction)) return;
         Log(attackResources.ContainsKey(faction).ToString());
 
-        //Go through the different resources allocated from attacking faction to spend against each targetfaction
+        //Go through the different resources allocated from attacking faction to spend against each targetFaction
         foreach (var targetFaction in WarStatus.FindWarFactionResources(faction).Keys)
         {
+            LogDebug("=== === targetFaction :" + targetFaction.ToString());
             var attacklist = new List<StarSystem>();
-            //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetfaction
+            //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetFaction
             foreach (var system in Globals.attackTargets[faction])
             {
                 //if (Globals.attackResources[faction].ContainsKey(system.Owner))
@@ -352,7 +387,7 @@ public class Core
                     attacklist.Add(system);
             }
 
-            //Allocate all the resources against the targetfaction to systems controlled by targetfaction.
+            //Allocate all the resources against the targetFaction to systems controlled by targetFaction.
             var i = 0;
             do
             {
@@ -361,6 +396,10 @@ public class Core
                 systemStatus.influenceTracker[faction] += 1;
             } while (i < WarStatus.FindWarFactionResources(faction)[targetFaction]);
         }
+
+        LogDebug("=== === DONE BUT PROBABLY NOTHING ABOVE");
+        attackResources.Do(x => LogDebug(x.Key.ToString()));
+        LogDebug("=== === DONE");
     }
 
     public static void AllocateDefensiveResources(Faction faction)
@@ -711,7 +750,7 @@ public class Core
                     WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
                     if (warFaction != null)
                     {
-                        warFaction.resources = Settings.ResourceMap[faction];
+                        warFaction.AttackResources = Settings.ResourceMap[faction];
                         warFaction.DefensiveResources = Settings.DefensiveResourceMap[faction];
                     }
                     else
@@ -739,7 +778,7 @@ public class Core
                 var faction = WarStatus.warFactionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
                 if (faction != null)
                 {
-                    faction.resources += resources;
+                    faction.AttackResources += resources;
                     faction.DefensiveResources += DefensiveResources;
                 }
             }
@@ -757,9 +796,9 @@ public class Core
             {
                 tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
                 i++;
-            } while (i < faction.resources);
+            } while (i < faction.AttackResources);
 
-            faction.resources = tempnum * (100f + faction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle) / 100f;
+            faction.AttackResources = tempnum * (100f + faction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle) / 100f;
 
             tempnum = 0f;
             i = 0;
@@ -772,7 +811,7 @@ public class Core
             faction.DefensiveResources = tempnum * (100f * Settings.GlobalDefenseFactor
                                                     - faction.DaysSinceSystemLost * Settings.ResourceAdjustmentPerCycle) / 100f;
 
-            Log($"Faction: {faction.faction}, Attack Resources: {faction.resources}, " +
+            Log($"Faction: {faction.faction}, Attack Resources: {faction.AttackResources}, " +
                 $"Defensive Resources: {faction.DefensiveResources}");
         }
     }
