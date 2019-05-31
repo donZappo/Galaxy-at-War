@@ -12,10 +12,10 @@ namespace GalaxyAtWar
 {
     public class WarStatus
     {
-        public List<SystemStatus> systems = new List<SystemStatus>();
+        public static List<SystemStatus> systems = new List<SystemStatus>();
         public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
-        public List<WarFaction> factionTracker = new List<WarFaction>();
-        public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
+        public static List<WarFaction> factionTracker = new List<WarFaction>();
+        public static Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
         internal static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
         internal static Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
         internal static Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();

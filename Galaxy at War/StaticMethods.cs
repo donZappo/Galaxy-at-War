@@ -28,10 +28,10 @@ namespace GalaxyAtWar
             LogDebug(starSystem.Name);
             // the rest happens only after initial distribution
             // build list of attack targets
-            LogDebug("neighorSystems " + sim.Starmap.GetAvailableNeighborSystem(starSystem).Count);
+            //LogDebug("neighorSystems " + sim.Starmap.GetAvailableNeighborSystem(starSystem).Count);
             foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                LogDebug("\t" + neighborSystem);
+                //LogDebug("\t" + neighborSystem);
                 if (!WarStatus.attackTargets.ContainsKey(neighborSystem.Owner) &&
                     neighborSystem.Owner != starSystem.Owner)
                 {

@@ -5,6 +5,7 @@ using BattleTech;
 using BattleTech.DataObjects;
 using BattleTech.UI;
 using BestHTTP.SocketIO;
+using GalaxyAtWar;
 using Harmony;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -33,50 +34,71 @@ public class StarmapMod
     //    }
     //}
 
-    [HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
+    //[HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
     public static class PatchyPOOOOP
     {
         public static bool Prefix(StarmapRenderer __instance)
         {
-            var war = Core.WarStatus;
             __instance.starmapCamera.gameObject.SetActive(true);
-            foreach (StarmapSystemRenderer starmapSystemRenderer in __instance.systemDictionary.Values)
+            var systemDictionary = Traverse.Create(__instance).Field("systemDictionary").GetValue<Dictionary<GameObject, StarmapSystemRenderer>>();
+            foreach (StarmapSystemRenderer renderer in systemDictionary.Values)
             {
-                //Logger.Log(starmapSystemRenderer.system.System.Name);
-                //Logger.Log(war.systems.Count.ToString());
-                var systemStatus = war.systems.Find(x => x.name == starmapSystemRenderer.system.System.Name);
 
-                try
-                {
-                    //var influence = systemStatus?.influenceTracker[systemStatus.owner];
-                    //if (influence < 90)
-                    {
-                        starmapSystemRenderer.systemColor = Color.magenta;
-                        //var mpb = StarmapSystemRenderer.mpb;
-                        // starmapSystemRenderer.starOuter.SetPropertyBlock(mpb);
-                        // starmapSystemRenderer.starInner.SetPropertyBlock(mpb);
-                        //starmapSystemRenderer.Set(starmapSystemRenderer.system, Color.magenta, false);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                }
-
-                __instance.InitializeSysRenderer(starmapSystemRenderer.system, starmapSystemRenderer);
-                if (__instance.starmap.CurSelected != null && __instance.starmap.CurSelected.System.ID == starmapSystemRenderer.system.System.ID)
-                {
-                    starmapSystemRenderer.Selected();
-                }
+                global::Logger.LogDebug("Color: " + renderer.systemColor);
+                renderer.systemColor = Color.magenta;
+                global::Logger.LogDebug("Color: " + renderer.systemColor);
+                renderer.Init(renderer.system, Color.magenta, renderer.CanTravel, false);
+                global::Logger.LogDebug("Color: " + renderer.systemColor);
+                Traverse.Create(__instance).Method("InitializeSysRenderer", new[] {typeof(StarSystemNode), typeof(StarmapSystemRenderer)}).GetValue(renderer.system, renderer);
+                //__instance.InitializeSysRenderer(renderer.system, renderer);
+                if (__instance.starmap.CurSelected != null && __instance.starmap.CurSelected.System.ID == renderer.system.System.ID)
+                    renderer.Selected();
                 else
-                {
-                    starmapSystemRenderer.Deselected();
-                }
+                    renderer.Deselected();
             }
 
-            __instance.PlaceLogo(Faction.AuriganDirectorate, __instance.directorateLogo);
-            __instance.PlaceLogo(Faction.AuriganRestoration, __instance.restorationLogo);
+            //__instance.PlaceLogo(Faction.AuriganRestoration, __instance.restorationLogo);
+
+            Traverse.Create(__instance).Method("PlaceLogo", new[] {typeof(Faction), typeof(GameObject)}).GetValue(Faction.AuriganDirectorate, __instance.directorateLogo);
+            Traverse.Create(__instance).Method("PlaceLogo", new[] {typeof(Faction), typeof(GameObject)}).GetValue(Faction.AuriganRestoration, __instance.restorationLogo);
             return false;
+
+            //__instance.PlaceLogo(Faction.AuriganDirectorate, this.directorateLogo);
+            //__instance.PlaceLogo(Faction.AuriganRestoration, this.restorationLogo);
+
+            //var war = Core.WarStatus;
+            //__instance.starmapCamera.gameObject.SetActive(true);
+            //var systemDictionary = Traverse.Create(__instance).Field("systemDictionary").GetValue<Dictionary<GameObject, StarmapSystemRenderer>>();
+            //foreach (StarmapSystemRenderer starmapSystemRenderer in systemDictionary.Values)
+            //{
+            //    //Logger.Log(starmapSystemRenderer.system.System.Name);
+            //    //Logger.Log(war.systems.Count.ToString());
+            //    var systemStatus = WarStatus.systems.Find(x => x.name == starmapSystemRenderer.system.System.Name);
+            //
+            //    try
+            //    {
+            //        starmapSystemRenderer.systemColor = Color.magenta;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Logger.Error(ex);
+            //    }
+            //
+            //    Traverse.Create(__instance).Method("InitializeSysRenderer").GetValue(starmapSystemRenderer.system, starmapSystemRenderer);
+            //    //__instance.InitializeSysRenderer(starmapSystemRenderer.system, starmapSystemRenderer);
+            //    if (__instance.starmap.CurSelected != null && __instance.starmap.CurSelected.System.ID == starmapSystemRenderer.system.System.ID)
+            //    {
+            //        starmapSystemRenderer.Selected();
+            //    }
+            //    else
+            //    {
+            //        starmapSystemRenderer.Deselected();
+            //    }
+            //}
+            //
+            //Traverse.Create(__instance).Method("PlaceLogo").GetValue(Faction.AuriganDirectorate, __instance.directorateLogo);
+            ////__instance.PlaceLogo(Faction.AuriganDirectorate, __instance.directorateLogo);
+            //Traverse.Create(__instance).Method("PlaceLogo").GetValue(Faction.AuriganRestoration, __instance.restorationLogo);
         }
     }
 
