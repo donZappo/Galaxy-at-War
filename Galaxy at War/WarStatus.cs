@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
+using Harmony;
 using Newtonsoft.Json;
 using static Logger;
 
@@ -18,9 +19,14 @@ public class WarStatus
     //public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    
-    public static Dictionary<Faction, float> FindWarFactionResources(Faction faction) =>
-        Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
+
+    public static Dictionary<Faction, float> FindWarFactionResources(Faction faction)
+    {
+        //LogDebug(">>> FindWarFactionResources " + Core.WarStatus.warFactionTracker.Count.ToString());
+        //LogDebug(">>> Faction: " + faction);
+        //Core.WarStatus.warFactionTracker.Do(x => LogDebug(x.warFactionAttackResources.Count.ToString()));
+        return Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
+    }
 }
 
 public class SystemStatus
@@ -63,6 +69,7 @@ public class DeathListTracker
     {
         // deser ctor
     }
+
     public DeathListTracker(Faction faction)
     {
         LogDebug("DeathListTracker ctor");
@@ -96,7 +103,6 @@ public class WarFaction
 
     public Faction faction;
 
-    
     //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
@@ -104,6 +110,7 @@ public class WarFaction
     {
         // deser ctor
     }
+
     public WarFaction(Faction faction, float AttackResources, float DefensiveResources)
     {
         LogDebug("WarFaction ctor");
