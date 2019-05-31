@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using BattleTech;
 using Harmony;
 using HBS.Util;
@@ -159,11 +160,15 @@ public class Core
 
             foreach (var warFaction in WarStatus.warFactionTracker)
             {
-                systemStatus.attackTargets.Clear();
-                systemStatus.defenseTargets.Clear();
+                warFaction.attackTargets.Clear();
+                warFaction.defenseTargets.Clear();
+            }
+
+            foreach (var systemStatus in WarStatus.systems)
+            {
                 systemStatus.neighborSystems.Clear();
-                warFaction.CalculateAttackTargets(systemStatus.name);
-                systemStatus.CalculateDefenseTargets(systemStatus.name);
+                systemStatus.CalculateAttackTargets();
+                systemStatus.CalculateDefenseTargets();
                 systemStatus.FindNeighbors();
                 foreach (var neighbor in systemStatus.neighborSystems)
                 {
@@ -288,13 +293,11 @@ public class Core
             var attackResources = warFaction.AttackResources;
             var total = deathList.Values.Sum();
 
-
             var UFKeys = uniqueFactions.Keys;
             var tempUF = uniqueFactions;
             foreach (var tempfaction in UFKeys)
                 tempUF[tempfaction] = deathList[tempfaction] * attackResources / total;
             warFaction.warFactionAttackResources = uniqueFactions;
-
         }
     }
 

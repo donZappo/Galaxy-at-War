@@ -33,6 +33,7 @@ public class SystemStatus
     public Faction owner = Faction.NoFaction;
     internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+    public WarFaction warFaction;
 
     [JsonConstructor]
     public SystemStatus()
@@ -45,6 +46,7 @@ public class SystemStatus
         Log($"SystemStatus ctor: {systemName}");
         name = systemName;
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
+        if (Core.WarStatus.warFactionTracker.
 
         //Globals.neighborSystems.Clear();
 
