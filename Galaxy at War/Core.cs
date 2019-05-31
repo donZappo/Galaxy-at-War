@@ -157,13 +157,13 @@ public class Core
             //Add resources for adjacent systems
             var rand = new Random();
 
-            foreach (var systemStatus in WarStatus.systems)
+            foreach (var warFaction in WarStatus.warFactionTracker)
             {
                 systemStatus.attackTargets.Clear();
                 systemStatus.defenseTargets.Clear();
                 systemStatus.neighborSystems.Clear();
-                systemStatus.CalculateAttackTargets();
-                systemStatus.CalculateDefenseTargets();
+                warFaction.CalculateAttackTargets(systemStatus.name);
+                systemStatus.CalculateDefenseTargets(systemStatus.name);
                 systemStatus.FindNeighbors();
                 foreach (var neighbor in systemStatus.neighborSystems)
                 {
@@ -281,55 +281,20 @@ public class Core
             foreach (var attackSystem in systemStatus.attackTargets[faction])
                 if (!uniqueFactions.ContainsKey(attackSystem.Owner))
                     uniqueFactions.Add(attackSystem.Owner, 0f);
+
             RefreshResources(sim);
             var deathList = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList;
             var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
             var attackResources = warFaction.AttackResources;
             var total = deathList.Values.Sum();
 
-            //var UFKeys = uniqueFactions.Keys;
 
-            var tempDict = new Dictionary<Faction, float>();
-            foreach (var tempfaction in uniqueFactions.Keys)
-            {
-                if (!tempDict.ContainsKey(tempfaction))
-                {
-                    LogDebug("=== Add " + tempfaction);
-                    tempDict.Add(tempfaction, 0);
-                }
-                else
-                {
-                    LogDebug("=== Already contains " + tempfaction);
-                }
+            var UFKeys = uniqueFactions.Keys;
+            var tempUF = uniqueFactions;
+            foreach (var tempfaction in UFKeys)
+                tempUF[tempfaction] = deathList[tempfaction] * attackResources / total;
+            warFaction.warFactionAttackResources = uniqueFactions;
 
-                if (deathList.ContainsKey(tempfaction))
-                {
-                    LogDebug("=== Set " + tempfaction);
-                    if (!tempDict.ContainsKey(tempfaction))
-                    {
-                        tempDict.Add(tempfaction, 0);
-                        LogDebug("=== Added again wtf");
-                    }
-
-                    tempDict[tempfaction] = deathList[tempfaction] * attackResources;// / total;
-                }
-                else
-                {
-                    LogDebug("=== Already contains " + tempfaction);
-                }
-
-                //uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
-            }
-
-            //foreach (var fact in tempDict.Keys)
-            //{
-            //    if (uniqueFactions.ContainsKey(fact))
-            //        uniqueFactions[fact] = tempDict[fact];
-            //    else
-            //        uniqueFactions.Add(fact, tempDict[fact]);
-            //}
-
-            warFaction.warFactionAttackResources = tempDict;
         }
     }
 
