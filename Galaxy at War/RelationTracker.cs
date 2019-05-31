@@ -10,8 +10,6 @@ using static Logger;
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
-
-
 //public class RelationTracker
 //{
 //    // we want to know how any given faction feels about another one
@@ -48,69 +46,7 @@ using static Logger;
 //    }
 //}
 
-public class DeathListTracker
-{
-    public Faction faction;
-    public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
-    public List<Faction> AttackedBy = new List<Faction>();
 
-    // can't serialize these so make them private
-    private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    private FactionDef factionDef;
-
-    public DeathListTracker(Faction faction)
-    {
-        this.faction = faction;
-        factionDef = sim.FactionsDict
-            .Where(kvp => kvp.Key == faction)
-            .Select(kvp => kvp.Value).First();
-
-        foreach (var def in sim.FactionsDict.Values)
-        {
-            // necessary to skip factions here?  it does fire
-            if (Core.Settings.ExcludedFactions.Contains(def.Faction) || (factionDef == def))
-                continue;
-            if (factionDef.Enemies.Contains(def.Faction))
-            {
-                deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
-            }
-            else if (factionDef.Allies.Contains(def.Faction))
-            {
-                deathList.Add(def.Faction, Core.Settings.KLValueAllies);
-            }
-            else
-            {
-                deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
-            }
-        }
-    }
-}
-
-public class WarFaction
-{
-    public float DaysSinceSystemAttacked;
-    public float DaysSinceSystemLost;
-    public float DefensiveResources;
-    public float resources;
-    public Faction faction;
-    public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
-    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    
-    public WarFaction(Faction faction, float resources, float DefensiveResources)
-    {
-        this.faction = faction;
-        this.resources = resources;
-        this.DefensiveResources = DefensiveResources;
-        
-        foreach (var kvp in sim.FactionsDict)
-        {
-            if (Core.Settings.ExcludedFactions.Contains(kvp.Key)) continue;
-            if (kvp.Value == null) continue;
-            if (deathListTracker.All(x => x.faction != kvp.Key))
-                deathListTracker.Add(new DeathListTracker(kvp.Key));
-        }
-    }
-}
 
 //public class ResourceTacker
 //{

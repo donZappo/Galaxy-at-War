@@ -24,6 +24,7 @@ public static class SaveHandling
             if (!File.Exists("Mods\\GalaxyAtWar\\" + fileName)) return;
             LogDebug("Rehydrate Postfix");
             DeserializeWar();
+            //File.Delete("Mods\\GalaxyAtWar\\" + fileName);
         }
     }
 
@@ -105,8 +106,8 @@ public static class SaveHandling
         //sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         //sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         //LogDebug($"Serializing systems: {Core.WarStatus.systems.Count}");
-        
-        LogDebug("WarStatus is null: " + (Core.WarStatus == null));
+
+        //LogDebug("WarStatus is null: " + (Core.WarStatus == null));
         LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
             writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
@@ -118,8 +119,10 @@ public static class SaveHandling
     internal static void DeserializeWar()
     {
         LogDebug(">>> Deserialization");
+
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
         {
+            Core.WarStatus = new WarStatus();
             Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
             try
             {
