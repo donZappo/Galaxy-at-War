@@ -47,7 +47,6 @@ public class SystemStatus
 
         //Globals.neighborSystems.Clear();
 
-
         //StaticMethods.CalculateNeighbours(sim, systemName);
         //StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
         //StaticMethods.CalculateAttackTargets(sim, name);
@@ -100,7 +99,6 @@ public class WarFaction
     public float DefensiveResources;
     public Dictionary<Faction, float> warFactionAttackResources;
     public float AttackResources;
-
     public Faction faction;
 
     //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
