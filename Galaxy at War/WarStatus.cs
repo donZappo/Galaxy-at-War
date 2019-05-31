@@ -9,46 +9,40 @@ using static Logger;
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
-namespace GalaxyAtWar
+public class WarStatus
 {
-    public class WarStatus
+    public List<SystemStatus> systems = new List<SystemStatus>();
+    public List<DeathListTracker> factions = new List<DeathListTracker>();
+    //public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
+    public List<WarFaction> factionTracker = new List<WarFaction>();
+    public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
+
+    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+}
+
+public class SystemStatus
+{
+    public string name;
+    public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
+    public Faction owner = Faction.Unknown;
+
+    [JsonConstructor]
+    public SystemStatus()
     {
-        public List<SystemStatus> systems = new List<SystemStatus>();
-        public static RelationTracker relationTracker = new RelationTracker(UnityGameInstance.BattleTechGame.Simulation);
-        public List<WarFaction> factionTracker = new List<WarFaction>();
-        public Dictionary<Faction, Dictionary<Faction, float>> attackResources = new Dictionary<Faction, Dictionary<Faction, float>>();
+        // don't want our ctor running at deserialization
     }
 
-    public class SystemStatus
+    public SystemStatus(SimGameState sim, string systemName)
     {
-        public string name;
-        public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-        public Faction owner = Faction.Unknown;
+        Log($"new SystemStatus: {systemName}");
+        name = systemName;
+        owner = sim.StarSystems.First(s => s.Name == name).Owner;
 
-        [JsonConstructor]
-        public SystemStatus()
-        {
-            // don't want our ctor running at deserialization
-        }
+        Globals.neighborSystems.Clear();
 
-        public SystemStatus(SimGameState sim, string systemName)
-        {
-            Log($"new SystemStatus: {systemName}");
-            name = systemName;
-            owner = sim.StarSystems.First(s => s.Name == name).Owner;
-            Globals.neighborSystems.Clear();
-            try
-            {
-                StaticMethods.CalculateNeighbours(sim, systemName);
-            }
-            catch (Exception ex)
-            {
-                Error(ex);
-            }
-
-            StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
-            StaticMethods.CalculateAttackTargets(sim, name);
-            StaticMethods.CalculateDefenseTargets(sim, name);
-        }
+        StaticMethods.CalculateNeighbours(sim, systemName);
+        StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
+        StaticMethods.CalculateAttackTargets(sim, name);
+        StaticMethods.CalculateDefenseTargets(sim, name);
     }
 }

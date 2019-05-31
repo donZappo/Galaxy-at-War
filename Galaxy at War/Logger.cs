@@ -1,13 +1,12 @@
 using System;
 using System.IO;
 using System.Reflection;
-using GalaxyAtWar;
+
 
 public static class Logger
 {
     internal static string LogFilePath =>
-        Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName +
-        "\\Galaxy-at-War.txt";
+        Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "\\Galaxy-at-War.txt";
 
     public static void Error(Exception ex)
     {
