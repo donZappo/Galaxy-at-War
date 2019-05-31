@@ -48,6 +48,7 @@ public class SystemStatus
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
 
+
         //Globals.neighborSystems.Clear();
 
         //StaticMethods.CalculateNeighbours(sim, systemName);
@@ -233,6 +234,7 @@ public class WarFaction
             if (kvp.Value == null) continue;
             if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
                 Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
+            
         }
     }
 }

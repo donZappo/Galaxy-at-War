@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using BattleTech;
 using Harmony;
 using HBS.Util;
@@ -677,7 +678,7 @@ public class Core
     public static void RefreshResources(SimGameState sim)
     {
 // no point iterating over a KVP if you aren't using the values
-        LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+        //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
             //Log(faction.ToString());
@@ -704,7 +705,7 @@ public class Core
             }
         }
 
-        LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+        //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         if (sim.Starmap == null)
         {
             LogDebug("wHAAAAAAAAaat");
