@@ -96,8 +96,8 @@ public class Core
 
                 // TODO if it deserializes something invalid, handle it
 
-                ///foreach (var faction in sim.FactionsDict.Keys)
-                ///    LogPotentialTargets(faction);
+                //foreach (var faction in sim.FactionsDict.Keys)
+                //    LogPotentialTargets(faction);
             }
 
             //// first time setup if not
@@ -157,24 +157,6 @@ public class Core
             //Add resources for adjacent systems
             var rand = new Random();
 
-            foreach (var warFaction in WarStatus.warFactionTracker)
-            {
-                systemStatus.attackTargets.Clear();
-                systemStatus.defenseTargets.Clear();
-                systemStatus.neighborSystems.Clear();
-                warFaction.CalculateAttackTargets(systemStatus.name);
-                systemStatus.CalculateDefenseTargets(systemStatus.name);
-                systemStatus.FindNeighbors();
-                foreach (var neighbor in systemStatus.neighborSystems)
-                {
-                    var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
-                    if (systemStatus.influenceTracker.ContainsKey(neighbor.Key))
-                        systemStatus.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
-                    else
-                        systemStatus.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
-                }
-            }
-
             try
 
             {
@@ -188,24 +170,40 @@ public class Core
 
             foreach (var systemStatus in WarStatus.systems)
             {
-                if (systemStatus.attackTargets.Count > 0)
+                systemStatus.warFaction?.attackTargets.Clear();
+                systemStatus.warFaction?.defenseTargets.Clear();
+                systemStatus.neighborSystems.Clear();
+                systemStatus.CalculateAttackTargets();
+                systemStatus.CalculateDefenseTargets();
+                systemStatus.FindNeighbors();
+                foreach (var neighbor in systemStatus.neighborSystems)
+                {
+                    var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
+                    if (systemStatus.influenceTracker.ContainsKey(neighbor.Key))
+                        systemStatus.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
+                    else
+                        systemStatus.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
+                }
+            }
+
+            foreach (var systemStatus in WarStatus.systems)
+            {
+                if (systemStatus.warFaction?.attackTargets.Count > 0)
                 {
                     // attacking
-                    foreach (var faction in systemStatus.attackTargets.Keys)
+                    foreach (var faction in systemStatus.warFaction?.attackTargets.Keys)
                         AllocateAttackResources(faction);
 
-                    LogDebug($"=== Globals.attackTargets {systemStatus.attackTargets.Count}");
-                    LogDebug($"=== Globals.defenseTargets {systemStatus.defenseTargets.Count}");
+                    //LogDebug($"=== systemStatus.warFaction?.attackTargets.Count {systemStatus.warFaction?.attackTargets.Count}");
+                    //LogDebug($"=== systemStatus.warFaction?.defenseTargets.Count {systemStatus.warFaction?.defenseTargets.Count}");
                 }
 
-                if (systemStatus.defenseTargets.Count > 0)
+                if (systemStatus.warFaction?.defenseTargets.Count > 0)
                 {
                     // defending
-                    foreach (var faction in systemStatus.attackTargets.Keys)
+                    foreach (var faction in systemStatus.warFaction?.attackTargets.Keys)
                         AllocateDefensiveResources(faction);
                 }
-
-                LogDebug($"Globals.attackTargets {systemStatus.attackTargets.Count}");
             }
 
             UpdateInfluenceFromAttacks(sim);
@@ -278,7 +276,7 @@ public class Core
         var uniqueFactions = new Dictionary<Faction, float>();
         foreach (var systemStatus in WarStatus.systems)
         {
-            foreach (var attackSystem in systemStatus.attackTargets[faction])
+            foreach (var attackSystem in systemStatus.warFaction?.attackTargets[faction])
                 if (!uniqueFactions.ContainsKey(attackSystem.Owner))
                     uniqueFactions.Add(attackSystem.Owner, 0f);
 
@@ -288,13 +286,49 @@ public class Core
             var attackResources = warFaction.AttackResources;
             var total = deathList.Values.Sum();
 
+            //var UFKeys = uniqueFactions.Keys;
 
-            var UFKeys = uniqueFactions.Keys;
-            var tempUF = uniqueFactions;
-            foreach (var tempfaction in UFKeys)
-                tempUF[tempfaction] = deathList[tempfaction] * attackResources / total;
-            warFaction.warFactionAttackResources = uniqueFactions;
+            var tempDict = new Dictionary<Faction, float>();
+            foreach (var tempfaction in uniqueFactions.Keys)
+            {
+                if (!tempDict.ContainsKey(tempfaction))
+                {
+                    LogDebug("=== Add " + tempfaction);
+                    tempDict.Add(tempfaction, 0);
+                }
+                else
+                {
+                    LogDebug("=== Already contains " + tempfaction);
+                }
 
+                if (deathList.ContainsKey(tempfaction))
+                {
+                    LogDebug("=== Set " + tempfaction);
+                    if (!tempDict.ContainsKey(tempfaction))
+                    {
+                        tempDict.Add(tempfaction, 0);
+                        LogDebug("=== Added again wtf");
+                    }
+
+                    tempDict[tempfaction] = deathList[tempfaction] * attackResources; // / total;
+                }
+                else
+                {
+                    LogDebug("=== Already contains " + tempfaction);
+                }
+
+                //uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
+            }
+
+            //foreach (var fact in tempDict.Keys)
+            //{
+            //    if (uniqueFactions.ContainsKey(fact))
+            //        uniqueFactions[fact] = tempDict[fact];
+            //    else
+            //        uniqueFactions.Add(fact, tempDict[fact]);
+            //}
+
+            warFaction.warFactionAttackResources = tempDict;
         }
     }
 
@@ -329,7 +363,7 @@ public class Core
             //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetFaction
             foreach (var systemStatus in WarStatus.systems)
             {
-                foreach (var system in systemStatus.attackTargets[faction])
+                foreach (var system in systemStatus.warFaction?.attackTargets[faction])
                 {
                     //if (Globals.attackResources[faction].ContainsKey(system.Owner))
                     if (WarStatus.FindWarFactionResources(faction).ContainsKey(system.Owner))
@@ -363,10 +397,10 @@ public class Core
         var DefensiveResources = warFaction.DefensiveResources;
         foreach (var systemStatus in WarStatus.systems)
         {
-            if (!systemStatus.defenseTargets.ContainsKey(faction))
+            if (!systemStatus.warFaction.defenseTargets.Contains(systemStatus.starSystem))
                 return;
 
-            var systems = systemStatus.defenseTargets[faction];
+            var systems = systemStatus.warFaction.defenseTargets;
 
             // TODO fix so != 0
             while (DefensiveResources > 0)
