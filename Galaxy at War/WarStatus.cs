@@ -31,8 +31,6 @@ public class SystemStatus
     public string name;
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
     public Faction owner = Faction.NoFaction;
-    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-    internal Dictionary<Faction, List<StarSystem>> defenseTargets = new Dictionary<Faction, List<StarSystem>>();
     internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
@@ -69,7 +67,6 @@ public class SystemStatus
                 neighborSystems.Add(neighborSystem.Owner, 1);
         }
     }
-
     public void CalculateAttackTargets()
     {
         LogDebug("Calculate Potential Attack Targets");
@@ -77,21 +74,20 @@ public class SystemStatus
         LogDebug(starSystem.Name + ": " + starSystem.Owner);
         // the rest happens only after initial distribution
         // build list of attack targets
-        LogDebug("Under attack by:");
+        LogDebug("Can Attack:");
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!attackTargets.ContainsKey(neighborSystem.Owner) &&
-                (neighborSystem.Owner != starSystem.Owner))
+            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
+            if ((neighborSystem.Owner != starSystem.Owner) && !warFaction.attackTargets.ContainsKey(neighborSystem.Owner))
             {
-                var tempList = new List<StarSystem> {starSystem};
-                attackTargets.Add(neighborSystem.Owner, tempList);
+                var tempList = new List<StarSystem> { neighborSystem };
+                warFaction.attackTargets.Add(neighborSystem.Owner, tempList);
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
-            else if (attackTargets.ContainsKey(neighborSystem.Owner) &&
-                     !attackTargets[neighborSystem.Owner].Contains(starSystem) &&
-                     (neighborSystem.Owner != starSystem.Owner))
+            else if ((neighborSystem.Owner != starSystem.Owner) && warFaction.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                     !warFaction.attackTargets[neighborSystem.Owner].Contains(neighborSystem))
             {
-                attackTargets[neighborSystem.Owner].Add(starSystem);
+                warFaction.attackTargets[neighborSystem.Owner].Add(neighborSystem);
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
         }
@@ -110,22 +106,15 @@ public class SystemStatus
         // build list of defense targets
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!defenseTargets.ContainsKey(starSystem.Owner) &&
-                (neighborSystem.Owner != starSystem.Owner))
+            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
+            if ((neighborSystem.Owner != starSystem.Owner) && !warFaction.defenseTargets.Contains(starSystem))
             {
-                var tempList = new List<StarSystem> {starSystem};
-                defenseTargets.Add(starSystem.Owner, tempList);
-                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
-            }
-            else if (defenseTargets.ContainsKey(starSystem.Owner) &&
-                     !defenseTargets[starSystem.Owner].Contains(starSystem) &&
-                     (neighborSystem.Owner != starSystem.Owner))
-            {
-                defenseTargets[starSystem.Owner].Add(starSystem);
+                warFaction.defenseTargets.Add(starSystem);
                 LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
             }
         }
     }
+
 
     public void CalculateSystemInfluence()
     {
@@ -215,6 +204,9 @@ public class WarFaction
     public Dictionary<Faction, float> warFactionAttackResources;
     public float AttackResources;
     public Faction faction;
+
+    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    internal List<StarSystem> defenseTargets = new List<StarSystem>();
 
     //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;

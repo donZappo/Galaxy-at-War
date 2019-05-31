@@ -157,13 +157,13 @@ public class Core
             //Add resources for adjacent systems
             var rand = new Random();
 
-            foreach (var systemStatus in WarStatus.systems)
+            foreach (var warFaction in WarStatus.warFactionTracker)
             {
                 systemStatus.attackTargets.Clear();
                 systemStatus.defenseTargets.Clear();
                 systemStatus.neighborSystems.Clear();
-                systemStatus.CalculateAttackTargets();
-                systemStatus.CalculateDefenseTargets();
+                warFaction.CalculateAttackTargets(systemStatus.name);
+                systemStatus.CalculateDefenseTargets(systemStatus.name);
                 systemStatus.FindNeighbors();
                 foreach (var neighbor in systemStatus.neighborSystems)
                 {
@@ -281,6 +281,7 @@ public class Core
             foreach (var attackSystem in systemStatus.attackTargets[faction])
                 if (!uniqueFactions.ContainsKey(attackSystem.Owner))
                     uniqueFactions.Add(attackSystem.Owner, 0f);
+
             RefreshResources(sim);
             var deathList = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList;
             var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
@@ -288,8 +289,9 @@ public class Core
             var total = deathList.Values.Sum();
 
             var UFKeys = uniqueFactions.Keys;
+            var tempUF = uniqueFactions;
             foreach (var tempfaction in UFKeys)
-                uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
+                tempUF[tempfaction] = deathList[tempfaction] * attackResources / total;
             warFaction.warFactionAttackResources = uniqueFactions;
         }
     }
