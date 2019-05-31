@@ -157,14 +157,17 @@ public class Core
             //Add resources for adjacent systems
             var rand = new Random();
 
-            foreach (var warFaction in WarStatus.warFactionTracker)
+            foreach (var systemStatus in WarStatus.systems)
             {
-                systemStatus.attackTargets.Clear();
-                systemStatus.defenseTargets.Clear();
+                WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
+                warFaction.attackTargets.Clear();
+                warFaction.defenseTargets.Clear();
                 systemStatus.neighborSystems.Clear();
-                warFaction.CalculateAttackTargets(systemStatus.name);
-                systemStatus.CalculateDefenseTargets(systemStatus.name);
+
+                systemStatus.CalculateAttackTargets();
+                systemStatus.CalculateDefenseTargets();
                 systemStatus.FindNeighbors();
+
                 foreach (var neighbor in systemStatus.neighborSystems)
                 {
                     var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
@@ -186,26 +189,26 @@ public class Core
                 Error(ex);
             }
 
-            foreach (var systemStatus in WarStatus.systems)
+            foreach (var warFaction in WarStatus.warFactionTracker)
             {
-                if (systemStatus.attackTargets.Count > 0)
+                if (warFaction.attackTargets.Count > 0)
                 {
                     // attacking
-                    foreach (var faction in systemStatus.attackTargets.Keys)
+                    foreach (var faction in warFaction.attackTargets.Keys)
                         AllocateAttackResources(faction);
 
-                    LogDebug($"=== Globals.attackTargets {systemStatus.attackTargets.Count}");
-                    LogDebug($"=== Globals.defenseTargets {systemStatus.defenseTargets.Count}");
+                    LogDebug($"=== warFaction.attackTargets: {warFaction.attackTargets.Count}");
                 }
+            }
 
-                if (systemStatus.defenseTargets.Count > 0)
+            foreach (var warFaction in WarStatus.warFactionTracker)
+            { 
+                if (warFaction.defenseTargets.Count > 0)
                 {
                     // defending
-                    foreach (var faction in systemStatus.attackTargets.Keys)
-                        AllocateDefensiveResources(faction);
+                     AllocateDefensiveResources(warFaction.faction);
                 }
-
-                LogDebug($"Globals.attackTargets {systemStatus.attackTargets.Count}");
+                LogDebug($"=== warFaction.defenseTargets: {warFaction.defenseTargets.Count}");
             }
 
             UpdateInfluenceFromAttacks(sim);
@@ -275,24 +278,23 @@ public class Core
 
     public static void DivideAttackResources(SimGameState sim, Faction faction)
     {
-        var uniqueFactions = new Dictionary<Faction, float>();
-        foreach (var systemStatus in WarStatus.systems)
+        RefreshResources(sim);
+        foreach (var warFaction in WarStatus.warFactionTracker)
         {
-            foreach (var attackSystem in systemStatus.attackTargets[faction])
-                if (!uniqueFactions.ContainsKey(attackSystem.Owner))
-                    uniqueFactions.Add(attackSystem.Owner, 0f);
+            var warFAR = warFaction.warFactionAttackResources;
+            warFAR.Clear();
+            
+            foreach (Faction tempfaction in warFaction.attackTargets.Keys)
+            {
+                var deathlistValue = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList[tempfaction];
+                warFAR.Add(tempfaction, deathlistValue);
+            }
 
-            RefreshResources(sim);
-            var deathList = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList;
-            var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-            var attackResources = warFaction.AttackResources;
-            var total = deathList.Values.Sum();
+            var total = warFAR.Values.Sum();
+            var tempWarFAR = new Dictionary<Faction, float>();
 
-            var UFKeys = uniqueFactions.Keys;
-            var tempUF = uniqueFactions;
-            foreach (var tempfaction in UFKeys)
-                tempUF[tempfaction] = deathList[tempfaction] * attackResources / total;
-            warFaction.warFactionAttackResources = uniqueFactions;
+            foreach(Faction tempfaction in warFAR.Keys)
+                tempWarFAR.Add(tempfaction, warFAR[tempfaction] * warFaction.AttackResources / total);
         }
     }
 
@@ -327,7 +329,7 @@ public class Core
             //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetFaction
             foreach (var systemStatus in WarStatus.systems)
             {
-                foreach (var system in systemStatus.attackTargets[faction])
+                foreach (var system in systemStatus.warFaction.attackTargets[faction])
                 {
                     //if (Globals.attackResources[faction].ContainsKey(system.Owner))
                     if (WarStatus.FindWarFactionResources(faction).ContainsKey(system.Owner))
@@ -356,54 +358,45 @@ public class Core
         var random = new Random();
         if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
             return;
+
         WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-
         var DefensiveResources = warFaction.DefensiveResources;
-        foreach (var systemStatus in WarStatus.systems)
+        
+        while (DefensiveResources > 0)
         {
-            if (!systemStatus.defenseTargets.ContainsKey(faction))
-                return;
-
-            var systems = systemStatus.defenseTargets[faction];
-
-            // TODO fix so != 0
-            while (DefensiveResources > 0)
+            float highest = 0f;
+            Faction highestFaction = faction;
+            var rand = random.Next(0, warFaction.defenseTargets.Count());
+            var system = warFaction.defenseTargets[rand].Name;
+            var systemStatus = WarStatus.systems.Find(x => x.name == system);
+            
+            foreach (Faction tempfaction in systemStatus.influenceTracker.Keys)
             {
-                float highest = 0f;
-                Faction highestFaction = faction;
-                var rand = random.Next(0, systems.Count());
-                var system = WarStatus.systems.First(f => f.name == systems[rand].Name);
-
-                foreach (Faction tempfaction in system.influenceTracker.Keys)
+                if (systemStatus.influenceTracker[tempfaction] > highest)
                 {
-                    if (system.influenceTracker[tempfaction] > highest)
-                    {
-                        highest = system.influenceTracker[tempfaction];
-                        highestFaction = tempfaction;
-                    }
+                    highest = systemStatus.influenceTracker[tempfaction];
+                    highestFaction = tempfaction;
                 }
+            }
 
-                if (highestFaction == faction)
+            if (highestFaction == faction)
+            {
+                systemStatus.influenceTracker[faction] += 1;
+                DefensiveResources -= 1;
+            }
+            else
+            {
+                var diffRes = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[faction];
+                if (diffRes >= DefensiveResources)
                 {
-                    system.influenceTracker[faction] += 1;
-                    DefensiveResources -= 1;
+                    systemStatus.influenceTracker[faction] += DefensiveResources;
+                    DefensiveResources = 0;
                 }
                 else
                 {
-                    var diffRes = system.influenceTracker[highestFaction] - system.influenceTracker[faction];
-                    if (diffRes >= DefensiveResources)
-                    {
-                        system.influenceTracker[faction] += DefensiveResources;
-                        DefensiveResources = 0;
-                    }
-                    else
-                    {
-                        system.influenceTracker[faction] += diffRes;
-                        DefensiveResources -= diffRes;
-                    }
+                    systemStatus.influenceTracker[faction] += diffRes;
+                    DefensiveResources -= diffRes;
                 }
-
-                //Log($"DefensiveResources: {DefensiveResources}");
             }
         }
     }
