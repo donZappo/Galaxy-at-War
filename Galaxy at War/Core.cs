@@ -287,10 +287,49 @@ public class Core
             var attackResources = warFaction.AttackResources;
             var total = deathList.Values.Sum();
 
-            var UFKeys = uniqueFactions.Keys;
-            foreach (var tempfaction in UFKeys)
-                uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
-            warFaction.warFactionAttackResources = uniqueFactions;
+            //var UFKeys = uniqueFactions.Keys;
+
+            var tempDict = new Dictionary<Faction, float>();
+            foreach (var tempfaction in uniqueFactions.Keys)
+            {
+                if (!tempDict.ContainsKey(tempfaction))
+                {
+                    LogDebug("=== Add " + tempfaction);
+                    tempDict.Add(tempfaction, 0);
+                }
+                else
+                {
+                    LogDebug("=== Already contains " + tempfaction);
+                }
+
+                if (deathList.ContainsKey(tempfaction))
+                {
+                    LogDebug("=== Set " + tempfaction);
+                    if (!tempDict.ContainsKey(tempfaction))
+                    {
+                        tempDict.Add(tempfaction, 0);
+                        LogDebug("=== Added again wtf");
+                    }
+
+                    tempDict[tempfaction] = deathList[tempfaction] * attackResources;// / total;
+                }
+                else
+                {
+                    LogDebug("=== Already contains " + tempfaction);
+                }
+
+                //uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
+            }
+
+            //foreach (var fact in tempDict.Keys)
+            //{
+            //    if (uniqueFactions.ContainsKey(fact))
+            //        uniqueFactions[fact] = tempDict[fact];
+            //    else
+            //        uniqueFactions.Add(fact, tempDict[fact]);
+            //}
+
+            warFaction.warFactionAttackResources = tempDict;
         }
     }
 
@@ -682,7 +721,7 @@ public class Core
     public static void RefreshResources(SimGameState sim)
     {
 // no point iterating over a KVP if you aren't using the values
-        LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+        //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {
             //Log(faction.ToString());
@@ -709,7 +748,7 @@ public class Core
             }
         }
 
-        LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+        //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         if (sim.Starmap == null)
         {
             LogDebug("wHAAAAAAAAaat");
