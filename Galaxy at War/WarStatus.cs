@@ -37,10 +37,9 @@ public class SystemStatus
 
     public SystemStatus(SimGameState sim, string systemName)
     {
-        Log($"new SystemStatus: {systemName}");
+        Log($"SystemStatus ctor: {systemName}");
         name = systemName;
         owner = sim.StarSystems.First(s => s.Name == name).Owner;
-
         Globals.neighborSystems.Clear();
 
         //StaticMethods.CalculateNeighbours(sim, systemName);
@@ -60,8 +59,13 @@ public class DeathListTracker
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     private FactionDef factionDef;
 
+    public DeathListTracker()
+    {
+        // deser ctor
+    }
     public DeathListTracker(Faction faction)
     {
+        LogDebug("DeathListTracker ctor");
         this.faction = faction;
         factionDef = sim.FactionsDict
             .Where(kvp => kvp.Key == faction)
@@ -88,17 +92,23 @@ public class WarFaction
     public float DaysSinceSystemLost;
     public float DefensiveResources;
     public Dictionary<Faction, float> warFactionAttackResources;
-    public float resources;
+    public float AttackResources;
 
     public Faction faction;
 
+    
     //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
-    public WarFaction(Faction faction, float resources, float DefensiveResources)
+    public WarFaction()
     {
+        // deser ctor
+    }
+    public WarFaction(Faction faction, float AttackResources, float DefensiveResources)
+    {
+        LogDebug("WarFaction ctor");
         this.faction = faction;
-        this.resources = resources;
+        this.AttackResources = AttackResources;
         this.DefensiveResources = DefensiveResources;
         // get rid of a faction tracker DeathList for itself
         //var ownFactionListEntry = deathListTracker.Find(x => faction == x.faction);

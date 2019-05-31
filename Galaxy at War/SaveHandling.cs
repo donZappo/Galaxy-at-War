@@ -12,7 +12,7 @@ using static Logger;
 public static class SaveHandling
 {
     private static readonly SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    private static string fileName = $"WarStatus_{sim.InstanceGUID}.json";
+    public static string fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
     [HarmonyPatch(typeof(SimGameState), nameof(SimGameState.Rehydrate))]
     public static class SimGameState_Rehydrate_Patch
