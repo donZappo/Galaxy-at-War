@@ -4,6 +4,8 @@ using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
 using static Logger;
+using System;
+using Harmony;
 
 public static class StaticMethods
 {
@@ -37,7 +39,7 @@ public static class StaticMethods
                 (neighborSystem.Owner != starSystem.Owner))
             {
                 var tempList = new List<StarSystem> {starSystem};
-                Globals.attackTargets.Add(neighborSystem.Owner, tempList);
+                Globals.attackTargets.Add(new KeyValuePair<Faction, List<StarSystem>>(neighborSystem.Owner, tempList));
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
             else if (Globals.attackTargets.ContainsKey(neighborSystem.Owner) &&
@@ -66,8 +68,8 @@ public static class StaticMethods
             if (!Globals.defenseTargets.ContainsKey(starSystem.Owner) &&
                 (neighborSystem.Owner != starSystem.Owner))
             {
-                var tempList = new List<StarSystem> {starSystem};
-                Globals.defenseTargets.Add(starSystem.Owner, tempList);
+                var tempList = new List<StarSystem>() {starSystem};
+                Globals.defenseTargets.Add(new KeyValuePair<Faction, List<StarSystem>>( starSystem.Owner, tempList));
                 LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
             }
             else if (Globals.defenseTargets.ContainsKey(starSystem.Owner) &&

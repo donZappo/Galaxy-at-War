@@ -213,20 +213,20 @@ public class Core
                 {
                     // attacking
                     foreach (var faction in Globals.attackTargets.Keys)
-                        AllocateAttackResources(faction);
+                        AllocateAttackResources(sim, faction);
 
                     LogDebug($"=== Globals.attackTargets {Globals.attackTargets.Count}");
                     LogDebug($"=== Globals.defenseTargets {Globals.defenseTargets.Count}");
                 }
-                else
-                {
-                    foreach (var systemStatus in WarStatus.systems)
-                    {
-                        StaticMethods.CalculateAttackTargets(sim, systemStatus.name);
-                        foreach (var faction in Globals.attackTargets.Keys)
-                            AllocateAttackResources(faction);
-                    }
-                }
+                //else
+                //{
+                //    foreach (var systemStatus in WarStatus.systems)
+                //    {
+                //        StaticMethods.CalculateAttackTargets(sim, systemStatus.name);
+                //        foreach (var faction in Globals.attackTargets.Keys)
+                //            AllocateAttackResources(sim, faction);
+                //    }
+                //}
             }
             catch (Exception ex)
             {
@@ -243,15 +243,15 @@ public class Core
                         AllocateDefensiveResources(faction);
 
                 }
-                else
-                {
-                    foreach (var systemStatus in WarStatus.systems)
-                    {
-                        StaticMethods.CalculateDefenseTargets(sim, systemStatus.name);
-                        foreach (var faction in Globals.attackTargets.Keys)
-                            AllocateDefensiveResources(faction);
-                    }
-                }
+                //else
+                //{
+                //    foreach (var systemStatus in WarStatus.systems)
+                //    {
+                //        StaticMethods.CalculateDefenseTargets(sim, systemStatus.name);
+                //        foreach (var faction in Globals.attackTargets.Keys)
+                //            AllocateDefensiveResources(faction);
+                //    }
+                //}
             }
             catch (Exception ex)
             {
@@ -261,7 +261,7 @@ public class Core
 
             try
             {
-                LogDebug($"Globals.attackTargets {Globals.attackTargets.Count}");
+                LogDebug($"Globals.attackTargets {Globals.attackTargets.Keys.Count()}");
                 UpdateInfluenceFromAttacks(sim);
             }
             catch (Exception ex)
@@ -343,20 +343,20 @@ public class Core
         RefreshResources(sim);
         var deathList = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList;
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-        var resources = warFaction.AttackResources;
+        var attackResources = warFaction.AttackResources;
 
-        
-        // TODO unfuck the math I broke, sorry
-        var total = uniqueFactions.Values.Sum();
-        foreach (var tempfaction in uniqueFactions.Keys)
-            uniqueFactions[tempfaction] = deathList[tempfaction] * resources / total;
-        var attackResources = WarStatus.FindWarFactionResources(faction); //.Add((Dictionary<Faction, float>)uniqueFactions);
-        attackResources = uniqueFactions;
-        //Globals.attackResources.Add(faction, uniqueFactions);
+        var total = deathList.Values.Sum();
+        var UFKeys = uniqueFactions.Keys;
+
+        foreach (var tempfaction in UFKeys)
+            uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
+
+        warFaction.warFactionAttackResources = uniqueFactions;
     }
 
-    public static void AllocateAttackResources(Faction faction)
+    public static void AllocateAttackResources(SimGameState sim, Faction faction)
     {
+        DivideAttackResources(sim, faction);
         var random = new Random();
         LogDebug("AllocateAttackResources faction: " + faction);
         
