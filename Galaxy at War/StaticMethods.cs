@@ -77,7 +77,7 @@ namespace GalaxyAtWar
             }
         }
 
-        public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Faction owner, string name)
+        public static void DistributeInfluence(Dictionary<Faction, float> influenceTracker, Dictionary<Faction, int> neighborSystems, Faction owner, string name)
         {
             Log(">>> DistributeInfluence: " + name);
             // determine starting influence based on neighboring systems

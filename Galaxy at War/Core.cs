@@ -158,11 +158,9 @@ namespace GalaxyAtWar
 
                 //Add resources for adjacent systems
                 var rand = new Random();
-
-                foreach (var system in WarStatus.systems)
+                try
                 {
-                    //Log($"\n\n{system.name}");
-                    foreach (var neighbor in WarStatus.neighborSystems)
+                    foreach (var system in WarStatus.systems)
                     {
                         Globals.neighborSystems.Clear();
                         StaticMethods.CalculateNeighbours(sim, system.name);
@@ -185,15 +183,26 @@ namespace GalaxyAtWar
                         Log($"\n{system.name} influenceTracker:");
                         //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                     }
-
-                    Log($"\n{system.name} influenceTracker:");
-                    //system.influenceTracker.Do(x => Log($"{x.Key.ToString()} {x.Value}"));
                 }
 
-                RefreshResources(__instance);
+                catch (Exception ex)
+                {
+                    LogDebug("\n2");
+                    Error(ex);
+                }
 
-                LogDebug($"WarStatus.attackTargets {WarStatus.attackTargets.Count}");
-                if (WarStatus.attackTargets.Count > 0)
+                //Log("Refreshing Resources");
+                try
+                {
+                    RefreshResources(__instance);
+                }
+                catch (Exception ex)
+                {
+                    LogDebug("3");
+                    Error(ex);
+                }
+
+                try
                 {
                     LogDebug($"Globals.attackTargets {Globals.attackTargets.Count}");
                     if (Globals.attackTargets.Count > 0)
@@ -213,7 +222,15 @@ namespace GalaxyAtWar
                     Error(ex);
                 }
 
-                UpdateInfluenceFromAttacks(sim);
+                try
+                {
+                    UpdateInfluenceFromAttacks(sim);
+                }
+                catch (Exception ex)
+                {
+                    LogDebug("6");
+                    Error(ex);
+                }
 
                 //Increase War Escalation of decay defenses.
                 foreach (var warfaction in WarStatus.factionTracker)
