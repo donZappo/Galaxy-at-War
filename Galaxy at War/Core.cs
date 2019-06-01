@@ -134,48 +134,27 @@ public class Core
             LogDebug(">>> PROC");
 
             // Proc effects
-            //if (WarStatus.systems.Count > 0)
-            //{
-            //    Globals.neighborSystems.Clear();
-            //    foreach (var system in WarStatus.systems)
-            //    {
-            //        try
-            //        {
-            //            //LogDebug("Calculating neighbors for " + system.name);
-            //            StaticMethods.CalculateNeighbours(sim, system.name);
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            LogDebug("CALC NEIGHBORS");
-            //            Error(ex);
-            //        }
-            //    }
-            //}
-            //else
-            //    LogDebug("NO SYSTEMS FOUND");
 
             //Add resources for adjacent systems
+            RefreshResources(__instance);
+
             var rand = new Random();
-
-            try
-
+            foreach (var systemStatus in WarStatus.systems.Where(x => x.starSystem != null))
             {
-                RefreshResources(__instance);
-            }
-            catch (Exception ex)
-            {
-                LogDebug("RefreshResources");
-                Error(ex);
-            }
+                try
+                {
+                    systemStatus.warFaction.attackTargets.Clear();
+                    systemStatus.warFaction.defenseTargets.Clear();
+                    systemStatus.neighborSystems.Clear();
+                }
+                catch
+                {
+                }
 
-            foreach (var systemStatus in WarStatus.systems)
-            {
-                systemStatus.warFaction?.attackTargets.Clear();
-                systemStatus.warFaction?.defenseTargets.Clear();
-                systemStatus.neighborSystems.Clear();
                 systemStatus.CalculateAttackTargets();
                 systemStatus.CalculateDefenseTargets();
                 systemStatus.FindNeighbors();
+
                 foreach (var neighbor in systemStatus.neighborSystems)
                 {
                     var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
@@ -719,7 +698,7 @@ public class Core
 
     public static void RefreshResources(SimGameState sim)
     {
-// no point iterating over a KVP if you aren't using the values
+        // no point iterating over a KVP if you aren't using the values
         //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
         {

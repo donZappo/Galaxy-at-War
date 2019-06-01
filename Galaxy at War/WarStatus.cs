@@ -34,9 +34,11 @@ public class SystemStatus
     internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     internal WarFaction warFaction;
-    internal StarSystem starSystem;
+    internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
+    
 
-    [JsonConstructor]
+    [JsonConstructor
+    ]
     public SystemStatus()
     {
         // don't want our ctor running at deserialization
@@ -46,7 +48,6 @@ public class SystemStatus
     {
         Log($"SystemStatus ctor: {systemName}");
         name = systemName;
-        starSystem = sim.StarSystems.Find(s => s.Name == name);
         owner = starSystem.Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
 
@@ -76,10 +77,16 @@ public class SystemStatus
     {
         LogDebug("Calculate Potential Attack Targets");
         //var starSystem = sim.StarSystems.Find(x => x.Name == name);
-        LogDebug(starSystem.Name + ": " + starSystem.Owner);
+        //                                               LogDebug(starSystem.Name + ": " + starSystem.Owner);
         // the rest happens only after initial distribution
         // build list of attack targets
         LogDebug("Can Attack:");
+        if (starSystem == null)
+        {
+            LogDebug("PPPPPPPPPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+            return;
+        }
+
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
             var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);

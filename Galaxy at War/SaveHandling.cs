@@ -121,10 +121,12 @@ public static class SaveHandling
         using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
         {
             Core.WarStatus = new WarStatus();
+            LogDebug($"Size before load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
             Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(reader.ReadToEnd());
+            LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
             try
             {
-                //LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
+                LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
             }
             catch (Exception ex)
             {
