@@ -127,6 +127,7 @@ public class Core
             RefreshResources(__instance);
                
             var rand = new Random();
+            var i = 0;
             foreach (var systemStatus in WarStatus.systems)
             {
 
@@ -139,11 +140,9 @@ public class Core
                 catch // silent drop
                 {
                 }
-
                 systemStatus.CalculateAttackTargets();
                 systemStatus.CalculateDefenseTargets();
                 systemStatus.FindNeighbors();
-
                 foreach (var neighbor in systemStatus.neighborSystems)
                 {
                     var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
@@ -153,20 +152,19 @@ public class Core
                         systemStatus.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
                 }
             }
-
             foreach (var systemStatus in WarStatus.systems)
             {
-                if (systemStatus.warFaction?.attackTargets.Count > 0)
+                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
+                if (warFaction.attackTargets.Count > 0)
                 {
                     // attacking
-                    foreach (var faction in systemStatus.warFaction?.attackTargets.Keys)
+                    foreach (var faction in warFaction.attackTargets.Keys)
                         AllocateAttackResources(faction);
                 }
-
-                if (systemStatus.warFaction?.defenseTargets.Count > 0)
+                if (warFaction.defenseTargets.Count > 0)
                 {
                     // defending
-                    foreach (var faction in systemStatus.warFaction?.attackTargets.Keys)
+                    foreach (var faction in warFaction.attackTargets.Keys)
                         AllocateDefensiveResources(faction);
                 }
             }
@@ -176,15 +174,50 @@ public class Core
             //Increase War Escalation of decay defenses.
             foreach (var warfaction in WarStatus.warFactionTracker)
             {
-                if (Settings.GainedSystem.Contains(warfaction.faction))
+                if (!warfaction.GainedSystem)
                     warfaction.DaysSinceSystemAttacked += 1;
+                else
+                {
+                    warfaction.DaysSinceSystemAttacked = 0;
+                    warfaction.GainedSystem = false;
+                }
 
-                if (Settings.LostSystem.Contains(warfaction.faction))
+                if (!warfaction.LostSystem)
                     warfaction.DaysSinceSystemLost += 1;
+                else
+                {
+                    warfaction.DaysSinceSystemLost = 0;
+                    warfaction.LostSystem = false;
+                }
             }
 
-            Settings.GainedSystem.Clear();
-            Settings.LostSystem.Clear();
+            Log("===================================================");
+            Log("TESTING ZONE");
+            Log("===================================================");
+            //TESTING ZONE
+            foreach (WarFaction WF in WarStatus.warFactionTracker)
+            {
+                Log("----------------------------------------------");
+                Log(WF.faction.ToString());
+                try
+                {
+                    //Log("\tAttacked By :");
+                    //foreach (Faction fac in DLT.AttackedBy)
+                    //    Log("\t\t" + fac.ToString());
+                    Log("\tDefense Resources :" + WF.DefensiveResources.ToString());
+                    Log("\tAttack Resources :" + WF.AttackResources.ToString());
+                    //Log("\tDefensive Resources :" + warF.DefensiveResources.ToString());
+                    //Log("\tDeath List:");
+                    //foreach (Faction faction in DLT.deathList.Keys)
+                    //{
+                    //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+                    //}
+                }
+                catch (Exception e)
+                {
+                    Error(e);
+                }
+            }
 
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
@@ -238,30 +271,23 @@ public class Core
 
         public static void DivideAttackResources(SimGameState sim, Faction faction)
         {
-            var uniqueFactions = new Dictionary<Faction, float>();
-            foreach (var systemStatus in WarStatus.systems)
+            RefreshResources(sim);
+            foreach (WarFaction warFaction in WarStatus.warFactionTracker)
             {
-                foreach (var attackSystem in systemStatus.warFaction?.attackTargets[faction])
-                    if (!uniqueFactions.ContainsKey(attackSystem.Owner))
-                        uniqueFactions.Add(attackSystem.Owner, 0f);
-
-                RefreshResources(sim);
-                var deathList = WarStatus.deathListTracker.Find(x => x.faction == faction).deathList;
-                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-                var attackResources = warFaction.AttackResources;
-                var total = deathList.Values.Sum();
-
-                var tempDict = new Dictionary<Faction, float>();
-                foreach (var tempfaction in uniqueFactions.Keys)
+                var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
+                var warFAR = warFaction.warFactionAttackResources;
+                warFAR.Clear();
+                var tempTargets = new Dictionary<Faction, float>();
+                foreach(Faction fact in warFaction.attackTargets.Keys)
                 {
-                    if (!tempDict.ContainsKey(tempfaction))
-                        tempDict.Add(tempfaction, 0);
-
-                    if (deathList.ContainsKey(tempfaction))
-                        tempDict[tempfaction] = deathList[tempfaction] * attackResources / total;
+                    tempTargets.Add(fact, deathList.deathList[fact]);
                 }
+                var total = tempTargets.Values.Sum();
 
-                warFaction.warFactionAttackResources = tempDict;
+                foreach(Faction Rfact in tempTargets.Keys)
+                {
+                    warFAR.Add(Rfact, tempTargets[Rfact] * warFaction.AttackResources / total);
+                }
             }
         }
 
@@ -280,7 +306,6 @@ public class Core
             }
 
             if (!attackResources.ContainsKey(faction)) return;
-            Log(attackResources.ContainsKey(faction).ToString());
 
             //Go through the different resources allocated from attacking faction to spend against each targetFaction
             foreach (var targetFaction in WarStatus.FindWarFactionResources(faction))
@@ -434,8 +459,11 @@ public class Core
 
                 factionTracker.AttackedBy.Add(faction);
 
-                Settings.LostSystem.Add(OldFaction);
-                Settings.GainedSystem.Add(faction);
+                WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+                WFWinner.GainedSystem = true;
+
+                WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
+                WFLoser.LostSystem = true;
             }
         }
 
@@ -448,11 +476,9 @@ public class Core
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
                 var highest = 0f;
                 var highestfaction = systemStatus.owner;
-                Log($"Attacking status for {systemStatus.name}");
                 foreach (var kvp in systemStatus.influenceTracker)
                 {
                     tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
-                    Log($"{kvp.Key}: {tempDict[kvp.Key]}");
                     if (kvp.Value > highest)
                     {
                         highest = kvp.Value;
@@ -490,7 +516,6 @@ public class Core
                     }
                     catch (Exception ex)
                     {
-                        Log("TWO");
                         Error(ex);
                     }
                 }
@@ -499,7 +524,6 @@ public class Core
             var tempRTFactions = WarStatus.deathListTracker;
             foreach (var deathListTracker in tempRTFactions)
             {
-                Log(deathListTracker.faction.ToString());
                 AdjustDeathList(deathListTracker, sim);
                 deathListTracker.AttackedBy.Clear();
             }
@@ -519,7 +543,7 @@ public class Core
                     if (deathList[faction] > 50)
                         deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
                     else if (deathList[faction] <= 50)
-                        deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
+                        deathList[faction] -= 1 - (deathList[faction]) / 50;
                 }
 
                 //Ceiling and floor for faction enmity. 
@@ -632,7 +656,6 @@ public class Core
             //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
             foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
             {
-                //Log(faction.ToString());
                 if (Settings.ResourceMap.ContainsKey(faction))
                 {
                     // initialize resources from the ResourceMap
@@ -650,8 +673,6 @@ public class Core
                             warFaction.AttackResources = Settings.ResourceMap[faction];
                             warFaction.DefensiveResources = Settings.DefensiveResourceMap[faction];
                         }
-                        else
-                            Log($"warFaction {faction} was null");
                     }
                 }
             }
@@ -662,7 +683,6 @@ public class Core
                 var resources = GetTotalResources(system);
                 var DefensiveResources = GetTotalDefensiveResources(system);
                 var owner = system.Owner;
-                Log($"{system.Name + ":",-20} {owner,-20}, total resources: {resources}, total defensive resources: {DefensiveResources}");
                 try
                 {
                     var faction = WarStatus.warFactionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
@@ -700,9 +720,6 @@ public class Core
 
                 faction.DefensiveResources = tempnum * (100f * Settings.GlobalDefenseFactor
                                                         - faction.DaysSinceSystemLost * Settings.ResourceAdjustmentPerCycle) / 100f;
-
-                Log($"Faction: {faction.faction}, Attack Resources: {faction.AttackResources}, " +
-                    $"Defensive Resources: {faction.DefensiveResources}");
             }
         }
 

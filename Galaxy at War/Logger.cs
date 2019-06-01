@@ -29,10 +29,10 @@ public static class Logger
 
     public static void Log(string line)
     {
-        //using (var writer = new StreamWriter(LogFilePath, true))
-        //{
-        //    writer.WriteLine(line);
-        //}
+        using (var writer = new StreamWriter(LogFilePath, true))
+        {
+            writer.WriteLine(line);
+        }
     }
 
     public static void Clear()

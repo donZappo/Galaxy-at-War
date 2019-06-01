@@ -25,28 +25,22 @@ public class ModSettings
 
     public Dictionary<Faction, int> ResourceMap = new Dictionary<Faction, int>
     {
-        {Faction.Steiner, 10},
-        {Faction.Kurita, 10},
         {Faction.Davion, 10},
         {Faction.Liao, 10},
         {Faction.Marik, 10},
         {Faction.TaurianConcordat, 10},
         {Faction.MagistracyOfCanopus, 10},
-        {Faction.AuriganPirates, 10},
         {Faction.Locals, 10},
         {Faction.NoFaction, 10}
     };
 
     public Dictionary<Faction, int> DefensiveResourceMap = new Dictionary<Faction, int>
     {
-        {Faction.Steiner, 10},
-        {Faction.Kurita, 10},
         {Faction.Davion, 10},
         {Faction.Liao, 10},
         {Faction.Marik, 10},
         {Faction.TaurianConcordat, 10},
         {Faction.MagistracyOfCanopus, 10},
-        {Faction.AuriganPirates, 10},
         {Faction.Locals, 10},
         {Faction.NoFaction, 10}
     };
@@ -92,26 +86,20 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-    public bool Debug = true;
+    public bool Debug = false;
     public string modDirectory;
     public int DominantInfluence = 60;
     public int MinorInfluencePool = 40;
-    public float GlobalDefenseFactor = 0.5f;
+    public float GlobalDefenseFactor = 1f;
     public int ResourceAdjustmentPerCycle = 1;
-    public int ResourceRandomizer = 4;
+    public int ResourceRandomizer = 1;
     public float DifficultyFactor = 1f;
-    public float TakeoverThreshold = 5f;
+    public float TakeoverThreshold = 0f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
     public float KLValueAllies = 25f;
     public float KLValuesNeutral = 50f;
     public float KLValuesEnemies = 100f;
-
-    public List<Faction> LostSystem = new List<Faction>()
-        { };
-
-    public List<Faction> GainedSystem = new List<Faction>()
-        { };
 
     public List<Faction> ExcludedFactions = new List<Faction>()
     {

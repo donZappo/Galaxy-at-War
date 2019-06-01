@@ -52,11 +52,11 @@ public static class SaveHandling
                     if (tag.StartsWith("GalaxyAtWar"))
                     {
                         sim.CompanyTags.Remove(tag);
-                        Log("removed tag");
+                    //    Log("removed tag");
                     }
                     else
                     {
-                        Log("left " + tag);
+                    //   Log("left " + tag);
                     }
                 }
 
