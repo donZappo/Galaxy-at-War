@@ -124,11 +124,10 @@ public class Core
 
             //Add resources for adjacent systems
             RefreshResources(__instance);
-               
+
             var rand = new Random();
             foreach (var systemStatus in WarStatus.systems)
             {
-
                 try
                 {
                     systemStatus.warFaction.attackTargets.Clear();
@@ -155,17 +154,17 @@ public class Core
 
             foreach (var systemStatus in WarStatus.systems)
             {
-                if (systemStatus.warFaction?.attackTargets.Count > 0)
+                if (systemStatus.warFaction != null && systemStatus.warFaction.attackTargets.Count > 0)
                 {
                     // attacking
-                    foreach (var faction in systemStatus.warFaction?.attackTargets.Keys)
+                    foreach (var faction in systemStatus.warFaction.attackTargets.Keys)
                         AllocateAttackResources(faction);
                 }
 
-                if (systemStatus.warFaction?.defenseTargets.Count > 0)
+                if (systemStatus.warFaction != null && systemStatus.warFaction.defenseTargets.Count > 0)
                 {
                     // defending
-                    foreach (var faction in systemStatus.warFaction?.attackTargets.Keys)
+                    foreach (var faction in systemStatus.warFaction.attackTargets.Keys)
                         AllocateDefensiveResources(faction);
                 }
             }
@@ -240,7 +239,7 @@ public class Core
             var uniqueFactions = new Dictionary<Faction, float>();
             foreach (var systemStatus in WarStatus.systems)
             {
-                foreach (var attackSystem in systemStatus.warFaction?.attackTargets[faction])
+                foreach (var attackSystem in systemStatus.warFaction.attackTargets[faction])
                     if (!uniqueFactions.ContainsKey(attackSystem.Owner))
                         uniqueFactions.Add(attackSystem.Owner, 0f);
 
