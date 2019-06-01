@@ -176,6 +176,8 @@ public class SystemStatus
 
 public class WarFaction
 {
+    public bool GainedSystem;
+    public bool LostSystem;
     public float DaysSinceSystemAttacked;
     public float DaysSinceSystemLost;
     public float DefensiveResources;
@@ -200,6 +202,10 @@ public class WarFaction
         this.faction = faction;
         this.AttackResources = AttackResources;
         this.DefensiveResources = DefensiveResources;
+        GainedSystem = false;
+        LostSystem = false;
+        DaysSinceSystemAttacked = 0;
+        DaysSinceSystemLost = 0;
 
         foreach (var kvp in sim.FactionsDict)
         {

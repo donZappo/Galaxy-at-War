@@ -107,12 +107,6 @@ public class ModSettings
     public float KLValuesNeutral = 50f;
     public float KLValuesEnemies = 100f;
 
-    public List<Faction> LostSystem = new List<Faction>()
-        { };
-
-    public List<Faction> GainedSystem = new List<Faction>()
-        { };
-
     public List<Faction> ExcludedFactions = new List<Faction>()
     {
         Faction.Unknown,

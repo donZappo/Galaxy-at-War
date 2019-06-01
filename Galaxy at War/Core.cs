@@ -175,15 +175,22 @@ public class Core
             //Increase War Escalation of decay defenses.
             foreach (var warfaction in WarStatus.warFactionTracker)
             {
-                if (Settings.GainedSystem.Contains(warfaction.faction))
+                if (!warfaction.GainedSystem)
                     warfaction.DaysSinceSystemAttacked += 1;
+                else
+                {
+                    warfaction.DaysSinceSystemAttacked = 0;
+                    warfaction.GainedSystem = false;
+                }
 
-                if (Settings.LostSystem.Contains(warfaction.faction))
+                if (!warfaction.LostSystem)
                     warfaction.DaysSinceSystemLost += 1;
+                else
+                {
+                    warfaction.DaysSinceSystemLost = 0;
+                    warfaction.LostSystem = false;
+                }
             }
-
-            Settings.GainedSystem.Clear();
-            Settings.LostSystem.Clear();
 
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
@@ -433,8 +440,11 @@ public class Core
 
                 factionTracker.AttackedBy.Add(faction);
 
-                Settings.LostSystem.Add(OldFaction);
-                Settings.GainedSystem.Add(faction);
+                WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+                WFWinner.GainedSystem = true;
+
+                WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
+                WFLoser.LostSystem = true;
             }
         }
 
