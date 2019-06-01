@@ -92,15 +92,15 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-    public bool Debug = true;
+    public bool Debug = false;
     public string modDirectory;
     public int DominantInfluence = 60;
     public int MinorInfluencePool = 40;
-    public float GlobalDefenseFactor = 0.5f;
+    public float GlobalDefenseFactor = 0f;
     public int ResourceAdjustmentPerCycle = 1;
-    public int ResourceRandomizer = 4;
+    public int ResourceRandomizer = 1;
     public float DifficultyFactor = 1f;
-    public float TakeoverThreshold = 5f;
+    public float TakeoverThreshold = 0f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
     public float KLValueAllies = 25f;

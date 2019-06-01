@@ -38,7 +38,6 @@ public class SystemStatus
 
     public SystemStatus(SimGameState sim, string systemName)
     {
-        Log($"SystemStatus ctor: {systemName}");
         name = systemName;
         owner = starSystem.Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
@@ -134,7 +133,6 @@ public class SystemStatus
 
     public void CalculateSystemInfluence()
     {
-        Log(">>> DistributeInfluence: " + name);
         // determine starting influence based on neighboring systems
         influenceTracker.Add(owner, Core.Settings.DominantInfluence);
         int remainingInfluence = Core.Settings.MinorInfluencePool;
@@ -181,7 +179,7 @@ public class WarFaction
     public float DaysSinceSystemAttacked;
     public float DaysSinceSystemLost;
     public float DefensiveResources;
-    public Dictionary<Faction, float> warFactionAttackResources;
+    public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     public float AttackResources;
     public Faction faction;
 
@@ -206,6 +204,7 @@ public class WarFaction
         LostSystem = false;
         DaysSinceSystemAttacked = 0;
         DaysSinceSystemLost = 0;
+
 
         foreach (var kvp in sim.FactionsDict)
         {

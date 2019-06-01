@@ -52,11 +52,11 @@ public static class SaveHandling
                     if (tag.StartsWith("GalaxyAtWar"))
                     {
                         sim.CompanyTags.Remove(tag);
-                        Log("removed tag");
+                    //    Log("removed tag");
                     }
                     else
                     {
-                        Log("left " + tag);
+                    //   Log("left " + tag);
                     }
                 }
             }
@@ -87,7 +87,7 @@ public static class SaveHandling
             if (hotkeyT)
             {
                 var tagLength = sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"))?.Length;
-                Log($"GalaxyAtWarSize {tagLength / 1024}kb");
+                //Log($"GalaxyAtWarSize {tagLength / 1024}kb");
             }
         }
     }
