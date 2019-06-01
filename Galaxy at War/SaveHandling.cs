@@ -59,6 +59,8 @@ public static class SaveHandling
                         Log("left " + tag);
                     }
                 }
+
+                Core.WarStatus = null;
             }
 
             //sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
@@ -86,7 +88,7 @@ public static class SaveHandling
             var hotkeyT = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)
             {
-                var tagLength = sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"))?.Length;
+                var tagLength = sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave")).Length;
                 Log($"GalaxyAtWarSize {tagLength / 1024}kb");
             }
         }
