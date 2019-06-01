@@ -67,6 +67,7 @@ public class Core
 
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
+    public static StarSystem SelectedSystem;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
