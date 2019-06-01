@@ -8,6 +8,8 @@ using Harmony;
 using Newtonsoft.Json;
 using static Logger;
 using Random = System.Random;
+using BattleTech.UI;
+using HBS;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -190,35 +192,64 @@ public class Core
                 }
             }
 
-            //Log("===================================================");
-            //Log("TESTING ZONE");
-            //Log("===================================================");
-            ////TESTING ZONE
-            //foreach (WarFaction WF in WarStatus.warFactionTracker)
-            //{
-            //    Log("----------------------------------------------");
-            //    Log(WF.faction.ToString());
-            //    try
-            //    {
-            //        //Log("\tAttacked By :");
-            //        //foreach (Faction fac in DLT.AttackedBy)
-            //        //    Log("\t\t" + fac.ToString());
-            //        //Log("\tOwner :" + DLT.);
-            //        Log("\tAttack Resources :" + WF.AttackResources.ToString());
-            //        Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
-            //        //Log("\tDeath List:");
-            //        //foreach (Faction faction in DLT.deathList.Keys)
-            //        //{
-            //        //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
-            //        //}
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Error(e);
-            //    }
-            //}
+            //Comstar report on ongoing war.
 
-            SaveHandling.SerializeWar();
+            //GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+            //SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools.Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+            //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", " poop " + " from " + "heaven", true, null);
+
+            //if ((__instance.DayRemainingInQuarter - num <= 0))
+            //{
+            //    foreach (KeyValuePair<string, string> changes in Fields.thisMonthChanges)
+            //    {
+            //        StarSystem changedSystem = __instance.StarSystems.Find(x => x.Name.Equals(changes.Key));
+            //        if (!Helper.GetFactionName(changedSystem.Owner, __instance.DataManager).Equals(changes.Value))
+            //        {
+            //            War war = Helper.getWar(changedSystem.Owner);
+            //            if (war != null)
+            //            {
+            //                if (war.attackers.ContainsKey(changedSystem.Owner))
+            //                {
+            //                    war.monthlyEvents.Add("<color=" + Fields.settings.attackercolor + ">" + Helper.GetFactionName(changedSystem.Owner, __instance.DataManager) + "</color>" + " took " + "<color=" + Fields.settings.planetcolor + ">" + changes.Key + "</color>" + " from " + "<color=" + Fields.settings.defendercolor + ">" + changes.Value + "</color>");
+            //                }
+            //                else
+            //                {
+            //                    war.monthlyEvents.Add("<color=" + Fields.settings.defendercolor + ">" + Helper.GetFactionName(changedSystem.Owner, __instance.DataManager) + "</color>" + " took " + "<color=" + Fields.settings.planetcolor + ">" + changes.Key + "</color>" + " from " + "<color=" + Fields.settings.attackercolor + ">" + changes.Value + "</color>");
+            //                }
+            //            }
+            //        }
+            //    }
+
+
+                //Log("===================================================");
+                //Log("TESTING ZONE");
+                //Log("===================================================");
+                ////TESTING ZONE
+                //foreach (WarFaction WF in WarStatus.warFactionTracker)
+                //{
+                //    Log("----------------------------------------------");
+                //    Log(WF.faction.ToString());
+                //    try
+                //    {
+                //        //Log("\tAttacked By :");
+                //        //foreach (Faction fac in DLT.AttackedBy)
+                //        //    Log("\t\t" + fac.ToString());
+                //        //Log("\tOwner :" + DLT.);
+                //        Log("\tAttack Resources :" + WF.AttackResources.ToString());
+                //        Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
+                //        //Log("\tDeath List:");
+                //        //foreach (Faction faction in DLT.deathList.Keys)
+                //        //{
+                //        //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+                //        //}
+                //    }
+                //    catch (Exception e)
+                //    {
+                //        Error(e);
+                //    }
+                //}
+
+                SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
         }
 
@@ -755,7 +786,19 @@ public class Core
                 }
 
                 var sim = __instance.BattleTechGame.Simulation;
+              //  var oldowner = sim.CurSystem.Owner;
                 UpdateInfluenceFromAttacks(sim);
+              //  var newowner = sim.CurSystem.Owner;
+
+                //if (oldowner != newowner)
+                //{
+                //    GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                //    SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                //        .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                //    interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() + 
+                //        " conquered from " + oldowner.ToString(), true, null);
+                //}
+
             }
         }
     }
