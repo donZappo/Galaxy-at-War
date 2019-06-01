@@ -12,7 +12,7 @@ using static Logger;
 public static class SaveHandling
 {
     private static readonly SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    private static string fileName = $"WarStatus_{sim.InstanceGUID}.json";
+    private static string FileName => $"WarStatus_{sim.InstanceGUID}.json";
 
     [HarmonyPatch(typeof(SimGameState), nameof(SimGameState.Rehydrate))]
     public static class SimGameState_Rehydrate_Patch
@@ -21,7 +21,7 @@ public static class SaveHandling
         {
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
             //if (!sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave"))) return;
-            if (!File.Exists("Mods\\GalaxyAtWar\\" + fileName)) return;
+            if (!File.Exists("Mods\\GalaxyAtWar\\" + FileName)) return;
             LogDebug("Rehydrate Postfix");
             DeserializeWar();
             //File.Delete("Mods\\GalaxyAtWar\\" + fileName);
@@ -107,7 +107,7 @@ public static class SaveHandling
 
         //LogDebug("WarStatus is null: " + (Core.WarStatus == null));
         LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + fileName))
+        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + FileName))
             writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
         //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\RelationTracker.json"))
         //    writer.Write(JsonConvert.SerializeObject(WarStatus.factionTracker));
@@ -118,7 +118,7 @@ public static class SaveHandling
     {
         LogDebug(">>> Deserialization");
 
-        using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + fileName))
+        using (var reader = new StreamReader("Mods\\GalaxyAtWar\\" + FileName))
         {
             Core.WarStatus = new WarStatus();
             LogDebug($"Size before load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
