@@ -33,9 +33,12 @@ public class SystemStatus
     public Faction owner = Faction.NoFaction;
     internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    public WarFaction warFaction;
+    internal WarFaction warFaction;
+    internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
-    [JsonConstructor]
+
+    [JsonConstructor
+    ]
     public SystemStatus()
     {
         // don't want our ctor running at deserialization
@@ -45,7 +48,7 @@ public class SystemStatus
     {
         Log($"SystemStatus ctor: {systemName}");
         name = systemName;
-        owner = sim.StarSystems.First(s => s.Name == name).Owner;
+        owner = starSystem.Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
 
 
@@ -59,7 +62,7 @@ public class SystemStatus
 
     public void FindNeighbors()
     {
-        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        //var starSystem = sim.StarSystems.Find(x => x.Name == name);
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
         // build a list of all neighbors
         foreach (var neighborSystem in neighbors)
@@ -70,27 +73,40 @@ public class SystemStatus
                 neighborSystems.Add(neighborSystem.Owner, 1);
         }
     }
+
     public void CalculateAttackTargets()
     {
         LogDebug("Calculate Potential Attack Targets");
-        var starSystem = sim.StarSystems.Find(x => x.Name == name);
-        LogDebug(starSystem.Name + ": " + starSystem.Owner);
+        //var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        //                                               LogDebug(starSystem.Name + ": " + starSystem.Owner);
         // the rest happens only after initial distribution
         // build list of attack targets
         LogDebug("Can Attack:");
+        if (starSystem == null)
+        {
+            LogDebug("PPPPPPPPPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+            return;
+        }
+
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
-            if ((neighborSystem.Owner != starSystem.Owner) && !warFaction.attackTargets.ContainsKey(neighborSystem.Owner))
+            var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
+            if (warFac == null)
             {
-                var tempList = new List<StarSystem> { neighborSystem };
-                warFaction.attackTargets.Add(neighborSystem.Owner, tempList);
+                LogDebug("Didn't find warFaction for " + starSystem.Owner);
+                return;
+            }
+
+            if (neighborSystem.Owner != starSystem.Owner && !warFac.attackTargets.ContainsKey(neighborSystem.Owner))
+            {
+                var tempList = new List<StarSystem> {neighborSystem};
+                warFac.attackTargets.Add(neighborSystem.Owner, tempList);
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
-            else if ((neighborSystem.Owner != starSystem.Owner) && warFaction.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                     !warFaction.attackTargets[neighborSystem.Owner].Contains(neighborSystem))
+            else if ((neighborSystem.Owner != starSystem.Owner) && warFac.attackTargets.ContainsKey(neighborSystem.Owner) &&
+                     !warFac.attackTargets[neighborSystem.Owner].Contains(neighborSystem))
             {
-                warFaction.attackTargets[neighborSystem.Owner].Add(neighborSystem);
+                warFac.attackTargets[neighborSystem.Owner].Add(neighborSystem);
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
         }
@@ -103,21 +119,27 @@ public class SystemStatus
     public void CalculateDefenseTargets()
     {
         LogDebug("Calculate Potential Defendable Systems");
-        var starSystem = sim.StarSystems.Find(x => x.Name == name);
+        //var starSystem = sim.StarSystems.Find(x => x.Name == name);
         LogDebug(starSystem.Name);
         LogDebug("Needs defense:");
         // build list of defense targets
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
-            if ((neighborSystem.Owner != starSystem.Owner) && !warFaction.defenseTargets.Contains(starSystem))
+            var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
+            if (warFac == null)
             {
-                warFaction.defenseTargets.Add(starSystem);
+                LogDebug("Didn't find warFaction for " + starSystem.Owner);
+
+                return;
+            }
+
+            if ((neighborSystem.Owner != starSystem.Owner) && !warFac.defenseTargets.Contains(starSystem))
+            {
+                warFac.defenseTargets.Add(starSystem);
                 LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
             }
         }
     }
-
 
     public void CalculateSystemInfluence()
     {
@@ -161,44 +183,6 @@ public class SystemStatus
     }
 }
 
-public class DeathListTracker
-{
-    public Faction faction;
-    public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
-    public List<Faction> AttackedBy = new List<Faction>();
-
-    // can't serialize these so make them private
-    private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    private FactionDef factionDef;
-
-    public DeathListTracker()
-    {
-        // deser ctor
-    }
-
-    public DeathListTracker(Faction faction)
-    {
-        LogDebug("DeathListTracker ctor");
-        this.faction = faction;
-        factionDef = sim.FactionsDict
-            .Where(kvp => kvp.Key == faction)
-            .Select(kvp => kvp.Value).First();
-
-        foreach (var def in sim.FactionsDict.Values)
-        {
-            // necessary to skip factions here?  it does fire
-            if (Core.Settings.ExcludedFactions.Contains(def.Faction))
-                continue;
-            if (factionDef.Enemies.Contains(def.Faction))
-                deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
-            else if (factionDef.Allies.Contains(def.Faction))
-                deathList.Add(def.Faction, Core.Settings.KLValueAllies);
-            else
-                deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
-        }
-    }
-}
-
 public class WarFaction
 {
     public float DaysSinceSystemAttacked;
@@ -234,7 +218,44 @@ public class WarFaction
             if (kvp.Value == null) continue;
             if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
                 Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
-            
+        }
+    }
+}
+
+public class DeathListTracker
+{
+    public Faction faction;
+    public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
+    public List<Faction> AttackedBy = new List<Faction>();
+
+    // can't serialize these so make them private
+    private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+    private FactionDef factionDef;
+
+    public DeathListTracker()
+    {
+        // deser ctor
+    }
+
+    public DeathListTracker(Faction faction)
+    {
+        LogDebug("DeathListTracker ctor");
+        this.faction = faction;
+        factionDef = sim.FactionsDict
+            .Where(kvp => kvp.Key == faction)
+            .Select(kvp => kvp.Value).First();
+
+        foreach (var def in sim.FactionsDict.Values)
+        {
+            // necessary to skip factions here?  it does fire
+            if (Core.Settings.ExcludedFactions.Contains(def.Faction))
+                continue;
+            if (factionDef.Enemies.Contains(def.Faction))
+                deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
+            else if (factionDef.Allies.Contains(def.Faction))
+                deathList.Add(def.Faction, Core.Settings.KLValueAllies);
+            else
+                deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
         }
     }
 }
