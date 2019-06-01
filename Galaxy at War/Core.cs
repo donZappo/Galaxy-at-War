@@ -1,17 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using BattleTech;
 using Harmony;
-using HBS.Util;
 using Newtonsoft.Json;
-using UnityEngine;
 using static Logger;
-using Error = BestHTTP.SocketIO.Error;
 using Random = System.Random;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -79,20 +74,12 @@ public class Core
         static void Prefix(SimGameState __instance, int timeLapse)
         {
             SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (sim == null)
-            {
-                LogDebug("WTAF");
-                return;
-            }
 
             // already have a save?
-            var fileName = $"WarStatus_{sim.InstanceGUID}.json";
 
-            //File.Delete("Mods\\GalaxyAtWar\\" + fileName);
-            //if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
-            if (WarStatus == null && File.Exists("Mods\\GalaxyAtWar\\" + fileName))
+            if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
             {
-                LogDebug(">>> Loading " + fileName);
+                LogDebug(">>> Loading");
                 SaveHandling.DeserializeWar();
 
                 // TODO if it deserializes something invalid, handle it
@@ -101,7 +88,7 @@ public class Core
                 //    LogPotentialTargets(faction);
             }
 
-            //// first time setup if not
+            // first time setup if not
             if (WarStatus == null)
             {
                 LogDebug(">>> First-time initialization");
@@ -109,7 +96,6 @@ public class Core
                 //This generates the initial distribution of Influence amongst the systems.
                 WarStatus = new WarStatus();
                 InitializeSystems(sim);
-                LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
 
                 //foreach (var faction in sim.FactionsDict.Keys)
                 //    LogPotentialTargets(faction);
@@ -138,12 +124,10 @@ public class Core
 
             //Add resources for adjacent systems
             RefreshResources(__instance);
-
+               
+            var rand = new Random();
             foreach (var systemStatus in WarStatus.systems)
             {
-                //WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
-
-                var rand = new Random();
 
                 try
                 {
@@ -151,7 +135,7 @@ public class Core
                     systemStatus.warFaction.defenseTargets.Clear();
                     systemStatus.neighborSystems.Clear();
                 }
-                catch
+                catch // silent drop
                 {
                 }
 
@@ -221,14 +205,15 @@ public class Core
             }
         }
 
+        // TODO refactor to make it compile
         //public static void LogPotentialTargets(Faction faction)
         //{
-        //    if (Globals.attackTargets.Keys.Contains(faction))
+        //    if (WarStatus.warFactionTracker.First(x=> x.faction == faction).attackTargets.Keys.Contains(faction))
         //    {
         //        LogDebug("------------------------------------------------------");
         //        LogDebug(faction.ToString());
         //        LogDebug("Attack Targets");
-        //        foreach (StarSystem attackedSystem in Globals.attackTargets[faction])
+        //        foreach (StarSystem attackedSystem in WarStatus.warFactionTracker.First(x=> x.faction == faction).attackTargets[faction])
         //            LogDebug($"{attackedSystem.Name,-30} : {attackedSystem.Owner}");
         //    }
         //    else
@@ -236,12 +221,12 @@ public class Core
         //        LogDebug($"No Attack Targets for {faction.ToString()}!");
         //    }
         //
-        //    if (Globals.defenseTargets.Keys.Contains(faction))
+        //    if (WarStatus.warFactionTracker.First(x=> x.faction == faction).defenseTargets.Contains(faction))
         //    {
         //        LogDebug("------------------------------------------------------");
         //        LogDebug(faction.ToString());
         //        LogDebug("Defense Targets");
-        //        foreach (StarSystem defensedsystem in Globals.defenseTargets[faction])
+        //        foreach (StarSystem defensedsystem in WarStatus.warFactionTracker.First(x=> x.faction == faction).defenseTargets[faction])
         //            LogDebug($"{defensedsystem.Name,-30} : {defensedsystem.Owner}");
         //    }
         //    else
@@ -265,47 +250,15 @@ public class Core
                 var attackResources = warFaction.AttackResources;
                 var total = deathList.Values.Sum();
 
-                //var UFKeys = uniqueFactions.Keys;
-
                 var tempDict = new Dictionary<Faction, float>();
                 foreach (var tempfaction in uniqueFactions.Keys)
                 {
                     if (!tempDict.ContainsKey(tempfaction))
-                    {
-                        LogDebug("=== Add " + tempfaction);
                         tempDict.Add(tempfaction, 0);
-                    }
-                    else
-                    {
-                        LogDebug("=== Already contains " + tempfaction);
-                    }
 
                     if (deathList.ContainsKey(tempfaction))
-                    {
-                        LogDebug("=== Set " + tempfaction);
-                        if (!tempDict.ContainsKey(tempfaction))
-                        {
-                            tempDict.Add(tempfaction, 0);
-                            LogDebug("=== Added again wtf");
-                        }
-
-                        tempDict[tempfaction] = deathList[tempfaction] * attackResources; // / total;
-                    }
-                    else
-                    {
-                        LogDebug("=== Already contains " + tempfaction);
-                    }
-
-                    //uniqueFactions[tempfaction] = deathList[tempfaction] * attackResources / total;
+                        tempDict[tempfaction] = deathList[tempfaction] * attackResources / total;
                 }
-
-                //foreach (var fact in tempDict.Keys)
-                //{
-                //    if (uniqueFactions.ContainsKey(fact))
-                //        uniqueFactions[fact] = tempDict[fact];
-                //    else
-                //        uniqueFactions.Add(fact, tempDict[fact]);
-                //}
 
                 warFaction.warFactionAttackResources = tempDict;
             }
@@ -321,23 +274,16 @@ public class Core
             var attackResources = WarStatus.FindWarFactionResources(faction);
             if (attackResources == null)
             {
-                LogDebug("NULLLLLFUUUCKPOOP " + faction);
+                LogDebug("attackResources null " + faction);
                 return;
-            }
-
-            else
-            {
-                LogDebug("POOOOOOPY " + faction);
             }
 
             if (!attackResources.ContainsKey(faction)) return;
             Log(attackResources.ContainsKey(faction).ToString());
-            LogDebug("+++++++++++++++++++ POOOOOOOOOOOOOOOP" + WarStatus.warFactionTracker.Count);
 
             //Go through the different resources allocated from attacking faction to spend against each targetFaction
             foreach (var targetFaction in WarStatus.FindWarFactionResources(faction))
             {
-                LogDebug("=== === targetFaction :" + targetFaction.Key);
                 var attacklist = new List<StarSystem>();
                 //Generate the list of all systems being attacked by faction and pulls out the ones that match the targetFaction
                 foreach (var systemStatus in WarStatus.systems)
@@ -361,10 +307,6 @@ public class Core
                     } while (i < WarStatus.FindWarFactionResources(faction)[targetFaction.Key]);
                 }
             }
-
-            LogDebug("=== === DONE BUT PROBABLY NOTHING ABOVE");
-            attackResources.Do(x => LogDebug(x.Key.ToString()));
-            LogDebug("=== === DONE");
         }
 
         public static void AllocateDefensiveResources(Faction faction)
@@ -525,13 +467,7 @@ public class Core
                     var previousOwner = systemStatus.owner;
                     var starSystem = sim.StarSystems.Find(x => x.Name == systemStatus.name);
                     if (starSystem != null)
-                    {
                         ChangeSystemOwnership(sim, starSystem, highestfaction, true);
-                    }
-                    else
-                    {
-                        Log("+=======+++== NULL");
-                    }
 
                     LogDebug(">>> Ownership changed to " + highestfaction);
                     if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
@@ -719,14 +655,7 @@ public class Core
                 }
             }
 
-            //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-            if (sim.Starmap == null)
-            {
-                LogDebug("wHAAAAAAAAaat");
-                return;
-            }
-
-            Random random = new Random();
+            var random = new Random();
             foreach (var system in sim.StarSystems)
             {
                 var resources = GetTotalResources(system);
@@ -804,21 +733,3 @@ public class Core
         }
     }
 }
-
-//try
-//{
-//    foreach (KeyValuePair<Faction, FactionDef> pair in Sim.FactionsDict)
-//    {
-//        {
-//            if (Fields.factionResources.Find(x => x.faction == pair.Key) == null)
-//            {
-//                Fields.factionResources.Add(new FactionResources(pair.Key, 0, 0));
-//            }
-//            else
-//            {
-//                FactionResources resources = Fields.factionResources.Find(x => x.faction == pair.Key);
-//                resources.offence = 0;
-//                resources.defence = 0;
-//            }
-//        }
-//    }

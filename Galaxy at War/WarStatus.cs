@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
-using Harmony;
 using Newtonsoft.Json;
 using static Logger;
 
@@ -17,13 +15,8 @@ public class WarStatus
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
-    public static Dictionary<Faction, float> FindWarFactionResources(Faction faction)
-    {
-        //LogDebug(">>> FindWarFactionResources " + Core.WarStatus.warFactionTracker.Count.ToString());
-        //LogDebug(">>> Faction: " + faction);
-        //Core.WarStatus.warFactionTracker.Do(x => LogDebug(x.warFactionAttackResources.Count.ToString()));
-        return Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
-    }
+    public static Dictionary<Faction, float> FindWarFactionResources(Faction faction) =>
+        Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
 }
 
 public class SystemStatus
@@ -35,7 +28,6 @@ public class SystemStatus
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     internal WarFaction warFaction;
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
-
 
     [JsonConstructor
     ]
@@ -50,7 +42,6 @@ public class SystemStatus
         name = systemName;
         owner = starSystem.Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
-
 
         //Globals.neighborSystems.Clear();
 
@@ -209,8 +200,6 @@ public class WarFaction
         this.faction = faction;
         this.AttackResources = AttackResources;
         this.DefensiveResources = DefensiveResources;
-        // get rid of a faction tracker DeathList for itself
-        //var ownFactionListEntry = deathListTracker.Find(x => faction == x.faction);
 
         foreach (var kvp in sim.FactionsDict)
         {
