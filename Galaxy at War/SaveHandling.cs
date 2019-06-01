@@ -59,6 +59,8 @@ public static class SaveHandling
                         Log("left " + tag);
                     }
                 }
+
+                Core.WarStatus = null;
             }
 
             //sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
