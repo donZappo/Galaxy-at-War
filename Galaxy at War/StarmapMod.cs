@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
-using GalaxyAtWar;
 using Harmony;
 using UnityEngine;
 
@@ -15,8 +14,22 @@ public class StarmapMod
     {
         public static void Postfix(ref StarmapSystemRenderer __result)
         {
-            var contendedSystems = Core.WarStatus.systems.Where(x => x.influenceTracker[x.owner] < 60).Select(x => x.name);
-
+            var contendedSystems = new List<string>();
+            foreach (SystemStatus systemStatus in Core.WarStatus.systems)
+            {
+                float highest = 0;
+                Faction highestFaction = systemStatus.owner;
+                foreach (Faction faction in systemStatus.influenceTracker.Keys)
+                {
+                    if (systemStatus.influenceTracker[faction] > highest)
+                    {
+                        highest = systemStatus.influenceTracker[faction];
+                        highestFaction = faction;
+                    }
+                }
+                if (highestFaction != systemStatus.owner && (highest - systemStatus.influenceTracker[systemStatus.owner]) < Core.Settings.TakeoverThreshold)
+                    contendedSystems.Add(systemStatus.name);
+            }
             if (contendedSystems.Contains(__result.name))
             {
                 var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();

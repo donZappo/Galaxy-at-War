@@ -1,13 +1,12 @@
 using System;
 using System.IO;
 using System.Reflection;
-using GalaxyAtWar;
+
 
 public static class Logger
 {
     internal static string LogFilePath =>
-        Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName +
-        "\\Galaxy-at-War.txt";
+        Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "\\Galaxy-at-War.txt";
 
     public static void Error(Exception ex)
     {
@@ -31,10 +30,10 @@ public static class Logger
 
     public static void Log(string line)
     {
-        using (var writer = new StreamWriter(LogFilePath, true))
-        {
-            writer.WriteLine(line);
-        }
+        //using (var writer = new StreamWriter(LogFilePath, true))
+        //{
+        //    writer.WriteLine(line);
+        //}
     }
 
     public static void Clear()
