@@ -74,15 +74,15 @@ public class Core
     {
         static void Prefix(SimGameState __instance, int timeLapse)
         {
-            SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            var rand = new Random();
             // already have a save?
 
             if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
             {
                 LogDebug(">>> Loading");
                 SaveHandling.DeserializeWar();
-
+                RepopulateWarStatus(rand);
                 // TODO if it deserializes something invalid, handle it
 
                 //foreach (var faction in sim.FactionsDict.Keys)
@@ -125,49 +125,8 @@ public class Core
 
             //Add resources for adjacent systems
             RefreshResources(__instance);
-               
-            var rand = new Random();
-            var i = 0;
-            foreach (var systemStatus in WarStatus.systems)
-            {
 
-                try
-                {
-                    systemStatus.warFaction.attackTargets.Clear();
-                    systemStatus.warFaction.defenseTargets.Clear();
-                    systemStatus.neighborSystems.Clear();
-                }
-                catch // silent drop
-                {
-                }
-                systemStatus.CalculateAttackTargets();
-                systemStatus.CalculateDefenseTargets();
-                systemStatus.FindNeighbors();
-                foreach (var neighbor in systemStatus.neighborSystems)
-                {
-                    var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
-                    if (systemStatus.influenceTracker.ContainsKey(neighbor.Key))
-                        systemStatus.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
-                    else
-                        systemStatus.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
-                }
-            }
-            foreach (var systemStatus in WarStatus.systems)
-            {
-                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
-                if (warFaction.attackTargets.Count > 0)
-                {
-                    // attacking
-                    foreach (var faction in warFaction.attackTargets.Keys)
-                        AllocateAttackResources(faction);
-                }
-                if (warFaction.defenseTargets.Count > 0)
-                {
-                    // defending
-                    foreach (var faction in warFaction.attackTargets.Keys)
-                        AllocateDefensiveResources(faction);
-                }
-            }
+            RepopulateWarStatus(rand);
 
             UpdateInfluenceFromAttacks(sim);
 
@@ -221,6 +180,52 @@ public class Core
 
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
+        }
+
+        private static void RepopulateWarStatus(Random rand)
+        {
+            foreach (var systemStatus in WarStatus.systems)
+            {
+                try
+                {
+                    systemStatus.warFaction.attackTargets.Clear();
+                    systemStatus.warFaction.defenseTargets.Clear();
+                    systemStatus.neighborSystems.Clear();
+                }
+                catch // silent drop
+                {
+                }
+
+                systemStatus.CalculateAttackTargets();
+                systemStatus.CalculateDefenseTargets();
+                systemStatus.FindNeighbors();
+                foreach (var neighbor in systemStatus.neighborSystems)
+                {
+                    var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
+                    if (systemStatus.influenceTracker.ContainsKey(neighbor.Key))
+                        systemStatus.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
+                    else
+                        systemStatus.influenceTracker.Add(neighbor.Key, neighbor.Value * PushFactor);
+                }
+            }
+
+            foreach (var systemStatus in WarStatus.systems)
+            {
+                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
+                if (warFaction.attackTargets.Count > 0)
+                {
+                    // attacking
+                    foreach (var faction in warFaction.attackTargets.Keys)
+                        AllocateAttackResources(faction);
+                }
+
+                if (warFaction.defenseTargets.Count > 0)
+                {
+                    // defending
+                    foreach (var faction in warFaction.attackTargets.Keys)
+                        AllocateDefensiveResources(faction);
+                }
+            }
         }
 
         public static void InitializeSystems(SimGameState sim)
@@ -278,13 +283,14 @@ public class Core
                 var warFAR = warFaction.warFactionAttackResources;
                 warFAR.Clear();
                 var tempTargets = new Dictionary<Faction, float>();
-                foreach(Faction fact in warFaction.attackTargets.Keys)
+                foreach (Faction fact in warFaction.attackTargets.Keys)
                 {
                     tempTargets.Add(fact, deathList.deathList[fact]);
                 }
+
                 var total = tempTargets.Values.Sum();
 
-                foreach(Faction Rfact in tempTargets.Keys)
+                foreach (Faction Rfact in tempTargets.Keys)
                 {
                     warFAR.Add(Rfact, tempTargets[Rfact] * warFaction.AttackResources / total);
                 }
