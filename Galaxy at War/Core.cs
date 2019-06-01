@@ -190,33 +190,33 @@ public class Core
                 }
             }
 
-            //Log("===================================================");
-            //Log("TESTING ZONE");
-            //Log("===================================================");
-            ////TESTING ZONE
-            //foreach (DeathListTracker DLT in WarStatus.deathListTracker)
-            //{
-            //    Log("----------------------------------------------");
-            //    Log(DLT.faction.ToString());
-            //    try
-            //    {
-            //        Log("\tAttacked By :");
-            //        foreach (Faction fac in DLT.AttackedBy)
-            //            Log("\t\t" + fac.ToString());
-            //        //Log("\tDays Since Lost :" + warF.DaysSinceSystemLost.ToString());
-            //        //Log("\tAttack Resources :" + warF.AttackResources.ToString());
-            //        //Log("\tDefensive Resources :" + warF.DefensiveResources.ToString());
-            //        Log("\tDeath List:");
-            //        foreach (Faction faction in DLT.deathList.Keys)
-            //        {
-            //            Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
-            //        }
-            //    }
-            //    catch(Exception e)
-            //    {
-            //        Error(e);
-            //    }
-            //}
+            Log("===================================================");
+            Log("TESTING ZONE");
+            Log("===================================================");
+            //TESTING ZONE
+            foreach (WarFaction WF in WarStatus.warFactionTracker)
+            {
+                Log("----------------------------------------------");
+                Log(WF.faction.ToString());
+                try
+                {
+                    //Log("\tAttacked By :");
+                    //foreach (Faction fac in DLT.AttackedBy)
+                    //    Log("\t\t" + fac.ToString());
+                    Log("\tDefense Resources :" + WF.DefensiveResources.ToString());
+                    Log("\tAttack Resources :" + WF.AttackResources.ToString());
+                    //Log("\tDefensive Resources :" + warF.DefensiveResources.ToString());
+                    //Log("\tDeath List:");
+                    //foreach (Faction faction in DLT.deathList.Keys)
+                    //{
+                    //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+                    //}
+                }
+                catch (Exception e)
+                {
+                    Error(e);
+                }
+            }
 
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
