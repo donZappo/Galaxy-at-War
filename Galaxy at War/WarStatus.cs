@@ -35,7 +35,7 @@ public class SystemStatus
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     internal WarFaction warFaction;
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
-    
+
 
     [JsonConstructor
     ]
@@ -50,6 +50,7 @@ public class SystemStatus
         name = systemName;
         owner = starSystem.Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
+
 
         //Globals.neighborSystems.Clear();
 
