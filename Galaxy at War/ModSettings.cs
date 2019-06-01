@@ -3,46 +3,50 @@ using BattleTech;
 
 public class ModSettings
 {
-    public int planet_industry_poor = -1;
-    public int planet_industry_mining = 1;
-    public int planet_industry_rich = 2;
+    //attacking resources
+    public int planet_industry_poor = 1;
+    public int planet_industry_mining = 2;
+    public int planet_industry_rich = 3;
     public int planet_industry_manufacturing = 4;
     public int planet_industry_research = 5;
     public int planet_other_starleague = 6;
-    public int planet_other_comstar = 0;
 
+    //defending resources
     public int planet_industry_agriculture = 3;
     public int planet_industry_aquaculture = 3;
     public int planet_other_capital = 7;
-    public int planet_other_megacity = 6;
+    public int planet_other_megacity = 5;
     public int planet_pop_large = 4;
-    public int planet_pop_medium = 2;
-    public int planet_pop_none = -1;
-    public int planet_pop_small = 1;
-    public int planet_other_hub = 5;
+    public int planet_pop_medium = 3;
+    public int planet_pop_none = 1;
+    public int planet_pop_small = 2;
+    public int planet_other_hub = 6;
+    public int planet_other_comstar = 0;
 
     public int WarFrequency = 6;
 
     public Dictionary<Faction, int> ResourceMap = new Dictionary<Faction, int>
     {
-        {Faction.Davion, 10},
-        {Faction.Liao, 10},
-        {Faction.Marik, 10},
-        {Faction.TaurianConcordat, 10},
-        {Faction.MagistracyOfCanopus, 10},
-        {Faction.Locals, 10},
-        {Faction.NoFaction, 10}
+        {Faction.Davion, 0},
+        {Faction.Liao, 0},
+        {Faction.Marik, 0},
+        {Faction.TaurianConcordat, 0},
+        {Faction.MagistracyOfCanopus, 0},
+        {Faction.Locals, 0},
+        {Faction.NoFaction, 0},
+        {Faction.AuriganRestoration, 0 }
     };
 
     public Dictionary<Faction, int> DefensiveResourceMap = new Dictionary<Faction, int>
     {
-        {Faction.Davion, 10},
-        {Faction.Liao, 10},
-        {Faction.Marik, 10},
-        {Faction.TaurianConcordat, 10},
-        {Faction.MagistracyOfCanopus, 10},
-        {Faction.Locals, 10},
-        {Faction.NoFaction, 10}
+        {Faction.Davion, 0},
+        {Faction.Liao, 0},
+        {Faction.Marik, 0},
+        {Faction.TaurianConcordat, 0},
+        {Faction.MagistracyOfCanopus, 0},
+        {Faction.Locals, 0},
+        {Faction.NoFaction, 0},
+        {Faction.AuriganRestoration, 0 }
     };
 
     public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>
@@ -90,20 +94,33 @@ public class ModSettings
     public string modDirectory;
     public int DominantInfluence = 60;
     public int MinorInfluencePool = 40;
-    public float GlobalDefenseFactor = 1f;
+    public float GlobalDefenseFactor = 1.1f;
     public int ResourceAdjustmentPerCycle = 1;
-    public int ResourceRandomizer = 1;
+    public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
-    public float TakeoverThreshold = 0f;
+    public float TakeoverThreshold = 10f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
     public float KLValueAllies = 25f;
     public float KLValuesNeutral = 50f;
     public float KLValuesEnemies = 100f;
+    public bool DefendersUseARforDR = true;
 
-    public List<Faction> ExcludedFactions = new List<Faction>()
+    public List<Faction> DefensiveFactions = new List<Faction>()
     {
-        Faction.Unknown,
-        Faction.SelfEmployed,
+        Faction.Locals,
+        Faction.NoFaction,
+    };
+
+    public List<Faction> IncludedFactions = new List<Faction>()
+    {
+        Faction.MagistracyOfCanopus,
+        Faction.Locals,
+        Faction.AuriganRestoration,
+        Faction.TaurianConcordat,
+        Faction.Liao,
+        Faction.Davion,
+        Faction.Marik,
+        Faction.NoFaction
     };
 }

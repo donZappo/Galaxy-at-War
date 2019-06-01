@@ -127,7 +127,6 @@ public class Core
             RefreshResources(__instance);
                
             var rand = new Random();
-            var i = 0;
             foreach (var systemStatus in WarStatus.systems)
             {
 
@@ -191,33 +190,33 @@ public class Core
                 }
             }
 
-            Log("===================================================");
-            Log("TESTING ZONE");
-            Log("===================================================");
-            //TESTING ZONE
-            foreach (WarFaction WF in WarStatus.warFactionTracker)
-            {
-                Log("----------------------------------------------");
-                Log(WF.faction.ToString());
-                try
-                {
-                    //Log("\tAttacked By :");
-                    //foreach (Faction fac in DLT.AttackedBy)
-                    //    Log("\t\t" + fac.ToString());
-                    Log("\tDefense Resources :" + WF.DefensiveResources.ToString());
-                    Log("\tAttack Resources :" + WF.AttackResources.ToString());
-                    //Log("\tDefensive Resources :" + warF.DefensiveResources.ToString());
-                    //Log("\tDeath List:");
-                    //foreach (Faction faction in DLT.deathList.Keys)
-                    //{
-                    //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
-                    //}
-                }
-                catch (Exception e)
-                {
-                    Error(e);
-                }
-            }
+            //Log("===================================================");
+            //Log("TESTING ZONE");
+            //Log("===================================================");
+            ////TESTING ZONE
+            //foreach (WarFaction WF in WarStatus.warFactionTracker)
+            //{
+            //    Log("----------------------------------------------");
+            //    Log(WF.faction.ToString());
+            //    try
+            //    {
+            //        //Log("\tAttacked By :");
+            //        //foreach (Faction fac in DLT.AttackedBy)
+            //        //    Log("\t\t" + fac.ToString());
+            //        //Log("\tOwner :" + DLT.);
+            //        Log("\tAttack Resources :" + WF.AttackResources.ToString());
+            //        Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
+            //        //Log("\tDeath List:");
+            //        //foreach (Faction faction in DLT.deathList.Keys)
+            //        //{
+            //        //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+            //        //}
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Error(e);
+            //    }
+            //}
 
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
@@ -437,8 +436,8 @@ public class Core
                 //WarStatus.factionTracker.Find(x=> x.faction == faction)
 
                 var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == system.Owner);
-                if (factionTracker.deathList[faction] < 75)
-                    factionTracker.deathList[faction] = 75;
+                if (factionTracker.deathList[faction] < 50)
+                    factionTracker.deathList[faction] = 50;
 
                 factionTracker.deathList[faction] += KillListDelta;
 
@@ -447,14 +446,14 @@ public class Core
                 foreach (var ally in sim.FactionsDict[OldFaction].Allies)
                 {
                     var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
-                    factionAlly.deathList[ally] += KillListDelta / 2;
+                    factionAlly.deathList[ally] += KillListDelta/2;
                 }
 
                 //Enemies of the target faction are happy with the faction doing the beating.
                 foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
                 {
                     var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
-                    factionEnemy.deathList[faction] -= KillListDelta / 2;
+                    factionEnemy.deathList[faction] -= KillListDelta/2;
                 }
 
                 factionTracker.AttackedBy.Add(faction);
@@ -543,7 +542,7 @@ public class Core
                     if (deathList[faction] > 50)
                         deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
                     else if (deathList[faction] <= 50)
-                        deathList[faction] -= 1 - (deathList[faction]) / 50;
+                        deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
                 }
 
                 //Ceiling and floor for faction enmity. 
@@ -552,6 +551,10 @@ public class Core
 
                 if (deathList[faction] < 1)
                     deathList[faction] = 1;
+
+                //Defensive Only factions are always neutral
+                if (Settings.DefensiveFactions.Contains(faction))
+                    deathList[faction] = 50;
 
                 if (deathList[faction] > 75)
                 {
@@ -615,8 +618,6 @@ public class Core
                 result += Settings.planet_industry_mining;
             if (system.Tags.Contains("planet_industry_rich"))
                 result += Settings.planet_industry_rich;
-            if (system.Tags.Contains("planet_other_comstar"))
-                result += Settings.planet_other_comstar;
             if (system.Tags.Contains("planet_industry_manufacturing"))
                 result += Settings.planet_industry_manufacturing;
             if (system.Tags.Contains("planet_industry_research"))
@@ -647,6 +648,8 @@ public class Core
                 result += Settings.planet_pop_small;
             if (system.Tags.Contains("planet_other_hub"))
                 result += Settings.planet_other_hub;
+            if (system.Tags.Contains("planet_other_comstar"))
+                result += Settings.planet_other_comstar;
             return result;
         }
 
@@ -654,7 +657,7 @@ public class Core
         {
             // no point iterating over a KVP if you aren't using the values
             //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-            foreach (var faction in sim.FactionsDict.Select(x => x.Key).Except(Settings.ExcludedFactions))
+            foreach (var faction in sim.FactionsDict.Select(x => x.Key))
             {
                 if (Settings.ResourceMap.ContainsKey(faction))
                 {
@@ -700,6 +703,12 @@ public class Core
 
             foreach (var faction in WarStatus.warFactionTracker)
             {
+                if (Settings.DefensiveFactions.Contains(faction.faction) && Settings.DefendersUseARforDR)
+                {
+                    faction.DefensiveResources += faction.AttackResources;
+                    faction.AttackResources = 0;
+                }
+
                 float tempnum = 0f;
                 int i = 0;
                 do
