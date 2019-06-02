@@ -3,6 +3,7 @@ using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
 using static Logger;
+using Harmony;
 
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -41,6 +42,7 @@ public class SystemStatus
         name = systemName;
         owner = starSystem.Owner;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
+        InitializeContracts();
 
         //Globals.neighborSystems.Clear();
 
@@ -52,9 +54,7 @@ public class SystemStatus
 
     public void FindNeighbors()
     {
-        //var starSystem = sim.StarSystems.Find(x => x.Name == name);
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
-        // build a list of all neighbors
         foreach (var neighborSystem in neighbors)
         {
             if (neighborSystems.ContainsKey(neighborSystem.Owner))
@@ -64,12 +64,38 @@ public class SystemStatus
         }
     }
 
+    public void InitializeContracts()
+    {
+        FindNeighbors();
+        var ContractEmployers = starSystem.Def.ContractEmployers;
+        var ContractTargets = starSystem.Def.ContractTargets;
+        
+        ContractEmployers.Clear();
+        ContractTargets.Clear();
+        ContractEmployers.Add(owner);
+        ContractTargets.Add(owner);
+        
+        foreach (var systemNeighbor in neighborSystems.Keys)
+        {
+            if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractEmployers.Add(systemNeighbor);
+
+            if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractTargets.Add(systemNeighbor);
+        }
+
+        if (ContractTargets.Count() == 1)
+        {
+            ContractTargets.Clear();
+            foreach (Faction EF in sim.FactionsDict[owner].Enemies)
+                ContractTargets.Add(EF);
+        }
+    }
+
     public void CalculateAttackTargets()
     {
         LogDebug("Calculate Potential Attack Targets");
-        //var starSystem = sim.StarSystems.Find(x => x.Name == name);
-        //                                               LogDebug(starSystem.Name + ": " + starSystem.Owner);
-        // the rest happens only after initial distribution
+        
         // build list of attack targets
         LogDebug("Can Attack:");
         if (starSystem == null)
@@ -77,7 +103,6 @@ public class SystemStatus
             LogDebug("PPPPPPPPPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
             return;
         }
-
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
             var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);

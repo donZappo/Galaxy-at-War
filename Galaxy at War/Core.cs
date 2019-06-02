@@ -264,7 +264,7 @@ public class Core
 
             foreach (var starSystem in WarStatus.systems)
             {
-                starSystem.FindNeighbors();
+                //starSystem.FindNeighbors();
                 starSystem.CalculateSystemInfluence();
             }
         }
@@ -430,32 +430,25 @@ public class Core
                     system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
                 }
 
-                system.Def.ContractEmployers.Clear();
-                system.Def.ContractTargets.Clear();
-                List<Faction> ContractEmployers = new List<Faction>();
-                ContractEmployers.Add(system.Owner);
+                var ContractEmployers = system.Def.ContractEmployers;
+                var ContractTargets = system.Def.ContractTargets;
+                ContractEmployers.Clear();
+                ContractTargets.Clear();
+                
+                ContractEmployers.Add(faction);
+                ContractEmployers.Add(OldFaction);
+                ContractTargets.Add(faction);
+                ContractTargets.Add(OldFaction);
 
                 foreach (var systemNeighbor in sim.Starmap.GetAvailableNeighborSystem(system))
                 {
-                    if (!ContractEmployers.Remove(systemNeighbor.Owner))
+                    if (!ContractEmployers.Contains(systemNeighbor.Owner) && !Settings.DefensiveFactions.Contains(systemNeighbor.Owner))
                         ContractEmployers.Add(systemNeighbor.Owner);
+
+                    if (!ContractTargets.Contains(systemNeighbor.Owner) && !Settings.DefensiveFactions.Contains(systemNeighbor.Owner))
+                        ContractTargets.Add(systemNeighbor.Owner);
                 }
-
-                Traverse.Create(system.Def).Property("ContractEmployers").SetValue(ContractEmployers);
-
-                if (ContractEmployers.Count() > 1)
-                {
-                    Traverse.Create(system.Def).Property("ContractTargets").SetValue(ContractEmployers);
-                }
-                else
-                {
-                    // TODO, not sure this generates intended result (a list of enemies?)
-                    FactionDef FactionEnemies;
-                    FactionEnemies = sim.FactionsDict[faction];
-
-                    Traverse.Create(system.Def).Property("ContractTargets").SetValue(FactionEnemies.Enemies.ToList());
-                }
-
+                
                 var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
                 var oldOwner = systemStatus.owner;
                 systemStatus.owner = faction;
@@ -464,7 +457,6 @@ public class Core
                 //Change the Kill List for the factions.
                 var SystemValue = GetTotalResources(system) + GetTotalDefensiveResources(system);
                 var KillListDelta = Math.Max(10, SystemValue);
-                //WarStatus.factionTracker.Find(x=> x.faction == faction)
 
                 var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == system.Owner);
                 if (factionTracker.deathList[faction] < 50)
@@ -786,18 +778,18 @@ public class Core
                 }
 
                 var sim = __instance.BattleTechGame.Simulation;
-              //  var oldowner = sim.CurSystem.Owner;
+                var oldowner = sim.CurSystem.Owner;
                 UpdateInfluenceFromAttacks(sim);
-              //  var newowner = sim.CurSystem.Owner;
+                var newowner = sim.CurSystem.Owner;
 
-                //if (oldowner != newowner)
-                //{
-                //    GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                //    SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                //        .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                //    interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() + 
-                //        " conquered from " + oldowner.ToString(), true, null);
-                //}
+                if (oldowner != newowner)
+                {
+                    GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                    SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                        .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                    interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
+                        " conquered from " + oldowner.ToString(), true, null);
+                }
 
             }
         }
