@@ -440,7 +440,9 @@ public static class Core
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
             var oldOwner = systemStatus.owner;
             systemStatus.owner = faction;
-            Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
+
+
+            Traverse.Create(system.Def).Property("Owner").SetValue(faction);
             //Change the Kill List for the factions.
             var TotalAR = GetTotalAttackResources(system);
             var TotalDR = GetTotalDefensiveResources(system);
