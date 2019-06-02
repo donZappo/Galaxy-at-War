@@ -149,10 +149,10 @@ public static class Core
             {
                 AllocateDefensiveResources(warFaction);
             }
-            
+
             UpdateInfluenceFromAttacks(sim);
 
-            foreach(StarSystem starSystem in ChangedSystems)
+            foreach (StarSystem starSystem in ChangedSystems)
                 PostChangeSystemUpdate(starSystem);
             ChangedSystems.Clear();
 
@@ -205,35 +205,35 @@ public static class Core
             //    }
 
 
-                //Log("===================================================");
-                //Log("TESTING ZONE");
-                //Log("===================================================");
-                ////TESTING ZONE
-                //foreach (WarFaction WF in WarStatus.warFactionTracker)
-                //{
-                //    Log("----------------------------------------------");
-                //    Log(WF.faction.ToString());
-                //    try
-                //    {
-                //        //Log("\tAttacked By :");
-                //        //foreach (Faction fac in DLT.AttackedBy)
-                //        //    Log("\t\t" + fac.ToString());
-                //        //Log("\tOwner :" + DLT.);
-                //        Log("\tAttack Resources :" + WF.AttackResources.ToString());
-                //        Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
-                //        //Log("\tDeath List:");
-                //        //foreach (Faction faction in DLT.deathList.Keys)
-                //        //{
-                //        //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
-                //        //}
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        Error(e);
-                //    }
-                //}
+            //Log("===================================================");
+            //Log("TESTING ZONE");
+            //Log("===================================================");
+            ////TESTING ZONE
+            //foreach (WarFaction WF in WarStatus.warFactionTracker)
+            //{
+            //    Log("----------------------------------------------");
+            //    Log(WF.faction.ToString());
+            //    try
+            //    {
+            //        //Log("\tAttacked By :");
+            //        //foreach (Faction fac in DLT.AttackedBy)
+            //        //    Log("\t\t" + fac.ToString());
+            //        //Log("\tOwner :" + DLT.);
+            //        Log("\tAttack Resources :" + WF.AttackResources.ToString());
+            //        Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
+            //        //Log("\tDeath List:");
+            //        //foreach (Faction faction in DLT.deathList.Keys)
+            //        //{
+            //        //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+            //        //}
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Error(e);
+            //    }
+            //}
 
-                SaveHandling.SerializeWar();
+            SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
         }
 
@@ -251,15 +251,16 @@ public static class Core
             foreach (var system in sim.StarSystems)
             {
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.Owner);
-                if(Settings.DefensiveFactions.Contains(warFaction.faction) && Settings.DefendersUseARforDR)
-                    warFaction.DefensiveResources += Methods.GetTotalAttackResources(system);
+                if (Settings.DefensiveFactions.Contains(warFaction.faction) && Settings.DefendersUseARforDR)
+                    warFaction.DefensiveResources += GetTotalAttackResources(system);
                 else
-                    warFaction.AttackResources += Methods.GetTotalAttackResources(system);
+                    warFaction.AttackResources += GetTotalAttackResources(system);
 
-                warFaction.DefensiveResources += Methods.GetTotalDefensiveResources(system);
+                warFaction.DefensiveResources += GetTotalDefensiveResources(system);
                 new SystemStatus(sim, system.Name, system.Owner);
             }
         }
+    }
 
         //public static void InitializeSystems(SimGameState sim)
         //{
@@ -283,8 +284,8 @@ public static class Core
             foreach (var system in WarStatus.systems)
             {
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
-                warFaction.AttackResources += Methods.GetTotalAttackResources(system.starSystem);
-                warFaction.DefensiveResources += Methods.GetTotalDefensiveResources(system.starSystem);
+                warFaction.AttackResources += GetTotalAttackResources(system.starSystem);
+                warFaction.DefensiveResources += GetTotalDefensiveResources(system.starSystem);
             }
         }
 
@@ -434,8 +435,8 @@ public static class Core
                 Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
 
                 //Change the Kill List for the factions.
-                var TotalAR = Methods.GetTotalAttackResources(system);
-                var TotalDR = Methods.GetTotalDefensiveResources(system);
+                var TotalAR = GetTotalAttackResources(system);
+                var TotalDR = GetTotalDefensiveResources(system);
                 var SystemValue = TotalAR + TotalDR;
                 var KillListDelta = Math.Max(10, SystemValue);
 
@@ -618,8 +619,6 @@ public static class Core
             }
         }
 
-        public static class Methods
-        {
             public static int GetTotalAttackResources(StarSystem system)
             {
                 int result = 0;
@@ -663,7 +662,6 @@ public static class Core
                     result += Settings.planet_other_comstar;
                 return result;
             }
-        }
 
         //public static void RefreshResources(SimGameState sim)
         //{
@@ -813,4 +811,3 @@ public static class Core
             }
         }
     }
-}

@@ -33,13 +33,12 @@ public class WarStatus
         {
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == system.Owner);
             if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
-                warFaction.DefensiveResources += Core.Methods.GetTotalAttackResources(system);
+                warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
             else
-                warFaction.AttackResources += GetTotalAttackResources(system);
+                warFaction.AttackResources += Core.GetTotalAttackResources(system);
 
-            warFaction.DefensiveResources += GetTotalDefensiveResources(system);
+            warFaction.DefensiveResources += Core.GetTotalDefensiveResources(system);
             new SystemStatus(sim, system.Name, system.Owner);
-            Core.
         }
     }
     [JsonConstructor]
