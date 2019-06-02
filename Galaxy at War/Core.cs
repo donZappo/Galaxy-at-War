@@ -470,7 +470,6 @@ public static class Core
                 if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
                     continue;
                 var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
-                Log(factionEnemy.faction.ToString());
                 factionEnemy.deathList[faction] -= KillListDelta / 2;
             }
 
@@ -484,7 +483,7 @@ public static class Core
             WFLoser.LostSystem = true;
             WFLoser.AttackResources -= TotalAR;
             WFLoser.DefensiveResources -= TotalDR;
-            ChangedSystems.Add(system);
+
         }
     }
 
@@ -515,12 +514,21 @@ public static class Core
 
             systemStatus.influenceTracker = tempDict;
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
+            Log("=====================");
+            Log(highestfaction.ToString());
+            Log(systemStatus.influenceTracker[highestfaction].ToString());
+            Log(systemStatus.owner.ToString());
+            Log(systemStatus.influenceTracker[systemStatus.owner].ToString());
             if (highestfaction != systemStatus.owner && (diffStatus >= Settings.TakeoverThreshold))
             {
                 var previousOwner = systemStatus.owner;
                 var starSystem = systemStatus.starSystem;
+
                 if (starSystem != null)
+                {
+                    Log("Trying to Change?");
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
+                }
 
                 LogDebug(">>> Ownership changed to " + highestfaction);
                 if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
