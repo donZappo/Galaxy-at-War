@@ -25,7 +25,7 @@ public class ModSettings
 
     public int WarFrequency = 6;
 
-    public Dictionary<Faction, int> ResourceMap = new Dictionary<Faction, int>
+    public Dictionary<Faction, int> AttackResourceMap = new Dictionary<Faction, int>
     {
         {Faction.Davion, 0},
         {Faction.Liao, 0},
@@ -90,7 +90,7 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-    public bool Debug = false;
+    public bool Debug = true;
     public string modDirectory;
     public int DominantInfluence = 60;
     public int MinorInfluencePool = 40;

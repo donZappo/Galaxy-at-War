@@ -23,13 +23,15 @@ public class WarStatus
 public class SystemStatus
 {
     public string name;
-    public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-    public Faction owner = Faction.NoFaction;
+    public Faction owner;
+
     internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
-    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+    public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
+
     internal WarFaction warFaction;
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
+    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     [JsonConstructor
     ]
     public SystemStatus()
@@ -37,23 +39,21 @@ public class SystemStatus
         // don't want our ctor running at deserialization
     }
 
-    public SystemStatus(SimGameState sim, string systemName)
+    public SystemStatus(SimGameState sim, string systemName, Faction faction)
     {
         name = systemName;
         owner = starSystem.Owner;
+        owner = faction;
         warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == owner);
+
+        FindNeighbors();
+        CalculateSystemInfluence();
         InitializeContracts();
-
-        //Globals.neighborSystems.Clear();
-
-        //StaticMethods.CalculateNeighbours(sim, systemName);
-        //StaticMethods.DistributeInfluence(influenceTracker, Globals.neighborSystems, owner, name);
-        //StaticMethods.CalculateAttackTargets(sim, name);
-        //StaticMethods.CalculateDefenseTargets(sim, name);
     }
 
     public void FindNeighbors()
     {
+        neighborSystems.Clear();
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
         foreach (var neighborSystem in neighbors)
         {
@@ -64,9 +64,44 @@ public class SystemStatus
         }
     }
 
+
+    // determine starting influence based on neighboring systems
+    public void CalculateSystemInfluence()
+    {
+        influenceTracker.Add(owner, Core.Settings.DominantInfluence);
+        int remainingInfluence = Core.Settings.MinorInfluencePool;
+
+        if (neighborSystems.Keys.Count() != 1)
+        {
+            while (remainingInfluence > 0)
+            {
+                foreach (var faction in neighborSystems.Keys)
+                {
+                    if (faction != owner)
+                    {
+                        var influenceDelta = neighborSystems[faction];
+                        remainingInfluence -= influenceDelta;
+                        if (influenceTracker.ContainsKey(faction))
+                            influenceTracker[faction] += influenceDelta;
+                        else
+                            influenceTracker.Add(faction, influenceDelta);
+                    }
+                }
+            }
+        }
+
+        // need percentages from InfluenceTracker data 
+        var totalInfluence = influenceTracker.Values.Sum();
+        var tempDict = new Dictionary<Faction, float>();
+        foreach (var kvp in influenceTracker)
+        {
+            tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
+        }
+        influenceTracker = tempDict;
+    }
+
     public void InitializeContracts()
     {
-        FindNeighbors();
         var ContractEmployers = starSystem.Def.ContractEmployers;
         var ContractTargets = starSystem.Def.ContractTargets;
         
@@ -96,7 +131,6 @@ public class SystemStatus
     {
         LogDebug("Calculate Potential Attack Targets");
         
-        // build list of attack targets
         LogDebug("Can Attack:");
         if (starSystem == null)
         {
@@ -126,7 +160,6 @@ public class SystemStatus
             }
         }
 
-        //LogDebug("Attack targets"  + Globals.attackTargets.Count);
         //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + SaveHandling.fileName))
         //    writer.Write(JsonConvert.SerializeObject(Globals.attackTargets));
     }
@@ -134,10 +167,9 @@ public class SystemStatus
     public void CalculateDefenseTargets()
     {
         LogDebug("Calculate Potential Defendable Systems");
-        //var starSystem = sim.StarSystems.Find(x => x.Name == name);
         LogDebug(starSystem.Name);
         LogDebug("Needs defense:");
-        // build list of defense targets
+
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
             var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
@@ -156,63 +188,24 @@ public class SystemStatus
         }
     }
 
-    public void CalculateSystemInfluence()
-    {
-        // determine starting influence based on neighboring systems
-        influenceTracker.Add(owner, Core.Settings.DominantInfluence);
-        int remainingInfluence = Core.Settings.MinorInfluencePool;
-
-        if (neighborSystems.Keys.Count() != 1)
-        {
-            while (remainingInfluence > 0)
-            {
-                foreach (var faction in neighborSystems.Keys)
-                {
-                    if (faction != owner)
-                    {
-                        var influenceDelta = neighborSystems[faction];
-                        remainingInfluence -= influenceDelta;
-                        if (influenceTracker.ContainsKey(faction))
-                            influenceTracker[faction] += influenceDelta;
-                        else
-                            influenceTracker.Add(faction, influenceDelta);
-                    }
-                }
-            }
-        }
-
-        var totalInfluence = influenceTracker.Values.Sum();
-        LogDebug($"\ntotalInfluence for {name}");
-        LogDebug("=====================================================");
-        // need percentages from InfluenceTracker data 
-        var tempDict = new Dictionary<Faction, float>();
-        foreach (var kvp in influenceTracker)
-        {
-            tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
-            LogDebug($"{kvp.Key}: {tempDict[kvp.Key]}");
-        }
-
-        LogDebug("=====================================================");
-        influenceTracker = tempDict;
-    }
+    
 }
 
 public class WarFaction
 {
+    public Faction faction;
     public bool GainedSystem;
     public bool LostSystem;
     public float DaysSinceSystemAttacked;
     public float DaysSinceSystemLost;
-    public float DefensiveResources;
-    public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     public float AttackResources;
-    public Faction faction;
+    public float DefensiveResources;
 
+    public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
     internal List<StarSystem> defenseTargets = new List<StarSystem>();
 
-    //public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
-    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+    //internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
     public WarFaction()
     {
@@ -231,25 +224,25 @@ public class WarFaction
         DaysSinceSystemLost = 0;
 
 
-        foreach (var kvp in sim.FactionsDict)
-        {
-            if (!Core.Settings.IncludedFactions.Contains(kvp.Key)) continue;
-            if (kvp.Value == null) continue;
-            if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
-                Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
-        }
+        //foreach (var kvp in sim.FactionsDict)
+        //{
+        //    if (!Core.Settings.IncludedFactions.Contains(kvp.Key)) continue;
+        //    if (kvp.Value == null) continue;
+        //    if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
+        //        Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
+        //}
     }
 }
 
 public class DeathListTracker
 {
     public Faction faction;
+    private FactionDef factionDef;
     public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
     public List<Faction> AttackedBy = new List<Faction>();
 
     // can't serialize these so make them private
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    private FactionDef factionDef;
 
     public DeathListTracker()
     {
@@ -258,7 +251,6 @@ public class DeathListTracker
 
     public DeathListTracker(Faction faction)
     {
-        LogDebug("DeathListTracker ctor");
         this.faction = faction;
         factionDef = sim.FactionsDict
             .Where(kvp => kvp.Key == faction)
