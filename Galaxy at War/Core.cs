@@ -116,30 +116,36 @@ public static class Core
             LogDebug(">>> PROC");
 
             // Proc effects
-            Random rand = new Random();
-            foreach (var systemStatus in WarStatus.systems)
+            foreach (var warFaction in WarStatus.warFactionTracker)
             {
                 try
                 {
-                    systemStatus.warFaction.attackTargets.Clear();
-                    systemStatus.warFaction.defenseTargets.Clear();
+                    warFaction.attackTargets.Clear();
+                    warFaction.defenseTargets.Clear();
                 }
                 catch // silent drop
                 {
                 }
+            }
+
+            Random rand = new Random();
+            foreach (var systemStatus in WarStatus.systems)
+            {
+                
                 systemStatus.CalculateAttackTargets();
                 systemStatus.CalculateDefenseTargets();
                 //systemStatus.FindNeighbors();
 
                 //Add resources from neighboring systems.
-                foreach (var neighbor in systemStatus.neighborSystems)
+                foreach (var neighbor in systemStatus.neighborSystems.Keys)
                 {
                     var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
-                    systemStatus.influenceTracker[neighbor.Key] += neighbor.Value * PushFactor;
+                    systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
                 }
             }
 
             //Attack!
+            LogDebug("Attacking Fool");
             foreach (var warFaction in WarStatus.warFactionTracker)
             {
                 DivideAttackResources(warFaction);
@@ -174,6 +180,7 @@ public static class Core
                     warfaction.DaysSinceSystemLost = 0;
                     warfaction.LostSystem = false;
                 }
+                
             }
 
             //Comstar report on ongoing war.
@@ -262,552 +269,560 @@ public static class Core
         }
     }
 
-        //public static void InitializeSystems(SimGameState sim)
-        //{
-        //    LogDebug(">>> Initialize systems");
-        //    foreach (var starSystem in sim.StarSystems)
-        //    {
-        //        LogDebug("Add system " + starSystem.Name);
-        //        WarStatus.systems.Add(new SystemStatus(sim, starSystem.Name));
-        //    }
+    //public static void InitializeSystems(SimGameState sim)
+    //{
+    //    LogDebug(">>> Initialize systems");
+    //    foreach (var starSystem in sim.StarSystems)
+    //    {
+    //        LogDebug("Add system " + starSystem.Name);
+    //        WarStatus.systems.Add(new SystemStatus(sim, starSystem.Name));
+    //    }
 
-        //    foreach (var starSystem in WarStatus.systems)
-        //    {
-        //        //starSystem.FindNeighbors();
-        //        starSystem.CalculateSystemInfluence();
-        //    }
-        //}
+    //    foreach (var starSystem in WarStatus.systems)
+    //    {
+    //        //starSystem.FindNeighbors();
+    //        starSystem.CalculateSystemInfluence();
+    //    }
+    //}
 
-        public static void InitializeAllResources()
+    public static void InitializeAllResources()
+    {
+
+        foreach (var system in WarStatus.systems)
         {
-
-            foreach (var system in WarStatus.systems)
-            {
-                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
-                warFaction.AttackResources += GetTotalAttackResources(system.starSystem);
-                warFaction.DefensiveResources += GetTotalDefensiveResources(system.starSystem);
-            }
+            var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
+            warFaction.AttackResources += GetTotalAttackResources(system.starSystem);
+            warFaction.DefensiveResources += GetTotalDefensiveResources(system.starSystem);
         }
+    }
 
 
-        public static void DivideAttackResources(WarFaction warFaction)
+    public static void DivideAttackResources(WarFaction warFaction)
+    {
+    LogDebug("Attacking");
+        var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
+        var warFAR = warFaction.warFactionAttackResources;
+        warFAR.Clear();
+        var tempTargets = new Dictionary<Faction, float>();
+        foreach(Faction fact in warFaction.attackTargets.Keys)
         {
-            var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
-            var warFAR = warFaction.warFactionAttackResources;
-            warFAR.Clear();
-            var tempTargets = new Dictionary<Faction, float>();
-            foreach(Faction fact in warFaction.attackTargets.Keys)
-            {
-                tempTargets.Add(fact, deathList.deathList[fact]);
-            }
-            var total = tempTargets.Values.Sum();
-
-            Random rand = new Random();
-            float APRMultiplier = rand.Next(1, Settings.APRPushRandomizer + 1);
-            APRMultiplier = APRMultiplier * (1 + warFaction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle / 100);
-            var attackResources = warFaction.AttackResources * APRMultiplier;
-
-            foreach(Faction Rfact in tempTargets.Keys)
-            {
-                warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
-            }
+            tempTargets.Add(fact, deathList.deathList[fact]);
         }
+        var total = tempTargets.Values.Sum();
 
-        public static void AllocateAttackResources(WarFaction warFaction)
+        Random rand = new Random();
+        float APRMultiplier = rand.Next(1, Settings.APRPushRandomizer + 1);
+        APRMultiplier = APRMultiplier * (1 + warFaction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle / 100);
+        var attackResources = warFaction.AttackResources * APRMultiplier;
+
+        foreach(Faction Rfact in tempTargets.Keys)
         {
-            var random = new Random();
-            LogDebug("AllocateAttackResources Faction: " + warFaction.faction);
+            warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
+        }
+    }
 
-            var warFAR = warFaction.warFactionAttackResources;
-            //Go through the different resources allocated from attacking faction to spend against each targetFaction
-            foreach (var targetFaction in warFAR.Keys)
-            {
-                var targetFactionFAR = warFAR[targetFaction];
+    public static void AllocateAttackResources(WarFaction warFaction)
+    {
+        var random = new Random();
+        LogDebug("AllocateAttackResources Faction: " + warFaction.faction);
+
+        var warFAR = warFaction.warFactionAttackResources;
+        //Go through the different resources allocated from attacking faction to spend against each targetFaction
+        foreach (var targetFaction in warFAR.Keys)
+        {
+            var targetFactionFAR = warFAR[targetFaction];
                 
-                while(targetFactionFAR > 0)
-                {
-                    var rand = random.Next(0, warFaction.attackTargets.Count());
-                    var system = WarStatus.systems.First(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
-                    if (targetFactionFAR > 1)
-                    {
-                        system.influenceTracker[warFaction.faction] += 1;
-                        targetFactionFAR -= 1;
-                    }
-                    else
-                    {
-                        system.influenceTracker[warFaction.faction] += targetFactionFAR;
-                        targetFactionFAR = 0;
-                    }
-                }
-            }
-        }
-
-        public static void AllocateDefensiveResources(WarFaction warFaction)
-        {
-            var random = new Random();
-            var faction = warFaction.faction;
-            if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
-                return;
-
-            float DPRMultiplier = random.Next(0, Settings.APRPushRandomizer + 1);
-            DPRMultiplier = DPRMultiplier * (100 * Settings.GlobalDefenseFactor - 
-                Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
-            var DefensiveResources = warFaction.DefensiveResources * DPRMultiplier;
-
-            while (DefensiveResources > 0)
+            while(targetFactionFAR > 0)
             {
-                float highest = 0f;
-                Faction highestFaction = faction;
-                var rand = random.Next(0, warFaction.defenseTargets.Count());
-                var system = warFaction.defenseTargets[rand].Name;
-                var systemStatus = WarStatus.systems.Find(x => x.name == system);
-
-                foreach (Faction tempfaction in systemStatus.influenceTracker.Keys)
+                var rand = random.Next(0, warFaction.attackTargets[targetFaction].Count());
+                var system = WarStatus.systems.First(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
+                if (targetFactionFAR > 1)
                 {
-                    if (systemStatus.influenceTracker[tempfaction] > highest)
-
-                    {
-                        highest = systemStatus.influenceTracker[tempfaction];
-                        highestFaction = tempfaction;
-                    }
-                }
-
-                if (highestFaction == faction)
-                {
-                    if (DefensiveResources > 0)
-                    {
-                        systemStatus.influenceTracker[faction] += 1;
-                        DefensiveResources -= 1;
-                    }
-                    else
-                    {
-                        systemStatus.influenceTracker[faction] += DefensiveResources;
-                        DefensiveResources = 0;
-                    }
+                    system.influenceTracker[warFaction.faction] += 1;
+                    targetFactionFAR -= 1;
                 }
                 else
                 {
-                    var diffRes = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[faction];
-                    if (diffRes >= DefensiveResources)
-                    {
-                        systemStatus.influenceTracker[faction] += DefensiveResources;
-                        DefensiveResources = 0;
-                    }
-                    else
-                    {
-                        systemStatus.influenceTracker[faction] += diffRes;
-                        DefensiveResources -= diffRes;
-                    }
+                    system.influenceTracker[warFaction.faction] += targetFactionFAR;
+                    targetFactionFAR = 0;
                 }
-            }
-        }
-
-        public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
-        {
-            if (faction != system.Owner || ForceFlip)
-            {
-                Faction OldFaction = system.Owner;
-
-                system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
-                system.Def.Tags.Add(Settings.FactionTags[faction]);
-                system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
-                if (system.Def.FactionShopItems != null)
-                {
-                    Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
-                    system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
-                    system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
-                }
-
-                var ContractEmployers = system.Def.ContractEmployers;
-                var ContractTargets = system.Def.ContractTargets;
-                ContractEmployers.Clear();
-                ContractTargets.Clear();
-
-                ContractEmployers.Add(faction);
-                ContractEmployers.Add(OldFaction);
-                ContractTargets.Add(faction);
-                ContractTargets.Add(OldFaction);
-
-
-                var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
-                var oldOwner = systemStatus.owner;
-                systemStatus.owner = faction;
-                Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
-
-                //Change the Kill List for the factions.
-                var TotalAR = GetTotalAttackResources(system);
-                var TotalDR = GetTotalDefensiveResources(system);
-                var SystemValue = TotalAR + TotalDR;
-                var KillListDelta = Math.Max(10, SystemValue);
-
-                var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == system.Owner);
-                if (factionTracker.deathList[faction] < 50)
-                    factionTracker.deathList[faction] = 50;
-
-                factionTracker.deathList[faction] += KillListDelta;
-
-                //Allies are upset that their friend is being beaten up.
-
-                foreach (var ally in sim.FactionsDict[OldFaction].Allies)
-                {
-                    var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
-                    factionAlly.deathList[ally] += KillListDelta/2;
-                }
-
-                //Enemies of the target faction are happy with the faction doing the beating.
-                foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
-                {
-                    var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
-                    factionEnemy.deathList[faction] -= KillListDelta/2;
-                }
-
-                factionTracker.AttackedBy.Add(faction);
-
-                WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-                WFWinner.GainedSystem = true;
-                WFWinner.AttackResources += TotalAR;
-                WFWinner.DefensiveResources += TotalDR;
-
-                WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
-                WFLoser.LostSystem = true;
-                WFLoser.AttackResources -= TotalAR;
-                WFLoser.DefensiveResources -= TotalDR;
-
-                ChangedSystems.Add(system);
-            }
-        }
-
-        private static void UpdateInfluenceFromAttacks(SimGameState sim)
-        {
-            LogDebug($"Updating influence for {WarStatus.systems.Count().ToString()} systems");
-            foreach (var systemStatus in WarStatus.systems)
-            {
-                var tempDict = new Dictionary<Faction, float>();
-                var totalInfluence = systemStatus.influenceTracker.Values.Sum();
-                var highest = 0f;
-                var highestfaction = systemStatus.owner;
-                foreach (var kvp in systemStatus.influenceTracker)
-                {
-                    tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
-                    if (kvp.Value > highest)
-                    {
-                        highest = kvp.Value;
-                        highestfaction = kvp.Key;
-                    }
-                }
-
-                systemStatus.influenceTracker = tempDict;
-                var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
-                if (highestfaction != systemStatus.owner && (diffStatus >= Settings.TakeoverThreshold))
-                {
-                    var previousOwner = systemStatus.owner;
-                    var starSystem = systemStatus.starSystem;
-                    if (starSystem != null)
-                        ChangeSystemOwnership(sim, starSystem, highestfaction, false);
-
-                    LogDebug(">>> Ownership changed to " + highestfaction);
-                    if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
-                    {
-                        LogDebug("\tNoFaction or Locals, continuing");
-                        continue;
-                    }
-
-                    // BUG NRE on deserialization
-                    var WarFactionWinner = WarStatus.warFactionTracker.Find(x => x.faction == highestfaction);
-                    if (WarFactionWinner != null)
-                        WarFactionWinner.DaysSinceSystemAttacked = 0;
-
-                    try
-                    {
-                        var WarFactionLoser = WarStatus.warFactionTracker.Find(x => x.faction == previousOwner);
-                        if (WarFactionLoser != null)
-                            WarFactionLoser.DaysSinceSystemLost = 0;
-                    }
-                    catch (Exception ex)
-                    {
-                        Error(ex);
-                    }
-                }
-            }
-
-            var tempRTFactions = WarStatus.deathListTracker;
-            foreach (var deathListTracker in tempRTFactions)
-            {
-                AdjustDeathList(deathListTracker, sim);
-                deathListTracker.AttackedBy.Clear();
-            }
-        }
-
-        public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim)
-        {
-            var deathList = deathListTracker.deathList;
-            var KL_List = new List<Faction>(deathList.Keys);
-
-            var deathListFaction = deathListTracker.faction;
-            foreach (Faction faction in KL_List)
-            {
-                //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
-                if (!deathListTracker.AttackedBy.Contains(faction))
-                {
-                    if (deathList[faction] > 50)
-                        deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
-                    else if (deathList[faction] <= 50)
-                        deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
-                }
-
-                //Ceiling and floor for faction enmity. 
-                if (deathList[faction] > 99)
-                    deathList[faction] = 99;
-
-                if (deathList[faction] < 1)
-                    deathList[faction] = 1;
-
-                //Defensive Only factions are always neutral
-                if (Settings.DefensiveFactions.Contains(faction))
-                    deathList[faction] = 50;
-
-                if (deathList[faction] > 75)
-                {
-                    if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
-                    {
-                        var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
-                        enemies.Add(faction);
-                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
-                    }
-
-                    if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
-                    {
-                        var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
-                        allies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
-                    }
-                }
-
-                if (deathList[faction] <= 75 && deathList[faction] > 25)
-                {
-                    if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
-                    {
-                        var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
-                        enemies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
-                    }
-
-                    if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
-                    {
-                        var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
-                        allies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
-                    }
-                }
-
-                if (deathList[faction] <= 25)
-                {
-                    if (!sim.FactionsDict[deathListFaction].Allies.Contains(faction))
-                    {
-                        var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
-                        allies.Add(faction);
-                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
-                    }
-
-                    if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
-                    {
-                        var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
-                        enemies.Remove(faction);
-                        Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
-                    }
-                }
-            }
-        }
-
-            public static int GetTotalAttackResources(StarSystem system)
-            {
-                int result = 0;
-                if (system.Tags.Contains("planet_industry_poor"))
-                    result += Settings.planet_industry_poor;
-                if (system.Tags.Contains("planet_industry_mining"))
-                    result += Settings.planet_industry_mining;
-                if (system.Tags.Contains("planet_industry_rich"))
-                    result += Settings.planet_industry_rich;
-                if (system.Tags.Contains("planet_industry_manufacturing"))
-                    result += Settings.planet_industry_manufacturing;
-                if (system.Tags.Contains("planet_industry_research"))
-                    result += Settings.planet_industry_research;
-                if (system.Tags.Contains("planet_other_starleague"))
-                    result += Settings.planet_other_starleague;
-                return result;
-            }
-
-            public static int GetTotalDefensiveResources(StarSystem system)
-            {
-                int result = 0;
-                if (system.Tags.Contains("planet_industry_agriculture"))
-                    result += Settings.planet_industry_agriculture;
-                if (system.Tags.Contains("planet_industry_aquaculture"))
-                    result += Settings.planet_industry_aquaculture;
-                if (system.Tags.Contains("planet_other_capital"))
-                    result += Settings.planet_other_capital;
-                if (system.Tags.Contains("planet_other_megacity"))
-                    result += Settings.planet_other_megacity;
-                if (system.Tags.Contains("planet_pop_large"))
-                    result += Settings.planet_pop_large;
-                if (system.Tags.Contains("planet_pop_medium"))
-                    result += Settings.planet_pop_medium;
-                if (system.Tags.Contains("planet_pop_none"))
-                    result += Settings.planet_pop_none;
-                if (system.Tags.Contains("planet_pop_small"))
-                    result += Settings.planet_pop_small;
-                if (system.Tags.Contains("planet_other_hub"))
-                    result += Settings.planet_other_hub;
-                if (system.Tags.Contains("planet_other_comstar"))
-                    result += Settings.planet_other_comstar;
-                return result;
-            }
-
-        //public static void RefreshResources(SimGameState sim)
-        //{
-        //    // no point iterating over a KVP if you aren't using the values
-        //    //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-        //    foreach (var faction in sim.FactionsDict.Select(x => x.Key))
-        //    {
-        //        if (Settings.ResourceMap.ContainsKey(faction))
-        //        {
-        //            // initialize resources from the ResourceMap
-        //            if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
-        //            {
-        //                var StartingResources = Settings.ResourceMap[faction];
-        //                var DefensiveStartingResources = Settings.DefensiveResourceMap[faction];
-        //                WarStatus.warFactionTracker.Add(new WarFaction(faction, StartingResources, DefensiveStartingResources));
-        //            }
-        //            else
-        //            {
-        //                WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-        //                if (warFaction != null)
-        //                {
-        //                    warFaction.AttackResources = Settings.ResourceMap[faction];
-        //                    warFaction.DefensiveResources = Settings.DefensiveResourceMap[faction];
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    var random = new Random();
-        //    foreach (var system in sim.StarSystems)
-        //    {
-        //        var resources = GetTotalResources(system);
-        //        var DefensiveResources = GetTotalDefensiveResources(system);
-        //        var owner = system.Owner;
-        //        try
-        //        {
-        //            var faction = WarStatus.warFactionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
-        //            if (faction != null)
-        //            {
-        //                faction.AttackResources += resources;
-        //                faction.DefensiveResources += DefensiveResources;
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Error(ex);
-        //        }
-        //    }
-
-        //    foreach (var faction in WarStatus.warFactionTracker)
-        //    {
-        //        if (Settings.DefensiveFactions.Contains(faction.faction) && Settings.DefendersUseARforDR)
-        //        {
-        //            faction.DefensiveResources += faction.AttackResources;
-        //            faction.AttackResources = 0;
-        //        }
-
-        //        float tempnum = 0f;
-        //        int i = 0;
-        //        do
-        //        {
-        //            tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
-        //            i++;
-        //        } while (i < faction.AttackResources);
-
-        //        faction.AttackResources = tempnum * (100f + faction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle) / 100f;
-
-        //        tempnum = 0f;
-        //        i = 0;
-        //        do
-        //        {
-        //            tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
-        //            i++;
-        //        } while (i < faction.DefensiveResources);
-
-        //        faction.DefensiveResources = tempnum * (100f * Settings.GlobalDefenseFactor
-        //                                                - faction.DaysSinceSystemLost * Settings.ResourceAdjustmentPerCycle) / 100f;
-        //    }
-        //}
-
-        public static void PostChangeSystemUpdate(StarSystem starSystem)
-        {
-            SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-            var system = WarStatus.systems.Find(x => x.name == starSystem.Name);
-            system.neighborSystems.Clear();
-            var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
-            foreach (var neighborSystem in neighbors)
-            {
-                if (system.neighborSystems.ContainsKey(neighborSystem.Owner))
-                    system.neighborSystems[neighborSystem.Owner] += 1;
-                else
-                    system.neighborSystems.Add(neighborSystem.Owner, 1);
-            }
-
-            var ContractEmployers = system.starSystem.Def.ContractEmployers;
-            var ContractTargets = system.starSystem.Def.ContractTargets;
-
-            foreach (var systemNeighbor in sim.Starmap.GetAvailableNeighborSystem(starSystem))
-            {
-                if (!ContractEmployers.Contains(systemNeighbor.Owner) && !Settings.DefensiveFactions.Contains(systemNeighbor.Owner))
-                    ContractEmployers.Add(systemNeighbor.Owner);
-
-                if (!ContractTargets.Contains(systemNeighbor.Owner) && !Settings.DefensiveFactions.Contains(systemNeighbor.Owner))
-                    ContractTargets.Add(systemNeighbor.Owner);
-            }
-
-
-        }
-
-
-        [HarmonyPatch(typeof(Contract), "CompleteContract")]
-        public static class CompleteContract_Patch
-        {
-            public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
-            {
-                var teamfaction = __instance.Override.employerTeam.faction;
-                var enemyfaction = __instance.Override.targetTeam.faction;
-                var difficulty = __instance.Difficulty;
-                var system = __instance.TargetSystem;
-                var warsystem = WarStatus.systems.Find(x => x.name == system);
-
-                if (result == MissionResult.Victory)
-                {
-                    warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
-                    warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
-                }
-                else if (result == MissionResult.Defeat || (result != MissionResult.Victory && !isGoodFaithEffort))
-                {
-                    warsystem.influenceTracker[teamfaction] -= difficulty * Settings.DifficultyFactor;
-                    warsystem.influenceTracker[enemyfaction] += difficulty * Settings.DifficultyFactor;
-                }
-
-                var sim = __instance.BattleTechGame.Simulation;
-                var oldowner = sim.CurSystem.Owner;
-                UpdateInfluenceFromAttacks(sim);
-                var newowner = sim.CurSystem.Owner;
-
-                if (oldowner != newowner)
-                {
-                    GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                    SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                        .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                    interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
-                        " conquered from " + oldowner.ToString(), true, null);
-                }
-
             }
         }
     }
+
+    public static void AllocateDefensiveResources(WarFaction warFaction)
+    {
+        var random = new Random();
+        var faction = warFaction.faction;
+        if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
+            return;
+
+        float DPRMultiplier = random.Next(0, Settings.APRPushRandomizer + 1);
+        DPRMultiplier = DPRMultiplier * (100 * Settings.GlobalDefenseFactor - 
+            Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+        var DefensiveResources = warFaction.DefensiveResources * DPRMultiplier;
+
+        while (DefensiveResources > 0)
+        {
+            float highest = 0f;
+            Faction highestFaction = faction;
+            var rand = random.Next(0, warFaction.defenseTargets.Count());
+        LogDebug("rando: " + rand);
+            var system = warFaction.defenseTargets[rand].Name;
+            var systemStatus = WarStatus.systems.Find(x => x.name == system);
+
+            foreach (Faction tempfaction in systemStatus.influenceTracker.Keys)
+            {
+                if (systemStatus.influenceTracker[tempfaction] > highest)
+
+                {
+                    highest = systemStatus.influenceTracker[tempfaction];
+                    highestFaction = tempfaction;
+                }
+            }
+
+            if (highestFaction == faction)
+            {
+                if (DefensiveResources > 0)
+                {
+                    systemStatus.influenceTracker[faction] += 1;
+                    DefensiveResources -= 1;
+                }
+                else
+                {
+                    systemStatus.influenceTracker[faction] += DefensiveResources;
+                    DefensiveResources = 0;
+                }
+            }
+            else
+            {
+                var diffRes = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[faction];
+                if (diffRes >= DefensiveResources)
+                {
+                    systemStatus.influenceTracker[faction] += DefensiveResources;
+                    DefensiveResources = 0;
+                }
+                else
+                {
+                    systemStatus.influenceTracker[faction] += diffRes;
+                    DefensiveResources -= diffRes;
+                }
+            }
+        }
+    }
+
+    public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
+    {
+        if (faction != system.Owner || ForceFlip)
+        {
+            Faction OldFaction = system.Owner;
+            if (system.Def.Tags.Contains(Settings.FactionTags[system.Owner]))
+                system.Def.Tags.Remove(Settings.FactionTags[system.Owner]);
+            system.Def.Tags.Add(Settings.FactionTags[faction]);
+            system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
+            if (system.Def.FactionShopItems != null)
+            {
+                Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
+                if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]));
+                    system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
+                system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
+            }
+            var ContractEmployers = system.Def.ContractEmployers;
+            var ContractTargets = system.Def.ContractTargets;
+            ContractEmployers.Clear();
+            ContractTargets.Clear();
+
+            ContractEmployers.Add(faction);
+            ContractEmployers.Add(OldFaction);
+            ContractTargets.Add(faction);
+            ContractTargets.Add(OldFaction);
+
+            var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
+            var oldOwner = systemStatus.owner;
+            systemStatus.owner = faction;
+            Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
+            //Change the Kill List for the factions.
+            var TotalAR = GetTotalAttackResources(system);
+            var TotalDR = GetTotalDefensiveResources(system);
+            var SystemValue = TotalAR + TotalDR;
+            var KillListDelta = Math.Max(10, SystemValue);
+
+            var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
+            if (factionTracker.deathList[faction] < 50)
+                factionTracker.deathList[faction] = 50;
+
+            factionTracker.deathList[faction] += KillListDelta;
+            //Allies are upset that their friend is being beaten up.
+
+            foreach (var ally in sim.FactionsDict[OldFaction].Allies)
+            {
+                if (!Settings.IncludedFactions.Contains(ally) || faction == ally)
+                    continue;
+
+                var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
+                factionAlly.deathList[faction] += KillListDelta / 2;
+            }
+
+            //Enemies of the target faction are happy with the faction doing the beating.
+            
+            foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
+            {
+                if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
+                    continue;
+                var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
+                Log(factionEnemy.faction.ToString());
+                factionEnemy.deathList[faction] -= KillListDelta / 2;
+            }
+
+            factionTracker.AttackedBy.Add(faction);
+
+            WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+            WFWinner.GainedSystem = true;
+            WFWinner.AttackResources += TotalAR;
+            WFWinner.DefensiveResources += TotalDR;
+            WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
+            WFLoser.LostSystem = true;
+            WFLoser.AttackResources -= TotalAR;
+            WFLoser.DefensiveResources -= TotalDR;
+            ChangedSystems.Add(system);
+        }
+    }
+
+    private static void UpdateInfluenceFromAttacks(SimGameState sim)
+    {
+        var tempRTFactions = WarStatus.deathListTracker;
+        foreach (var deathListTracker in tempRTFactions)
+        {
+            deathListTracker.AttackedBy.Clear();
+        }
+
+        LogDebug($"Updating influence for {WarStatus.systems.Count().ToString()} systems");
+        foreach (var systemStatus in WarStatus.systems)
+        {
+            var tempDict = new Dictionary<Faction, float>();
+            var totalInfluence = systemStatus.influenceTracker.Values.Sum();
+            var highest = 0f;
+            var highestfaction = systemStatus.owner;
+            foreach (var kvp in systemStatus.influenceTracker)
+            {
+                tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
+                if (kvp.Value > highest)
+                {
+                    highest = kvp.Value;
+                    highestfaction = kvp.Key;
+                }
+            }
+
+            systemStatus.influenceTracker = tempDict;
+            var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
+            if (highestfaction != systemStatus.owner && (diffStatus >= Settings.TakeoverThreshold))
+            {
+                var previousOwner = systemStatus.owner;
+                var starSystem = systemStatus.starSystem;
+                if (starSystem != null)
+                    ChangeSystemOwnership(sim, starSystem, highestfaction, false);
+
+                LogDebug(">>> Ownership changed to " + highestfaction);
+                if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
+                {
+                    LogDebug("\tNoFaction or Locals, continuing");
+                    continue;
+                }
+
+                // BUG NRE on deserialization
+                var WarFactionWinner = WarStatus.warFactionTracker.Find(x => x.faction == highestfaction);
+                if (WarFactionWinner != null)
+                    WarFactionWinner.DaysSinceSystemAttacked = 0;
+
+                try
+                {
+                    var WarFactionLoser = WarStatus.warFactionTracker.Find(x => x.faction == previousOwner);
+                    if (WarFactionLoser != null)
+                        WarFactionLoser.DaysSinceSystemLost = 0;
+                }
+                catch (Exception ex)
+                {
+                    Error(ex);
+                }
+            }
+        }
+
+        foreach (var deathListTracker in tempRTFactions)
+        {
+            AdjustDeathList(deathListTracker, sim);
+        }
+    }
+
+    public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim)
+    {
+        var deathList = deathListTracker.deathList;
+        var KL_List = new List<Faction>(deathList.Keys);
+
+        var deathListFaction = deathListTracker.faction;
+        foreach (Faction faction in KL_List)
+        {
+            //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
+            if (!deathListTracker.AttackedBy.Contains(faction))
+            {
+                if (deathList[faction] > 50)
+                    deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
+                else if (deathList[faction] <= 50)
+                    deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
+            }
+
+            //Ceiling and floor for faction enmity. 
+            if (deathList[faction] > 99)
+                deathList[faction] = 99;
+
+            if (deathList[faction] < 1)
+                deathList[faction] = 1;
+
+            //Defensive Only factions are always neutral
+            if (Settings.DefensiveFactions.Contains(faction))
+                deathList[faction] = 50;
+
+            if (deathList[faction] > 75)
+            {
+                if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
+                    enemies.Add(faction);
+                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+
+                if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
+                    allies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+            }
+
+            if (deathList[faction] <= 75 && deathList[faction] > 25)
+            {
+                if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
+                    enemies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+
+                if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
+                    allies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+            }
+
+            if (deathList[faction] <= 25)
+            {
+                if (!sim.FactionsDict[deathListFaction].Allies.Contains(faction))
+                {
+                    var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
+                    allies.Add(faction);
+                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
+                }
+
+                if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
+                {
+                    var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
+                    enemies.Remove(faction);
+                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                }
+            }
+        }
+    }
+
+        public static int GetTotalAttackResources(StarSystem system)
+        {
+            int result = 0;
+            if (system.Tags.Contains("planet_industry_poor"))
+                result += Settings.planet_industry_poor;
+            if (system.Tags.Contains("planet_industry_mining"))
+                result += Settings.planet_industry_mining;
+            if (system.Tags.Contains("planet_industry_rich"))
+                result += Settings.planet_industry_rich;
+            if (system.Tags.Contains("planet_industry_manufacturing"))
+                result += Settings.planet_industry_manufacturing;
+            if (system.Tags.Contains("planet_industry_research"))
+                result += Settings.planet_industry_research;
+            if (system.Tags.Contains("planet_other_starleague"))
+                result += Settings.planet_other_starleague;
+            return result;
+        }
+
+        public static int GetTotalDefensiveResources(StarSystem system)
+        {
+            int result = 0;
+            if (system.Tags.Contains("planet_industry_agriculture"))
+                result += Settings.planet_industry_agriculture;
+            if (system.Tags.Contains("planet_industry_aquaculture"))
+                result += Settings.planet_industry_aquaculture;
+            if (system.Tags.Contains("planet_other_capital"))
+                result += Settings.planet_other_capital;
+            if (system.Tags.Contains("planet_other_megacity"))
+                result += Settings.planet_other_megacity;
+            if (system.Tags.Contains("planet_pop_large"))
+                result += Settings.planet_pop_large;
+            if (system.Tags.Contains("planet_pop_medium"))
+                result += Settings.planet_pop_medium;
+            if (system.Tags.Contains("planet_pop_none"))
+                result += Settings.planet_pop_none;
+            if (system.Tags.Contains("planet_pop_small"))
+                result += Settings.planet_pop_small;
+            if (system.Tags.Contains("planet_other_hub"))
+                result += Settings.planet_other_hub;
+            if (system.Tags.Contains("planet_other_comstar"))
+                result += Settings.planet_other_comstar;
+            return result;
+        }
+
+    //public static void RefreshResources(SimGameState sim)
+    //{
+    //    // no point iterating over a KVP if you aren't using the values
+    //    //LogDebug($"Object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+    //    foreach (var faction in sim.FactionsDict.Select(x => x.Key))
+    //    {
+    //        if (Settings.ResourceMap.ContainsKey(faction))
+    //        {
+    //            // initialize resources from the ResourceMap
+    //            if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
+    //            {
+    //                var StartingResources = Settings.ResourceMap[faction];
+    //                var DefensiveStartingResources = Settings.DefensiveResourceMap[faction];
+    //                WarStatus.warFactionTracker.Add(new WarFaction(faction, StartingResources, DefensiveStartingResources));
+    //            }
+    //            else
+    //            {
+    //                WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+    //                if (warFaction != null)
+    //                {
+    //                    warFaction.AttackResources = Settings.ResourceMap[faction];
+    //                    warFaction.DefensiveResources = Settings.DefensiveResourceMap[faction];
+    //                }
+    //            }
+    //        }
+    //    }
+
+    //    var random = new Random();
+    //    foreach (var system in sim.StarSystems)
+    //    {
+    //        var resources = GetTotalResources(system);
+    //        var DefensiveResources = GetTotalDefensiveResources(system);
+    //        var owner = system.Owner;
+    //        try
+    //        {
+    //            var faction = WarStatus.warFactionTracker.Where(x => x != null).FirstOrDefault(x => x.faction == owner);
+    //            if (faction != null)
+    //            {
+    //                faction.AttackResources += resources;
+    //                faction.DefensiveResources += DefensiveResources;
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            Error(ex);
+    //        }
+    //    }
+
+    //    foreach (var faction in WarStatus.warFactionTracker)
+    //    {
+    //        if (Settings.DefensiveFactions.Contains(faction.faction) && Settings.DefendersUseARforDR)
+    //        {
+    //            faction.DefensiveResources += faction.AttackResources;
+    //            faction.AttackResources = 0;
+    //        }
+
+    //        float tempnum = 0f;
+    //        int i = 0;
+    //        do
+    //        {
+    //            tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
+    //            i++;
+    //        } while (i < faction.AttackResources);
+
+    //        faction.AttackResources = tempnum * (100f + faction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle) / 100f;
+
+    //        tempnum = 0f;
+    //        i = 0;
+    //        do
+    //        {
+    //            tempnum += random.Next(1, Settings.ResourceRandomizer + 1);
+    //            i++;
+    //        } while (i < faction.DefensiveResources);
+
+    //        faction.DefensiveResources = tempnum * (100f * Settings.GlobalDefenseFactor
+    //                                                - faction.DaysSinceSystemLost * Settings.ResourceAdjustmentPerCycle) / 100f;
+    //    }
+    //}
+
+    public static void PostChangeSystemUpdate(StarSystem starSystem)
+    {
+        SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+        var system = WarStatus.systems.Find(x => x.name == starSystem.Name);
+        system.neighborSystems.Clear();
+        var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
+        foreach (var neighborSystem in neighbors)
+        {
+            if (system.neighborSystems.ContainsKey(neighborSystem.Owner))
+                system.neighborSystems[neighborSystem.Owner] += 1;
+            else
+                system.neighborSystems.Add(neighborSystem.Owner, 1);
+        }
+
+        var ContractEmployers = system.starSystem.Def.ContractEmployers;
+        var ContractTargets = system.starSystem.Def.ContractTargets;
+
+        foreach (var systemNeighbor in sim.Starmap.GetAvailableNeighborSystem(starSystem))
+        {
+            if (!ContractEmployers.Contains(systemNeighbor.Owner) && !Settings.DefensiveFactions.Contains(systemNeighbor.Owner))
+                ContractEmployers.Add(systemNeighbor.Owner);
+
+            if (!ContractTargets.Contains(systemNeighbor.Owner) && !Settings.DefensiveFactions.Contains(systemNeighbor.Owner))
+                ContractTargets.Add(systemNeighbor.Owner);
+        }
+
+
+    }
+
+
+    [HarmonyPatch(typeof(Contract), "CompleteContract")]
+    public static class CompleteContract_Patch
+    {
+        public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
+        {
+            var teamfaction = __instance.Override.employerTeam.faction;
+            var enemyfaction = __instance.Override.targetTeam.faction;
+            var difficulty = __instance.Difficulty;
+            var system = __instance.TargetSystem;
+            var warsystem = WarStatus.systems.Find(x => x.name == system);
+
+            if (result == MissionResult.Victory)
+            {
+                warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
+            }
+            else if (result == MissionResult.Defeat || (result != MissionResult.Victory && !isGoodFaithEffort))
+            {
+                warsystem.influenceTracker[teamfaction] -= difficulty * Settings.DifficultyFactor;
+                warsystem.influenceTracker[enemyfaction] += difficulty * Settings.DifficultyFactor;
+            }
+
+            var sim = __instance.BattleTechGame.Simulation;
+            var oldowner = sim.CurSystem.Owner;
+            UpdateInfluenceFromAttacks(sim);
+            var newowner = sim.CurSystem.Owner;
+
+            if (oldowner != newowner)
+            {
+                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
+                    " conquered from " + oldowner.ToString(), true, null);
+            }
+
+        }
+    }
+}
