@@ -14,7 +14,7 @@ using HBS;
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
-public class Core
+public static class Core
 {
     #region Init
 
@@ -252,11 +252,11 @@ public class Core
             {
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.Owner);
                 if(Settings.DefensiveFactions.Contains(warFaction.faction) && Settings.DefendersUseARforDR)
-                    warFaction.DefensiveResources += GetTotalAttackResources(system);
+                    warFaction.DefensiveResources += Methods.GetTotalAttackResources(system);
                 else
-                    warFaction.AttackResources += GetTotalAttackResources(system);
+                    warFaction.AttackResources += Methods.GetTotalAttackResources(system);
 
-                warFaction.DefensiveResources += GetTotalDefensiveResources(system);
+                warFaction.DefensiveResources += Methods.GetTotalDefensiveResources(system);
                 new SystemStatus(sim, system.Name, system.Owner);
             }
         }
@@ -283,8 +283,8 @@ public class Core
             foreach (var system in WarStatus.systems)
             {
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
-                warFaction.AttackResources += GetTotalAttackResources(system.starSystem);
-                warFaction.DefensiveResources += GetTotalDefensiveResources(system.starSystem);
+                warFaction.AttackResources += Methods.GetTotalAttackResources(system.starSystem);
+                warFaction.DefensiveResources += Methods.GetTotalDefensiveResources(system.starSystem);
             }
         }
 
@@ -434,8 +434,8 @@ public class Core
                 Traverse.Create(system.Def.Owner).Property("Owner").SetValue(faction);
 
                 //Change the Kill List for the factions.
-                var TotalAR = GetTotalAttackResources(system);
-                var TotalDR = GetTotalDefensiveResources(system);
+                var TotalAR = Methods.GetTotalAttackResources(system);
+                var TotalDR = Methods.GetTotalDefensiveResources(system);
                 var SystemValue = TotalAR + TotalDR;
                 var KillListDelta = Math.Max(10, SystemValue);
 
@@ -618,48 +618,51 @@ public class Core
             }
         }
 
-        public static int GetTotalAttackResources(StarSystem system)
+        public static class Methods
         {
-            int result = 0;
-            if (system.Tags.Contains("planet_industry_poor"))
-                result += Settings.planet_industry_poor;
-            if (system.Tags.Contains("planet_industry_mining"))
-                result += Settings.planet_industry_mining;
-            if (system.Tags.Contains("planet_industry_rich"))
-                result += Settings.planet_industry_rich;
-            if (system.Tags.Contains("planet_industry_manufacturing"))
-                result += Settings.planet_industry_manufacturing;
-            if (system.Tags.Contains("planet_industry_research"))
-                result += Settings.planet_industry_research;
-            if (system.Tags.Contains("planet_other_starleague"))
-                result += Settings.planet_other_starleague;
-            return result;
-        }
+            public static int GetTotalAttackResources(StarSystem system)
+            {
+                int result = 0;
+                if (system.Tags.Contains("planet_industry_poor"))
+                    result += Settings.planet_industry_poor;
+                if (system.Tags.Contains("planet_industry_mining"))
+                    result += Settings.planet_industry_mining;
+                if (system.Tags.Contains("planet_industry_rich"))
+                    result += Settings.planet_industry_rich;
+                if (system.Tags.Contains("planet_industry_manufacturing"))
+                    result += Settings.planet_industry_manufacturing;
+                if (system.Tags.Contains("planet_industry_research"))
+                    result += Settings.planet_industry_research;
+                if (system.Tags.Contains("planet_other_starleague"))
+                    result += Settings.planet_other_starleague;
+                return result;
+            }
 
-        public static int GetTotalDefensiveResources(StarSystem system)
-        {
-            int result = 0;
-            if (system.Tags.Contains("planet_industry_agriculture"))
-                result += Settings.planet_industry_agriculture;
-            if (system.Tags.Contains("planet_industry_aquaculture"))
-                result += Settings.planet_industry_aquaculture;
-            if (system.Tags.Contains("planet_other_capital"))
-                result += Settings.planet_other_capital;
-            if (system.Tags.Contains("planet_other_megacity"))
-                result += Settings.planet_other_megacity;
-            if (system.Tags.Contains("planet_pop_large"))
-                result += Settings.planet_pop_large;
-            if (system.Tags.Contains("planet_pop_medium"))
-                result += Settings.planet_pop_medium;
-            if (system.Tags.Contains("planet_pop_none"))
-                result += Settings.planet_pop_none;
-            if (system.Tags.Contains("planet_pop_small"))
-                result += Settings.planet_pop_small;
-            if (system.Tags.Contains("planet_other_hub"))
-                result += Settings.planet_other_hub;
-            if (system.Tags.Contains("planet_other_comstar"))
-                result += Settings.planet_other_comstar;
-            return result;
+            public static int GetTotalDefensiveResources(StarSystem system)
+            {
+                int result = 0;
+                if (system.Tags.Contains("planet_industry_agriculture"))
+                    result += Settings.planet_industry_agriculture;
+                if (system.Tags.Contains("planet_industry_aquaculture"))
+                    result += Settings.planet_industry_aquaculture;
+                if (system.Tags.Contains("planet_other_capital"))
+                    result += Settings.planet_other_capital;
+                if (system.Tags.Contains("planet_other_megacity"))
+                    result += Settings.planet_other_megacity;
+                if (system.Tags.Contains("planet_pop_large"))
+                    result += Settings.planet_pop_large;
+                if (system.Tags.Contains("planet_pop_medium"))
+                    result += Settings.planet_pop_medium;
+                if (system.Tags.Contains("planet_pop_none"))
+                    result += Settings.planet_pop_none;
+                if (system.Tags.Contains("planet_pop_small"))
+                    result += Settings.planet_pop_small;
+                if (system.Tags.Contains("planet_other_hub"))
+                    result += Settings.planet_other_hub;
+                if (system.Tags.Contains("planet_other_comstar"))
+                    result += Settings.planet_other_comstar;
+                return result;
+            }
         }
 
         //public static void RefreshResources(SimGameState sim)

@@ -18,8 +18,36 @@ public class WarStatus
 
     public static Dictionary<Faction, float> FindWarFactionResources(Faction faction) =>
         Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
-}
 
+    WarStatus()
+    {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+
+        //initialize all WarFactions, DeathListTrackers, and SystemStatuses
+        foreach (var faction in Core.Settings.IncludedFactions)
+        {
+            new WarFaction(faction, Core.Settings.AttackResourceMap[faction], Core.Settings.DefensiveResourceMap[faction]);
+            new DeathListTracker(faction);
+        }
+        foreach (var system in sim.StarSystems)
+        {
+            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == system.Owner);
+            if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
+                warFaction.DefensiveResources += Core.Methods.GetTotalAttackResources(system);
+            else
+                warFaction.AttackResources += GetTotalAttackResources(system);
+
+            warFaction.DefensiveResources += GetTotalDefensiveResources(system);
+            new SystemStatus(sim, system.Name, system.Owner);
+            Core.
+        }
+    }
+    [JsonConstructor]
+    WarStatus (bool fake = false)
+    {
+
+    }
+}
 public class SystemStatus
 {
     public string name;
