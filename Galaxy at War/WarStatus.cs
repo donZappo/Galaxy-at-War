@@ -19,7 +19,7 @@ public class WarStatus
     public static Dictionary<Faction, float> FindWarFactionResources(Faction faction) =>
         Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
 
-    WarStatus()
+    public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
 
