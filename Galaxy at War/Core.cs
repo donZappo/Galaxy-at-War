@@ -516,11 +516,7 @@ public static class Core
 
             systemStatus.influenceTracker = tempDict;
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
-            Log("=====================");
-            Log(highestfaction.ToString());
-            Log(systemStatus.influenceTracker[highestfaction].ToString());
-            Log(systemStatus.owner.ToString());
-            Log(systemStatus.influenceTracker[systemStatus.owner].ToString());
+            
             if (highestfaction != systemStatus.owner && (diffStatus >= Settings.TakeoverThreshold))
             {
                 var previousOwner = systemStatus.owner;
@@ -528,7 +524,6 @@ public static class Core
 
                 if (starSystem != null)
                 {
-                    Log("Trying to Change?");
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
                 }
 
