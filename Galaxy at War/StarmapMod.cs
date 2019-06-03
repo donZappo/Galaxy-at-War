@@ -1,36 +1,14 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BattleTech;
-using BattleTech.UI;
 using BattleTech.UI.Tooltips;
 using Harmony;
-using TMPro;
 using UnityEngine;
 
 public class StarmapMod
 {
     private static readonly SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
-    [HarmonyPatch(typeof(Starmap), "SetSelectedSystem")]
-    [HarmonyPatch(new[] {typeof(StarSystem)})]
-    public static class Starmap_SetSelectedSystem_Patch
-    {
-        public static void Postfix(StarSystem sys)
-        {
-            Core.SelectedSystem = sys;
-        }
-    }
-
-    [HarmonyPatch(typeof(TooltipPrefab_Planet), "GetPlanetPop")]
-    public static class TooltipPrefab_Planet_GetPlanetPop_Patch
-    {
-        public static void Prefix(StarSystem starSystem)
-        {
-            Core.SelectedSystem = starSystem;
-        }
-    }
 
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
     public static class TooltipPrefab_Planet_SetData_Patch
@@ -38,6 +16,10 @@ public class StarmapMod
         public static void Prefix(object data, ref string __state)
         {
             var starSystem = (StarSystem) data;
+            // if the hovered system is not the selected system, don't update Core.SelectedSystem
+
+            Core.SelectedSystem = starSystem;
+
             if (starSystem == null)
             {
                 return;
@@ -47,10 +29,20 @@ public class StarmapMod
             var factionString = new StringBuilder();
             factionString.AppendLine(starSystem.Def.Description.Details);
             factionString.AppendLine();
-            var tracker = Core.WarStatus.systems.Find(x => x.name == Core.SelectedSystem.Name);
+            var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             foreach (var foo in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                factionString.AppendLine($" {Math.Round(foo.Value) + "%",-6:#} {foo.Key}");
+                string number;
+                if (foo.Value == 100)
+                    number = "100%";
+                else if (foo.Value < 1)
+                    number = "< 1%";
+                else if (foo.Value > 99)
+                    number = "> 99%";
+                else
+                    number = "> " + (int) foo.Value + "%";
+                
+                factionString.AppendLine($"{number,-15} {foo.Key}");
             }
 
             Traverse.Create(starSystem.Def.Description).Property("Details").SetValue(factionString.ToString());
@@ -65,42 +57,6 @@ public class StarmapMod
             }
 
             Traverse.Create(starSystem.Def.Description).Property("Details").SetValue(__state);
-        }
-    }
-
-    [HarmonyPatch(typeof(TooltipPrefab_Faction), "SetData")]
-    public static class TooltipPrefab_Faction_SetData_Patch
-    {
-        public static void Prefix(object data, ref string __state)
-        {
-            var factionDef = (FactionDef) data;
-            if (factionDef == null)
-            {
-                return;
-            }
-
-            __state = factionDef.Description;
-            var factionString = new StringBuilder();
-            factionString.AppendLine(factionDef.Description);
-            factionString.AppendLine();
-            var tracker = Core.WarStatus.systems.Find(x => x.name == Core.SelectedSystem.Name);
-            foreach (var foo in tracker.influenceTracker.OrderByDescending(x => x.Value))
-            {
-                factionString.AppendLine($" {Math.Round(foo.Value) + "%",-6:#} {foo.Key}");
-            }
-
-            Traverse.Create(factionDef).Property("Description").SetValue(factionString.ToString());
-        }
-
-        public static void Postfix(object data, string __state)
-        {
-            var factionDef = (FactionDef) data;
-            if (factionDef == null)
-            {
-                return;
-            }
-
-            Traverse.Create(factionDef).Property("Description").SetValue(__state);
         }
     }
 
@@ -124,7 +80,8 @@ public class StarmapMod
                     }
                 }
 
-                if (highestFaction != systemStatus.owner && (highest - systemStatus.influenceTracker[systemStatus.owner]) < Core.Settings.TakeoverThreshold)
+                var infDiff = highest - systemStatus.influenceTracker[systemStatus.owner];
+                if (highestFaction != systemStatus.owner && infDiff < Core.Settings.TakeoverThreshold && infDiff >= 1)
                     contendedSystems.Add(systemStatus.name);
             }
 
