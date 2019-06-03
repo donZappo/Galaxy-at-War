@@ -819,6 +819,7 @@ public static class Core
             UpdateInfluenceFromAttacks(sim);
             var newowner = sim.CurSystem.Owner;
 
+            //This is a WIP for the pop-up after a system changes due to player interaction.
             if (oldowner != newowner)
             {
                 GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
@@ -826,6 +827,7 @@ public static class Core
                     .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
                 interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
                     " conquered from " + oldowner.ToString(), true, null);
+                sim.StopPlayMode();
             }
 
         }
