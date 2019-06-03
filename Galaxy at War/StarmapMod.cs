@@ -124,7 +124,8 @@ public class StarmapMod
                     }
                 }
 
-                if (highestFaction != systemStatus.owner && (highest - systemStatus.influenceTracker[systemStatus.owner]) < Core.Settings.TakeoverThreshold)
+                var infDiff = highest - systemStatus.influenceTracker[systemStatus.owner];
+                if (highestFaction != systemStatus.owner && infDiff < Core.Settings.TakeoverThreshold && infDiff >= 1)
                     contendedSystems.Add(systemStatus.name);
             }
 

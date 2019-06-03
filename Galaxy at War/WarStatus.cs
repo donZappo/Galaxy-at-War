@@ -59,7 +59,7 @@ public class SystemStatus
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
 
     //internal WarFaction warFaction;
-    internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
+    public StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     [JsonConstructor
@@ -121,6 +121,11 @@ public class SystemStatus
                 }
             }
         }
+        foreach (var faction in Core.Settings.IncludedFactions)
+        {
+            if (!influenceTracker.Keys.Contains(faction))
+                influenceTracker.Add(faction, 0);
+        }
 
         // need percentages from InfluenceTracker data 
         var totalInfluence = influenceTracker.Values.Sum();
@@ -158,71 +163,6 @@ public class SystemStatus
                 ContractTargets.Add(EF);
         }
     }
-
-    public void CalculateAttackTargets()
-    {
-        LogDebug("Calculate Potential Attack Targets");
-        
-        LogDebug("Can Attack:");
-        if (starSystem == null)
-        {
-            LogDebug("PPPPPPPPPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-            return;
-        }
-        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
-        {
-            var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
-            if (warFac == null)
-            {
-                LogDebug("Didn't find warFaction for " + starSystem.Owner);
-                return;
-            }
-
-            if (neighborSystem.Owner != starSystem.Owner && !warFac.attackTargets.ContainsKey(neighborSystem.Owner))
-            {
-                var tempList = new List<StarSystem> {neighborSystem};
-                warFac.attackTargets.Add(neighborSystem.Owner, tempList);
-                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
-            }
-            else if ((neighborSystem.Owner != starSystem.Owner) && warFac.attackTargets.ContainsKey(neighborSystem.Owner) &&
-                     !warFac.attackTargets[neighborSystem.Owner].Contains(neighborSystem))
-            {
-                warFac.attackTargets[neighborSystem.Owner].Add(neighborSystem);
-                LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
-            }
-        }
-
-        //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + SaveHandling.fileName))
-        //    writer.Write(JsonConvert.SerializeObject(Globals.attackTargets));
-    }
-
-    public void CalculateDefenseTargets()
-    {
-        LogDebug("Calculate Potential Defendable Systems");
-        LogDebug(starSystem.Name);
-        LogDebug("Needs defense:");
-        
-        foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
-        {
-            LogDebug("A");
-            var warFac = Core.WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
-            LogDebug("B");
-            if (warFac == null)
-            {
-                LogDebug("Didn't find warFaction for " + starSystem.Owner);
-                return;
-            }
-            LogDebug("C");
-            if ((neighborSystem.Owner != starSystem.Owner) && !warFac.defenseTargets.Contains(starSystem))
-            {
-                LogDebug("D");
-                warFac.defenseTargets.Add(starSystem);
-                LogDebug("\t" + starSystem.Name + ": " + starSystem.Owner);
-            }
-        }
-    }
-
-    
 }
 
 public class WarFaction

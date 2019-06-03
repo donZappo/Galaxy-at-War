@@ -92,13 +92,13 @@ public class ModSettings
 
     public bool Debug = false;
     public string modDirectory;
-    public int DominantInfluence = 60;
-    public int MinorInfluencePool = 40;
-    public float GlobalDefenseFactor = 1.1f;
+    public int DominantInfluence = 75;
+    public int MinorInfluencePool = 25;
+    public float GlobalDefenseFactor = 1.5f;
     public int ResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
-    public float TakeoverThreshold = 10f;
+    public float TakeoverThreshold = 20f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
     public float KLValueAllies = 25f;
