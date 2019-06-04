@@ -192,11 +192,8 @@ public static class Core
             }
 
             //Comstar report on ongoing war.
-            Logger.Log("Comstar");
-            Logger.Log(sim.DayRemainingInQuarter.ToString());
             if (sim.DayRemainingInQuarter == 30)
             {
-                Logger.Log("Report");
                 var ReportString = MonthlyWarReport();
                 Console.Write(String.Format("0, -10", ReportString));
                 GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
