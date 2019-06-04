@@ -115,8 +115,8 @@ public static class Core
                 }
             }
 
-            // if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
-            //     return;
+            if (sim.DayRemainingInQuarter % Settings.WarFrequency != 0)
+                 return;
 
             LogDebug(">>> PROC");
 
@@ -192,16 +192,18 @@ public static class Core
             }
 
             //Comstar report on ongoing war.
-            var ReportString = MonthlyWarReport();
-            Console.Write(String.Format("0, -10", ReportString));
-            GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-            SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-            interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
-            //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
-            //                                                                                 " conquered from " + oldowner.ToString(), true, null);
-            sim.StopPlayMode();
-
+            if (sim.DayRemainingInQuarter == 2)
+            {
+                var ReportString = MonthlyWarReport();
+                Console.Write(String.Format("0, -10", ReportString));
+                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
+                //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
+                //                                                                                 " conquered from " + oldowner.ToString(), true, null);
+                sim.StopPlayMode();
+            }
             //GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
             //SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools.Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
             //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", " poop " + " from " + "heaven", true, null);
@@ -422,6 +424,8 @@ public static class Core
             return;
         var random = new Random();
         var warFAR = warFaction.warFactionAttackResources;
+
+       
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         foreach (var targetFaction in warFAR.Keys)
         {
@@ -431,10 +435,13 @@ public static class Core
             {
                 var rand = random.Next(0, warFaction.attackTargets[targetFaction].Count());
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
-                if (targetFAR > 1)
+                var maxValue = system.influenceTracker.Values.Max();
+                var bonusAR = (maxValue - system.influenceTracker[warFaction.faction]) * 0.15f;
+                
+                if (targetFAR > 1 + bonusAR)
                 {
-                    system.influenceTracker[warFaction.faction] += 1;
-                    targetFAR -= 1;
+                    system.influenceTracker[warFaction.faction] += 1 + bonusAR;
+                    targetFAR -= 1 + bonusAR;
                 }
                 else
                 {
@@ -506,16 +513,23 @@ public static class Core
             }
             else
             {
-                var diffRes = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[faction];
-                if (diffRes >= defensiveResources)
-                {
-                    systemStatus.influenceTracker[faction] += defensiveResources;
-                    defensiveResources = 0;
-                }
+                var totalInfluence = systemStatus.influenceTracker.Values.Sum();
+                var diffRes = systemStatus.influenceTracker[highestFaction]/totalInfluence - systemStatus.influenceTracker[faction]/totalInfluence;
+                if (diffRes > Settings.TakeoverThreshold)
+                    if (defensiveResources >= (diffRes - Settings.TakeoverThreshold) * totalInfluence/100)
+                    {
+                        systemStatus.influenceTracker[faction] += (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100;
+                        defensiveResources -= (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100;
+                    }
+                    else
+                    {
+                        systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 5);
+                        defensiveResources -= Math.Min(defensiveResources, 5);
+                    }
                 else
                 {
-                    systemStatus.influenceTracker[faction] += diffRes;
-                    defensiveResources -= diffRes;
+                    systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 5);
+                    defensiveResources -= Math.Min(defensiveResources, 5);
                 }
             }
         }
@@ -623,7 +637,7 @@ public static class Core
             systemStatus.influenceTracker = tempDict;
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
 
-            if (highestfaction != systemStatus.owner && (diffStatus >= Settings.TakeoverThreshold))
+            if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold))
             {
                 var previousOwner = systemStatus.owner;
                 var starSystem = systemStatus.starSystem;
@@ -726,6 +740,11 @@ public static class Core
         {
             ContractTargets.Clear();
             foreach (Faction EF in sim.FactionsDict[owner].Enemies)
+                ContractTargets.Add(EF);
+        }
+        if (ContractTargets.Count() == 0)
+        {
+            foreach (Faction EF in Settings.DefensiveFactions)
                 ContractTargets.Add(EF);
         }
     }
