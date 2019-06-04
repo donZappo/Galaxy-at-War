@@ -177,6 +177,8 @@ public class WarFaction
     public float DaysSinceSystemLost;
     public float AttackResources;
     public float DefensiveResources;
+    public int MonthlySystemsChanged;
+    public int TotalSystemsChanged;
 
     public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
@@ -199,6 +201,8 @@ public class WarFaction
         LostSystem = false;
         DaysSinceSystemAttacked = 0;
         DaysSinceSystemLost = 0;
+        MonthlySystemsChanged = 0;
+        TotalSystemsChanged = 0;
 
         //foreach (var kvp in sim.FactionsDict)
         //{
