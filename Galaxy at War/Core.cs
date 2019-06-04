@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using BattleTech;
@@ -9,6 +10,7 @@ using Newtonsoft.Json;
 using static Logger;
 using Random = System.Random;
 using BattleTech.UI;
+using fastJSON;
 using HBS;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -20,19 +22,22 @@ public static class Core
 
     public static void Init(string modDir, string settings)
     {
-        var harmony = HarmonyInstance.Create("ca.gnivler.BattleTech.DevMod");
+        var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
         harmony.PatchAll(Assembly.GetExecutingAssembly());
         // read settings
         try
         {
             Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
             Settings.modDirectory = modDir;
+
         }
         catch (Exception)
         {
             Settings = new ModSettings();
         }
 
+        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\settings.json"))
+            writer.Write(JSON.ToNiceJSON(Settings, new JSONParameters{UsingGlobalTypes = true}));
         // blank the logfile
         Clear();
         // PrintObjectFields(Settings, "Settings");
@@ -51,7 +56,7 @@ public static class Core
                 !(field.GetValue(obj) is string))
             {
                 LogDebug(field.Name);
-                foreach (var item in (IEnumerable)field.GetValue(obj))
+                foreach (var item in (IEnumerable) field.GetValue(obj))
                 {
                     LogDebug("\t" + item);
                 }
@@ -84,7 +89,7 @@ public static class Core
             if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
             {
                 LogDebug(">>> Loading");
-                SaveHandling.DeserializeWar();
+                SaveHandling.DeserializeWar(FileID);
             }
 
             // first time setup if not
@@ -143,8 +148,8 @@ public static class Core
                     var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
                     systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
                 }
-                
             }
+
             LogDebug("Finished System Push");
 
             //Attack!
@@ -154,6 +159,7 @@ public static class Core
                 DivideAttackResources(warFaction);
                 AllocateAttackResources(warFaction);
             }
+
             foreach (var warFaction in WarStatus.warFactionTracker)
             {
                 AllocateDefensiveResources(warFaction);
@@ -183,7 +189,6 @@ public static class Core
                     warfaction.DaysSinceSystemLost = 0;
                     warfaction.LostSystem = false;
                 }
-
             }
 
             //Comstar report on ongoing war.
@@ -213,7 +218,6 @@ public static class Core
             //            }
             //        }
             //    }
-
 
             //Log("===================================================");
             //Log("TESTING ZONE");
@@ -290,7 +294,6 @@ public static class Core
 
     public static void InitializeAllResources()
     {
-
         foreach (var system in WarStatus.systems)
         {
             var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
@@ -309,6 +312,7 @@ public static class Core
             LogDebug("PPPPPPPPPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
             return;
         }
+
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
             var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
@@ -320,7 +324,7 @@ public static class Core
 
             if (neighborSystem.Owner != starSystem.Owner && !warFac.attackTargets.ContainsKey(neighborSystem.Owner))
             {
-                var tempList = new List<StarSystem> { neighborSystem };
+                var tempList = new List<StarSystem> {neighborSystem};
                 warFac.attackTargets.Add(neighborSystem.Owner, tempList);
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
@@ -351,6 +355,7 @@ public static class Core
                 LogDebug("Didn't find warFaction for " + starSystem.Owner);
                 return;
             }
+
             if ((neighborSystem.Owner != starSystem.Owner) && !warFac.defenseTargets.Contains(starSystem))
             {
                 warFac.defenseTargets.Add(starSystem);
@@ -358,8 +363,6 @@ public static class Core
             }
         }
     }
-
-
 
     public static void DivideAttackResources(WarFaction warFaction)
     {
@@ -372,6 +375,7 @@ public static class Core
         {
             tempTargets.Add(fact, deathList.deathList[fact]);
         }
+
         var total = tempTargets.Values.Sum();
 
         Random rand = new Random();
@@ -421,7 +425,7 @@ public static class Core
 
         float DPRMultiplier = random.Next(0, Settings.APRPushRandomizer + 1);
         DPRMultiplier = DPRMultiplier * (100 * Settings.GlobalDefenseFactor -
-            Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+                                         Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
         var DefensiveResources = warFaction.DefensiveResources * DPRMultiplier;
 
         while (DefensiveResources > 0.0)
@@ -474,7 +478,6 @@ public static class Core
 
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
     {
-
         if (faction != system.Owner || ForceFlip)
         {
             Faction OldFaction = system.Owner;
@@ -485,8 +488,8 @@ public static class Core
             if (system.Def.FactionShopItems != null)
             {
                 Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
-                if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner])) ;
-                system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
+                if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]))
+                    system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
                 system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
             }
 
@@ -890,8 +893,6 @@ public static class Core
     //    }
     //}
 
-
-
     [HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
@@ -923,13 +924,12 @@ public static class Core
             if (oldowner != newowner)
             {
                 GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
                     .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
                 interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
-                    " conquered from " + oldowner.ToString(), true, null);
+                                                                                                 " conquered from " + oldowner.ToString(), true, null);
                 sim.StopPlayMode();
             }
-
         }
     }
 }
