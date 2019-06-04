@@ -89,7 +89,7 @@ public static class Core
             if (WarStatus == null && sim.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave{")))
             {
                 LogDebug(">>> Loading");
-                SaveHandling.DeserializeWar(FileID);
+                SaveHandling.DeserializeWar();
             }
 
             // first time setup if not
@@ -192,6 +192,15 @@ public static class Core
             }
 
             //Comstar report on ongoing war.
+            var ReportString = MonthlyWarReport();
+            Console.Write(String.Format("0, -10", ReportString));
+            GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+            SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+            interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
+            //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
+            //                                                                                 " conquered from " + oldowner.ToString(), true, null);
+            sim.StopPlayMode();
 
             //GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
             //SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools.Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
@@ -379,9 +388,24 @@ public static class Core
         var total = tempTargets.Values.Sum();
 
         Random rand = new Random();
-        float APRMultiplier = rand.Next(1, Settings.APRPushRandomizer + 1);
-        APRMultiplier = APRMultiplier * (1 + warFaction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle / 100);
-        var attackResources = warFaction.AttackResources * APRMultiplier;
+        float attackResources = 0f;
+        var i = warFaction.AttackResources;
+        while (i > 0)
+        {
+            if (i >= 1)
+            {
+                attackResources += rand.Next(1, Settings.APRPushRandomizer + 1);
+                i--;
+            }
+            else
+            {
+                attackResources = i * rand.Next(1, Settings.APRPushRandomizer + 1);
+                i = 0;
+            }
+        }
+
+        attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle / 100);
+       
 
         foreach (Faction Rfact in tempTargets.Keys)
         {
@@ -391,6 +415,8 @@ public static class Core
 
     public static void AllocateAttackResources(WarFaction warFaction)
     {
+        if (warFaction.warFactionAttackResources.Keys.Count() == 0)
+            return;
         var random = new Random();
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
@@ -418,17 +444,33 @@ public static class Core
 
     public static void AllocateDefensiveResources(WarFaction warFaction)
     {
-        var random = new Random();
+        if (warFaction.defenseTargets.Count() == 0)
+            return;
         var faction = warFaction.faction;
         if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
             return;
 
-        float DPRMultiplier = random.Next(0, Settings.APRPushRandomizer + 1);
-        DPRMultiplier = DPRMultiplier * (100 * Settings.GlobalDefenseFactor -
-                                         Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
-        var DefensiveResources = warFaction.DefensiveResources * DPRMultiplier;
+        Random random = new Random();
+        float defensiveResources = 0f;
+        var i = warFaction.DefensiveResources;
+        while (i > 0)
+        {
+            if (i >= 1)
+            {
+                defensiveResources += random.Next(1, Settings.APRPushRandomizer + 1);
+                i--;
+            }
+            else
+            {
+                defensiveResources = i * random.Next(1, Settings.APRPushRandomizer + 1);
+                i = 0;
+            }
+        }
 
-        while (DefensiveResources > 0.0)
+        defensiveResources = defensiveResources * (100 * Settings.GlobalDefenseFactor -
+                                         Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+
+        while (defensiveResources > 0.0)
         {
             float highest = 0f;
             Faction highestFaction = faction;
@@ -448,29 +490,29 @@ public static class Core
 
             if (highestFaction == faction)
             {
-                if (DefensiveResources > 0)
+                if (defensiveResources > 0)
                 {
                     systemStatus.influenceTracker[faction] += 1;
-                    DefensiveResources -= 1;
+                    defensiveResources -= 1;
                 }
                 else
                 {
-                    systemStatus.influenceTracker[faction] += DefensiveResources;
-                    DefensiveResources = 0;
+                    systemStatus.influenceTracker[faction] += defensiveResources;
+                    defensiveResources = 0;
                 }
             }
             else
             {
                 var diffRes = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[faction];
-                if (diffRes >= DefensiveResources)
+                if (diffRes >= defensiveResources)
                 {
-                    systemStatus.influenceTracker[faction] += DefensiveResources;
-                    DefensiveResources = 0;
+                    systemStatus.influenceTracker[faction] += defensiveResources;
+                    defensiveResources = 0;
                 }
                 else
                 {
                     systemStatus.influenceTracker[faction] += diffRes;
-                    DefensiveResources -= diffRes;
+                    defensiveResources -= diffRes;
                 }
             }
         }
@@ -534,14 +576,19 @@ public static class Core
 
             WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
             WFWinner.GainedSystem = true;
+            WFWinner.MonthlySystemsChanged += 1;
+            WFWinner.TotalSystemsChanged += 1;
             WFWinner.AttackResources += TotalAR;
             WFWinner.DefensiveResources += TotalDR;
             WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
             WFLoser.LostSystem = true;
+            WFLoser.MonthlySystemsChanged -= 1;
+            WFLoser.TotalSystemsChanged -= 1;
             WFLoser.AttackResources -= TotalAR;
             WFLoser.DefensiveResources -= TotalDR;
 
             ChangedSystems.Add(system);
+
         }
     }
 
@@ -612,6 +659,27 @@ public static class Core
         {
             AdjustDeathList(deathListTracker, sim);
         }
+    }
+
+    public static string MonthlyWarReport()
+    {
+        string summaryString = "";
+        string summaryString2 = "";
+        string combinedString = "";
+
+        foreach (Faction faction in Settings.IncludedFactions)
+        {
+            WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+            combinedString = combinedString + "<b><u>" + Settings.FactionNames[faction] + "</b></u>\n";
+            summaryString = "Monthly Change in Systems: " + warFaction.MonthlySystemsChanged + "\n";
+            summaryString2 = "Overall Change in Systems: " + warFaction.TotalSystemsChanged + "\n\n";
+
+            combinedString = combinedString + summaryString + summaryString2;
+            warFaction.MonthlySystemsChanged = 0;
+        }
+        char[] trim = { '\n' };
+        combinedString = combinedString.TrimEnd(trim);
+        return combinedString;
     }
 
     public static void RefreshNeighbors(StarSystem starSystem)
@@ -932,4 +1000,6 @@ public static class Core
             }
         }
     }
+
+    
 }

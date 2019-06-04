@@ -94,7 +94,7 @@ public class ModSettings
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
-    public float GlobalDefenseFactor = 1.5f;
+    public float GlobalDefenseFactor = 5f;
     public int ResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
@@ -114,13 +114,26 @@ public class ModSettings
 
     public List<Faction> IncludedFactions = new List<Faction>()
     {
-        Faction.MagistracyOfCanopus,
-        Faction.Locals,
+
         Faction.AuriganRestoration,
-        Faction.TaurianConcordat,
-        Faction.Liao,
         Faction.Davion,
+        Faction.Liao,
+        Faction.MagistracyOfCanopus,
         Faction.Marik,
+        Faction.TaurianConcordat,
+        Faction.Locals,
         Faction.NoFaction
+    };
+
+    public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>()
+    {
+        { Faction.AuriganRestoration, "The Arana Restoration" },
+        { Faction.Davion, "The Federated Suns" },
+        { Faction.Liao, "The Capellan Confederation" },
+        { Faction.MagistracyOfCanopus, "The Magistracy of Canopus" },
+        { Faction.Marik, "The Free Worlds League" },
+        { Faction.TaurianConcordat, "The Taurian Concordat" },
+        { Faction.Locals, "Local Factions" },
+        { Faction.NoFaction, "No Owner" }
     };
 }
