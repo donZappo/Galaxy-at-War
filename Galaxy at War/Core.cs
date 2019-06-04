@@ -275,7 +275,10 @@ public static class Core
             {
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == system.Owner);
                 if (Settings.DefensiveFactions.Contains(warFaction.faction) && Settings.DefendersUseARforDR)
+                {
                     warFaction.DefensiveResources += GetTotalAttackResources(system);
+                    warFaction.AttackResources = 0;
+                }
                 else
                     warFaction.AttackResources += GetTotalAttackResources(system);
 
