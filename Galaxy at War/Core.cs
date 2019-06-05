@@ -435,8 +435,14 @@ public static class Core
             {
                 var rand = random.Next(0, warFaction.attackTargets[targetFaction].Count());
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
-                var maxValue = system.influenceTracker.Values.Max();
-                var bonusAR = (maxValue - system.influenceTracker[warFaction.faction]) * 0.15f;
+                var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
+                var PmaxValue = maxValueList[1];
+                var ITValue = system.influenceTracker[warFaction.faction];
+                float bonusAR = 0f;
+
+                if (ITValue > PmaxValue)
+                    bonusAR = (ITValue - PmaxValue) * 0.15f;
+
                 
                 if (targetFAR > 1 + bonusAR)
                 {
@@ -515,11 +521,12 @@ public static class Core
             {
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
                 var diffRes = systemStatus.influenceTracker[highestFaction]/totalInfluence - systemStatus.influenceTracker[faction]/totalInfluence;
+                var bonusDefense = (diffRes * totalInfluence - (Settings.TakeoverThreshold/100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
                 if (diffRes > Settings.TakeoverThreshold)
-                    if (defensiveResources >= (diffRes - Settings.TakeoverThreshold) * totalInfluence/100)
+                    if (defensiveResources >= bonusDefense)
                     {
-                        systemStatus.influenceTracker[faction] += (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100;
-                        defensiveResources -= (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100;
+                        systemStatus.influenceTracker[faction] += bonusDefense;
+                        defensiveResources -= bonusDefense;
                     }
                     else
                     {
