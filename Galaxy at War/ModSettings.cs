@@ -34,7 +34,7 @@ public class ModSettings
         {Faction.MagistracyOfCanopus, 0},
         {Faction.Locals, 0},
         {Faction.NoFaction, 0},
-        {Faction.AuriganRestoration, 0 }
+        {Faction.AuriganRestoration, 0}
     };
 
     public Dictionary<Faction, int> DefensiveResourceMap = new Dictionary<Faction, int>
@@ -46,7 +46,7 @@ public class ModSettings
         {Faction.MagistracyOfCanopus, 0},
         {Faction.Locals, 0},
         {Faction.NoFaction, 0},
-        {Faction.AuriganRestoration, 0 }
+        {Faction.AuriganRestoration, 0}
     };
 
     public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>
@@ -114,7 +114,6 @@ public class ModSettings
 
     public List<Faction> IncludedFactions = new List<Faction>()
     {
-
         Faction.AuriganRestoration,
         Faction.Davion,
         Faction.Liao,
@@ -127,13 +126,13 @@ public class ModSettings
 
     public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>()
     {
-        { Faction.AuriganRestoration, "The Arana Restoration" },
-        { Faction.Davion, "The Federated Suns" },
-        { Faction.Liao, "The Capellan Confederation" },
-        { Faction.MagistracyOfCanopus, "The Magistracy of Canopus" },
-        { Faction.Marik, "The Free Worlds League" },
-        { Faction.TaurianConcordat, "The Taurian Concordat" },
-        { Faction.Locals, "Local Factions" },
-        { Faction.NoFaction, "No Owner" }
+        {Faction.AuriganRestoration, "The Arana Restoration"},
+        {Faction.Davion, "The Federated Suns"},
+        {Faction.Liao, "The Capellan Confederation"},
+        {Faction.MagistracyOfCanopus, "The Magistracy of Canopus"},
+        {Faction.Marik, "The Free Worlds League"},
+        {Faction.TaurianConcordat, "The Taurian Concordat"},
+        {Faction.Locals, "Local Factions"},
+        {Faction.NoFaction, "No Owner"}
     };
 }
