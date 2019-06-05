@@ -497,7 +497,7 @@ public static class Core
             WFLoser.MonthlySystemsChanged -= 1;
             WFLoser.TotalSystemsChanged -= 1;
 
-            if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFLoser.faction))
+            if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
             {
                 WFLoser.DefensiveResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
