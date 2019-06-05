@@ -91,12 +91,14 @@ public static class Core
         public static void Postfix()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
             {
                 Log(sim.DayRemainingInQuarter.ToString());
                 LogDebug(">>> PROC");
-                WarTick();
+                for (int i = 0; i < 1; i++)
+                {
+                    WarTick();
+                }
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
@@ -305,7 +307,7 @@ public static class Core
             }
         }
 
-        attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.ResourceAdjustmentPerCycle / 100);
+        attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
 
         foreach (Faction Rfact in tempTargets.Keys)
         {
@@ -375,7 +377,7 @@ public static class Core
         }
 
         defensiveResources = defensiveResources * (100 * Settings.GlobalDefenseFactor -
-                                                   Settings.ResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+                                                   Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
 
         while (defensiveResources > 0.0)
         {
@@ -413,7 +415,7 @@ public static class Core
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
                 var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
                 var bonusDefense = (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
-                if (diffRes > Settings.TakeoverThreshold)
+                if (100 * diffRes > Settings.TakeoverThreshold)
                     if (defensiveResources >= bonusDefense)
                     {
                         systemStatus.influenceTracker[faction] += bonusDefense;
