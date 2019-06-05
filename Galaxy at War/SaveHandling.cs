@@ -20,6 +20,7 @@ public static class SaveHandling
                 LogDebug("Setting up new WarStatus");
                 Core.WarStatus = new WarStatus();
                 Core.WarTick();
+                
             }
             else
             {

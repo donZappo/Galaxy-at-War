@@ -23,7 +23,7 @@ public class ModSettings
     public int planet_other_hub = 6;
     public int planet_other_comstar = 0;
 
-    public int WarFrequency = 5;
+    
 
     public Dictionary<Faction, int> AttackResourceMap = new Dictionary<Faction, int>
     {
@@ -90,15 +90,18 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-    public bool Debug = true;
+    public int WarFrequency = 5;
+    public bool Debug = false;
+
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
-    public float GlobalDefenseFactor = 1.2f;
-    public int ResourceAdjustmentPerCycle = 1;
+    public float GlobalDefenseFactor = 1.25f;
+    public int AResourceAdjustmentPerCycle = 1;
+    public int DResourceAdjustmentPerCycle = 0;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
-    public float TakeoverThreshold = 20f;
+    public float TakeoverThreshold = 30f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
     public float KLValueAllies = 25f;
