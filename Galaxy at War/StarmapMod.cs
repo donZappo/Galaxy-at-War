@@ -16,10 +16,6 @@ public class StarmapMod
         public static void Prefix(object data, ref string __state)
         {
             var starSystem = (StarSystem) data;
-            // if the hovered system is not the selected system, don't update Core.SelectedSystem
-
-            Core.SelectedSystem = starSystem;
-
             if (starSystem == null)
             {
                 return;
