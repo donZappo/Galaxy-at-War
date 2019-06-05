@@ -23,7 +23,7 @@ public class ModSettings
     public int planet_other_hub = 6;
     public int planet_other_comstar = 0;
 
-    public int WarFrequency = 3;
+    public int WarFrequency = 5;
 
     public Dictionary<Faction, int> AttackResourceMap = new Dictionary<Faction, int>
     {
@@ -90,11 +90,11 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-    public bool Debug = false;
+    public bool Debug = true;
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
-    public float GlobalDefenseFactor = 1.15f;
+    public float GlobalDefenseFactor = 1.2f;
     public int ResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
@@ -126,7 +126,7 @@ public class ModSettings
 
     public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>()
     {
-        {Faction.AuriganRestoration, "The Arana Restoration"},
+        {Faction.AuriganRestoration, "The Arano Restoration"},
         {Faction.Davion, "The Federated Suns"},
         {Faction.Liao, "The Capellan Confederation"},
         {Faction.MagistracyOfCanopus, "The Magistracy of Canopus"},
