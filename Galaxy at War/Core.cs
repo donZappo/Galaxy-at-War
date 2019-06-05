@@ -90,7 +90,6 @@ public static class Core
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
-                
 
             //Comstar report on ongoing war.
             if (sim.DayRemainingInQuarter == 30)

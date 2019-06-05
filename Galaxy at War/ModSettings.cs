@@ -126,7 +126,7 @@ public class ModSettings
 
     public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>()
     {
-        {Faction.AuriganRestoration, "The Arana Restoration"},
+        {Faction.AuriganRestoration, "The Arano Restoration"},
         {Faction.Davion, "The Federated Suns"},
         {Faction.Liao, "The Capellan Confederation"},
         {Faction.MagistracyOfCanopus, "The Magistracy of Canopus"},
