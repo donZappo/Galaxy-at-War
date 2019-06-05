@@ -90,7 +90,7 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-    public bool Debug = false;
+    public bool Debug = true;
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;

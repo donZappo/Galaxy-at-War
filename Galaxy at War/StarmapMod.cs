@@ -9,7 +9,8 @@ using UnityEngine;
 public class StarmapMod
 {
     private static readonly SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
+    internal static TextPopup tooltip = new TextPopup("GaW", true);
+    
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
     public static class TooltipPrefab_Planet_SetData_Patch
     {
@@ -62,6 +63,15 @@ public class StarmapMod
     {
         public static void Postfix(ref StarmapSystemRenderer __result)
         {
+            //var foo = new GameObject("GaW");
+            //foo.transform.SetParent(__result.transform);
+            //foo.AddComponent<DotTooltip>();
+            //var dotTooltip = foo.AddComponent<DotTooltip>();
+            //dotTooltip.TooltipPopup = tooltip;
+            //tooltip.SetText("POOOP");
+            var mpb = Traverse.Create(__result).Property("mpb");
+            Traverse.Create(mpb).Method("SetColor", new[] {typeof(Color)}).GetValue(Color.magenta);
+            //StarmapSystemRenderer.mpb.SetColor("_Color", Color.magenta);
             var contendedSystems = new List<string>();
             foreach (SystemStatus systemStatus in Core.WarStatus.systems)
             {
@@ -85,7 +95,8 @@ public class StarmapMod
             {
                 var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
                 var wasVisited = visitedStarSystems.Contains(__result.name);
-                __result.Init(__result.system, Color.magenta, __result.CanTravel, wasVisited);
+                //__result.Init(__result.system, Color.magenta, __result.CanTravel, wasVisited);
+                
             }
         }
     }
