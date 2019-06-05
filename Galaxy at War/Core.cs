@@ -80,17 +80,28 @@ public static class Core
     {
         public static void Prefix(SimGameState __instance, int timeLapse)
         {
-            SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
-            LogDebug(">>> PROC");
-            WarTick();
-            SaveHandling.SerializeWar();
-            LogDebug(">>> DONE PROC");
+            //SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+           
+            //LogDebug(">>> PROC");
+            //WarTick();
+            //SaveHandling.SerializeWar();
+            //LogDebug(">>> DONE PROC");
         }
 
         public static void Postfix()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
+
+            if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
+            {
+                Log(sim.DayRemainingInQuarter.ToString());
+                LogDebug(">>> PROC");
+                WarTick();
+                SaveHandling.SerializeWar();
+                LogDebug(">>> DONE PROC");
+            }
+                
+
             //Comstar report on ongoing war.
             if (sim.DayRemainingInQuarter == 30)
             {
