@@ -90,9 +90,9 @@ public class ModSettings
         {Faction.AuriganRestoration, null}
     };
 
-
     public int WarFrequency = 5;
     public bool Debug = false;
+
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
@@ -129,7 +129,7 @@ public class ModSettings
 
     public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>()
     {
-        {Faction.AuriganRestoration, "The Arana Restoration"},
+        {Faction.AuriganRestoration, "The Arano Restoration"},
         {Faction.Davion, "The Federated Suns"},
         {Faction.Liao, "The Capellan Confederation"},
         {Faction.MagistracyOfCanopus, "The Magistracy of Canopus"},

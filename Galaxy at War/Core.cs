@@ -78,16 +78,6 @@ public static class Core
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
-        public static void Prefix(SimGameState __instance, int timeLapse)
-        {
-            //SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-           
-            //LogDebug(">>> PROC");
-            //WarTick();
-            //SaveHandling.SerializeWar();
-            //LogDebug(">>> DONE PROC");
-        }
-
         public static void Postfix()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -102,7 +92,6 @@ public static class Core
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
-                
 
             //Comstar report on ongoing war.
             if (sim.DayRemainingInQuarter == 30)
@@ -157,9 +146,6 @@ public static class Core
         {
             DivideAttackResources(warFaction);
             AllocateAttackResources(warFaction);
-            //Log("=========================================================================");
-            //Log(warFaction.faction.ToString());
-            //Log("Attack Resources: " + warFaction.AttackResources + " || " + "Defense Resources: " + warFaction.DefensiveResources);
         }
 
         foreach (var warFaction in WarStatus.warFactionTracker)
@@ -325,7 +311,7 @@ public static class Core
         foreach (var targetFaction in warFAR.Keys)
         {
             var targetFAR = warFAR[targetFaction];
-            
+
             while (targetFAR > 0.0)
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
@@ -513,7 +499,7 @@ public static class Core
             WFLoser.MonthlySystemsChanged -= 1;
             WFLoser.TotalSystemsChanged -= 1;
 
-            if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFLoser.faction))
+            if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
             {
                 WFLoser.DefensiveResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
