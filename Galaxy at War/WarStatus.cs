@@ -13,15 +13,10 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
-    internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
-    public static Dictionary<Faction, float> FindWarFactionResources(Faction faction) =>
-        Core.WarStatus.warFactionTracker.Find(x => x.faction == faction).warFactionAttackResources;
 
     public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
@@ -186,6 +181,7 @@ public class WarFaction
 
     //internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
+    [JsonConstructor]
     public WarFaction()
     {
         // deser ctor
@@ -203,14 +199,6 @@ public class WarFaction
         DaysSinceSystemLost = 0;
         MonthlySystemsChanged = 0;
         TotalSystemsChanged = 0;
-
-        //foreach (var kvp in sim.FactionsDict)
-        //{
-        //    if (!Core.Settings.IncludedFactions.Contains(kvp.Key)) continue;
-        //    if (kvp.Value == null) continue;
-        //    if (Core.WarStatus.deathListTracker.All(x => x.faction != kvp.Key))
-        //        Core.WarStatus.deathListTracker.Add(new DeathListTracker(kvp.Key));
-        //}
     }
 }
 
@@ -224,6 +212,7 @@ public class DeathListTracker
     // can't serialize these so make them private
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
+    [JsonConstructor]
     public DeathListTracker()
     {
         // deser ctor
