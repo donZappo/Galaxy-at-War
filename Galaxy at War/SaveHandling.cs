@@ -1,11 +1,8 @@
-using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using BattleTech;
 using BattleTech.Save.Test;
 using Harmony;
 using Newtonsoft.Json;
-using UnityEngine;
 using static Logger;
 
 public static class SaveHandling
@@ -13,7 +10,7 @@ public static class SaveHandling
     private static readonly SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
     [HarmonyPatch(typeof(SimGameState), "_OnAttachUXComplete")]
-    public static class SimGameState_Rehydrate_Patch
+    public static class SimGameState__OnAttachUXComplete_Patch
     {
         public static void Postfix()
         {
@@ -26,7 +23,7 @@ public static class SaveHandling
             }
             else
             {
-                LogDebug("Rehydrate Postfix");
+                LogDebug("_OnAttachUXComplete Postfix");
                 DeserializeWar();
             }
         }
@@ -39,37 +36,7 @@ public static class SaveHandling
         {
             if (UnityGameInstance.BattleTechGame.Simulation == null) return;
             if (Core.WarStatus != null)
-            {
-                LogDebug("Save Prefix");
                 SerializeWar();
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(SimGameState), "Update")]
-    public static class SimGameState_Update_Patch
-    {
-        public static void Postfix(SimGameState __instance)
-        {
-            // clear the WarStatus completely
-            var hotkeyF10 = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.F10);
-            if (hotkeyF10)
-            {
-                foreach (var tag in sim.CompanyTags)
-                    if (tag.StartsWith("GalaxyAtWar"))
-                        sim.CompanyTags.Remove(tag);
-
-                Core.WarStatus = null;
-            }
-
-            var hotkeyD = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
-            if (hotkeyD)
-                using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\SaveDump.json"))
-                    writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
-
-            var hotkeyL = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.L);
-            if (hotkeyL)
-                sim.CompanyTags.Do(LogDebug);
         }
     }
 
@@ -83,9 +50,35 @@ public static class SaveHandling
 
     internal static void DeserializeWar()
     {
-        LogDebug(">>> Deserialization");
         Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
+        LogDebug(">>> Deserialization complete");
         LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-        LogDebug($"Deserialized systems: {Core.WarStatus.systems.Count}");
     }
+
+    //[HarmonyPatch(typeof(SimGameState), "Update")]
+    //public static class SimGameState_Update_Patch
+    //{
+    //    public static void Postfix(SimGameState __instance)
+    //    {
+    //        // clear the WarStatus completely
+    //        var hotkeyF10 = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.F10);
+    //        if (hotkeyF10)
+    //        {
+    //            foreach (var tag in sim.CompanyTags)
+    //                if (tag.StartsWith("GalaxyAtWar"))
+    //                    sim.CompanyTags.Remove(tag);
+    //
+    //            Core.WarStatus = null;
+    //        }
+    //
+    //        var hotkeyD = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
+    //        if (hotkeyD)
+    //            using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\SaveDump.json"))
+    //                writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
+    //
+    //        var hotkeyL = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.L);
+    //        if (hotkeyL)
+    //            sim.CompanyTags.Do(LogDebug);
+    //    }
+    //}
 }
