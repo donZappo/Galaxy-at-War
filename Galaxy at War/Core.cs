@@ -12,6 +12,7 @@ using Random = System.Random;
 using BattleTech.UI;
 using fastJSON;
 using HBS;
+using Error = BestHTTP.SocketIO.Error;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -72,11 +73,12 @@ public static class Core
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
     public static List<StarSystem> ChangedSystems = new List<StarSystem>();
+    public static readonly Random Random = new Random();
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
-        static void Prefix(SimGameState __instance, int timeLapse)
+        public static void Prefix(SimGameState __instance, int timeLapse)
         {
             SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
@@ -84,6 +86,22 @@ public static class Core
             WarTick();
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
+        }
+
+        public static void Postfix()
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            //Comstar report on ongoing war.
+            if (sim.DayRemainingInQuarter == 30)
+            {
+                var ReportString = MonthlyWarReport();
+                Console.Write(String.Format("0, -10", ReportString));
+                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
+                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
+                sim.StopPlayMode();
+            }
         }
     }
 
@@ -105,7 +123,6 @@ public static class Core
         }
 
         LogDebug("Calculations and System Push");
-        Random rand = new Random();
         foreach (var systemStatus in WarStatus.systems)
         {
             CalculateAttackTargets(systemStatus.starSystem);
@@ -116,7 +133,7 @@ public static class Core
             //Add resources from neighboring systems.
             foreach (var neighbor in systemStatus.neighborSystems.Keys)
             {
-                var PushFactor = Settings.APRPush * rand.Next(1, Settings.APRPushRandomizer + 1);
+                var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
                 systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
             }
         }
@@ -258,19 +275,18 @@ public static class Core
 
         var total = tempTargets.Values.Sum();
 
-        Random rand = new Random();
         float attackResources = 0f;
         var i = warFaction.AttackResources;
         while (i > 0)
         {
             if (i >= 1)
             {
-                attackResources += rand.Next(1, Settings.APRPushRandomizer + 1);
+                attackResources += Random.Next(1, Settings.APRPushRandomizer + 1);
                 i--;
             }
             else
             {
-                attackResources = i * rand.Next(1, Settings.APRPushRandomizer + 1);
+                attackResources = i * Random.Next(1, Settings.APRPushRandomizer + 1);
                 i = 0;
             }
         }
@@ -285,9 +301,8 @@ public static class Core
 
     public static void AllocateAttackResources(WarFaction warFaction)
     {
-        if (warFaction.warFactionAttackResources.Keys.Count() == 0)
+        if (warFaction.warFactionAttackResources.Keys.Count == 0)
             return;
-        var random = new Random();
         var warFAR = warFaction.warFactionAttackResources;
 
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
@@ -297,7 +312,7 @@ public static class Core
 
             while (targetFAR > 0.0)
             {
-                var rand = random.Next(0, warFaction.attackTargets[targetFaction].Count());
+                var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 var PmaxValue = maxValueList[1];
@@ -323,25 +338,24 @@ public static class Core
 
     public static void AllocateDefensiveResources(WarFaction warFaction)
     {
-        if (warFaction.defenseTargets.Count() == 0)
+        if (warFaction.defenseTargets.Count == 0)
             return;
         var faction = warFaction.faction;
         if (WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
             return;
 
-        Random random = new Random();
         float defensiveResources = 0f;
         var i = warFaction.DefensiveResources;
         while (i > 0)
         {
             if (i >= 1)
             {
-                defensiveResources += random.Next(1, Settings.APRPushRandomizer + 1);
+                defensiveResources += Random.Next(1, Settings.APRPushRandomizer + 1);
                 i--;
             }
             else
             {
-                defensiveResources = i * random.Next(1, Settings.APRPushRandomizer + 1);
+                defensiveResources = i * Random.Next(1, Settings.APRPushRandomizer + 1);
                 i = 0;
             }
         }
@@ -353,7 +367,7 @@ public static class Core
         {
             float highest = 0f;
             Faction highestFaction = faction;
-            var rand = random.Next(0, warFaction.defenseTargets.Count());
+            var rand = Random.Next(0, warFaction.defenseTargets.Count);
             var system = warFaction.defenseTargets[rand].Name;
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
 
@@ -506,7 +520,7 @@ public static class Core
             deathListTracker.AttackedBy.Clear();
         }
 
-        LogDebug($"Updating influence for {WarStatus.systems.Count().ToString()} systems");
+        LogDebug($"Updating influence for {WarStatus.systems.Count.ToString()} systems");
         foreach (var systemStatus in WarStatus.systems)
         {
             var tempDict = new Dictionary<Faction, float>();
@@ -543,7 +557,6 @@ public static class Core
                     continue;
                 }
 
-                // BUG NRE on deserialization
                 var WarFactionWinner = WarStatus.warFactionTracker.Find(x => x.faction == highestfaction);
                 if (WarFactionWinner != null)
                     WarFactionWinner.DaysSinceSystemAttacked = 0;
@@ -615,28 +628,31 @@ public static class Core
         ContractTargets.Clear();
         ContractEmployers.Add(owner);
         ContractTargets.Add(owner);
-
-        var neighborSystems = WarStatus.systems.Find(x => x.owner == owner).neighborSystems;
-        foreach (var systemNeighbor in neighborSystems.Keys)
+        if (WarStatus.systems.Count(x => x.owner == owner) > 0)
         {
-            if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractEmployers.Add(systemNeighbor);
+            var neighborSystems = WarStatus.systems.Find(x => x.owner == owner).neighborSystems;
 
-            if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractTargets.Add(systemNeighbor);
-        }
+            foreach (var systemNeighbor in neighborSystems.Keys)
+            {
+                if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+                    ContractEmployers.Add(systemNeighbor);
 
-        if (ContractTargets.Count() == 1)
-        {
-            ContractTargets.Clear();
-            foreach (Faction EF in sim.FactionsDict[owner].Enemies)
-                ContractTargets.Add(EF);
-        }
+                if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+                    ContractTargets.Add(systemNeighbor);
+            }
 
-        if (ContractTargets.Count() == 0)
-        {
-            foreach (Faction EF in Settings.DefensiveFactions)
-                ContractTargets.Add(EF);
+            if (ContractTargets.Count == 1)
+            {
+                ContractTargets.Clear();
+                foreach (Faction EF in sim.FactionsDict[owner].Enemies)
+                    ContractTargets.Add(EF);
+            }
+
+            if (ContractTargets.Count == 0)
+            {
+                foreach (Faction EF in Settings.DefensiveFactions)
+                    ContractTargets.Add(EF);
+            }
         }
     }
 
@@ -765,7 +781,8 @@ public static class Core
         return result;
     }
 
-    [HarmonyPatch(typeof(Contract), "CompleteContract")]
+    [
+        HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
