@@ -23,7 +23,7 @@ public class ModSettings
     public int planet_other_hub = 6;
     public int planet_other_comstar = 0;
 
-    public int WarFrequency = 3;
+    public int WarFrequency = 5;
 
     public Dictionary<Faction, int> AttackResourceMap = new Dictionary<Faction, int>
     {
@@ -94,7 +94,7 @@ public class ModSettings
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
-    public float GlobalDefenseFactor = 1.15f;
+    public float GlobalDefenseFactor = 1.2f;
     public int ResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
