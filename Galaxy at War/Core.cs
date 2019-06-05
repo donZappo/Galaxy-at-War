@@ -388,12 +388,13 @@ public static class Core
             else
             {
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
-                var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
+                var diffRes = systemStatus.influenceTracker[highestFaction]/totalInfluence - systemStatus.influenceTracker[faction]/totalInfluence;
+                var bonusDefense = (diffRes * totalInfluence - (Settings.TakeoverThreshold/100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
                 if (diffRes > Settings.TakeoverThreshold)
-                    if (defensiveResources >= (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100)
+                    if (defensiveResources >= bonusDefense)
                     {
-                        systemStatus.influenceTracker[faction] += (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100;
-                        defensiveResources -= (diffRes - Settings.TakeoverThreshold) * totalInfluence / 100;
+                        systemStatus.influenceTracker[faction] += bonusDefense;
+                        defensiveResources -= bonusDefense;
                     }
                     else
                     {
