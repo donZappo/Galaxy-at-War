@@ -78,7 +78,7 @@ public static class Core
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
-        static void Prefix(SimGameState __instance, int timeLapse)
+        public static void Prefix(SimGameState __instance, int timeLapse)
         {
             SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
@@ -86,6 +86,22 @@ public static class Core
             WarTick();
             SaveHandling.SerializeWar();
             LogDebug(">>> DONE PROC");
+        }
+
+        public static void Postfix()
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            //Comstar report on ongoing war.
+            if (sim.DayRemainingInQuarter == 30)
+            {
+                var ReportString = MonthlyWarReport();
+                Console.Write(String.Format("0, -10", ReportString));
+                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
+                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
+                sim.StopPlayMode();
+            }
         }
     }
 
