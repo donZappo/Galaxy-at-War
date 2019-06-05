@@ -90,6 +90,14 @@ public class StarmapMod
                 if (highestFaction != systemStatus.owner && infDiff < Core.Settings.TakeoverThreshold && infDiff >= 1)
                     contendedSystems.Add(systemStatus.name);
             }
+            
+            //var red = 255 - __result.systemColor.r;
+            //var green = 255 - __result.systemColor.g;
+            //var blue = 255 - __result.systemColor.b;
+            ////var alpha = 255 - __result.systemColor.a;
+            //
+            //var color = new Color(red, green, blue, __result.systemColor.a);
+            //Logger.LogDebug($"{red} {green} {blue} {__result.systemColor.a}");
 
             if (contendedSystems.Contains(__result.name))
             {

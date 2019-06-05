@@ -78,16 +78,6 @@ public static class Core
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
-        public static void Prefix(SimGameState __instance, int timeLapse)
-        {
-            //SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-           
-            //LogDebug(">>> PROC");
-            //WarTick();
-            //SaveHandling.SerializeWar();
-            //LogDebug(">>> DONE PROC");
-        }
-
         public static void Postfix()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
