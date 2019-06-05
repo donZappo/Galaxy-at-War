@@ -144,9 +144,9 @@ public static class Core
         {
             DivideAttackResources(warFaction);
             AllocateAttackResources(warFaction);
-            Log("=========================================================================");
-            Log(warFaction.faction.ToString());
-            Log("Attack Resources: " + warFaction.AttackResources + " || " + "Defense Resources: " + warFaction.DefensiveResources);
+            //Log("=========================================================================");
+            //Log(warFaction.faction.ToString());
+            //Log("Attack Resources: " + warFaction.AttackResources + " || " + "Defense Resources: " + warFaction.DefensiveResources);
         }
 
         foreach (var warFaction in WarStatus.warFactionTracker)
