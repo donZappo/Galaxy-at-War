@@ -35,8 +35,6 @@ public static class Core
             Settings = new ModSettings();
         }
 
-        using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\settings.json"))
-            writer.Write(JSON.ToNiceJSON(Settings, new JSONParameters {UsingGlobalTypes = true}));
         // blank the logfile
         Clear();
         // PrintObjectFields(Settings, "Settings");
@@ -220,9 +218,6 @@ public static class Core
                 LogDebug("\t" + neighborSystem.Name + ": " + neighborSystem.Owner);
             }
         }
-
-        //using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\" + SaveHandling.fileName))
-        //    writer.Write(JsonConvert.SerializeObject(Globals.attackTargets));
     }
 
     public static void CalculateDefenseTargets(StarSystem starSystem)
@@ -388,8 +383,8 @@ public static class Core
             else
             {
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
-                var diffRes = systemStatus.influenceTracker[highestFaction]/totalInfluence - systemStatus.influenceTracker[faction]/totalInfluence;
-                var bonusDefense = (diffRes * totalInfluence - (Settings.TakeoverThreshold/100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
+                var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
+                var bonusDefense = (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
                 if (diffRes > Settings.TakeoverThreshold)
                     if (defensiveResources >= bonusDefense)
                     {
@@ -470,7 +465,7 @@ public static class Core
             WFWinner.GainedSystem = true;
             WFWinner.MonthlySystemsChanged += 1;
             WFWinner.TotalSystemsChanged += 1;
-            if(Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
+            if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
             {
                 WFWinner.DefensiveResources += TotalAR;
                 WFWinner.DefensiveResources += TotalDR;
@@ -480,6 +475,7 @@ public static class Core
                 WFWinner.AttackResources += TotalAR;
                 WFWinner.DefensiveResources += TotalDR;
             }
+
             WFWinner.AttackResources += TotalAR;
             WFWinner.DefensiveResources += TotalDR;
             WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
