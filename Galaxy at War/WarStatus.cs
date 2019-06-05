@@ -199,6 +199,12 @@ public class WarFaction
         DaysSinceSystemLost = 0;
         MonthlySystemsChanged = 0;
         TotalSystemsChanged = 0;
+
+        if(Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(faction))
+        {
+            this.DefensiveResources += AttackResources;
+            this.AttackResources = 0;
+        }
     }
 }
 

@@ -470,14 +470,33 @@ public static class Core
             WFWinner.GainedSystem = true;
             WFWinner.MonthlySystemsChanged += 1;
             WFWinner.TotalSystemsChanged += 1;
+            if(Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
+            {
+                WFWinner.DefensiveResources += TotalAR;
+                WFWinner.DefensiveResources += TotalDR;
+            }
+            else
+            {
+                WFWinner.AttackResources += TotalAR;
+                WFWinner.DefensiveResources += TotalDR;
+            }
             WFWinner.AttackResources += TotalAR;
             WFWinner.DefensiveResources += TotalDR;
             WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
             WFLoser.LostSystem = true;
             WFLoser.MonthlySystemsChanged -= 1;
             WFLoser.TotalSystemsChanged -= 1;
-            WFLoser.AttackResources -= TotalAR;
-            WFLoser.DefensiveResources -= TotalDR;
+
+            if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
+            {
+                WFLoser.DefensiveResources -= TotalAR;
+                WFLoser.DefensiveResources -= TotalDR;
+            }
+            else
+            {
+                WFLoser.AttackResources -= TotalAR;
+                WFLoser.DefensiveResources -= TotalDR;
+            }
 
             ChangedSystems.Add(system);
         }
