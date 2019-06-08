@@ -27,6 +27,7 @@ public static class SaveHandling
                 LogDebug("_OnAttachUXComplete Postfix");
                 DeserializeWar();
             }
+            StarmapMod.SetupRelationPanel();
         }
     }
 

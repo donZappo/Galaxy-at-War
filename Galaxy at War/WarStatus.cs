@@ -215,6 +215,9 @@ public class DeathListTracker
     public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
     public List<Faction> AttackedBy = new List<Faction>();
 
+    public List<Faction> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
+    public List<Faction> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
+
     // can't serialize these so make them private
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 

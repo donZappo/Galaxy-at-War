@@ -78,7 +78,7 @@ public static class Core
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
-        public static void Postfix()
+        public static void Postfix(SimGameState  __instance)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
@@ -97,10 +97,8 @@ public static class Core
             if (sim.DayRemainingInQuarter == 30)
             {
                 var ReportString = MonthlyWarReport();
-                Console.Write(String.Format("0, -10", ReportString));
-                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
                 SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
-                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                    .Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
                 interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
                 sim.StopPlayMode();
             }
