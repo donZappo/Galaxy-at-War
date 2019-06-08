@@ -51,7 +51,7 @@ public class StarmapMod
 
     internal static void SetupRelationPanel()
     {
-        eventPanel = LazySingletonBehavior<UIManager>.Instance.GetOrCreatePopupModule<SGEventPanel>("");
+        eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
         eventPanel.gameObject.SetActive(true);
         GameObject.Find("uixPrfPanl_spotIllustration_750-MANAGED").SetActive(false);
 
@@ -242,7 +242,7 @@ public class StarmapMod
         __result.transform.localScale = new Vector3(1, 1, 1);
         Traverse.Create(__result).Field("selectedScale").SetValue(6f);
         Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
-        __result.starOuter.gameObject.SetActive(false);
+        __result.starOuter.gameObject.SetActive(wasVisited);
     }
 
     [HarmonyPatch(typeof(SGNavigationScreen), "CreateSystemCallout")]
