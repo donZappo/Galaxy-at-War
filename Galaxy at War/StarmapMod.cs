@@ -171,34 +171,14 @@ public class StarmapMod
         public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-
-            var contendedSystems = new List<string>();
-            foreach (SystemStatus systemStatus in Core.WarStatus.systems)
-            {
-                float highest = 0;
-                var highestFaction = systemStatus.owner;
-                foreach (var faction in systemStatus.influenceTracker.Keys)
-                {
-                    if (systemStatus.influenceTracker[faction] > highest)
-                    {
-                        highest = systemStatus.influenceTracker[faction];
-                        highestFaction = faction;
-                    }
-                }
-
-                var infDiff = highest - systemStatus.influenceTracker[systemStatus.owner];
-                if (highestFaction != systemStatus.owner && infDiff < Core.Settings.TakeoverThreshold && infDiff >= 1)
-                    contendedSystems.Add(systemStatus.name);
-            }
+            Galaxy_at_War.HotSpots.ProcessHotSpots();
 
             var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
             var wasVisited = visitedStarSystems.Contains(__result.name);
-            if (contendedSystems.Contains(__result.name))
+            if (Galaxy_at_War.HotSpots.contendedSystems.Keys.Contains(__result.name))
                 MakeSystemPurple(__result, wasVisited);
             else if (__result.systemColor == Color.magenta)
                 MakeSystemNormal(__result, wasVisited);
-
-            contendedSystems.Clear();
         }
     }
 

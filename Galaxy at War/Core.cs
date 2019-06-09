@@ -314,6 +314,16 @@ public static class Core
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
+                if (system.Contended)
+                {
+                    warFaction.attackTargets[targetFaction].Remove(system.starSystem);
+                    if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
+                    {
+                        break;
+                    }
+                    else
+                        continue;
+                }
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 var PmaxValue = maxValueList[1];
                 var ITValue = system.influenceTracker[warFaction.faction];
@@ -370,6 +380,17 @@ public static class Core
             var rand = Random.Next(0, warFaction.defenseTargets.Count);
             var system = warFaction.defenseTargets[rand].Name;
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
+
+            if (systemStatus.Contended)
+            {
+                warFaction.defenseTargets.Remove(systemStatus.starSystem);
+                if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
+                {
+                    break;
+                }
+                else
+                    continue;
+            }
 
             foreach (Faction tempfaction in systemStatus.influenceTracker.Keys)
             {
@@ -545,10 +566,13 @@ public static class Core
                 var previousOwner = systemStatus.owner;
                 var starSystem = systemStatus.starSystem;
 
-                if (starSystem != null)
+                if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && sim.DayRemainingInQuarter == 30)
                 {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
+                    systemStatus.Contended = false;
                 }
+                else
+                    systemStatus.Contended = true;
 
                 LogDebug(">>> Ownership changed to " + highestfaction);
                 if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
@@ -622,7 +646,6 @@ public static class Core
         var ContractEmployers = starSystem.Def.ContractEmployers;
         var ContractTargets = starSystem.Def.ContractTargets;
         SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
         var owner = starSystem.Owner;
         ContractEmployers.Clear();
         ContractTargets.Clear();

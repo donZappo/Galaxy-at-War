@@ -108,6 +108,7 @@ public class ModSettings
     public float KLValuesNeutral = 50f;
     public float KLValuesEnemies = 100f;
     public bool DefendersUseARforDR = true;
+    public float PriorityHatred = 50;
 
     public List<Faction> DefensiveFactions = new List<Faction>()
     {

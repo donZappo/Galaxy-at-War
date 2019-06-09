@@ -55,10 +55,14 @@ public class SystemStatus
     internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
 
-    //internal WarFaction warFaction;
-    internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
+    public StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
+    public int TotalResources;
+    public bool HotBox = false;
+    public bool PriorityDefense = false;
+    public bool PriorityAttack = false;
+    public bool Contended = false;
 
     [JsonConstructor]
     public SystemStatus()
@@ -73,6 +77,7 @@ public class SystemStatus
         owner = starSystem.Owner;
         owner = faction;
         // warFaction = Core.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
+        TotalResources = Core.GetTotalAttackResources(starSystem) + Core.GetTotalDefensiveResources(starSystem);
 
         FindNeighbors();
         CalculateSystemInfluence();
