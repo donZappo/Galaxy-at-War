@@ -80,6 +80,7 @@ public static class Core
     {
         public static void Postfix(SimGameState  __instance)
         {
+            __instance.DoesFaction
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
             {
@@ -129,6 +130,8 @@ public static class Core
             CalculateDefenseTargets(systemStatus.starSystem);
             RefreshNeighbors(systemStatus.starSystem);
             RefreshContracts(systemStatus.starSystem);
+
+            if (systemStatus.Contended || systemStatus.HotBox) continue;
 
             //Add resources from neighboring systems.
             foreach (var neighbor in systemStatus.neighborSystems.Keys)
@@ -314,7 +317,7 @@ public static class Core
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
-                if (system.Contended)
+                if (system.Contended || system.HotBox)
                 {
                     warFaction.attackTargets[targetFaction].Remove(system.starSystem);
                     if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
@@ -381,7 +384,7 @@ public static class Core
             var system = warFaction.defenseTargets[rand].Name;
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
 
-            if (systemStatus.Contended)
+            if (systemStatus.Contended || systemStatus.HotBox)
             {
                 warFaction.defenseTargets.Remove(systemStatus.starSystem);
                 if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)

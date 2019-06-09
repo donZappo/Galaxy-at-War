@@ -70,6 +70,12 @@ public static class SaveHandling
         Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
         LogDebug(">>> Deserialization complete");
         LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+
+        foreach (var system in sim.StarSystems)
+        {
+            Core.CalculateAttackTargets(system);
+            Core.CalculateDefenseTargets(system);
+        }
     }
 
     [HarmonyPatch(typeof(SimGameState), "Update")]

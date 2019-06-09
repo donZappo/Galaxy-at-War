@@ -109,11 +109,14 @@ public class ModSettings
     public float KLValuesEnemies = 100f;
     public bool DefendersUseARforDR = true;
     public float PriorityHatred = 50;
+    public int DeploymentBreakRepCost = -30;
+    public int DeploymentBreakMRBRepCost = -50;
 
     public List<Faction> DefensiveFactions = new List<Faction>()
     {
         Faction.Locals,
         Faction.NoFaction,
+        Faction.AuriganPirates
     };
 
     public List<Faction> IncludedFactions = new List<Faction>()
@@ -138,5 +141,15 @@ public class ModSettings
         {Faction.TaurianConcordat, "The Taurian Concordat"},
         {Faction.Locals, "Local Factions"},
         {Faction.NoFaction, "No Owner"}
+    };
+
+    public List<Faction> NoReputationGain = new List<Faction>()
+    {
+        Faction.INVALID_UNSET,
+        Faction.MercenaryReviewBoard,
+        Faction.NoFaction,
+        Faction.ComStar,
+        Faction.AuriganMercenaries,
+        Faction.Locals
     };
 }

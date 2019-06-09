@@ -52,10 +52,8 @@ public class SystemStatus
     public string name;
     public Faction owner;
 
-    internal Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
+    public Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
-
-    public StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     public int TotalResources;
@@ -63,6 +61,8 @@ public class SystemStatus
     public bool PriorityDefense = false;
     public bool PriorityAttack = false;
     public bool Contended = false;
+
+    internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
     [JsonConstructor]
     public SystemStatus()
@@ -180,6 +180,7 @@ public class WarFaction
     public int MonthlySystemsChanged;
     public int TotalSystemsChanged;
 
+    public List<string> PriorityList = new List<string>();
     public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
     internal List<StarSystem> defenseTargets = new List<StarSystem>();
@@ -191,6 +192,7 @@ public class WarFaction
     {
         // deser ctor
     }
+
 
     public WarFaction(Faction faction, float AttackResources, float DefensiveResources)
     {
@@ -225,7 +227,7 @@ public class DeathListTracker
 
     // can't serialize these so make them private
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
+    
     [JsonConstructor]
     public DeathListTracker()
     {
