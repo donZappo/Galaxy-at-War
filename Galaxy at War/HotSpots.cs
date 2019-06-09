@@ -121,6 +121,7 @@ namespace Galaxy_at_War
                     PauseNotification.Show("Navigation Change", message, simState.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
                         cleanup();
                         system.HotBox = false;
+                        if (simState.DoesFactionGainReputation(system.owner))
                         if (!Core.Settings.NoReputationGain.Contains(system.owner))
                         {
                             ReflectionHelper.InvokePrivateMethode(simState, "SetReputation", new object[] { system.owner, Core.Settings.DeploymentBreakRepCost, StatCollection.StatOperation.Int_Add, null });
