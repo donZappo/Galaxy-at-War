@@ -142,14 +142,4 @@ public class ModSettings
         {Faction.Locals, "Local Factions"},
         {Faction.NoFaction, "No Owner"}
     };
-
-    public List<Faction> NoReputationGain = new List<Faction>()
-    {
-        Faction.INVALID_UNSET,
-        Faction.MercenaryReviewBoard,
-        Faction.NoFaction,
-        Faction.ComStar,
-        Faction.AuriganMercenaries,
-        Faction.Locals
-    };
 }

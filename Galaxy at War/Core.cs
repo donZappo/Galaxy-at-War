@@ -80,11 +80,14 @@ public static class Core
     {
         public static void Postfix(SimGameState  __instance)
         {
-            __instance.DoesFaction
             var sim = UnityGameInstance.BattleTechGame.Simulation;
+
+            //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(20f);
+            //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
             {
-                Log(sim.DayRemainingInQuarter.ToString());
                 LogDebug(">>> PROC");
                 for (int i = 0; i < 1; i++)
                 {
@@ -531,8 +534,6 @@ public static class Core
                 WFLoser.AttackResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
             }
-
-            ChangedSystems.Add(system);
         }
     }
 
@@ -576,28 +577,6 @@ public static class Core
                 }
                 else
                     systemStatus.Contended = true;
-
-                LogDebug(">>> Ownership changed to " + highestfaction);
-                if (highestfaction == Faction.NoFaction || highestfaction == Faction.Locals)
-                {
-                    LogDebug("\tNoFaction or Locals, continuing");
-                    continue;
-                }
-
-                var WarFactionWinner = WarStatus.warFactionTracker.Find(x => x.faction == highestfaction);
-                if (WarFactionWinner != null)
-                    WarFactionWinner.DaysSinceSystemAttacked = 0;
-
-                try
-                {
-                    var WarFactionLoser = WarStatus.warFactionTracker.Find(x => x.faction == previousOwner);
-                    if (WarFactionLoser != null)
-                        WarFactionLoser.DaysSinceSystemLost = 0;
-                }
-                catch (Exception ex)
-                {
-                    Error(ex);
-                }
             }
         }
 
@@ -654,31 +633,23 @@ public static class Core
         ContractTargets.Clear();
         ContractEmployers.Add(owner);
         ContractTargets.Add(owner);
-        if (WarStatus.systems.Count(x => x.owner == owner) > 0)
+       
+        var neighborSystems = WarStatus.systems.Find(x => x.name == starSystem.Name).neighborSystems;
+
+        foreach (var systemNeighbor in neighborSystems.Keys)
         {
-            var neighborSystems = WarStatus.systems.Find(x => x.owner == owner).neighborSystems;
+            if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractEmployers.Add(systemNeighbor);
 
-            foreach (var systemNeighbor in neighborSystems.Keys)
-            {
-                if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
-                    ContractEmployers.Add(systemNeighbor);
+            if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractTargets.Add(systemNeighbor);
+        }
 
-                if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
-                    ContractTargets.Add(systemNeighbor);
-            }
-
-            if (ContractTargets.Count == 1)
-            {
-                ContractTargets.Clear();
-                foreach (Faction EF in sim.FactionsDict[owner].Enemies)
-                    ContractTargets.Add(EF);
-            }
-
-            if (ContractTargets.Count == 0)
-            {
-                foreach (Faction EF in Settings.DefensiveFactions)
-                    ContractTargets.Add(EF);
-            }
+        if (ContractTargets.Count == 1)
+        {
+            ContractTargets.Clear();
+            foreach (Faction EF in Settings.DefensiveFactions)
+                ContractTargets.Add(EF);
         }
     }
 
@@ -831,18 +802,25 @@ public static class Core
             }
 
             var sim = __instance.BattleTechGame.Simulation;
-            var oldowner = sim.CurSystem.Owner;
-            UpdateInfluenceFromAttacks(sim);
-            var newowner = sim.CurSystem.Owner;
 
-            //This is a WIP for the pop-up after a system changes due to player interaction.
-            if (oldowner != newowner)
+            var tempIT = warsystem.influenceTracker;
+            var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
+            var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
+            tempIT.Remove(highKey);
+            var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
+            var oldOwner = warsystem.owner;
+
+            if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold)
             {
+                ChangeSystemOwnership(sim, warsystem.starSystem, teamfaction, false);
+
+                //This is a WIP for the pop-up after a system changes due to player interaction.
+
                 GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
                     .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + newowner.ToString() +
-                                                                                                 " conquered from " + oldowner.ToString(), true, null);
+                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + teamfaction.ToString() +
+                                                                                                 " conquered from " + oldOwner.ToString(), true, null);
                 sim.StopPlayMode();
             }
         }

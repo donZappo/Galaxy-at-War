@@ -156,7 +156,7 @@ public class StarmapMod
             else if (influence.Value > 99)
                 number = "> 99%";
             else
-                number = $"> {influence.Value:#.0}%";
+                number = $"{influence.Value:#.0}%";
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }

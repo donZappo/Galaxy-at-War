@@ -20,6 +20,7 @@ public static class SaveHandling
                 LogDebug("Setting up new WarStatus");
                 Core.WarStatus = new WarStatus();
                 Core.WarTick();
+                Galaxy_at_War.HotSpots.ProcessHotSpots();
                 
             }
             else
@@ -75,7 +76,10 @@ public static class SaveHandling
         {
             Core.CalculateAttackTargets(system);
             Core.CalculateDefenseTargets(system);
+            Core.RefreshNeighbors(system);
+            Core.RefreshContracts(system);
         }
+        Galaxy_at_War.HotSpots.ProcessHotSpots();
     }
 
     [HarmonyPatch(typeof(SimGameState), "Update")]

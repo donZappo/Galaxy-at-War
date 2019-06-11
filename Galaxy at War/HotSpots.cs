@@ -20,33 +20,18 @@ using fastJSON;
 using HBS;
 using Error = BestHTTP.SocketIO.Error;
 using DG.Tweening;
+using BattleTech.Data;
 
 namespace Galaxy_at_War
 {
-    class HotSpots
+    public static class HotSpots
     {
         public static List<string> contendedSystems = new List<string>();
-        public static List<string> BCTargets = new List<string>();
+        public static List<StarSystem> BCTargets = new List<StarSystem>();
+        public static bool isBreadcrumb = true;
+        public static List<Faction> EmployerHolder = new List<Faction>();
+        public static List<Faction> TargetHolder = new List<Faction>();
 
-        [HarmonyPatch(typeof(SimGameState), "StartGeneratePotentialContractsRoutine")]
-        public static class SimGameState_StartGeneratePotentialContractsRoutine_Patch
-        {
-            static void Prefix(SimGameState __instance, ref StarSystem systemOverride)
-            {
-                string BCTarget = BCTargets[0];
-                BCTargets.RemoveAt(0);
-                try
-                {
-                    var usingBreadcrumbs = systemOverride != null;
-                    if (usingBreadcrumbs)
-                        systemOverride = __instance.StarSystems.Find(x => x.Name == BCTarget);
-                }
-                catch (Exception e)
-                {
-                    Error(e);
-                }
-            }
-        }
         public static void ProcessHotSpots()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -55,6 +40,7 @@ namespace Galaxy_at_War
             var FullPriorityList = new Dictionary<StarSystem, float>();
 
             contendedSystems.Clear();
+            BCTargets.Clear();
             foreach (SystemStatus systemStatus in Core.WarStatus.systems)
             {
                 systemStatus.PriorityAttack = false;
@@ -85,65 +71,73 @@ namespace Galaxy_at_War
             {
                 var highKey = FullPriorityList.OrderByDescending(x => x.Value).Select(x => x.Key).First();
                 warFaction.PriorityList.Add(highKey.Name);
+                contendedSystems.Add(highKey.Name);
+                BCTargets.Add(highKey);
                 FullPriorityList.Remove(highKey);
                 i++;
             }
-            contendedSystems = warFaction.PriorityList;
-            BCTargets = warFaction.PriorityList;
         }
-    }
-
-
-
-
-
-    //Morphyum code from MercDeployments
-    [HarmonyPatch(typeof(SGNavigationScreen), "OnTravelCourseAccepted")]
-    public static class SGNavigationScreen_OnTravelCourseAccepted_Patch
-    {
-        static bool Prefix(SGNavigationScreen __instance)
+       
+        [HarmonyPatch(typeof(StarSystem), "GenerateInitialContracts")]
+        public static class SimGameState_GenerateInitialContracts_Patch
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var curSystem = sim.CurSystem;
-            var system = Core.WarStatus.systems.Find(x => x.name == curSystem.Name);
-            try
+            static void Prefix(StarSystem __instance)
             {
-                if (system.HotBox)
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(0);
+                Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(0);
+                Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
+            }
+
+            static void Postfix(StarSystem __instance)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
+                Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
+                Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
+               
+                ProcessHotSpots();
+                if (BCTargets.Count != 0)
                 {
-                    UIManager uiManager = (UIManager)AccessTools.Field(typeof(SGNavigationScreen), "uiManager").GetValue(__instance);
-                    SimGameState simState = (SimGameState)AccessTools.Field(typeof(SGNavigationScreen), "simState").GetValue(__instance);
-                    Action cleanup = delegate () {
-                        uiManager.ResetFader(UIManagerRootType.PopupRoot);
-                        simState.Starmap.Screen.AllowInput(true);
-                    };
-                    string primaryButtonText = "Break Contract";
-                    string message = "WARNING: This action will break your current deployment contract. Your reputation with this faction and the MRB will be negatively affected.";
-                    PauseNotification.Show("Navigation Change", message, simState.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
-                        cleanup();
-                        system.HotBox = false;
-                        if (simState.DoesFactionGainReputation(system.owner))
-                        if (!Core.Settings.NoReputationGain.Contains(system.owner))
+                    var MainBCTarget = BCTargets[0];
+                    TemporaryFlip(MainBCTarget);
+                    sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
+                    Core.RefreshContracts(MainBCTarget);
+                    BCTargets.RemoveAt(0);
+                    if (BCTargets.Count != 0)
+                    {
+                        int i = 2;
+                        foreach (var BCTarget in BCTargets)
                         {
-                            ReflectionHelper.InvokePrivateMethode(simState, "SetReputation", new object[] { system.owner, Core.Settings.DeploymentBreakRepCost, StatCollection.StatOperation.Int_Add, null });
-                            ReflectionHelper.InvokePrivateMethode(simState, "SetReputation", new object[] { Faction.MercenaryReviewBoard, Core.Settings.DeploymentBreakMRBRepCost, StatCollection.StatOperation.Int_Add, null });
-                            AccessTools.Field(typeof(SimGameState), "activeBreadcrumb").SetValue(simState, null);
+                            Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i);
+                            Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i);
+                            TemporaryFlip(BCTarget);
+                            sim.GeneratePotentialContracts(false, null, BCTarget, false);
+                            Core.RefreshContracts(BCTarget);
+                            i++;
                         }
-                        simState.Starmap.SetActivePath();
-                        simState.SetSimRoomState(DropshipLocation.SHIP);
-                    }, primaryButtonText, cleanup, "Cancel");
-                    simState.Starmap.Screen.AllowInput(false);
-                    uiManager.SetFaderColor(uiManager.UILookAndColorConstants.PopupBackfill, UIManagerFader.FadePosition.FadeInBack, UIManagerRootType.PopupRoot, true);
-                    return false;
-                }
-                else
-                {
-                    return true;
+                    }
                 }
             }
-            catch (Exception e)
+        }
+
+        public static void TemporaryFlip(StarSystem starSystem)
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            var owner = sim.CurSystem.Owner;
+            starSystem.Def.ContractEmployers.Clear();
+            starSystem.Def.ContractTargets.Clear();
+
+            starSystem.Def.ContractEmployers.Add(owner);
+
+            var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
+            foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                Error(e);
-                return true;
+                if (influence.Key != sim.CurSystem.Owner)
+                {
+                    starSystem.Def.ContractTargets.Add(influence.Key);
+                    break;
+                }
             }
         }
     }
