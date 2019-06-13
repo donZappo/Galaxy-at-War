@@ -82,9 +82,9 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
 
-            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(20f);
-            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+            //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(20f);
+            //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
 
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
             {
@@ -106,6 +106,12 @@ public static class Core
                 interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
                 sim.StopPlayMode();
             }
+
+            var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
+            if (DepSystem.HotBox)
+                WarStatus.DeploymentDays--;
+            if (DepSystem.HotBox && WarStatus.DeploymentDays == 0)
+                Galaxy_at_War.HotSpots.CompleteDeployment();
         }
     }
 

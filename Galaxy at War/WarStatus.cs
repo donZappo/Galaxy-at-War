@@ -13,7 +13,11 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
-    public static Dictionary<Faction, KeyValuePair<StarSystem, float>> PriorityTargets = new Dictionary<Faction, KeyValuePair<StarSystem, float>>();
+    public static Dictionary<Faction, KeyValuePair<StarSystem, float>> PriorityTargets
+        = new Dictionary<Faction, KeyValuePair<StarSystem, float>>();
+    public static bool JustArrived = true;
+    public static WorkOrderEntry_Notification DeploymentEnd;
+    public static int DeploymentDays = 0;
 
     public WarStatus()
     {

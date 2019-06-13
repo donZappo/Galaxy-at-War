@@ -111,7 +111,7 @@ namespace Galaxy_at_War
                 ExternalPriorityList.Add(ExtFact.Key, FullExternalPriorityList[ExtFact.Key].Key);
             }
         }
-       
+
         [HarmonyPatch(typeof(StarSystem), "GenerateInitialContracts")]
         public static class SimGameState_GenerateInitialContracts_Patch
         {
@@ -130,7 +130,7 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-               
+
                 ProcessHotSpots();
                 if (BCTargets.Count != 0)
                 {
@@ -145,7 +145,7 @@ namespace Galaxy_at_War
                     {
                         int i = 2;
                         foreach (var BCTarget in BCTargets)
-                        { 
+                        {
                             if (i == Core.Settings.InternalHotSpots + 1) break;
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i);
@@ -194,8 +194,78 @@ namespace Galaxy_at_War
             if (starSystem.Def.ContractTargets.Count == 0)
                 starSystem.Def.ContractTargets.AddRange(Core.Settings.DefensiveFactions);
         }
+
+        //Deployments area.
+        [HarmonyPatch(typeof(SimGameState), "PrepareBreadcrumb")]
+        public static class SimGameState_PrepareBreadcrumb_Patch
+        {
+            static void Postfix(Contract contract)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var starSystem = sim.StarSystems.Find(x => x.Def.Description.Id == contract.TargetSystem);
+                Core.WarStatus.systems.Find(x => x.name == starSystem.Name).HotBox = true;
+            }
+        }
+
+        [HarmonyPatch(typeof(SGNavigationScreen), "OnTravelCourseAccepted")]
+        public static class SGNavigationScreen_OnTravelCourseAccepted_Patch
+        {
+            static void Postfix(SGNavigationScreen __instance)
+            {
+                var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
+                Core.WarStatus.systems.Find(x => x.name == system.Name).HotBox = false;
+            }
+        }
+
+        [HarmonyPatch(typeof(SGTravelManager), "DisplayEnteredOrbitPopup")]
+        public static class Entered_Orbit_Patch
+        {
+            static void Postfix()
+            {
+                WarStatus.JustArrived = true;
+                WarStatus.DeploymentDays = Core.Settings.DeploymentDays;
+            }
+        }
+
+        [HarmonyPatch(typeof(AAR_SalvageScreen), "OnCompleted")]
+        public static class AAR_SalvageScreen_OnCompleted_Patch
+        {
+            static void Postfix(AAR_SalvageScreen __instance)
+            {
+                WarStatus.JustArrived = false;
+            }
+        }
+
+        [HarmonyPatch(typeof(TaskTimelineWidget), "RegenerateEntries")]
+        public static class TaskTimelineWidget_RegenerateEntries_Patch
+        {
+            static void Postfix(TaskTimelineWidget __instance)
+            {
+                if (!WarStatus.JustArrived)
+                {
+                    WarStatus.DeploymentEnd = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
+                        "Days Until Deployment Ends", "Days Until Deployment Ends");
+                    WarStatus.DeploymentEnd.SetCost(WarStatus.DeploymentDays);
+                    __instance.AddEntry(WarStatus.DeploymentEnd, false);
+                }
+                __instance.RefreshEntries();
+            }
+        }
+
+        [HarmonyPatch(typeof(TaskTimelineWidget), "RemoveEntry")]
+        public static class TaskTimelineWidget_RemoveEntry_Patch
+        {
+            static bool Prefix(WorkOrderEntry entry)
+            {
+                if (!WarStatus.JustArrived && (entry.ID.Equals("Days Until Deployment Ends")) && Core.Settings.DeploymentDays > 0)
+                {
+                    return false;
+                }
+                return true;
+            }
+        }
         
-        public static void GenerateExternalBreadcrumbs(int number, Faction IgnoredFaction)
+        public static void CompleteDeployment()
         {
 
         }

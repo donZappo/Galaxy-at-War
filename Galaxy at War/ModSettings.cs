@@ -111,6 +111,7 @@ public class ModSettings
     public float PriorityHatred = 50;
     public int InternalHotSpots = 2;
     public int ExternalHotSpots = 4;
+    public int DeploymentDays = 30;
 
     public List<Faction> DefensiveFactions = new List<Faction>()
     {
