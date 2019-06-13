@@ -795,21 +795,25 @@ public static class Core
     }
 
     [
-        HarmonyPatch(typeof(Contract), "CompleteContract")]
+    HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
             var teamfaction = __instance.Override.employerTeam.faction;
             var enemyfaction = __instance.Override.targetTeam.faction;
             var difficulty = __instance.Difficulty;
-            var system = __instance.TargetSystem;
-            var warsystem = WarStatus.systems.Find(x => x.name == system);
-
+            var system = sim.CurSystem;
+            var warsystem = WarStatus.systems.Find(x => x.name == system.Name);
             if (result == MissionResult.Victory)
             {
+                Log(warsystem.influenceTracker[teamfaction].ToString());
+                Log(warsystem.influenceTracker[enemyfaction].ToString());
                 warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
                 warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
+                Log(warsystem.influenceTracker[teamfaction].ToString());
+                Log(warsystem.influenceTracker[enemyfaction].ToString());
             }
             else if (result == MissionResult.Defeat || (result != MissionResult.Victory && !isGoodFaithEffort))
             {
@@ -817,14 +821,18 @@ public static class Core
                 warsystem.influenceTracker[enemyfaction] += difficulty * Settings.DifficultyFactor;
             }
 
-            var sim = __instance.BattleTechGame.Simulation;
+            Log(warsystem.influenceTracker[teamfaction].ToString());
+            Log(warsystem.influenceTracker[enemyfaction].ToString());
 
-            var tempIT = warsystem.influenceTracker;
+            var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
             var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
             var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
             tempIT.Remove(highKey);
             var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
             var oldOwner = warsystem.owner;
+
+            Log(warsystem.influenceTracker[teamfaction].ToString());
+            Log(warsystem.influenceTracker[enemyfaction].ToString());
 
             if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold)
             {

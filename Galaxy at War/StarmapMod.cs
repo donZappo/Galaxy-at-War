@@ -141,11 +141,13 @@ public class StarmapMod
 
     private static string BuildInfluenceString(StarSystem starSystem)
     {
+        Log("Building Influence");
         var factionString = new StringBuilder();
         factionString.AppendLine(starSystem.Name);
         var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
         foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
         {
+            Log(influence.Value.ToString());
             string number;
             if (influence.Value <= float.Epsilon)
                 continue;
