@@ -109,8 +109,8 @@ public class ModSettings
     public float KLValuesEnemies = 100f;
     public bool DefendersUseARforDR = true;
     public float PriorityHatred = 50;
-    public int DeploymentBreakRepCost = -30;
-    public int DeploymentBreakMRBRepCost = -50;
+    public int InternalHotSpots = 2;
+    public int ExternalHotSpots = 4;
 
     public List<Faction> DefensiveFactions = new List<Faction>()
     {

@@ -29,18 +29,22 @@ namespace Galaxy_at_War
         public static List<string> contendedSystems = new List<string>();
         public static List<StarSystem> BCTargets = new List<StarSystem>();
         public static bool isBreadcrumb = true;
-        public static List<Faction> EmployerHolder = new List<Faction>();
-        public static List<Faction> TargetHolder = new List<Faction>();
+        public static Dictionary<Faction, StarSystem> ExternalPriorityList = new Dictionary<Faction, StarSystem>();
 
         public static void ProcessHotSpots()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var DominantFaction = sim.CurSystem.Owner;
-            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
             var FullPriorityList = new Dictionary<StarSystem, float>();
+            var FullExternalPriorityList = new Dictionary<Faction, KeyValuePair<StarSystem, float>>();
+            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
+            System.Random rand = new System.Random();
 
+            ExternalPriorityList.Clear();
             contendedSystems.Clear();
             BCTargets.Clear();
+
+            //Populate lists with planets that are in danger of flipping
             foreach (SystemStatus systemStatus in Core.WarStatus.systems)
             {
                 systemStatus.PriorityAttack = false;
@@ -52,6 +56,20 @@ namespace Galaxy_at_War
                     if (!FullPriorityList.Keys.Contains(systemStatus.starSystem))
                         FullPriorityList.Add(systemStatus.starSystem, systemStatus.TotalResources);
                 }
+                else if (systemStatus.Contended)
+                {
+                    systemStatus.PriorityDefense = true;
+                    if (!FullExternalPriorityList.Keys.Contains(systemStatus.owner))
+                        FullExternalPriorityList.Add(systemStatus.owner, new KeyValuePair<StarSystem, float>
+                            (systemStatus.starSystem, systemStatus.TotalResources));
+                    else if (FullExternalPriorityList[systemStatus.owner].Value < systemStatus.TotalResources)
+                    {
+                        FullExternalPriorityList[systemStatus.owner] =
+                            new KeyValuePair<StarSystem, float>(systemStatus.starSystem, systemStatus.TotalResources);
+                    }
+                }
+
+                //Populate priority attack targets.
                 if (Core.Settings.DefensiveFactions.Contains(DominantFaction)) continue;
                 foreach (var targetFaction in warFaction.attackTargets.Keys)
                 {
@@ -65,6 +83,15 @@ namespace Galaxy_at_War
                     }
                 }
             }
+            foreach (Faction extFaction in WarStatus.PriorityTargets.Keys)
+            {
+                if (extFaction == DominantFaction) continue;
+                if (!FullExternalPriorityList.Keys.Contains(extFaction))
+                    FullExternalPriorityList.Add(extFaction, WarStatus.PriorityTargets[extFaction]);
+                if (WarStatus.PriorityTargets[extFaction].Value > FullExternalPriorityList[extFaction].Value)
+                    FullExternalPriorityList[extFaction] = WarStatus.PriorityTargets[extFaction];
+            }
+
             warFaction.PriorityList.Clear();
             int i = 0;
             while (i < 6 && FullPriorityList.Count != 0)
@@ -75,6 +102,13 @@ namespace Galaxy_at_War
                 BCTargets.Add(highKey);
                 FullPriorityList.Remove(highKey);
                 i++;
+            }
+
+            var ExternalFactionRep = sim.GetAllCareerFactionReputations();
+            foreach (var ExtFact in ExternalFactionRep.OrderByDescending(x => x.Value))
+            {
+                if (!FullExternalPriorityList.Keys.Contains(ExtFact.Key)) continue;
+                ExternalPriorityList.Add(ExtFact.Key, FullExternalPriorityList[ExtFact.Key].Key);
             }
         }
        
@@ -92,6 +126,7 @@ namespace Galaxy_at_War
             static void Postfix(StarSystem __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                sim.CurSystem.SystemBreadcrumbs.Clear();
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
@@ -100,45 +135,69 @@ namespace Galaxy_at_War
                 if (BCTargets.Count != 0)
                 {
                     var MainBCTarget = BCTargets[0];
-                    TemporaryFlip(MainBCTarget);
+                    TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                     sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
                     Core.RefreshContracts(MainBCTarget);
+
+
                     BCTargets.RemoveAt(0);
                     if (BCTargets.Count != 0)
                     {
                         int i = 2;
                         foreach (var BCTarget in BCTargets)
-                        {
+                        { 
+                            if (i == Core.Settings.InternalHotSpots + 1) break;
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i);
-                            TemporaryFlip(BCTarget);
+                            TemporaryFlip(BCTarget, sim.CurSystem.Owner);
                             sim.GeneratePotentialContracts(false, null, BCTarget, false);
                             Core.RefreshContracts(BCTarget);
                             i++;
                         }
                     }
                 }
+                if (ExternalPriorityList.Count != 0)
+                {
+                    int startBC = sim.CurSystem.SystemBreadcrumbs.Count;
+                    int j = startBC;
+                    foreach (var ExtTarget in ExternalPriorityList.Keys)
+                    {
+                        Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
+                        Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
+                        TemporaryFlip(ExternalPriorityList[ExtTarget], ExtTarget);
+                        sim.GeneratePotentialContracts(false, null, ExternalPriorityList[ExtTarget], false);
+                        Core.RefreshContracts(ExternalPriorityList[ExtTarget]);
+                        j = sim.CurSystem.SystemBreadcrumbs.Count;
+                        if (j - startBC == Core.Settings.ExternalHotSpots)
+                            break;
+                    }
+                }
             }
         }
 
-        public static void TemporaryFlip(StarSystem starSystem)
+        public static void TemporaryFlip(StarSystem starSystem, Faction faction)
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var owner = sim.CurSystem.Owner;
             starSystem.Def.ContractEmployers.Clear();
             starSystem.Def.ContractTargets.Clear();
 
-            starSystem.Def.ContractEmployers.Add(owner);
+            starSystem.Def.ContractEmployers.Add(faction);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                if (influence.Key != sim.CurSystem.Owner)
+                if (influence.Key != faction)
                 {
                     starSystem.Def.ContractTargets.Add(influence.Key);
                     break;
                 }
             }
+            if (starSystem.Def.ContractTargets.Count == 0)
+                starSystem.Def.ContractTargets.AddRange(Core.Settings.DefensiveFactions);
+        }
+        
+        public static void GenerateExternalBreadcrumbs(int number, Faction IgnoredFaction)
+        {
+
         }
     }
 }

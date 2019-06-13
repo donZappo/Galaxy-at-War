@@ -82,9 +82,9 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
 
-            //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(20f);
-            //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(20f);
+            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
 
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
             {
@@ -146,6 +146,7 @@ public static class Core
 
         //Attack!
         //LogDebug("Attacking Fool");
+        WarStatus.PriorityTargets.Clear();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             DivideAttackResources(warFaction);
@@ -280,7 +281,6 @@ public static class Core
         }
 
         var total = tempTargets.Values.Sum();
-
         float attackResources = 0f;
         var i = warFaction.AttackResources;
         while (i > 0)
@@ -320,6 +320,17 @@ public static class Core
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
+
+                //Find most valuable target for attacking for later.
+                if (!WarStatus.PriorityTargets.Keys.Contains(warFaction.faction))
+                    WarStatus.PriorityTargets.Add(warFaction.faction, new KeyValuePair<StarSystem, float>(system.starSystem, system.TotalResources));
+                else
+                {
+                    if (system.TotalResources > WarStatus.PriorityTargets[warFaction.faction].Value)
+                        WarStatus.PriorityTargets[warFaction.faction] = new KeyValuePair<StarSystem, float>(system.starSystem, system.TotalResources);
+                }
+
+                //Distribute attacking resources to systems.
                 if (system.Contended || system.HotBox)
                 {
                     warFaction.attackTargets[targetFaction].Remove(system.starSystem);
@@ -425,7 +436,7 @@ public static class Core
             {
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
                 var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
-                var bonusDefense = (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
+                var bonusDefense = 1 + (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
                 if (100 * diffRes > Settings.TakeoverThreshold)
                     if (defensiveResources >= bonusDefense)
                     {
@@ -567,7 +578,6 @@ public static class Core
 
             if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold))
             {
-                var previousOwner = systemStatus.owner;
                 var starSystem = systemStatus.starSystem;
 
                 if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && sim.DayRemainingInQuarter == 30)

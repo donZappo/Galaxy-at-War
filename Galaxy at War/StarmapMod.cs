@@ -160,7 +160,7 @@ public class StarmapMod
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
-
+        factionString.AppendLine("\n\nTotal System Resources: " + tracker.TotalResources);
         return factionString.ToString();
     }
 

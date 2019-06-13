@@ -13,6 +13,7 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
+    public static Dictionary<Faction, KeyValuePair<StarSystem, float>> PriorityTargets = new Dictionary<Faction, KeyValuePair<StarSystem, float>>();
 
     public WarStatus()
     {
