@@ -74,6 +74,11 @@ public static class Core
     public static WarStatus WarStatus;
     public static List<StarSystem> ChangedSystems = new List<StarSystem>();
     public static readonly Random Random = new Random();
+    public static Faction teamfaction;
+    public static Faction enemyfaction;
+    public static int difficulty;
+    public static MissionResult missionResult;
+    public static bool isGoodFaithEffort;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -108,6 +113,14 @@ public static class Core
             }
 
             var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
+            Log("On Day Passed");
+            foreach(Faction fact in DepSystem.influenceTracker.Keys)
+            {
+                Log(fact.ToString());
+                Log(DepSystem.influenceTracker[fact].ToString());
+
+            }
+
             if (DepSystem.HotBox)
                 WarStatus.DeploymentDays--;
             if (DepSystem.HotBox && WarStatus.DeploymentDays == 0)
@@ -801,51 +814,50 @@ public static class Core
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var teamfaction = __instance.Override.employerTeam.faction;
-            var enemyfaction = __instance.Override.targetTeam.faction;
-            var difficulty = __instance.Difficulty;
-            var system = sim.CurSystem;
-            var warsystem = WarStatus.systems.Find(x => x.name == system.Name);
-            if (result == MissionResult.Victory)
+            teamfaction = __instance.Override.employerTeam.faction;
+            enemyfaction = __instance.Override.targetTeam.faction;
+            difficulty = __instance.Difficulty;
+            missionResult = result;
+        }
+
+        [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
+        public static class SimGameState_ResolveCompleteContract_Patch
+        {
+            public static void Postfix(SimGameState __instance)
             {
-                Log(warsystem.influenceTracker[teamfaction].ToString());
-                Log(warsystem.influenceTracker[enemyfaction].ToString());
-                warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
-                warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
-                Log(warsystem.influenceTracker[teamfaction].ToString());
-                Log(warsystem.influenceTracker[enemyfaction].ToString());
-            }
-            else if (result == MissionResult.Defeat || (result != MissionResult.Victory && !isGoodFaithEffort))
-            {
-                warsystem.influenceTracker[teamfaction] -= difficulty * Settings.DifficultyFactor;
-                warsystem.influenceTracker[enemyfaction] += difficulty * Settings.DifficultyFactor;
-            }
+                var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
 
-            Log(warsystem.influenceTracker[teamfaction].ToString());
-            Log(warsystem.influenceTracker[enemyfaction].ToString());
+                if (missionResult == MissionResult.Victory)
+                {
+                    warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
+                    warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
+                }
+                else if (missionResult == MissionResult.Defeat || (missionResult != MissionResult.Victory && !isGoodFaithEffort))
+                {
+                    warsystem.influenceTracker[teamfaction] -= difficulty * Settings.DifficultyFactor;
+                    warsystem.influenceTracker[enemyfaction] += difficulty * Settings.DifficultyFactor;
+                }
 
-            var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
-            var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
-            var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
-            tempIT.Remove(highKey);
-            var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
-            var oldOwner = warsystem.owner;
+                var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
+                var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
+                var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
+                tempIT.Remove(highKey);
+                var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
+                var oldOwner = warsystem.owner;
 
-            Log(warsystem.influenceTracker[teamfaction].ToString());
-            Log(warsystem.influenceTracker[enemyfaction].ToString());
+                if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold)
+                {
+                    ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
 
-            if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold)
-            {
-                ChangeSystemOwnership(sim, warsystem.starSystem, teamfaction, false);
+                    //This is a WIP for the pop-up after a system changes due to player interaction.
 
-                //This is a WIP for the pop-up after a system changes due to player interaction.
-
-                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", sim.CurSystem.Name + " taken!" + teamfaction.ToString() +
-                                                                                                 " conquered from " + oldOwner.ToString(), true, null);
-                sim.StopPlayMode();
+                    GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                    SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                        .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                    interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken!" + teamfaction.ToString() +
+                                                                                                     " conquered from " + oldOwner.ToString(), true, null);
+                    __instance.StopPlayMode();
+                }
             }
         }
     }
