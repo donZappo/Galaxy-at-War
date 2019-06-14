@@ -113,6 +113,17 @@ public class ModSettings
     public int ExternalHotSpots = 4;
     public int DeploymentDays = 30;
 
+    public int Diff1 = 1;
+    public int Diff2 = 4;
+    public int Diff3 = 6;
+    public int Diff4 = 8;
+    public int Diff5 = 10;
+    public int Diff6 = 12;
+    public int Diff7 = 14;
+    public int Diff8 = 18;
+    public int Diff9 = 23;
+    public int Diff10 = 42;
+
     public List<Faction> DefensiveFactions = new List<Faction>()
     {
         Faction.Locals,

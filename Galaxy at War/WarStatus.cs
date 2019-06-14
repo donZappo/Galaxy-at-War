@@ -66,6 +66,7 @@ public class SystemStatus
     public bool PriorityDefense = false;
     public bool PriorityAttack = false;
     public bool Contended = false;
+    public int DifficultyRating;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
@@ -83,10 +84,45 @@ public class SystemStatus
         owner = faction;
         // warFaction = Core.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
         TotalResources = Core.GetTotalAttackResources(starSystem) + Core.GetTotalDefensiveResources(starSystem);
+        Log(TotalResources.ToString());
 
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();
+    }
+
+    public void SystemDifficulty()
+    {
+        if (TotalResources <= Core.Settings.Diff10)
+            DifficultyRating = 10;
+        if (TotalResources <= Core.Settings.Diff9)
+            DifficultyRating = 9;
+        if (TotalResources <= Core.Settings.Diff8)
+            DifficultyRating = 8;
+        if (TotalResources <= Core.Settings.Diff7)
+            DifficultyRating = 7;
+        if (TotalResources <= Core.Settings.Diff6)
+            DifficultyRating = 6;
+        if (TotalResources <= Core.Settings.Diff5)
+            DifficultyRating = 5;
+        if (TotalResources <= Core.Settings.Diff4)
+            DifficultyRating = 4;
+        if (TotalResources <= Core.Settings.Diff3)
+            DifficultyRating = 3;
+        if (TotalResources <= Core.Settings.Diff2)
+            DifficultyRating = 2;
+        if (TotalResources <= Core.Settings.Diff1)
+            DifficultyRating = 1;
+
+
+        var system = sim.StarSystems.Find(x => x.Name == name);
+
+        
+       
+        
+       
+        
+        
     }
 
     public void FindNeighbors()
