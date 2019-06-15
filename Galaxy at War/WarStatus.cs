@@ -3,6 +3,7 @@ using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
 using static Logger;
+using Harmony;
 
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -89,6 +90,7 @@ public class SystemStatus
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();
+        SystemDifficulty();
     }
 
     public void SystemDifficulty()
@@ -114,15 +116,9 @@ public class SystemStatus
         if (TotalResources <= Core.Settings.Diff1)
             DifficultyRating = 1;
 
-
+        List<int> difficultyList = new List<int>{ DifficultyRating ,  DifficultyRating};
         var system = sim.StarSystems.Find(x => x.Name == name);
-
-        
-       
-        
-       
-        
-        
+        Traverse.Create(system.Def).Field("DifficultyList").SetValue(difficultyList);
     }
 
     public void FindNeighbors()

@@ -113,14 +113,7 @@ public static class Core
             }
 
             var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
-            Log("On Day Passed");
-            foreach(Faction fact in DepSystem.influenceTracker.Keys)
-            {
-                Log(fact.ToString());
-                Log(DepSystem.influenceTracker[fact].ToString());
-
-            }
-
+            
             if (DepSystem.HotBox)
                 WarStatus.DeploymentDays--;
             if (DepSystem.HotBox && WarStatus.DeploymentDays == 0)
