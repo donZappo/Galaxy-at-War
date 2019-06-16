@@ -14,8 +14,8 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
-    public static Dictionary<Faction, List<KeyValuePair<StarSystem, int>>> PriorityTargets
-        = new Dictionary<Faction, List<KeyValuePair<StarSystem, int>>>();
+    public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets
+        = new Dictionary<Faction, List<StarSystem>>();
     public static bool JustArrived = true;
     public static WorkOrderEntry_Notification DeploymentEnd;
     public static int DeploymentDays = 0;
@@ -66,6 +66,7 @@ public class SystemStatus
     public bool HotBox = false;
     public bool PriorityDefense = false;
     public bool PriorityAttack = false;
+    public List<Faction> CurrentlyAttackedBy = new List<Faction>();
     public bool Contended = false;
     public int DifficultyRating;
 

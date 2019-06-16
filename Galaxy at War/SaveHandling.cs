@@ -21,6 +21,8 @@ public static class SaveHandling
             Core.WarTick();
             Galaxy_at_War.HotSpots.ProcessHotSpots();
             StarmapMod.SetupRelationPanel();
+            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
         }
     }
 

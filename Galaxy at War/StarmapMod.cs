@@ -174,7 +174,7 @@ public class StarmapMod
 
             var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
             var wasVisited = visitedStarSystems.Contains(__result.name);
-            if (Galaxy_at_War.HotSpots.contendedSystems.Contains(__result.name))
+            if (Galaxy_at_War.HotSpots.HomeContendedStrings.Contains(__result.name))
                 MakeSystemPurple(__result, wasVisited);
             else if (__result.systemColor == Color.magenta)
                 MakeSystemNormal(__result, wasVisited);

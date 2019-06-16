@@ -141,6 +141,9 @@ public static class Core
         LogDebug("Calculations and System Push");
         foreach (var systemStatus in WarStatus.systems)
         {
+            systemStatus.PriorityAttack = false;
+            systemStatus.PriorityDefense = false;
+            systemStatus.CurrentlyAttackedBy.Clear();
             CalculateAttackTargets(systemStatus.starSystem);
             CalculateDefenseTargets(systemStatus.starSystem);
             RefreshNeighbors(systemStatus.starSystem);
@@ -158,7 +161,6 @@ public static class Core
 
         //Attack!
         //LogDebug("Attacking Fool");
-        WarStatus.PriorityTargets.Clear();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             DivideAttackResources(warFaction);
@@ -330,7 +332,6 @@ public static class Core
         foreach (var targetFaction in warFAR.Keys)
         {
             var targetFAR = warFAR[targetFaction];
-
             var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
 
             while (targetFAR > 0.0)
@@ -338,22 +339,13 @@ public static class Core
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
 
-                //Find most valuable target for attacking for later.
+                //Find most valuable target for attacking for later. Used in HotSpots.
                 if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts
                     && system.DifficultyRating >= maxContracts - 2)
                 {
-                    if (!WarStatus.PriorityTargets.Keys.Contains(warFaction.faction))
-                    {
-                        var tempKvP = new KeyValuePair<StarSystem, int>(system.starSystem, system.DifficultyRating);
-                        List<KeyValuePair<StarSystem, int>> TempList = new List<KeyValuePair<StarSystem, int>>();
-                        TempList.Add(tempKvP);
-                        WarStatus.PriorityTargets.Add(warFaction.faction, TempList);
-                    }
-                    else
-                    {
-                        var tempKvP = new KeyValuePair<StarSystem, int>(system.starSystem, system.DifficultyRating);
-                        WarStatus.PriorityTargets[warFaction.faction].Add(tempKvP);
-                    }
+                    system.PriorityAttack = true;
+                    if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
+                        system.CurrentlyAttackedBy.Add(warFaction.faction);
                 }
 
                 //Distribute attacking resources to systems.

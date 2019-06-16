@@ -26,103 +26,69 @@ namespace Galaxy_at_War
 {
     public static class HotSpots
     {
-        public static List<string> contendedSystems = new List<string>();
-        public static List<StarSystem> BreadcrumbTargets = new List<StarSystem>();
+        public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
+        public static List<string> HomeContendedStrings = new List<string>();
         public static bool isBreadcrumb = true;
-        public static Dictionary<Faction, List<StarSystem>> ExternalPriorityList = new Dictionary<Faction, List<StarSystem>>();
         public static  System.Random rand = new System.Random();
+        public static bool EnemyAdded = false;
+        public static Faction EnemyFaction;
 
         public static void ProcessHotSpots()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var DominantFaction = sim.CurSystem.Owner;
-            var FullPriorityList = new Dictionary<StarSystem, int>();
-            var FullExternalPriorityList = new Dictionary<Faction, List<KeyValuePair<StarSystem, int>>>();
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
             System.Random rand = new System.Random();
-
-            ExternalPriorityList.Clear();
-            contendedSystems.Clear();
-            BreadcrumbTargets.Clear();
+            var FullHomeContendedSystems = new Dictionary<StarSystem, int>();
+            WarStatus.ExternalPriorityTargets.Clear();
+            HomeContendedSystems.Clear();
+            HomeContendedStrings.Clear();
 
             var FactRepDict = new Dictionary<Faction, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
+                WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 if (Core.Settings.DefensiveFactions.Contains(faction)) continue;
-                var MaxC = HotSpots.ProcessReputation(sim.GetRawReputation(faction));
-                FactRepDict.Add(faction, MaxC);
+                var MaxContracts = HotSpots.ProcessReputation(sim.GetRawReputation(faction));
+                FactRepDict.Add(faction, MaxContracts);
             }
 
             //Populate lists with planets that are in danger of flipping
             foreach (SystemStatus systemStatus in Core.WarStatus.systems)
             {
-                systemStatus.PriorityAttack = false;
-                systemStatus.PriorityDefense = false;
-
-                if (systemStatus.owner == DominantFaction && systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[DominantFaction]
-                     && systemStatus.DifficultyRating >= FactRepDict[DominantFaction] - 2)
-                {
+                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 2)
                     systemStatus.PriorityDefense = true;
-                    if (!FullPriorityList.Keys.Contains(systemStatus.starSystem))
-                        FullPriorityList.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
-                }
-                else if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 2)
+                if (systemStatus.PriorityDefense)
                 {
-                    systemStatus.PriorityDefense = true;
-                    var tempKvP = new KeyValuePair<StarSystem, int>(systemStatus.starSystem, systemStatus.DifficultyRating);
-                    List<KeyValuePair<StarSystem, int>> TempList = new List<KeyValuePair<StarSystem, int>>();
-                    TempList.Add(tempKvP);
-
-                    if (!FullExternalPriorityList.Keys.Contains(systemStatus.owner))
-                        FullExternalPriorityList.Add(systemStatus.owner, TempList);
+                    if (systemStatus.owner == DominantFaction)
+                        FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
                     else
-                        FullExternalPriorityList[systemStatus.owner].Add(tempKvP);
+                        WarStatus.ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                 }
-
-                //Populate priority attack targets.
-                if (Core.Settings.DefensiveFactions.Contains(DominantFaction)) continue;
-                foreach (var targetFaction in warFaction.attackTargets.Keys)
+                if (systemStatus.PriorityAttack)
                 {
-                    var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == DominantFaction);
-                    if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && warFaction.attackTargets[targetFaction].Contains(systemStatus.starSystem) 
-                        && systemStatus.DifficultyRating <= FactRepDict[DominantFaction] && systemStatus.DifficultyRating >= FactRepDict[DominantFaction] - 2)
+                    foreach (var attacker in systemStatus.CurrentlyAttackedBy)
                     {
-                        systemStatus.PriorityAttack = true;
-                        if (!FullPriorityList.Keys.Contains(systemStatus.starSystem))
-                            FullPriorityList.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
+                        if (attacker == DominantFaction)
+                        {
+                            if (!FullHomeContendedSystems.ContainsKey(systemStatus.starSystem))
+                                FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
+                        }
+                        else
+                        {
+                            if (!WarStatus.ExternalPriorityTargets[attacker].Contains(systemStatus.starSystem))
+                                WarStatus.ExternalPriorityTargets[attacker].Add(systemStatus.starSystem);
+                        }
                     }
                 }
             }
-            foreach (Faction extFaction in WarStatus.PriorityTargets.Keys)
+            var i = 0;
+            foreach (var ContendedSystem in FullHomeContendedSystems.OrderByDescending(key => key.Value))
             {
-                if (extFaction == DominantFaction) continue;
-                if (!FullExternalPriorityList.Keys.Contains(extFaction))
-                    FullExternalPriorityList.Add(extFaction, WarStatus.PriorityTargets[extFaction]);
-                else
-                    FullExternalPriorityList[extFaction].AddRange(WarStatus.PriorityTargets[extFaction]);
-            }
-
-            warFaction.PriorityList.Clear();
-
-            while (FullPriorityList.Count != 0)
-            {
-                var highKey = FullPriorityList.OrderByDescending(x => x.Value).Select(x => x.Key).First();
-                warFaction.PriorityList.Add(highKey.Name);
-                if (contendedSystems.Count < 6)
-                    contendedSystems.Add(highKey.Name);
-                BreadcrumbTargets.Add(highKey);
-                FullPriorityList.Remove(highKey);
-            }
-
-            var ExternalFactionRep = sim.GetAllCareerFactionReputations();
-            foreach (var ExtFact in ExternalFactionRep.OrderByDescending(x => x.Value))
-            {
-                if (!FullExternalPriorityList.Keys.Contains(ExtFact.Key)) continue;
-                var SortedEnumList = FullExternalPriorityList[ExtFact.Key].OrderByDescending(x => x.Value);
-                var SortedList = new List<StarSystem>();
-                foreach (var item in SortedEnumList)
-                    SortedList.Add(item.Key);
-                ExternalPriorityList.Add(ExtFact.Key, SortedList);
+                if (i == 6) break;
+                HomeContendedSystems.Add(ContendedSystem.Key);
+                HomeContendedStrings.Add(ContendedSystem.Key.Name);
+                i++;
             }
         }
 
@@ -146,58 +112,68 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
 
                 ProcessHotSpots();
-                if (BreadcrumbTargets.Count != 0)
+                if (HomeContendedSystems.Count != 0)
                 {
-                    while (sim.CurSystem.SystemBreadcrumbs.Count == 0 && BreadcrumbTargets.Count != 0)
+                    Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
+                    while (sim.CurSystem.SystemBreadcrumbs.Count == 0 && HomeContendedSystems.Count != 0)
                     {
-                        var RandomSystem = rand.Next(0, BreadcrumbTargets.Count - 1);
-                        var MainBCTarget = BreadcrumbTargets[RandomSystem];
+                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
+                        var MainBCTarget = HomeContendedSystems[RandomSystem];
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
                         Core.RefreshContracts(MainBCTarget);
                         Log("A");
                         Log(MainBCTarget.Name);
-                        BreadcrumbTargets.RemoveAt(RandomSystem);
+                        HomeContendedSystems.RemoveAt(RandomSystem);
                     }
-
-                    if (BreadcrumbTargets.Count != 0)
+                    Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
+                    if (HomeContendedSystems.Count != 0)
                     {
                         int i = 2;
-                        foreach (var BCTarget in BreadcrumbTargets)
+                        while (HomeContendedSystems.Count != 0)
                         {
                             Log("B");
+                            var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
+                            var MainBCTarget = HomeContendedSystems[RandomSystem];
                             if (i == Core.Settings.InternalHotSpots + 1) break;
-                            Log(BCTarget.Name);
+                            Log(MainBCTarget.Name);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i);
-                            TemporaryFlip(BCTarget, sim.CurSystem.Owner);
-                            sim.GeneratePotentialContracts(false, null, BCTarget, false);
-                            Core.RefreshContracts(BCTarget);
+                            TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
+                            sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
+                            Core.RefreshContracts(MainBCTarget);
+                            HomeContendedSystems.RemoveAt(RandomSystem);
                             i = sim.CurSystem.SystemBreadcrumbs.Count + 1;
                         }
                     }
                 }
-                if (ExternalPriorityList.Count != 0)
+                Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
+                var ExternalPriorityTargets = WarStatus.ExternalPriorityTargets;
+                if (ExternalPriorityTargets.Count != 0)
                 {
                     int startBC = sim.CurSystem.SystemBreadcrumbs.Count;
                     int j = startBC;
-                    foreach (var ExtTarget in ExternalPriorityList.Keys)
+                    foreach (var ExtTarget in ExternalPriorityTargets.Keys)
                     {
-                        if (ExternalPriorityList[ExtTarget].Count == 0) continue;
-                        
+                        Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
+                        if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
                         do
                         {
                             Log("C");
-                            var RandTarget = rand.Next(0, ExternalPriorityList[ExtTarget].Count - 1);
+                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
-                            TemporaryFlip(ExternalPriorityList[ExtTarget][RandTarget], ExtTarget);
-                            sim.GeneratePotentialContracts(false, null, ExternalPriorityList[ExtTarget][RandTarget], false);
-                            Core.RefreshContracts(ExternalPriorityList[ExtTarget][RandTarget]);
-                            Log(ExternalPriorityList[ExtTarget][RandTarget].Name);
-                            Log(ExternalPriorityList[ExtTarget][RandTarget].Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
-                            ExternalPriorityList[ExtTarget].RemoveAt(RandTarget);
-                        } while (sim.CurSystem.SystemBreadcrumbs.Count == j || ExternalPriorityList[ExtTarget].Count == 0);
+                            TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
+                            sim.GeneratePotentialContracts(false, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
+                            if (EnemyAdded)
+                            {
+                                sim.FactionsDict[ExtTarget].Enemies.
+                            }
+                            Core.RefreshContracts(ExternalPriorityTargets[ExtTarget][RandTarget]);
+                            Log(ExternalPriorityTargets[ExtTarget][RandTarget].Name);
+                            Log(ExternalPriorityTargets[ExtTarget][RandTarget].Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
+                            ExternalPriorityTargets[ExtTarget].RemoveAt(RandTarget);
+                        } while (sim.CurSystem.SystemBreadcrumbs.Count == j && ExternalPriorityTargets[ExtTarget].Count != 0);
 
                         j = sim.CurSystem.SystemBreadcrumbs.Count;
                         if (j - startBC == Core.Settings.ExternalHotSpots)
@@ -209,6 +185,7 @@ namespace Galaxy_at_War
 
         public static void TemporaryFlip(StarSystem starSystem, Faction faction)
         {
+            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.FactionsDict[faction];
             starSystem.Def.ContractEmployers.Clear();
             starSystem.Def.ContractTargets.Clear();
 
@@ -221,6 +198,12 @@ namespace Galaxy_at_War
                     && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargets.Add(influence.Key);
+                    if (!FactionDef.Enemies.Contains(influence.Key))
+                    {
+                        FactionDef.Enemies.Add(influence.Key);
+                        EnemyAdded = true;
+                        EnemyFaction = influence.Key;
+                    }
                     break;
                 }
             }
