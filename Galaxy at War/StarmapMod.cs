@@ -18,7 +18,6 @@ public class StarmapMod
 {
     //internal static GameObject textPanel;
     //internal static TextMeshProUGUI panelText;
-    internal static SimGameState sim;
     internal static SGEventPanel eventPanel;
 
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]

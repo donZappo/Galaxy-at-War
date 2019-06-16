@@ -319,6 +319,9 @@ public static class Core
 
     public static void AllocateAttackResources(WarFaction warFaction)
     {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        var FactionRep = sim.GetRawReputation(warFaction.faction);
+        int maxContracts = Galaxy_at_War.HotSpots.ProcessReputation(FactionRep);
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
             return;
         var warFAR = warFaction.warFactionAttackResources;
@@ -328,18 +331,29 @@ public static class Core
         {
             var targetFAR = warFAR[targetFaction];
 
+            var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
+
             while (targetFAR > 0.0)
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
 
                 //Find most valuable target for attacking for later.
-                if (!WarStatus.PriorityTargets.Keys.Contains(warFaction.faction))
-                    WarStatus.PriorityTargets.Add(warFaction.faction, new KeyValuePair<StarSystem, float>(system.starSystem, system.TotalResources));
-                else
+                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts
+                    && system.DifficultyRating >= maxContracts - 2)
                 {
-                    if (system.TotalResources > WarStatus.PriorityTargets[warFaction.faction].Value)
-                        WarStatus.PriorityTargets[warFaction.faction] = new KeyValuePair<StarSystem, float>(system.starSystem, system.TotalResources);
+                    if (!WarStatus.PriorityTargets.Keys.Contains(warFaction.faction))
+                    {
+                        var tempKvP = new KeyValuePair<StarSystem, int>(system.starSystem, system.DifficultyRating);
+                        List<KeyValuePair<StarSystem, int>> TempList = new List<KeyValuePair<StarSystem, int>>();
+                        TempList.Add(tempKvP);
+                        WarStatus.PriorityTargets.Add(warFaction.faction, TempList);
+                    }
+                    else
+                    {
+                        var tempKvP = new KeyValuePair<StarSystem, int>(system.starSystem, system.DifficultyRating);
+                        WarStatus.PriorityTargets[warFaction.faction].Add(tempKvP);
+                    }
                 }
 
                 //Distribute attacking resources to systems.
@@ -353,18 +367,22 @@ public static class Core
                     else
                         continue;
                 }
+
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 var PmaxValue = maxValueList[1];
                 var ITValue = system.influenceTracker[warFaction.faction];
-                float bonusAR = 0f;
+                float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
+                float bonusAR = 0f;
                 if (ITValue > PmaxValue)
                     bonusAR = (ITValue - PmaxValue) * 0.15f;
 
-                if (targetFAR > 1 + bonusAR)
+                float TotalAR = basicAR + bonusAR;
+
+                if (targetFAR > TotalAR)
                 {
-                    system.influenceTracker[warFaction.faction] += 1 + bonusAR;
-                    targetFAR -= 1 + bonusAR;
+                    system.influenceTracker[warFaction.faction] += TotalAR;
+                    targetFAR -= TotalAR;
                 }
                 else
                 {
