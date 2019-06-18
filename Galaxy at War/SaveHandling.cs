@@ -10,21 +10,21 @@ using BattleTech.Save;
 
 public static class SaveHandling
 {
-    [HarmonyPatch(typeof(SimGameState), "_OnAttachUXComplete")]
-    public static class SimGameState__OnAttachUXComplete_Patch
-    {
-        public static void Postfix()
-        {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            Log("Setting up new WarStatus");
-            Core.WarStatus = new WarStatus();
-            Core.WarTick();
-            Galaxy_at_War.HotSpots.ProcessHotSpots();
-            StarmapMod.SetupRelationPanel();
-            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-        }
-    }
+    //[HarmonyPatch(typeof(SimGameState), "_OnAttachUXComplete")]
+    //public static class SimGameState__OnAttachUXComplete_Patch
+    //{
+    //    public static void Postfix()
+    //    {
+    //        var sim = UnityGameInstance.BattleTechGame.Simulation;
+    //        Log("Setting up new WarStatus");
+    //        Core.WarStatus = new WarStatus();
+    //        Core.WarTick();
+    //        Galaxy_at_War.HotSpots.ProcessHotSpots();
+    //        StarmapMod.SetupRelationPanel();
+    //        var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+    //        sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+    //    }
+    //}
 
     [HarmonyPatch(typeof(SimGameState), "Rehydrate")]
     public static class SimGameState_Rehydrate_Patch
@@ -32,8 +32,26 @@ public static class SaveHandling
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
             DeserializeWar();
-            
         }
+    }
+    internal static void DeserializeWar()
+    {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        foreach (var tag in sim.CompanyTags)
+            LogDebug(tag);
+
+        Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
+        LogDebug(">>> Deserialization complete");
+        LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+
+        foreach (var system in sim.StarSystems)
+        {
+            Core.CalculateAttackTargets(system);
+            Core.CalculateDefenseTargets(system);
+            Core.RefreshNeighbors(system);
+            Core.RefreshContracts(system);
+        }
+        Galaxy_at_War.HotSpots.ProcessHotSpots();
     }
 
     [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
@@ -41,8 +59,36 @@ public static class SaveHandling
     {
         public static void Prefix()
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            bool savetag = false;
+            foreach (var tag in sim.CompanyTags)
+            {
+                if (tag.StartsWith("GalaxyAtWar"))
+                {
+                    savetag = true;
+                    SerializeWar();
+                    break;
+                }
+            }
+            if (!savetag)
+            {
+                Core.WarStatus = new WarStatus();
+                Core.WarTick();
+                Galaxy_at_War.HotSpots.ProcessHotSpots();
+                StarmapMod.SetupRelationPanel();
+                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 SerializeWar();
+            } 
         }
+    }
+    internal static void SerializeWar()
+    {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
+        sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
+        LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+        LogDebug(">>> Serialization complete");
     }
 
     //[HarmonyPatch(typeof(SerializableReferenceContainer), "Load")]
@@ -58,31 +104,9 @@ public static class SaveHandling
     //    }
     //}
 
-    internal static void SerializeWar()
-    {
-        var sim = UnityGameInstance.BattleTechGame.Simulation;
-        sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
-        sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
-        LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-        LogDebug(">>> Serialization complete");
-    }
 
-    internal static void DeserializeWar()
-    {
-        var sim = UnityGameInstance.BattleTechGame.Simulation;
-        Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
-        LogDebug(">>> Deserialization complete");
-        LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
 
-        foreach (var system in sim.StarSystems)
-        {
-            Core.CalculateAttackTargets(system);
-            Core.CalculateDefenseTargets(system);
-            Core.RefreshNeighbors(system);
-            Core.RefreshContracts(system);
-        }
-        Galaxy_at_War.HotSpots.ProcessHotSpots();
-    }
+    
 
 
     //Hotkeys

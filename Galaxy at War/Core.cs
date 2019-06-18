@@ -79,6 +79,7 @@ public static class Core
     public static int difficulty;
     public static MissionResult missionResult;
     public static bool isGoodFaithEffort;
+    public static List<Faction> FactionEnemyHolder = new List<Faction>();
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -684,6 +685,30 @@ public static class Core
                 ContractTargets.Add(EF);
         }
     }
+
+    [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
+    public static class SimGameState_GenerateContractParticipants_Patch
+    {
+        public static void Prefix(FactionDef employer, StarSystemDef system)
+        {
+            FactionEnemyHolder.Clear();
+            var NewEnemies = system.ContractTargets;
+            FactionEnemyHolder = employer.Enemies.ToList();
+            var NewFactionEnemies = FactionEnemyHolder;
+            foreach (var Enemy in NewEnemies)
+            {
+                if (!NewFactionEnemies.Contains(Enemy))
+                    NewFactionEnemies.Add(Enemy);
+            }
+            Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
+        }
+
+        public static void Postfix(FactionDef employer)
+        {
+            Traverse.Create(employer).Property("Enemies").SetValue(FactionEnemyHolder.ToArray());
+        }
+    }
+
 
     public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim)
     {

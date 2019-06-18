@@ -91,7 +91,7 @@ public class ModSettings
     };
 
     public int WarFrequency = 5;
-    public bool Debug = false;
+    public bool Debug = true;
 
     public string modDirectory;
     public int DominantInfluence = 75;

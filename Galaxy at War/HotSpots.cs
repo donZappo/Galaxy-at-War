@@ -112,9 +112,10 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
 
                 ProcessHotSpots();
+                Log("Generating Contracts");
+                Log(__instance.Name);
                 if (HomeContendedSystems.Count != 0)
                 {
-                    Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                     while (sim.CurSystem.SystemBreadcrumbs.Count == 0 && HomeContendedSystems.Count != 0)
                     {
                         var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
@@ -122,32 +123,30 @@ namespace Galaxy_at_War
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
                         Core.RefreshContracts(MainBCTarget);
-                        Log("A");
-                        Log(MainBCTarget.Name);
+                        Log("A: " + MainBCTarget.Name + ": " + sim.CurSystem.Owner.ToString());
+                        Log("Total Breadcrumbs: " + sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                         HomeContendedSystems.RemoveAt(RandomSystem);
                     }
-                    Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                     if (HomeContendedSystems.Count != 0)
                     {
                         int i = 2;
                         while (HomeContendedSystems.Count != 0)
                         {
-                            Log("B");
                             var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
                             var MainBCTarget = HomeContendedSystems[RandomSystem];
                             if (i == Core.Settings.InternalHotSpots + 1) break;
-                            Log(MainBCTarget.Name);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i);
                             TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
                             Core.RefreshContracts(MainBCTarget);
+                            Log("B: " + MainBCTarget.Name + ": " + sim.CurSystem.Owner.ToString());
+                            Log("Total Breadcrumbs: " + sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                             HomeContendedSystems.RemoveAt(RandomSystem);
                             i = sim.CurSystem.SystemBreadcrumbs.Count + 1;
                         }
                     }
                 }
-                Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                 var ExternalPriorityTargets = WarStatus.ExternalPriorityTargets;
                 if (ExternalPriorityTargets.Count != 0)
                 {
@@ -159,19 +158,17 @@ namespace Galaxy_at_War
                         if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
                         do
                         {
-                            Log("C");
                             var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
-                            sim.GeneratePotentialContracts(false, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
-                            if (EnemyAdded)
-                            {
-                                sim.FactionsDict[ExtTarget].Enemies.
-                            }
+                            if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
+                                sim.GeneratePotentialContracts(true, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
+                            else
+                                sim.GeneratePotentialContracts(false, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
                             Core.RefreshContracts(ExternalPriorityTargets[ExtTarget][RandTarget]);
-                            Log(ExternalPriorityTargets[ExtTarget][RandTarget].Name);
-                            Log(ExternalPriorityTargets[ExtTarget][RandTarget].Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
+                            Log("C: " + ExternalPriorityTargets[ExtTarget][RandTarget].Name + ": " + ExtTarget.ToString());
+                            Log("Total Breadcrumbs: " + sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                             ExternalPriorityTargets[ExtTarget].RemoveAt(RandTarget);
                         } while (sim.CurSystem.SystemBreadcrumbs.Count == j && ExternalPriorityTargets[ExtTarget].Count != 0);
 
@@ -198,12 +195,6 @@ namespace Galaxy_at_War
                     && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargets.Add(influence.Key);
-                    if (!FactionDef.Enemies.Contains(influence.Key))
-                    {
-                        FactionDef.Enemies.Add(influence.Key);
-                        EnemyAdded = true;
-                        EnemyFaction = influence.Key;
-                    }
                     break;
                 }
             }
