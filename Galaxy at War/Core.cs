@@ -234,9 +234,10 @@ public static class Core
             LogDebug("CalculateAttackTargets starSystem null");
             return;
         }
-
+        LogDebug("A");
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
+            LogDebug("B");
             var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
             if (warFac == null)
             {

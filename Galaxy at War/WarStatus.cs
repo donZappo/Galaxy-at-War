@@ -82,7 +82,6 @@ public class SystemStatus
     {
         //  LogDebug("SystemStatus ctor");
         name = systemName;
-        owner = starSystem.Owner;
         owner = faction;
         // warFaction = Core.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
         TotalResources = Core.GetTotalAttackResources(starSystem) + Core.GetTotalDefensiveResources(starSystem);
