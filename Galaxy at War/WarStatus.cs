@@ -27,7 +27,7 @@ public class WarStatus
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            warFactionTracker.Add(new WarFaction(faction, Core.Settings.AttackResourceMap[faction], Core.Settings.DefensiveResourceMap[faction]));
+            warFactionTracker.Add(new WarFaction(faction));
             deathListTracker.Add(new DeathListTracker(faction));
         }
 
@@ -41,6 +41,25 @@ public class WarStatus
 
             warFaction.DefensiveResources += Core.GetTotalDefensiveResources(system);
         }
+        var MaxAR = warFactionTracker.Select(x => x.AttackResources).Max();
+        var MaxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
+
+        foreach (var faction in Core.Settings.IncludedFactions)
+        {
+            var warFaction = warFactionTracker.Find(x => x.faction == faction);
+            if (Core.Settings.DefensiveFactions.Contains(faction) && Core.Settings.DefendersUseARforDR)
+            {
+                warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources[faction] +
+                    Core.Settings.BonusDefensiveResources[faction];
+                warFaction.AttackResources = 0;
+            }
+            else
+            {
+                warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources[faction];
+                warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
+            }
+        }
+
 
         foreach (var system in sim.StarSystems)
         {
@@ -70,6 +89,9 @@ public class SystemStatus
     public List<Faction> CurrentlyAttackedBy = new List<Faction>();
     public bool Contended = false;
     public int DifficultyRating;
+    public bool BonusSalvage = false;
+    public bool BonusXP = false;
+    public bool BonusCBills = false;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
@@ -231,24 +253,16 @@ public class WarFaction
     }
 
 
-    public WarFaction(Faction faction, float AttackResources, float DefensiveResources)
+    public WarFaction(Faction faction)
     {
         LogDebug("WarFaction ctor");
         this.faction = faction;
-        this.AttackResources = AttackResources;
-        this.DefensiveResources = DefensiveResources;
         GainedSystem = false;
         LostSystem = false;
         DaysSinceSystemAttacked = 0;
         DaysSinceSystemLost = 0;
         MonthlySystemsChanged = 0;
         TotalSystemsChanged = 0;
-
-        if(Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(faction))
-        {
-            this.DefensiveResources += AttackResources;
-            this.AttackResources = 0;
-        }
     }
 }
 

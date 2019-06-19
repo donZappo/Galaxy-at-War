@@ -25,7 +25,7 @@ public class ModSettings
 
     
 
-    public Dictionary<Faction, int> AttackResourceMap = new Dictionary<Faction, int>
+    public Dictionary<Faction, int> BonusAttackResources = new Dictionary<Faction, int>
     {
         {Faction.Davion, 0},
         {Faction.Liao, 0},
@@ -37,7 +37,7 @@ public class ModSettings
         {Faction.AuriganRestoration, 0}
     };
 
-    public Dictionary<Faction, int> DefensiveResourceMap = new Dictionary<Faction, int>
+    public Dictionary<Faction, int> BonusDefensiveResources = new Dictionary<Faction, int>
     {
         {Faction.Davion, 0},
         {Faction.Liao, 0},
