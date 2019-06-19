@@ -84,13 +84,36 @@ public static class Core
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
+        static void Prefix(SimGameState __instance, int timeLapse)
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
+            if (DepSystem.HotBox)
+            {
+                WarStatus.EscalationDays--;
+
+                if (WarStatus.EscalationDays == 0)
+                {
+                    Galaxy_at_War.HotSpots.CompleteDeployment();
+                }
+                if (WarStatus.EscalationOrder != null)
+                {
+                    WarStatus.EscalationOrder.PayCost(1);
+                    TaskManagementElement taskManagementElement4 = null;
+                    TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
+                    Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems = 
+                        (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                    if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
+                    {
+                        taskManagementElement4.UpdateItem(0);
+                    }
+                }
+            }
+        }
+
         public static void Postfix(SimGameState  __instance)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-
-            //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(20f);
-            //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
 
             if (sim.DayRemainingInQuarter%Settings.WarFrequency == 0 )
             {
@@ -98,6 +121,8 @@ public static class Core
                 for (int i = 0; i < 1; i++)
                 {
                     WarTick();
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 }
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
@@ -112,13 +137,6 @@ public static class Core
                 interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
                 sim.StopPlayMode();
             }
-
-            var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
-            
-            if (DepSystem.HotBox)
-                WarStatus.DeploymentDays--;
-            if (DepSystem.HotBox && WarStatus.DeploymentDays == 0)
-                Galaxy_at_War.HotSpots.CompleteDeployment();
         }
     }
 
@@ -342,8 +360,7 @@ public static class Core
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
-                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts
-                    && system.DifficultyRating >= maxContracts - 2)
+                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts)
                 {
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
@@ -666,10 +683,16 @@ public static class Core
         ContractEmployers.Clear();
         ContractTargets.Clear();
         ContractEmployers.Add(owner);
-        ContractTargets.Add(owner);
-       
-        var neighborSystems = WarStatus.systems.Find(x => x.name == starSystem.Name).neighborSystems;
 
+        foreach (Faction EF in Settings.DefensiveFactions)
+        {
+            ContractTargets.Add(EF);
+        }
+
+        if (!ContractTargets.Contains(owner))
+            ContractTargets.Add(owner);
+
+        var neighborSystems = WarStatus.systems.Find(x => x.name == starSystem.Name).neighborSystems;
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
             if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
@@ -679,12 +702,12 @@ public static class Core
                 ContractTargets.Add(systemNeighbor);
         }
 
-        if (ContractTargets.Count == 1)
-        {
-            ContractTargets.Clear();
-            foreach (Faction EF in Settings.DefensiveFactions)
-                ContractTargets.Add(EF);
-        }
+        //if (ContractTargets.Count == 1)
+        //{
+        //    ContractTargets.Clear();
+        //    foreach (Faction EF in Settings.DefensiveFactions)
+        //        ContractTargets.Add(EF);
+        //}
     }
 
     [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
@@ -698,7 +721,7 @@ public static class Core
             var NewFactionEnemies = FactionEnemyHolder;
             foreach (var Enemy in NewEnemies)
             {
-                if (!NewFactionEnemies.Contains(Enemy))
+                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy))
                     NewFactionEnemies.Add(Enemy);
             }
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());

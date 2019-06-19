@@ -16,9 +16,10 @@ public class WarStatus
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
     public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets
         = new Dictionary<Faction, List<StarSystem>>();
-    public static bool JustArrived = true;
-    public static WorkOrderEntry_Notification DeploymentEnd;
-    public static int DeploymentDays = 0;
+    public bool JustArrived = true;
+    public bool Escalation = false;
+    public WorkOrderEntry_Notification EscalationOrder;
+    public int EscalationDays = 0;
 
     public WarStatus()
     {
@@ -216,7 +217,7 @@ public class WarFaction
     public int MonthlySystemsChanged;
     public int TotalSystemsChanged;
 
-    public List<string> PriorityList = new List<string>();
+    //public List<string> PriorityList = new List<string>();
     public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
     internal List<StarSystem> defenseTargets = new List<StarSystem>();

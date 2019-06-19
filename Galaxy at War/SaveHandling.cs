@@ -20,17 +20,12 @@ public static class SaveHandling
             {
                 Core.WarStatus = new WarStatus();
                 Core.WarTick();
-                foreach (var system in sim.StarSystems)
-                {
-                    Core.CalculateAttackTargets(system);
-                    Core.CalculateDefenseTargets(system);
-                    Core.RefreshNeighbors(system);
-                    Core.RefreshContracts(system);
-                }
-                Galaxy_at_War.HotSpots.ProcessHotSpots();
+
+                //Galaxy_at_War.HotSpots.ProcessHotSpots();
+                //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 StarmapMod.SetupRelationPanel();
-                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(8f);
                 SerializeWar();
             }
             else

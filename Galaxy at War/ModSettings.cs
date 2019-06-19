@@ -91,7 +91,7 @@ public class ModSettings
     };
 
     public int WarFrequency = 5;
-    public bool Debug = true;
+    public bool Debug = false;
 
     public string modDirectory;
     public int DominantInfluence = 75;
@@ -111,7 +111,7 @@ public class ModSettings
     public float PriorityHatred = 50;
     public int InternalHotSpots = 2;
     public int ExternalHotSpots = 4;
-    public int DeploymentDays = 30;
+    public int EscalationDays = 30;
 
     public int Diff1 = 1;
     public int Diff2 = 4;

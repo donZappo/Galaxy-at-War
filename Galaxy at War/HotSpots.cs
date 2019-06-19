@@ -37,7 +37,7 @@ namespace Galaxy_at_War
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var DominantFaction = sim.CurSystem.Owner;
-            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
+            //var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
             System.Random rand = new System.Random();
             var FullHomeContendedSystems = new Dictionary<StarSystem, int>();
             WarStatus.ExternalPriorityTargets.Clear();
@@ -56,7 +56,7 @@ namespace Galaxy_at_War
             //Populate lists with planets that are in danger of flipping
             foreach (SystemStatus systemStatus in Core.WarStatus.systems)
             {
-                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 2)
+                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner])
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
                 {
@@ -112,39 +112,25 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
 
                 ProcessHotSpots();
-                Log("Generating Contracts");
-                Log(__instance.Name);
                 if (HomeContendedSystems.Count != 0)
                 {
-                    while (sim.CurSystem.SystemBreadcrumbs.Count == 0 && HomeContendedSystems.Count != 0)
+                    int i = 0;
+                    while (HomeContendedSystems.Count != 0)
                     {
-                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
+                        Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
+                        Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
+                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count/2);
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
-                        sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
-                        Core.RefreshContracts(MainBCTarget);
-                        Log("A: " + MainBCTarget.Name + ": " + sim.CurSystem.Owner.ToString());
-                        Log("Total Breadcrumbs: " + sim.CurSystem.SystemBreadcrumbs.Count.ToString());
-                        HomeContendedSystems.RemoveAt(RandomSystem);
-                    }
-                    if (HomeContendedSystems.Count != 0)
-                    {
-                        int i = 2;
-                        while (HomeContendedSystems.Count != 0)
-                        {
-                            var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
-                            var MainBCTarget = HomeContendedSystems[RandomSystem];
-                            if (i == Core.Settings.InternalHotSpots + 1) break;
-                            Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i);
-                            Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i);
-                            TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
+                        if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
+                            sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
+                        else
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
-                            Core.RefreshContracts(MainBCTarget);
-                            Log("B: " + MainBCTarget.Name + ": " + sim.CurSystem.Owner.ToString());
-                            Log("Total Breadcrumbs: " + sim.CurSystem.SystemBreadcrumbs.Count.ToString());
-                            HomeContendedSystems.RemoveAt(RandomSystem);
-                            i = sim.CurSystem.SystemBreadcrumbs.Count + 1;
-                        }
+                        Core.RefreshContracts(MainBCTarget);
+                        HomeContendedSystems.RemoveAt(RandomSystem);
+                        if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
+                            break;
+                        i = sim.CurSystem.SystemBreadcrumbs.Count;
                     }
                 }
                 var ExternalPriorityTargets = WarStatus.ExternalPriorityTargets;
@@ -154,11 +140,10 @@ namespace Galaxy_at_War
                     int j = startBC;
                     foreach (var ExtTarget in ExternalPriorityTargets.Keys)
                     {
-                        Log(sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                         if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
                         do
                         {
-                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
+                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count/2);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
@@ -167,8 +152,6 @@ namespace Galaxy_at_War
                             else
                                 sim.GeneratePotentialContracts(false, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
                             Core.RefreshContracts(ExternalPriorityTargets[ExtTarget][RandTarget]);
-                            Log("C: " + ExternalPriorityTargets[ExtTarget][RandTarget].Name + ": " + ExtTarget.ToString());
-                            Log("Total Breadcrumbs: " + sim.CurSystem.SystemBreadcrumbs.Count.ToString());
                             ExternalPriorityTargets[ExtTarget].RemoveAt(RandTarget);
                         } while (sim.CurSystem.SystemBreadcrumbs.Count == j && ExternalPriorityTargets[ExtTarget].Count != 0);
 
@@ -222,6 +205,8 @@ namespace Galaxy_at_War
             {
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
                 Core.WarStatus.systems.Find(x => x.name == system.Name).HotBox = false;
+                Core.WarStatus.Escalation = false;
+                Core.WarStatus.EscalationDays = 0;
             }
         }
 
@@ -230,8 +215,8 @@ namespace Galaxy_at_War
         {
             static void Postfix()
             {
-                WarStatus.JustArrived = true;
-                WarStatus.DeploymentDays = Core.Settings.DeploymentDays;
+                Core.WarStatus.JustArrived = true;
+                Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
             }
         }
 
@@ -240,7 +225,7 @@ namespace Galaxy_at_War
         {
             static void Postfix(AAR_SalvageScreen __instance)
             {
-                WarStatus.JustArrived = false;
+                Core.WarStatus.JustArrived = false;
             }
         }
 
@@ -249,14 +234,14 @@ namespace Galaxy_at_War
         {
             static void Postfix(TaskTimelineWidget __instance)
             {
-                if (!WarStatus.JustArrived)
+                if (Core.WarStatus != null && Core.WarStatus.Escalation)
                 {
-                    WarStatus.DeploymentEnd = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
-                        "Days Until Deployment Ends", "Days Until Deployment Ends");
-                    WarStatus.DeploymentEnd.SetCost(WarStatus.DeploymentDays);
-                    __instance.AddEntry(WarStatus.DeploymentEnd, false);
+                    Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
+                        "Escalation Days Remaining", "Escalation Days Remaining");
+                    Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                    __instance.AddEntry(Core.WarStatus.EscalationOrder, false);
+                    __instance.RefreshEntries();
                 }
-                __instance.RefreshEntries();
             }
         }
 
@@ -265,14 +250,32 @@ namespace Galaxy_at_War
         {
             static bool Prefix(WorkOrderEntry entry)
             {
-                if (!WarStatus.JustArrived && (entry.ID.Equals("Days Until Deployment Ends")) && Core.Settings.DeploymentDays > 0)
+                if (!Core.WarStatus.JustArrived && (entry.ID.Equals("Escalation Days Remaining")) && Core.WarStatus.EscalationDays > 0)
                 {
                     return false;
                 }
                 return true;
             }
         }
-        
+
+        [HarmonyPatch(typeof(SimGameState), "OnBreadcrumbArrival")]
+        public static class SimGameState_OnBreadcrumbArrival_Patch
+        {
+            static void Postfix(SimGameState __instance)
+            {
+                if (!__instance.ActiveTravelContract.IsPriorityContract)
+                {
+                    Core.WarStatus.Escalation = true;
+                    Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
+                    Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Escalation Days Remaining");
+                    Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                    __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
+                    __instance.RoomManager.SortTimeline();
+                    __instance.RoomManager.RefreshTimeline();
+                }
+            }
+        }
+
         public static void CompleteDeployment()
         {
 
