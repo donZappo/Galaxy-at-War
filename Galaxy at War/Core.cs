@@ -524,55 +524,65 @@ public static class Core
             Log("Change");
             Log(faction.ToString());
             Log(OldFaction.ToString());
+            Log("A");
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction]);
+            Log("B");
             system.Def.Tags.Add(Settings.FactionTags[faction]);
             system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
-            if (system.Def.FactionShopItems != null)
+            Log("C");
+            if (system.Def.FactionShopItems != null && !Settings.DefensiveFactions.Contains()
             {
                 Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
                 if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]))
                     system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
                 system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
             }
+            Log("D");
 
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
             var oldOwner = systemStatus.owner;
             systemStatus.owner = faction;
-
+            Log("E");
             Traverse.Create(system.Def).Property("Owner").SetValue(faction);
             //Change the Kill List for the factions.
             var TotalAR = GetTotalAttackResources(system);
             var TotalDR = GetTotalDefensiveResources(system);
             var SystemValue = TotalAR + TotalDR;
             var KillListDelta = Math.Max(10, SystemValue);
-
+            Log("F");
             var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
             if (factionTracker.deathList[faction] < 50)
                 factionTracker.deathList[faction] = 50;
-
+            Log("G");
             factionTracker.deathList[faction] += KillListDelta;
             //Allies are upset that their friend is being beaten up.
 
-            foreach (var ally in sim.FactionsDict[OldFaction].Allies)
+            if (!Settings.DefensiveFactions.Contains(OldFaction))
             {
-                if (!Settings.IncludedFactions.Contains(ally) || faction == ally)
-                    continue;
+                foreach (var ally in sim.FactionsDict[OldFaction].Allies)
+                {
+                    if (!Settings.IncludedFactions.Contains(ally) || faction == ally)
+                        continue;
 
-                var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
-                factionAlly.deathList[faction] += KillListDelta / 2;
+                    var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
+                    factionAlly.deathList[faction] += KillListDelta / 2;
+                }
             }
-
+            Log("H");
             //Enemies of the target faction are happy with the faction doing the beating.
 
-            foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
+            if (!Settings.DefensiveFactions.Contains(OldFaction))
             {
-                if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
-                    continue;
-                var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
-                factionEnemy.deathList[faction] -= KillListDelta / 2;
+                foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
+                {
+                    if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
+                        continue;
+                    var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
+                    factionEnemy.deathList[faction] -= KillListDelta / 2;
+                }
             }
-
+            Log("(");
             factionTracker.AttackedBy.Add(faction);
 
             WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
@@ -589,14 +599,14 @@ public static class Core
                 WFWinner.AttackResources += TotalAR;
                 WFWinner.DefensiveResources += TotalDR;
             }
-
+            Log("J");
             WFWinner.AttackResources += TotalAR;
             WFWinner.DefensiveResources += TotalDR;
             WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
             WFLoser.LostSystem = true;
             WFLoser.MonthlySystemsChanged -= 1;
             WFLoser.TotalSystemsChanged -= 1;
-
+            Log("K");
             if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
             {
                 WFLoser.DefensiveResources -= TotalAR;
@@ -607,6 +617,7 @@ public static class Core
                 WFLoser.AttackResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
             }
+            Log("L");
         }
     }
 
