@@ -20,7 +20,6 @@ public static class SaveHandling
                 Core.WarStatus = new WarStatus();
                 Core.WarTick();
                 StarmapMod.SetupRelationPanel();
-                //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(8f);
                 SerializeWar();
             }
         }
@@ -31,9 +30,25 @@ public static class SaveHandling
     {
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
+            bool NewGaW = true;
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            DeserializeWar();
-            Galaxy_at_War.HotSpots.ProcessHotSpots();
+            foreach (string tag in __instance.CompanyTags)
+            {
+                if (tag.StartsWith("GalaxyAtWarSave{"))
+                    NewGaW = false;
+            }
+            if (NewGaW)
+            {
+                Core.WarStatus = new WarStatus();
+                Core.WarTick();
+                StarmapMod.SetupRelationPanel();
+                SerializeWar();
+            }
+            else
+            {
+                DeserializeWar();
+                Galaxy_at_War.HotSpots.ProcessHotSpots();
+            }
         }
     }
     internal static void DeserializeWar()

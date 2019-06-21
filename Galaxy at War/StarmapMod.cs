@@ -133,7 +133,7 @@ public class StarmapMod
     {
         public static void Postfix(SimGameState __instance)
         {
-            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.F))
+            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
                 eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeInHierarchy);
         }
     }
