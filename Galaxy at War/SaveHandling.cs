@@ -15,38 +15,14 @@ public static class SaveHandling
     {
         public static void Postfix()
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null)
             {
                 Core.WarStatus = new WarStatus();
                 Core.WarTick();
-
-                //Galaxy_at_War.HotSpots.ProcessHotSpots();
-                //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 StarmapMod.SetupRelationPanel();
                 //Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(8f);
                 SerializeWar();
             }
-            else
-            {
-                foreach (var system in sim.StarSystems)
-                {
-                    Core.CalculateAttackTargets(system);
-                    Core.CalculateDefenseTargets(system);
-                    Core.RefreshNeighbors(system);
-                    Core.RefreshContracts(system);
-                }
-                Galaxy_at_War.HotSpots.ProcessHotSpots();
-            }
-
-            //Log("Setting up new WarStatus");
-            //Core.WarStatus = new WarStatus();
-            //Core.WarTick();
-            //Galaxy_at_War.HotSpots.ProcessHotSpots();
-            //StarmapMod.SetupRelationPanel();
-            //var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            //sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
         }
     }
 
@@ -55,31 +31,56 @@ public static class SaveHandling
     {
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
             DeserializeWar();
         }
     }
     internal static void DeserializeWar()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        //foreach (var tag in sim.CompanyTags)
-        //    LogDebug(tag);
 
         Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
         LogDebug(">>> Deserialization complete");
         LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
     }
+    [HarmonyPatch(typeof(GameInstance), "Load")]
+    public static class GameInstance_Load_Patch
+    {
+        public static void Postfix()
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            foreach (var system in sim.StarSystems)
+            {
+                Core.CalculateAttackTargets(system);
+                Core.CalculateDefenseTargets(system);
+                Core.RefreshNeighbors(system);
+                Core.RefreshContracts(system);
+            }
+            Galaxy_at_War.HotSpots.ProcessHotSpots();
+        }
+    }
+
 
     [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
     public static class SimGameState_Dehydrate_Patch
     {
         public static void Prefix()
         {
+            if (Core.WarStatus.StartGameContracts)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                Core.WarStatus.StartGameContracts = false;
+            }
             SerializeWar();
         }
     }
+
     internal static void SerializeWar()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
+        Core.WarStatus.CurSystem = sim.CurSystem.Name;
         sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");

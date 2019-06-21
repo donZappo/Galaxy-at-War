@@ -32,30 +32,37 @@ namespace Galaxy_at_War
         public static  System.Random rand = new System.Random();
         public static bool EnemyAdded = false;
         public static Faction EnemyFaction;
+        public static int BonusMoney = 0;
 
         public static void ProcessHotSpots()
         {
+            Log("A");
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var DominantFaction = sim.CurSystem.Owner;
+            var DominantFaction = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem).owner;
+            Log("B");
             //var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
             System.Random rand = new System.Random();
             var FullHomeContendedSystems = new Dictionary<StarSystem, int>();
+            Log("C");
             WarStatus.ExternalPriorityTargets.Clear();
             HomeContendedSystems.Clear();
             HomeContendedStrings.Clear();
-
+            Log("D");
             var FactRepDict = new Dictionary<Faction, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
+                Log("E");
                 WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
-                if (Core.Settings.DefensiveFactions.Contains(faction)) continue;
                 var MaxContracts = HotSpots.ProcessReputation(sim.GetRawReputation(faction));
                 FactRepDict.Add(faction, MaxContracts);
+                //if (Core.Settings.DefensiveFactions.Contains(faction)) continue;
             }
 
             //Populate lists with planets that are in danger of flipping
-            foreach (SystemStatus systemStatus in Core.WarStatus.systems)
+            foreach (var system in Core.WarStatus.PrioritySystems)
             {
+                Log("F");
+                var systemStatus = Core.WarStatus.systems.Find(x => x.name == system);
                 if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner])
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
@@ -82,6 +89,7 @@ namespace Galaxy_at_War
                     }
                 }
             }
+            Log("Left Loop");
             var i = 0;
             foreach (var ContendedSystem in FullHomeContendedSystems.OrderByDescending(key => key.Value))
             {
@@ -110,7 +118,6 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-
                 ProcessHotSpots();
                 if (HomeContendedSystems.Count != 0)
                 {
@@ -126,6 +133,7 @@ namespace Galaxy_at_War
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
                         else
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
+                        SystemBonuses(MainBCTarget);
                         Core.RefreshContracts(MainBCTarget);
                         HomeContendedSystems.RemoveAt(RandomSystem);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
@@ -151,6 +159,7 @@ namespace Galaxy_at_War
                                 sim.GeneratePotentialContracts(true, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
                             else
                                 sim.GeneratePotentialContracts(false, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
+                            SystemBonuses(ExternalPriorityTargets[ExtTarget][RandTarget]);
                             Core.RefreshContracts(ExternalPriorityTargets[ExtTarget][RandTarget]);
                             ExternalPriorityTargets[ExtTarget].RemoveAt(RandTarget);
                         } while (sim.CurSystem.SystemBreadcrumbs.Count == j && ExternalPriorityTargets[ExtTarget].Count != 0);
@@ -160,6 +169,15 @@ namespace Galaxy_at_War
                             break;
                     }
                 }
+            }
+        }
+        [HarmonyPatch(typeof(StarSystem))]
+        [HarmonyPatch("InitialContractsFetched", MethodType.Getter)]
+        public static class StarSystem_InitialContractsFetched_Patch
+        {
+            static void Postfix(ref bool __result)
+            {
+                __result = true;
             }
         }
 
@@ -195,6 +213,7 @@ namespace Galaxy_at_War
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var starSystem = sim.StarSystems.Find(x => x.Def.Description.Id == contract.TargetSystem);
                 Core.WarStatus.systems.Find(x => x.name == starSystem.Name).HotBox = true;
+                Core.WarStatus.HotBoxTravelling = true;
             }
         }
 
@@ -226,6 +245,7 @@ namespace Galaxy_at_War
             static void Postfix(AAR_SalvageScreen __instance)
             {
                 Core.WarStatus.JustArrived = false;
+                Core.WarStatus.HotBoxTravelling = false;
             }
         }
 
@@ -275,10 +295,126 @@ namespace Galaxy_at_War
                 }
             }
         }
-
-        public static void CompleteDeployment()
+        [HarmonyPatch(typeof(Contract), "GenerateSalvage")]
+        public static class Contract_GenerateSalvage_Patch
         {
+            static void Postfix(Contract __instance)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
 
+                if (system.BonusSalvage && system.HotBox)
+                {
+                    var NewSalvageCount = __instance.FinalSalvageCount + 1;
+                    Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(NewSalvageCount);
+
+                    if (__instance.FinalPrioritySalvageCount < 7)
+                    {
+                        var NewPrioritySalvage = __instance.FinalPrioritySalvageCount + 1;
+                        Traverse.Create(__instance).Property("FinalPrioritySalvageCount").SetValue(NewPrioritySalvage);
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(AAR_ContractObjectivesWidget), "FillInObjectives")]
+        public static class AAR_ContractObjectivesWidget_FillInObjectives
+        {
+            static void Postfix(AAR_ContractObjectivesWidget __instance)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                
+                if (system.BonusCBills && system.HotBox)
+                {
+                    string missionObjectiveResultString = $"BONUS FROM ESCALTION: ¢{String.Format("{0:n0}", BonusMoney)}";
+                    MissionObjectiveResult missionObjectiveResult = new MissionObjectiveResult(missionObjectiveResultString, "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0", false, true, ObjectiveStatus.Succeeded, false);
+                    Traverse.Create(__instance).Method("AddObjective", missionObjectiveResult).GetValue();
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Contract), "CompleteContract")]
+        public static class Contract_CompleteContract_Patch
+        {
+            static void Postfix(Contract __instance)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                if (system.BonusCBills && system.HotBox)
+                {
+                    BonusMoney = (int)(__instance.MoneyResults * Core.Settings.BonusCbillsFactor);
+                    int newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + BonusMoney);
+                    Traverse.Create(__instance).Property("set_MoneyResults").SetValue(newMoneyResults);
+                }
+            }
+        }
+        [HarmonyPatch(typeof(AAR_UnitStatusWidget), "FillInPilotData")]
+        public static class AAR_UnitStatusWidget_Patch
+        {
+            static void Prefix(ref int xpEarned)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                if (system.BonusXP && system.HotBox)
+                {
+                    xpEarned = xpEarned + (int)(xpEarned * Core.Settings.BonusXPFactor);
+                }
+            }
+        }
+
+        public static void SystemBonuses(StarSystem starSystem)
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            var system = Core.WarStatus.systems.Find(x => x.starSystem == starSystem);
+            System.Random rand = new System.Random();
+
+            if (!system.HotBox)
+            {
+                system.BonusCBills = false;
+                system.BonusSalvage = false;
+                system.BonusXP = false;
+
+                if (system.DifficultyRating <= 4)
+                {
+                    var bonus = rand.Next(0, 3);
+                    if (bonus == 0)
+                        system.BonusCBills = true;
+                    if (bonus == 1)
+                        system.BonusXP = true;
+                    if (bonus == 2)
+                        system.BonusSalvage = true;
+                }
+                if (system.DifficultyRating <= 8 && system.DifficultyRating > 4)
+                {
+                    system.BonusCBills = true;
+                    system.BonusSalvage = true;
+                    system.BonusXP = true;
+                    var bonus = rand.Next(0, 3);
+                    if (bonus == 0)
+                        system.BonusCBills = false;
+                    if (bonus == 1)
+                        system.BonusXP = false;
+                    if (bonus == 2)
+                        system.BonusSalvage = false;
+                }
+                if (system.DifficultyRating <= 10 && system.DifficultyRating > 8)
+                {
+                    system.BonusCBills = true;
+                    system.BonusSalvage = true;
+                    system.BonusXP = true;
+                }
+            }
+        }
+
+        public static void CompleteEscalation()
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+            system.BonusCBills = false;
+            system.BonusSalvage = false;
+            system.BonusXP = false;
+            system.HotBox = false;
         }
 
         public static int ProcessReputation(float FactionRep)

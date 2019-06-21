@@ -87,6 +87,7 @@ public static class Core
         static void Prefix(SimGameState __instance, int timeLapse)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
+            WarStatus.CurSystem = sim.CurSystem.Name;
             var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
             if (DepSystem.HotBox)
             {
@@ -94,7 +95,7 @@ public static class Core
 
                 if (WarStatus.EscalationDays == 0)
                 {
-                    Galaxy_at_War.HotSpots.CompleteDeployment();
+                    Galaxy_at_War.HotSpots.CompleteEscalation();
                 }
                 if (WarStatus.EscalationOrder != null)
                 {
@@ -121,8 +122,6 @@ public static class Core
                 for (int i = 0; i < 1; i++)
                 {
                     WarTick();
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 }
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
@@ -143,6 +142,12 @@ public static class Core
     internal static void WarTick()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
+        WarStatus.PrioritySystems.Clear();
+
+        int SystemSubsetSize = WarStatus.systems.Count;
+        if (Settings.UseSubsetOfSystems)
+            SystemSubsetSize = (int)(SystemSubsetSize * Settings.SubSetFraction);
+        var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
         // Proc effects
         foreach (var warFaction in WarStatus.warFactionTracker)
@@ -158,7 +163,7 @@ public static class Core
         }
 
         LogDebug("Calculations and System Push");
-        foreach (var systemStatus in WarStatus.systems)
+        foreach (var systemStatus in SystemSubset)
         {
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
@@ -167,14 +172,16 @@ public static class Core
             CalculateDefenseTargets(systemStatus.starSystem);
             RefreshNeighbors(systemStatus.starSystem);
             RefreshContracts(systemStatus.starSystem);
-
             if (systemStatus.Contended || systemStatus.HotBox) continue;
 
             //Add resources from neighboring systems.
-            foreach (var neighbor in systemStatus.neighborSystems.Keys)
+            if (systemStatus.neighborSystems.Count != 0)
             {
-                var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
-                systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
+                foreach (var neighbor in systemStatus.neighborSystems.Keys)
+                {
+                    var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
+                    systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
+                }
             }
         }
 
@@ -191,7 +198,7 @@ public static class Core
             AllocateDefensiveResources(warFaction);
         }
 
-        UpdateInfluenceFromAttacks(sim);
+        UpdateInfluenceFromAttacks(sim, SystemSubset);
 
         //Increase War Escalation or decay defenses.
         foreach (var warfaction in WarStatus.warFactionTracker)
@@ -211,6 +218,13 @@ public static class Core
                 warfaction.DaysSinceSystemLost = 0;
                 warfaction.LostSystem = false;
             }
+        }
+
+        Galaxy_at_War.HotSpots.ProcessHotSpots();
+        if (!WarStatus.HotBoxTravelling && !Core.WarStatus.StartGameContracts)
+        {
+            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
         }
 
         //Log("===================================================");
@@ -253,6 +267,8 @@ public static class Core
             return;
         }
         LogDebug("A");
+        if (sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
+            return;
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
             LogDebug("B");
@@ -316,7 +332,7 @@ public static class Core
 
         var total = tempTargets.Values.Sum();
         float attackResources = 0f;
-        var i = warFaction.AttackResources;
+        var i = warFaction.AttackResources * Settings.ResourceScale;
         while (i > 0)
         {
             if (i >= 1)
@@ -365,6 +381,8 @@ public static class Core
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
                         system.CurrentlyAttackedBy.Add(warFaction.faction);
+                    if (!WarStatus.PrioritySystems.Contains(system.starSystem.Name))
+                        WarStatus.PrioritySystems.Add(system.starSystem.Name);
                 }
 
                 //Distribute attacking resources to systems.
@@ -413,7 +431,7 @@ public static class Core
             return;
 
         float defensiveResources = 0f;
-        var i = warFaction.DefensiveResources;
+        var i = warFaction.DefensiveResources * Settings.ResourceScale;
         while (i > 0)
         {
             if (i >= 1)
@@ -503,6 +521,9 @@ public static class Core
         if (faction != system.Owner || ForceFlip)
         {
             Faction OldFaction = system.Owner;
+            Log("Change");
+            Log(faction.ToString());
+            Log(OldFaction.ToString());
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);
@@ -589,7 +610,7 @@ public static class Core
         }
     }
 
-    private static void UpdateInfluenceFromAttacks(SimGameState sim)
+    private static void UpdateInfluenceFromAttacks(SimGameState sim, IEnumerable<SystemStatus> systemSubset)
     {
         var tempRTFactions = WarStatus.deathListTracker;
         foreach (var deathListTracker in tempRTFactions)
@@ -598,7 +619,7 @@ public static class Core
         }
 
         LogDebug($"Updating influence for {WarStatus.systems.Count.ToString()} systems");
-        foreach (var systemStatus in WarStatus.systems)
+        foreach (var systemStatus in systemSubset)
         {
             var tempDict = new Dictionary<Faction, float>();
             var totalInfluence = systemStatus.influenceTracker.Values.Sum();
@@ -621,7 +642,7 @@ public static class Core
             {
                 var starSystem = systemStatus.starSystem;
 
-                if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && sim.DayRemainingInQuarter == 30)
+                if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && sim.DayRemainingInQuarter == 30 && !Settings.DefensiveFactions.Contains(highestfaction))
                 {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
                     systemStatus.Contended = false;
@@ -815,9 +836,9 @@ public static class Core
         }
     }
 
-    public static int GetTotalAttackResources(StarSystem system)
+    public static float GetTotalAttackResources(StarSystem system)
     {
-        int result = 0;
+        float result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
             result += Settings.planet_industry_poor;
         if (system.Tags.Contains("planet_industry_mining"))
@@ -833,9 +854,9 @@ public static class Core
         return result;
     }
 
-    public static int GetTotalDefensiveResources(StarSystem system)
+    public static float GetTotalDefensiveResources(StarSystem system)
     {
-        int result = 0;
+        float result = 0;
         if (system.Tags.Contains("planet_industry_agriculture"))
             result += Settings.planet_industry_agriculture;
         if (system.Tags.Contains("planet_industry_aquaculture"))
@@ -897,7 +918,7 @@ public static class Core
                 var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
                 var oldOwner = warsystem.owner;
 
-                if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold)
+                if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold && !Settings.DefensiveFactions.Contains(teamfaction))
                 {
                     ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
 
@@ -906,7 +927,7 @@ public static class Core
                     GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
                     SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
                         .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                    interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken!" + teamfaction.ToString() +
+                    interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken!" + teamfaction.ToString() +
                                                                                                      " conquered from " + oldOwner.ToString(), true, null);
                     __instance.StopPlayMode();
                 }

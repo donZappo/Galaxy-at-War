@@ -1,96 +1,42 @@
 using System.Collections.Generic;
 using BattleTech;
+using UnityEngine;
 
 public class ModSettings
 {
     //attacking resources
-    public int planet_industry_poor = 1;
-    public int planet_industry_mining = 2;
-    public int planet_industry_rich = 3;
-    public int planet_industry_manufacturing = 4;
-    public int planet_industry_research = 5;
-    public int planet_other_starleague = 6;
+    public float planet_industry_poor = 1;
+    public float planet_industry_mining = 2;
+    public float planet_industry_rich = 3;
+    public float planet_industry_manufacturing = 4;
+    public float planet_industry_research = 5;
+    public float planet_other_starleague = 6;
 
     //defending resources
-    public int planet_industry_agriculture = 3;
-    public int planet_industry_aquaculture = 3;
-    public int planet_other_capital = 7;
-    public int planet_other_megacity = 5;
-    public int planet_pop_large = 4;
-    public int planet_pop_medium = 3;
-    public int planet_pop_none = 1;
-    public int planet_pop_small = 2;
-    public int planet_other_hub = 6;
-    public int planet_other_comstar = 0;
+    public float planet_industry_agriculture = 3;
+    public float planet_industry_aquaculture = 3;
+    public float planet_other_capital = 7;
+    public float planet_other_megacity = 5;
+    public float planet_pop_large = 4;
+    public float planet_pop_medium = 3;
+    public float planet_pop_none = 1;
+    public float planet_pop_small = 2;
+    public float planet_other_hub = 6;
+    public float planet_other_comstar = 0;
 
-    
 
-    public Dictionary<Faction, int> BonusAttackResources = new Dictionary<Faction, int>
-    {
-        {Faction.Davion, 0},
-        {Faction.Liao, 0},
-        {Faction.Marik, 0},
-        {Faction.TaurianConcordat, 0},
-        {Faction.MagistracyOfCanopus, 0},
-        {Faction.Locals, 0},
-        {Faction.NoFaction, 0},
-        {Faction.AuriganRestoration, 0}
-    };
 
-    public Dictionary<Faction, int> BonusDefensiveResources = new Dictionary<Faction, int>
-    {
-        {Faction.Davion, 0},
-        {Faction.Liao, 0},
-        {Faction.Marik, 0},
-        {Faction.TaurianConcordat, 0},
-        {Faction.MagistracyOfCanopus, 0},
-        {Faction.Locals, 0},
-        {Faction.NoFaction, 0},
-        {Faction.AuriganRestoration, 0}
-    };
+    public Dictionary<Faction, int> BonusAttackResources = new Dictionary<Faction, int>();
 
-    public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>
-    {
-        {Faction.Liao, "planet_faction_liao"},
-        {Faction.Steiner, "planet_faction_steiner"},
-        {Faction.Marik, "planet_faction_marik"},
-        {Faction.Davion, "planet_faction_davion"},
-        {Faction.Kurita, "planet_faction_kurita"},
-        {Faction.AuriganDirectorate, "planet_faction_directorate"},
-        {Faction.TaurianConcordat, "planet_faction_taurian"},
-        {Faction.MagistracyOfCanopus, "planet_faction_magistracy"},
-        {Faction.NoFaction, "planet_faction_nofaction"},
-        {Faction.Locals, "planet_faction_independent"},
-        {Faction.AuriganRestoration, "planet_faction_restoration"}
-    };
+    public Dictionary<Faction, int> BonusDefensiveResources = new Dictionary<Faction, int>();
 
-    public Dictionary<Faction, string> FactionShops = new Dictionary<Faction, string>
-    {
-        {Faction.Liao, "itemCollection_minor_Liao"},
-        {Faction.Marik, "itemCollection_minor_Marik"},
-        {Faction.Davion, "itemCollection_minor_Davion"},
-        {Faction.AuriganDirectorate, "itemCollection_minor_AuriganDirectorate"},
-        {Faction.TaurianConcordat, "itemCollection_minor_TaurianConcordat"},
-        {Faction.MagistracyOfCanopus, "itemCollection_minor_MagistracyOfCanopus"},
-        {Faction.NoFaction, "itemCollection_minor_Locals"},
-        {Faction.Locals, "itemCollection_minor_Locals"},
-        {Faction.AuriganRestoration, "itemCollection_minor_AuriganRestoration"}
-    };
+    public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>();
 
-    public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>
-    {
-        {Faction.Liao, "itemCollection_faction_Liao"},
-        {Faction.Marik, "itemCollection_faction_Marik"},
-        {Faction.Davion, "itemCollection_faction_Davion"},
-        {Faction.AuriganDirectorate, null},
-        {Faction.TaurianConcordat, "itemCollection_faction_TaurianConcordat"},
-        {Faction.MagistracyOfCanopus, "itemCollection_faction_MagistracyOfCanopus"},
-        {Faction.NoFaction, null},
-        {Faction.Locals, null},
-        {Faction.AuriganRestoration, null}
-    };
+    public Dictionary<Faction, string> FactionShops = new Dictionary<Faction, string>();
 
-    public int WarFrequency = 5;
+    public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>();
+
+    public int WarFrequency = 1;
     public bool Debug = false;
 
     public string modDirectory;
@@ -101,7 +47,7 @@ public class ModSettings
     public int DResourceAdjustmentPerCycle = 0;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
-    public float TakeoverThreshold = 30f;
+    public float TakeoverThreshold = 10f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
     public float KLValueAllies = 25f;
@@ -112,6 +58,14 @@ public class ModSettings
     public int InternalHotSpots = 2;
     public int ExternalHotSpots = 4;
     public int EscalationDays = 30;
+    public float LogoScalar = 0.75f;
+    public float LogoMaxSize = 10;
+    public float BonusXPFactor = 0.2f;
+    public float BonusCbillsFactor = 0.2f;
+    public bool ISMCompatibility = true;
+    public float ResourceScale = 0.10f;
+    public bool UseSubsetOfSystems = false;
+    public float SubSetFraction = 0.10f;
 
     public int Diff1 = 1;
     public int Diff2 = 4;
@@ -124,34 +78,11 @@ public class ModSettings
     public int Diff9 = 23;
     public int Diff10 = 42;
 
-    public List<Faction> DefensiveFactions = new List<Faction>()
-    {
-        Faction.Locals,
-        Faction.NoFaction,
-        Faction.AuriganPirates
-    };
+    public List<Faction> DefensiveFactions = new List<Faction>();
 
-    public List<Faction> IncludedFactions = new List<Faction>()
-    {
-        Faction.AuriganRestoration,
-        Faction.Davion,
-        Faction.Liao,
-        Faction.MagistracyOfCanopus,
-        Faction.Marik,
-        Faction.TaurianConcordat,
-        Faction.Locals,
-        Faction.NoFaction
-    };
+    public List<Faction> IncludedFactions = new List<Faction>();
 
-    public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>()
-    {
-        {Faction.AuriganRestoration, "The Arano Restoration"},
-        {Faction.Davion, "The Federated Suns"},
-        {Faction.Liao, "The Capellan Confederation"},
-        {Faction.MagistracyOfCanopus, "The Magistracy of Canopus"},
-        {Faction.Marik, "The Free Worlds League"},
-        {Faction.TaurianConcordat, "The Taurian Concordat"},
-        {Faction.Locals, "Local Factions"},
-        {Faction.NoFaction, "No Owner"}
-    };
+    public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>();
+
+    public Dictionary<Faction, string> LogoNames = new Dictionary<Faction, string>();
 }

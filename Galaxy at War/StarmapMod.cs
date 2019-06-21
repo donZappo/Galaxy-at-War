@@ -160,6 +160,14 @@ public class StarmapMod
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
         factionString.AppendLine("\n\nTotal System Resources: " + tracker.TotalResources);
+        string BonusString = "Escalation Bonuses:";
+        if (tracker.BonusCBills)
+            BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";
+        if (tracker.BonusXP)
+            BonusString = BonusString + "\n\t20% Bonus XP per Mission";
+        if (tracker.BonusSalvage)
+            BonusString = BonusString + "\n\t+1 Priority Salvage per Mission";
+        factionString.AppendLine("\n\n" + BonusString);
         return factionString.ToString();
     }
 
@@ -170,7 +178,7 @@ public class StarmapMod
         public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            Galaxy_at_War.HotSpots.ProcessHotSpots();
+            //Galaxy_at_War.HotSpots.ProcessHotSpots();
 
             var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
             var wasVisited = visitedStarSystems.Contains(__result.name);
@@ -178,6 +186,16 @@ public class StarmapMod
                 MakeSystemPurple(__result, wasVisited);
             else if (__result.systemColor == Color.magenta)
                 MakeSystemNormal(__result, wasVisited);
+        }
+    }
+
+    [HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
+    public static class StarmapRenderer_RefreshSystems_Patch
+    {
+        public static void Postfix(StarmapRenderer __instance)
+        {
+            if (!Core.Settings.ISMCompatibility)
+                Galaxy_at_War.DynamicLogos.PlaceAndScaleLogos(Core.Settings.LogoNames, __instance);
         }
     }
 

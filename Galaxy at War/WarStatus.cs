@@ -20,10 +20,15 @@ public class WarStatus
     public bool Escalation = false;
     public WorkOrderEntry_Notification EscalationOrder;
     public int EscalationDays = 0;
+    public List<string> PrioritySystems = new List<string>();
+    public string CurSystem;
+    public bool HotBoxTravelling = false;
+    public bool StartGameContracts = true;
 
     public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
+        CurSystem = sim.CurSystem.Name;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
@@ -82,7 +87,7 @@ public class SystemStatus
     public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
 
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-    public int TotalResources;
+    public float TotalResources;
     public bool HotBox = false;
     public bool PriorityDefense = false;
     public bool PriorityAttack = false;
@@ -108,7 +113,6 @@ public class SystemStatus
         owner = faction;
         // warFaction = Core.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
         TotalResources = Core.GetTotalAttackResources(starSystem) + Core.GetTotalDefensiveResources(starSystem);
-
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();
@@ -163,7 +167,7 @@ public class SystemStatus
         influenceTracker.Add(owner, Core.Settings.DominantInfluence);
         int remainingInfluence = Core.Settings.MinorInfluencePool;
 
-        if (!(neighborSystems.Keys.Count() == 1 && neighborSystems.Keys.Contains(owner)))
+        if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
         {
             while (remainingInfluence > 0)
             {
@@ -181,7 +185,6 @@ public class SystemStatus
                 }
             }
         }
-
         foreach (var faction in Core.Settings.IncludedFactions)
         {
             if (!influenceTracker.Keys.Contains(faction))
@@ -195,7 +198,6 @@ public class SystemStatus
         {
             tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
         }
-
         influenceTracker = tempDict;
     }
 
