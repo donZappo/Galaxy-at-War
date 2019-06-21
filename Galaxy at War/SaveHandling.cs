@@ -33,12 +33,12 @@ public static class SaveHandling
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             DeserializeWar();
+            Galaxy_at_War.HotSpots.ProcessHotSpots();
         }
     }
     internal static void DeserializeWar()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-
         Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
         LogDebug(">>> Deserialization complete");
         LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
@@ -56,7 +56,6 @@ public static class SaveHandling
                 Core.RefreshNeighbors(system);
                 Core.RefreshContracts(system);
             }
-            Galaxy_at_War.HotSpots.ProcessHotSpots();
         }
     }
 

@@ -135,9 +135,15 @@ public static class Core
                     .Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
                 interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
                 sim.StopPlayMode();
+                if (!WarStatus.HotBoxTravelling && !Core.WarStatus.StartGameContracts)
+                {
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                }
             }
         }
     }
+
 
     internal static void WarTick()
     {
@@ -221,11 +227,7 @@ public static class Core
         }
 
         Galaxy_at_War.HotSpots.ProcessHotSpots();
-        if (!WarStatus.HotBoxTravelling && !Core.WarStatus.StartGameContracts)
-        {
-            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-        }
+
 
         //Log("===================================================");
         //Log("TESTING ZONE");
@@ -521,40 +523,29 @@ public static class Core
         if (faction != system.Owner || ForceFlip)
         {
             Faction OldFaction = system.Owner;
-            Log("Change");
-            Log(faction.ToString());
-            Log(OldFaction.ToString());
-            Log("A");
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction]);
-            Log("B");
             system.Def.Tags.Add(Settings.FactionTags[faction]);
             system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
-            Log("C");
-            if (system.Def.FactionShopItems != null && !Settings.DefensiveFactions.Contains()
+            if (system.Def.FactionShopItems != null)
             {
                 Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
                 if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]))
                     system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
                 system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
             }
-            Log("D");
-
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
             var oldOwner = systemStatus.owner;
             systemStatus.owner = faction;
-            Log("E");
             Traverse.Create(system.Def).Property("Owner").SetValue(faction);
             //Change the Kill List for the factions.
             var TotalAR = GetTotalAttackResources(system);
             var TotalDR = GetTotalDefensiveResources(system);
             var SystemValue = TotalAR + TotalDR;
             var KillListDelta = Math.Max(10, SystemValue);
-            Log("F");
             var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
             if (factionTracker.deathList[faction] < 50)
                 factionTracker.deathList[faction] = 50;
-            Log("G");
             factionTracker.deathList[faction] += KillListDelta;
             //Allies are upset that their friend is being beaten up.
 
@@ -569,7 +560,6 @@ public static class Core
                     factionAlly.deathList[faction] += KillListDelta / 2;
                 }
             }
-            Log("H");
             //Enemies of the target faction are happy with the faction doing the beating.
 
             if (!Settings.DefensiveFactions.Contains(OldFaction))
@@ -582,7 +572,6 @@ public static class Core
                     factionEnemy.deathList[faction] -= KillListDelta / 2;
                 }
             }
-            Log("(");
             factionTracker.AttackedBy.Add(faction);
 
             WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
@@ -599,14 +588,12 @@ public static class Core
                 WFWinner.AttackResources += TotalAR;
                 WFWinner.DefensiveResources += TotalDR;
             }
-            Log("J");
             WFWinner.AttackResources += TotalAR;
             WFWinner.DefensiveResources += TotalDR;
             WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
             WFLoser.LostSystem = true;
             WFLoser.MonthlySystemsChanged -= 1;
             WFLoser.TotalSystemsChanged -= 1;
-            Log("K");
             if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
             {
                 WFLoser.DefensiveResources -= TotalAR;
@@ -617,7 +604,6 @@ public static class Core
                 WFLoser.AttackResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
             }
-            Log("L");
         }
     }
 
@@ -653,7 +639,8 @@ public static class Core
             {
                 var starSystem = systemStatus.starSystem;
 
-                if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && sim.DayRemainingInQuarter == 30 && !Settings.DefensiveFactions.Contains(highestfaction))
+                if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && sim.DayRemainingInQuarter == 30 && !Settings.DefensiveFactions.Contains(highestfaction)
+                    && starSystem.Owner != Faction.ComStar)
                 {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
                     systemStatus.Contended = false;
@@ -929,7 +916,8 @@ public static class Core
                 var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
                 var oldOwner = warsystem.owner;
 
-                if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold && !Settings.DefensiveFactions.Contains(teamfaction))
+                if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold && !Settings.DefensiveFactions.Contains(teamfaction)
+                    && warsystem.starSystem.Owner != Faction.ComStar)
                 {
                     ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
 

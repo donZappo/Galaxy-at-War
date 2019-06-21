@@ -36,7 +36,7 @@ public class ModSettings
 
     public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>();
 
-    public int WarFrequency = 1;
+    public int WarFrequency = 10;
     public bool Debug = false;
 
     public string modDirectory;
@@ -63,9 +63,9 @@ public class ModSettings
     public float BonusXPFactor = 0.2f;
     public float BonusCbillsFactor = 0.2f;
     public bool ISMCompatibility = true;
-    public float ResourceScale = 0.10f;
+    public float ResourceScale = 0.1f;
     public bool UseSubsetOfSystems = false;
-    public float SubSetFraction = 0.10f;
+    public float SubSetFraction = 0.1f;
 
     public int Diff1 = 1;
     public int Diff2 = 4;

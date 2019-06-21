@@ -36,22 +36,17 @@ namespace Galaxy_at_War
 
         public static void ProcessHotSpots()
         {
-            Log("A");
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var DominantFaction = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem).owner;
-            Log("B");
             //var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
             System.Random rand = new System.Random();
             var FullHomeContendedSystems = new Dictionary<StarSystem, int>();
-            Log("C");
             WarStatus.ExternalPriorityTargets.Clear();
             HomeContendedSystems.Clear();
             HomeContendedStrings.Clear();
-            Log("D");
             var FactRepDict = new Dictionary<Faction, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
-                Log("E");
                 WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 var MaxContracts = HotSpots.ProcessReputation(sim.GetRawReputation(faction));
                 FactRepDict.Add(faction, MaxContracts);
@@ -61,7 +56,6 @@ namespace Galaxy_at_War
             //Populate lists with planets that are in danger of flipping
             foreach (var system in Core.WarStatus.PrioritySystems)
             {
-                Log("F");
                 var systemStatus = Core.WarStatus.systems.Find(x => x.name == system);
                 if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner])
                     systemStatus.PriorityDefense = true;
@@ -89,7 +83,6 @@ namespace Galaxy_at_War
                     }
                 }
             }
-            Log("Left Loop");
             var i = 0;
             foreach (var ContendedSystem in FullHomeContendedSystems.OrderByDescending(key => key.Value))
             {
