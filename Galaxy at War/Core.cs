@@ -949,6 +949,7 @@ public static class Core
             Log("***********DIFFICULTY******");
             Log(system.name);
             Log("Resources: " + system.TotalResources);
+            Log("i :" + i.ToString());
             Log(simSystem2.Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
             if (i <= DifficultyCutoff)
             { 
@@ -956,6 +957,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 1, 1 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
             }
             if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
             {
@@ -963,6 +965,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 2, 2 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
             }
             if (i <= DifficultyCutoff * 3 && i > 2* DifficultyCutoff)
             {
@@ -970,6 +973,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 3, 3 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
             }
             if (i <= DifficultyCutoff * 4 && i > 3 * DifficultyCutoff)
             {
@@ -977,6 +981,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 4, 4 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
             }
             if (i <= DifficultyCutoff * 5 && i > 4 * DifficultyCutoff)
             {
@@ -984,6 +989,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 5, 5 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
             }
             if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
             {
@@ -991,6 +997,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 6, 6 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
             }
             if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
             {
@@ -998,6 +1005,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 7, 7 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
             }
             if (i <= DifficultyCutoff * 8 && i > 7 * DifficultyCutoff)
             {
@@ -1005,6 +1013,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 8, 8 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
             }
             if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
             {
@@ -1012,6 +1021,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 9, 9 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
             }
             if (i > 9 * DifficultyCutoff)
             {
@@ -1019,6 +1029,7 @@ public static class Core
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 10, 10 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
             }
             Log(simSystem2.Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
             i++;
