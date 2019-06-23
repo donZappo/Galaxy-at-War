@@ -377,13 +377,14 @@ public static class Core
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
             return;
         var warFAR = warFaction.warFactionAttackResources;
-
+        Log("****************ATTACKING***************");
+        Log(warFaction.faction.ToString());
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         foreach (var targetFaction in warFAR.Keys)
         {
             var targetFAR = warFAR[targetFaction];
             var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
-
+            Log("\t" + targetFaction.ToString());
             while (targetFAR > 0.0)
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
@@ -394,9 +395,14 @@ public static class Core
                 {
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
+                    {
                         system.CurrentlyAttackedBy.Add(warFaction.faction);
+                    }
                     if (!WarStatus.PrioritySystems.Contains(system.starSystem.Name))
+                    {
                         WarStatus.PrioritySystems.Add(system.starSystem.Name);
+                        Log("\t\t" + system.name + ": " + system.DifficultyRating);
+                    }
                 }
 
                 //Distribute attacking resources to systems.
@@ -410,7 +416,7 @@ public static class Core
                     else
                         continue;
                 }
-
+                
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 var PmaxValue = maxValueList[1];
                 var ITValue = system.influenceTracker[warFaction.faction];
@@ -933,10 +939,17 @@ public static class Core
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var TotalSystems = WarStatus.systems.Count;
+        Log(TotalSystems.ToString());
         var DifficultyCutoff = TotalSystems / 10;
+        Log(DifficultyCutoff.ToString());
         int i = 0;
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
+            var simSystem2 = sim.StarSystems.Find(x => x.Name == system.name);
+            Log("***********DIFFICULTY******");
+            Log(system.name);
+            Log("Resources: " + system.TotalResources);
+            Log(simSystem2.Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
             if (i <= DifficultyCutoff)
             { 
                 system.DifficultyRating = 1;
@@ -990,14 +1003,14 @@ public static class Core
             {
                 system.DifficultyRating = 8;
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
-                List<int> difficultyList = new List<int> { 1, 1 };
+                List<int> difficultyList = new List<int> { 8, 8 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
             }
             if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
             {
                 system.DifficultyRating = 1;
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
-                List<int> difficultyList = new List<int> { 1, 1 };
+                List<int> difficultyList = new List<int> { 9, 9 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
             }
             if (i > 9 * DifficultyCutoff)
@@ -1007,6 +1020,7 @@ public static class Core
                 List<int> difficultyList = new List<int> { 10, 10 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
             }
+            Log(simSystem2.Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
             i++;
         }
     }

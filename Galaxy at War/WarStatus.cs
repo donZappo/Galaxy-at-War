@@ -123,12 +123,7 @@ public class SystemStatus
     public void FindNeighbors()
     {
         neighborSystems.Clear();
-        Log("A");
-        Log((sim == null).ToString());
-        Log((sim.Starmap == null).ToString());
-        Log((starSystem == null).ToString());
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
-        Log("B");
         foreach (var neighborSystem in neighbors)
         {
             if (neighborSystems.ContainsKey(neighborSystem.Owner))

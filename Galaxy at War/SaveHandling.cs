@@ -69,7 +69,6 @@ public static class SaveHandling
 
             if (Core.WarStatus == null)
             {
-                Log("Making WarStatus");
                 Core.WarStatus = new WarStatus();
                 Core.SystemDifficulty();
                 Core.WarTick(true, true);

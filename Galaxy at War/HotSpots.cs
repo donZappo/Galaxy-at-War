@@ -94,6 +94,7 @@ namespace Galaxy_at_War
                 i++;
             }
             Log(HomeContendedStrings.Count.ToString());
+
             Log(FullHomeContendedSystems.Count.ToString());
         }
 
