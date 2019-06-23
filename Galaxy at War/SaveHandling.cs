@@ -7,31 +7,19 @@ using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
 using BattleTech.Save;
+using System.Diagnostics;
+using HBS;
+using BattleTech.UI;
+
 
 public static class SaveHandling
 {
-    [HarmonyPatch(typeof(SimGameState), "_OnAttachUXComplete")]
-    public static class SimGameState__OnAttachUXComplete_Patch
-    {
-        public static void Postfix()
-        {
-            if (Core.WarStatus == null)
-            {
-                Core.WarStatus = new WarStatus();
-                Core.WarTick();
-                StarmapMod.SetupRelationPanel();
-                SerializeWar();
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(SimGameState), "Rehydrate")]
     public static class SimGameState_Rehydrate_Patch
     {
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
             bool NewGaW = true;
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
             foreach (string tag in __instance.CompanyTags)
             {
                 if (tag.StartsWith("GalaxyAtWarSave{"))
@@ -40,14 +28,14 @@ public static class SaveHandling
             if (NewGaW)
             {
                 Core.WarStatus = new WarStatus();
-                Core.WarTick();
-                StarmapMod.SetupRelationPanel();
+                Core.SystemDifficulty();
+                Core.WarTick(true, true);
                 SerializeWar();
             }
             else
             {
                 DeserializeWar();
-                Galaxy_at_War.HotSpots.ProcessHotSpots();
+                //Galaxy_at_War.HotSpots.ProcessHotSpots(__instance.CurSystem);
             }
         }
     }
@@ -66,9 +54,7 @@ public static class SaveHandling
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             foreach (var system in sim.StarSystems)
             {
-                Core.CalculateAttackTargets(system);
-                Core.CalculateDefenseTargets(system);
-                Core.RefreshNeighbors(system);
+                Core.CalculateAttackAndDefenseTargets(system);
                 Core.RefreshContracts(system);
             }
         }
@@ -78,45 +64,31 @@ public static class SaveHandling
     [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
     public static class SimGameState_Dehydrate_Patch
     {
-        public static void Prefix()
+        public static void Prefix(SimGameState __instance)
         {
-            if (Core.WarStatus.StartGameContracts)
+
+            if (Core.WarStatus == null)
             {
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
-                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                Core.WarStatus.StartGameContracts = false;
+                Log("Making WarStatus");
+                Core.WarStatus = new WarStatus();
+                Core.SystemDifficulty();
+                Core.WarTick(true, true);
+                StarmapMod.SetupRelationPanel();
+                SerializeWar();
             }
-            SerializeWar();
+            else
+                SerializeWar();
         }
     }
 
     internal static void SerializeWar()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        Core.WarStatus.CurSystem = sim.CurSystem.Name;
         sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         LogDebug(">>> Serialization complete");
     }
-
-    //[HarmonyPatch(typeof(SerializableReferenceContainer), "Load")]
-    //public static class SerializableReferenceContainer_Load_Patch
-    //{
-    //    // get rid of tags before loading because vanilla behaviour doesn't purge them
-    //    public static void Prefix()
-    //    {
-    //        var sim = UnityGameInstance.BattleTechGame.Simulation;
-    //        if (sim == null) return;
-    //        LogDebug("Clearing GaW save tags");
-    //        sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
-    //    }
-    //}
-
-
-
-    
 
 
     //Hotkeys
@@ -137,7 +109,7 @@ public static class SaveHandling
 
                 LogDebug("Setting up new WarStatus");
                 Core.WarStatus = new WarStatus();
-                Core.WarTick();
+                Core.WarTick(true, true);
             }
 
             var hotkeyD = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);

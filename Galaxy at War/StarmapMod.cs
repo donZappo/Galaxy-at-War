@@ -25,7 +25,7 @@ public class StarmapMod
     {
         public static void Prefix(TooltipPrefab_Planet __instance, object data, ref string __state)
         {
-            var starSystem = (StarSystem) data;
+            var starSystem = (StarSystem)data;
             if (starSystem == null)
             {
                 return;
@@ -38,7 +38,7 @@ public class StarmapMod
 
         public static void Postfix(TooltipPrefab_Planet __instance, object data, string __state)
         {
-            var starSystem = (StarSystem) data;
+            var starSystem = (StarSystem)data;
             if (starSystem == null)
             {
                 return;
@@ -54,27 +54,7 @@ public class StarmapMod
         eventPanel.gameObject.SetActive(true);
         GameObject.Find("uixPrfPanl_spotIllustration_750-MANAGED").SetActive(false);
 
-        var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
-        foreach (var tm in tmps)
-        {
-            switch (tm.name)
-            {
-                case "title_week-day":
-                    tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
-                    break;
-                case "event_titleText":
-                    tm.text = "Relationship Summary";
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "descriptionText":
-                    tm.text = BuildRelationString();
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "label_Text":
-                    tm.gameObject.SetActive(false);
-                    break;
-            }
-        }
+        UpdatePanelText();
 
         try
         {
@@ -128,6 +108,31 @@ public class StarmapMod
         return sb.ToString();
     }
 
+    internal static void UpdatePanelText()
+    {
+        var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
+        foreach (var tm in tmps)
+        {
+            switch (tm.name)
+            {
+                case "title_week-day":
+                    tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
+                    break;
+                case "event_titleText":
+                    tm.text = "Relationship Summary";
+                    tm.alignment = TextAlignmentOptions.Center;
+                    break;
+                case "descriptionText":
+                    tm.text = BuildRelationString();
+                    tm.alignment = TextAlignmentOptions.Center;
+                    break;
+                case "label_Text":
+                    tm.gameObject.SetActive(false);
+                    break;
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(SimGameState), "Update")]
     public static class FactionPopup_Patch
     {
@@ -171,20 +176,43 @@ public class StarmapMod
         return factionString.ToString();
     }
 
+    [HarmonyPatch(typeof(StarmapScreen), "RenderStarmap")]
+    public static class StarmapScreen_RenderStarmap_Patch
+    {
+        public static void Prefix()
+        {
+            if (!Core.WarStatus.StartGameInitialized)
+            {
+                Log("Initializing");
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                Galaxy_at_War.HotSpots.ProcessHotSpots();
+                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                Core.WarStatus.StartGameInitialized = true;
+            }
+        }
+    }
+
+
     [HarmonyPatch(typeof(StarmapRenderer), "GetSystemRenderer")]
-    [HarmonyPatch(new[] {typeof(StarSystemNode)})]
+    [HarmonyPatch(new[] { typeof(StarSystemNode) })]
     public static class StarmapRenderer_GetSystemRenderer_Patch
     {
+        public static void Prefix()
+        {
+        }
+
         public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            //Galaxy_at_War.HotSpots.ProcessHotSpots();
 
             var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
             var wasVisited = visitedStarSystems.Contains(__result.name);
             if (Galaxy_at_War.HotSpots.HomeContendedStrings.Contains(__result.name))
-                MakeSystemPurple(__result, wasVisited);
-            else if (__result.systemColor == Color.magenta)
+                HighlightSystem(__result, wasVisited, Color.magenta, true);
+            else if (Galaxy_at_War.HotSpots.ContendedStrings.Contains(__result.name))
+                HighlightSystem(__result, wasVisited, Color.yellow, true);
+            else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                 MakeSystemNormal(__result, wasVisited);
         }
     }
@@ -208,7 +236,7 @@ public class StarmapMod
             var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
             foreach (var o in fonts)
             {
-                var font = (TMP_FontAsset) o;
+                var font = (TMP_FontAsset)o;
                 if (font.name == "UnitedSansSemiExt-Light")
                     ___LabelField.SetFont(font);
                 ___NameField.SetFont(font);
@@ -216,20 +244,22 @@ public class StarmapMod
         }
     }
 
-    private static void MakeSystemPurple(StarmapSystemRenderer __result, bool wasVisited)
+    private static void HighlightSystem(StarmapSystemRenderer __result, bool wasVisited, Color color, bool resize)
     {
         var blackMarketIsActive = __result.blackMarketObj.gameObject.activeInHierarchy;
         var fpAvailableIsActive = __result.flashpointAvailableObj.gameObject.activeInHierarchy;
         var fpActiveIsActive = __result.flashpointActiveObj.gameObject.activeInHierarchy;
-        __result.Init(__result.system, Color.magenta, __result.CanTravel, wasVisited);
+        __result.Init(__result.system, color, __result.CanTravel, wasVisited);
         if (fpAvailableIsActive)
             __result.flashpointAvailableObj.SetActive(true);
         if (fpActiveIsActive)
             __result.flashpointActiveObj.SetActive(true);
         if (blackMarketIsActive)
             __result.blackMarketObj.gameObject.SetActive(true);
-
-        Traverse.Create(__result).Field("selectedScale").SetValue(10f);
+        if (resize)
+            Traverse.Create(__result).Field("selectedScale").SetValue(10f);
+        else
+            Traverse.Create(__result).Field("selectedScale").SetValue(8f);
         Traverse.Create(__result).Field("deselectedScale").SetValue(8f);
     }
 
@@ -284,25 +314,26 @@ public class StarmapMod
         //}
 
         //[HarmonyPatch(typeof(SGNavigationScreen), "Init")]
-        //[HarmonyPatch(new[] {typeof(SimGameState), typeof(SGRoomController_Navigation)})]
+        //[HarmonyPatch(new[] { typeof(SimGameState), typeof(SGRoomController_Navigation) })]
         //public static class SGNavigationScreen_Init_Patch
         //{
         //    internal static GameObject testObject;
         //    internal static TextMeshProUGUI objectText;
-        //
+
         //    public static void Prefix(SGNavigationScreen __instance, SimGameState simGame)
         //    {
-        //        testObject = new GameObject("Test Object");
-        //        testObject.AddComponent<RectTransform>().sizeDelta = new Vector2(200, 200);
-        //        objectText = testObject.AddComponent<TextMeshProUGUI>();
-        //        objectText.text = "Some text";
-        //        testObject.transform.SetParent(__instance.transform);
-        //        testObject.SetActive(true);
+        //        if (!Core.WarStatus.StartGameInitialize)
+        //        {
+        //            Galaxy_at_War.HotSpots.ProcessHotSpots();
+        //            Core.WarStatus.StartGameInitialize = true;
+        //        }
         //    }
+        //}
     }
+}
 
-    public static void ConfigurePopup(SGNavigationScreen navScreen)
-    {
+    //public static void ConfigurePopup(SGNavigationScreen navScreen)
+    //{
         // keep for reference
         //textPanel = new GameObject("Faction Relationships");
         //textPanel.AddComponent(typeof(ScrollRect));
@@ -339,5 +370,3 @@ public class StarmapMod
         //var texture = new Texture2D(1, 1);
         //texture.SetPixel(1, 1, Color.red);
         //canvasRenderer.SetTexture(texture);
-    }
-}

@@ -28,35 +28,37 @@ namespace Galaxy_at_War
     {
         public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static List<string> HomeContendedStrings = new List<string>();
-        public static bool isBreadcrumb = true;
-        public static  System.Random rand = new System.Random();
+        public static List<string> ContendedStrings = new List<string>();
+        public static bool isBreadcrumb = false;
+        public static System.Random rand = new System.Random();
         public static bool EnemyAdded = false;
         public static Faction EnemyFaction;
         public static int BonusMoney = 0;
 
+
         public static void ProcessHotSpots()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var DominantFaction = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem).owner;
-            //var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == DominantFaction);
+            var DominantFaction = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem).owner;
             System.Random rand = new System.Random();
             var FullHomeContendedSystems = new Dictionary<StarSystem, int>();
             WarStatus.ExternalPriorityTargets.Clear();
             HomeContendedSystems.Clear();
             HomeContendedStrings.Clear();
+            ContendedStrings.Clear();
             var FactRepDict = new Dictionary<Faction, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
                 WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
-                var MaxContracts = HotSpots.ProcessReputation(sim.GetRawReputation(faction));
+                var MaxContracts = ProcessReputation(sim.GetRawReputation(faction));
                 FactRepDict.Add(faction, MaxContracts);
-                //if (Core.Settings.DefensiveFactions.Contains(faction)) continue;
             }
 
             //Populate lists with planets that are in danger of flipping
-            foreach (var system in Core.WarStatus.PrioritySystems)
+            foreach (var systemStatus in Core.WarStatus.systems)
             {
-                var systemStatus = Core.WarStatus.systems.Find(x => x.name == system);
+                if (systemStatus.Contended)
+                    ContendedStrings.Add(systemStatus.name);
                 if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner])
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
@@ -91,6 +93,8 @@ namespace Galaxy_at_War
                 HomeContendedStrings.Add(ContendedSystem.Key.Name);
                 i++;
             }
+            Log(HomeContendedStrings.Count.ToString());
+            Log(FullHomeContendedSystems.Count.ToString());
         }
 
         [HarmonyPatch(typeof(StarSystem), "GenerateInitialContracts")]
@@ -106,12 +110,12 @@ namespace Galaxy_at_War
 
             static void Postfix(StarSystem __instance)
             {
+                isBreadcrumb = true;
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 sim.CurSystem.SystemBreadcrumbs.Clear();
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-                ProcessHotSpots();
                 if (HomeContendedSystems.Count != 0)
                 {
                     int i = 0;
@@ -119,7 +123,7 @@ namespace Galaxy_at_War
                     {
                         Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
-                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count/2);
+                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
@@ -144,7 +148,7 @@ namespace Galaxy_at_War
                         if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
                         do
                         {
-                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count/2);
+                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count / 2);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
@@ -162,6 +166,7 @@ namespace Galaxy_at_War
                             break;
                     }
                 }
+                isBreadcrumb = false;
             }
         }
         [HarmonyPatch(typeof(StarSystem))]
@@ -173,6 +178,28 @@ namespace Galaxy_at_War
                 __result = true;
             }
         }
+
+        [HarmonyPatch(typeof(SimGameState), "GetDifficultyRangeForContract")]
+        public static class SimGameState_GetDifficultyRangeForContracts_Patch
+        {
+            static void Prefix(SimGameState __instance, ref int __state)
+            {
+                if (isBreadcrumb)
+                {
+                    __state = __instance.Constants.Story.ContractDifficultyVariance;
+                    __instance.Constants.Story.ContractDifficultyVariance = 0;
+                }
+            }
+
+            static void Postfix(SimGameState __instance, ref int __state)
+            {
+                if (isBreadcrumb)
+                {
+                    __instance.Constants.Story.ContractDifficultyVariance = __state;
+                }
+            }
+        }
+
 
         public static void TemporaryFlip(StarSystem starSystem, Faction faction)
         {
@@ -194,19 +221,31 @@ namespace Galaxy_at_War
             }
 
             if (starSystem.Def.ContractTargets.Count == 0)
-            starSystem.Def.ContractTargets.AddRange(Core.Settings.DefensiveFactions);
+                starSystem.Def.ContractTargets.AddRange(Core.Settings.DefensiveFactions);
         }
 
         //Deployments area.
         [HarmonyPatch(typeof(SimGameState), "PrepareBreadcrumb")]
         public static class SimGameState_PrepareBreadcrumb_Patch
         {
-            static void Postfix(Contract contract)
+            static void Postfix(SimGameState __instance, Contract contract)
             {
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
-                var starSystem = sim.StarSystems.Find(x => x.Def.Description.Id == contract.TargetSystem);
-                Core.WarStatus.systems.Find(x => x.name == starSystem.Name).HotBox = true;
-                Core.WarStatus.HotBoxTravelling = true;
+                if (contract.TargetSystem != __instance.CurSystem.Def.Description.Id)
+                {
+                    var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id == contract.TargetSystem);
+
+                    var targetSystem = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
+                    targetSystem.HotBox = true;
+                    Core.WarStatus.HotBoxTravelling = true;
+                    TemporaryFlip(starSystem, contract.Override.employerTeam.faction);
+                    var curSystem = Core.WarStatus.systems.Find(x => x.starSystem == __instance.CurSystem);
+                    if (curSystem.HotBox)
+                    {
+                        curSystem.HotBox = false;
+                        Core.WarStatus.EscalationDays = 0;
+                        Core.WarStatus.Escalation = false;
+                    }
+                }
             }
         }
 
@@ -219,6 +258,7 @@ namespace Galaxy_at_War
                 Core.WarStatus.systems.Find(x => x.name == system.Name).HotBox = false;
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
+                Core.RefreshContracts(system);
             }
         }
 
@@ -317,7 +357,7 @@ namespace Galaxy_at_War
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
-                
+
                 if (system.BonusCBills && system.HotBox)
                 {
                     string missionObjectiveResultString = $"BONUS FROM ESCALTION: ¢{String.Format("{0:n0}", BonusMoney)}";
@@ -348,7 +388,7 @@ namespace Galaxy_at_War
             static void Prefix(ref int xpEarned)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                var system = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem);
                 if (system.BonusXP && system.HotBox)
                 {
                     xpEarned = xpEarned + (int)(xpEarned * Core.Settings.BonusXPFactor);
@@ -405,9 +445,13 @@ namespace Galaxy_at_War
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
             system.BonusCBills = false;
+
             system.BonusSalvage = false;
             system.BonusXP = false;
             system.HotBox = false;
+            Core.RefreshContracts(system.starSystem);
+            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
         }
 
         public static int ProcessReputation(float FactionRep)
@@ -416,7 +460,7 @@ namespace Galaxy_at_War
             var simCareer = UnityGameInstance.BattleTechGame.Simulation.Constants.CareerMode;
             int MaxContracts = 1;
 
-            
+
             if (FactionRep <= 100)
                 MaxContracts = (int)simCareer.HonoredMaxContractDifficulty;
             if (FactionRep <= simStory.HonoredReputation)
@@ -433,5 +477,19 @@ namespace Galaxy_at_War
                 MaxContracts = (int)simCareer.LoathedMaxContractDifficulty;
             return MaxContracts;
         }
+        [HarmonyPatch(typeof(SGRoomController_CmdCenter), "StartContractScreen")]
+        public static class SGRoomController_CmdCenter_StartContractScreen_Patch
+        {
+            static void Prefix(SGRoomController_CmdCenter __instance)
+            {
+                if (!Core.WarStatus.StartGameInitialized)
+                {
+                    ProcessHotSpots();
+                    StarmapMod.SetupRelationPanel();
+                    Core.WarStatus.StartGameInitialized = true;
+                }
+            }
+        }
+
     }
 }

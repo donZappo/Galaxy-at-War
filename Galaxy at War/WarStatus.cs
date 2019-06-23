@@ -22,13 +22,15 @@ public class WarStatus
     public int EscalationDays = 0;
     public List<string> PrioritySystems = new List<string>();
     public string CurSystem;
-    public bool HotBoxTravelling = false;
-    public bool StartGameContracts = true;
+    public bool HotBoxTravelling;
+    public bool StartGameInitialized;
 
     public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         CurSystem = sim.CurSystem.Name;
+        StartGameInitialized = false;
+        HotBoxTravelling = false;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
@@ -116,41 +118,17 @@ public class SystemStatus
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();
-        SystemDifficulty();
-    }
-
-    public void SystemDifficulty()
-    {
-        if (TotalResources <= Core.Settings.Diff10)
-            DifficultyRating = 10;
-        if (TotalResources <= Core.Settings.Diff9)
-            DifficultyRating = 9;
-        if (TotalResources <= Core.Settings.Diff8)
-            DifficultyRating = 8;
-        if (TotalResources <= Core.Settings.Diff7)
-            DifficultyRating = 7;
-        if (TotalResources <= Core.Settings.Diff6)
-            DifficultyRating = 6;
-        if (TotalResources <= Core.Settings.Diff5)
-            DifficultyRating = 5;
-        if (TotalResources <= Core.Settings.Diff4)
-            DifficultyRating = 4;
-        if (TotalResources <= Core.Settings.Diff3)
-            DifficultyRating = 3;
-        if (TotalResources <= Core.Settings.Diff2)
-            DifficultyRating = 2;
-        if (TotalResources <= Core.Settings.Diff1)
-            DifficultyRating = 1;
-
-        List<int> difficultyList = new List<int>{ DifficultyRating ,  DifficultyRating};
-        var system = sim.StarSystems.Find(x => x.Name == name);
-        Traverse.Create(system.Def).Field("DifficultyList").SetValue(difficultyList);
     }
 
     public void FindNeighbors()
     {
         neighborSystems.Clear();
+        Log("A");
+        Log((sim == null).ToString());
+        Log((sim.Starmap == null).ToString());
+        Log((starSystem == null).ToString());
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
+        Log("B");
         foreach (var neighborSystem in neighbors)
         {
             if (neighborSystems.ContainsKey(neighborSystem.Owner))

@@ -24,7 +24,7 @@ public class ModSettings
     public float planet_other_hub = 6;
     public float planet_other_comstar = 0;
 
-
+    public List<Faction> ImmuneToWar = new List<Faction>();
 
     public Dictionary<Faction, int> BonusAttackResources = new Dictionary<Faction, int>();
 
@@ -36,7 +36,7 @@ public class ModSettings
 
     public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>();
 
-    public int WarFrequency = 10;
+    public int WarFrequency = 6;
     public bool Debug = false;
 
     public string modDirectory;
@@ -55,7 +55,7 @@ public class ModSettings
     public float KLValuesEnemies = 100f;
     public bool DefendersUseARforDR = true;
     public float PriorityHatred = 50;
-    public int InternalHotSpots = 2;
+    public int InternalHotSpots = 4;
     public int ExternalHotSpots = 4;
     public int EscalationDays = 30;
     public float LogoScalar = 0.75f;
@@ -63,21 +63,10 @@ public class ModSettings
     public float BonusXPFactor = 0.2f;
     public float BonusCbillsFactor = 0.2f;
     public bool ISMCompatibility = true;
-    public float ResourceScale = 0.1f;
-    public bool UseSubsetOfSystems = false;
-    public float SubSetFraction = 0.1f;
-
-    public int Diff1 = 1;
-    public int Diff2 = 4;
-    public int Diff3 = 6;
-    public int Diff4 = 8;
-    public int Diff5 = 10;
-    public int Diff6 = 12;
-    public int Diff7 = 14;
-    public int Diff8 = 18;
-    public int Diff9 = 23;
-    public int Diff10 = 42;
-
+    public float ResourceScale = 1.0f;
+    public bool UseSubsetOfSystems = true;
+    public float SubSetFraction = 0.15f;
+    
     public List<Faction> DefensiveFactions = new List<Faction>();
 
     public List<Faction> IncludedFactions = new List<Faction>();
