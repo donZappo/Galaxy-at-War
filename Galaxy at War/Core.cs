@@ -90,8 +90,7 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             WarStatus.CurSystem = sim.CurSystem.Name;
-            var DepSystem = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
-            if (DepSystem.HotBox)
+            if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
             {
                 WarStatus.EscalationDays--;
 
@@ -118,16 +117,15 @@ public static class Core
         {
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
-                LogDebug(">>> PROC");
-                if (__instance.DayRemainingInQuarter != 30)
-                {
-                    for (int i = 0; i < 1; i++)
-                    {
-                        WarTick(false, false);
-                        __instance.StopPlayMode();
-                    }
-                }
-                else
+                //LogDebug(">>> PROC");
+                //if (__instance.DayRemainingInQuarter != 30)
+                //{
+                //    for (int i = 0; i < 1; i++)
+                //    {
+                //        WarTick(false, false);
+                //    }
+                //}
+                //else
                     WarTick(true, true);
 
                 SaveHandling.SerializeWar();
@@ -180,10 +178,15 @@ public static class Core
         {
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
-            systemStatus.CurrentlyAttackedBy.Clear();
-            CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-            RefreshContracts(systemStatus.starSystem);
-            if (systemStatus.Contended || systemStatus.HotBox) continue;
+            if (WarStatus.InitializeAtStart || WarStatus.SystemChangedOwners.Contains(systemStatus.name))
+            {
+                if (!WarStatus.InitializeAtStart)
+                    WarStatus.SystemChangedOwners.Remove(systemStatus.name);
+                systemStatus.CurrentlyAttackedBy.Clear();
+                CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+                RefreshContracts(systemStatus.starSystem);
+            }
+            if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name)) continue;
 
             //Add resources from neighboring systems.
             if (systemStatus.neighborSystems.Count != 0)
@@ -198,7 +201,7 @@ public static class Core
                 }
             }
         }
-
+        WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
         foreach (var warFaction in WarStatus.warFactionTracker)
@@ -377,14 +380,11 @@ public static class Core
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
             return;
         var warFAR = warFaction.warFactionAttackResources;
-        Log("****************ATTACKING***************");
-        Log(warFaction.faction.ToString());
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         foreach (var targetFaction in warFAR.Keys)
         {
             var targetFAR = warFAR[targetFaction];
             var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
-            Log("\t" + targetFaction.ToString());
             while (targetFAR > 0.0)
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
@@ -401,12 +401,11 @@ public static class Core
                     if (!WarStatus.PrioritySystems.Contains(system.starSystem.Name))
                     {
                         WarStatus.PrioritySystems.Add(system.starSystem.Name);
-                        Log("\t\t" + system.name + ": " + system.DifficultyRating);
                     }
                 }
 
                 //Distribute attacking resources to systems.
-                if (system.Contended || system.HotBox)
+                if (system.Contended || Core.WarStatus.HotBox.Contains(system.name))
                 {
                     warFaction.attackTargets[targetFaction].Remove(system.starSystem);
                     if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
@@ -475,7 +474,7 @@ public static class Core
             var system = warFaction.defenseTargets[rand].Name;
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
 
-            if (systemStatus.Contended || systemStatus.HotBox)
+            if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
             {
                 warFaction.defenseTargets.Remove(systemStatus.starSystem);
                 if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
@@ -620,6 +619,13 @@ public static class Core
                 WFLoser.AttackResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
             }
+            if (!WarStatus.SystemChangedOwners.Contains(system.Name))
+                WarStatus.SystemChangedOwners.Add(system.Name);
+            foreach (var neighbor in sim.Starmap.GetAvailableNeighborSystem(system))
+            {
+                if (!WarStatus.SystemChangedOwners.Contains(neighbor.Name))
+                    WarStatus.SystemChangedOwners.Add(neighbor.Name);
+            }
         }
     }
 
@@ -655,7 +661,7 @@ public static class Core
             {
                 var starSystem = systemStatus.starSystem;
 
-                if (starSystem != null && systemStatus.Contended && !systemStatus.HotBox && !Settings.DefensiveFactions.Contains(highestfaction)
+                if (starSystem != null && systemStatus.Contended && !Core.WarStatus.HotBox.Contains(systemStatus.name) && !Settings.DefensiveFactions.Contains(highestfaction)
                     && !Settings.ImmuneToWar.Contains(starSystem.Owner))
                 {
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
@@ -696,7 +702,7 @@ public static class Core
 
     public static void RefreshContracts(StarSystem starSystem)
     {
-        if (WarStatus.systems.Find(x => x.starSystem == starSystem).HotBox)
+        if (WarStatus.HotBox.Contains(starSystem.Name))
             return;
         var ContractEmployers = starSystem.Def.ContractEmployers;
         var ContractTargets = starSystem.Def.ContractTargets;

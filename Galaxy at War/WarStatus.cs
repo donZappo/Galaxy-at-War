@@ -24,6 +24,9 @@ public class WarStatus
     public string CurSystem;
     public bool HotBoxTravelling;
     public bool StartGameInitialized;
+    public bool InitializeAtStart = true;
+    public List<string> SystemChangedOwners = new List<string>();
+    public List<string> HotBox = new List<string>();
 
     public WarStatus()
     {
@@ -90,7 +93,6 @@ public class SystemStatus
 
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     public float TotalResources;
-    public bool HotBox = false;
     public bool PriorityDefense = false;
     public bool PriorityAttack = false;
     public List<Faction> CurrentlyAttackedBy = new List<Faction>();

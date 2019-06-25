@@ -234,15 +234,13 @@ namespace Galaxy_at_War
                 if (contract.TargetSystem != __instance.CurSystem.Def.Description.Id)
                 {
                     var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id == contract.TargetSystem);
-
-                    var targetSystem = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
-                    targetSystem.HotBox = true;
+                    Core.WarStatus.HotBox.Add(starSystem.Name);
                     Core.WarStatus.HotBoxTravelling = true;
                     TemporaryFlip(starSystem, contract.Override.employerTeam.faction);
                     var curSystem = Core.WarStatus.systems.Find(x => x.starSystem == __instance.CurSystem);
-                    if (curSystem.HotBox)
+                    if (Core.WarStatus.HotBox.Contains(__instance.CurSystem.Name))
                     {
-                        curSystem.HotBox = false;
+                        Core.WarStatus.HotBox.Remove(__instance.CurSystem.Name);
                         Core.WarStatus.EscalationDays = 0;
                         Core.WarStatus.Escalation = false;
                     }
@@ -256,7 +254,7 @@ namespace Galaxy_at_War
             static void Postfix(SGNavigationScreen __instance)
             {
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
-                Core.WarStatus.systems.Find(x => x.name == system.Name).HotBox = false;
+                Core.WarStatus.HotBox.Remove(system.Name);
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
                 Core.RefreshContracts(system);
@@ -337,7 +335,7 @@ namespace Galaxy_at_War
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
 
-                if (system.BonusSalvage && system.HotBox)
+                if (system.BonusSalvage && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
                     var NewSalvageCount = __instance.FinalSalvageCount + 1;
                     Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(NewSalvageCount);
@@ -359,7 +357,7 @@ namespace Galaxy_at_War
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
 
-                if (system.BonusCBills && system.HotBox)
+                if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
                     string missionObjectiveResultString = $"BONUS FROM ESCALTION: ¢{String.Format("{0:n0}", BonusMoney)}";
                     MissionObjectiveResult missionObjectiveResult = new MissionObjectiveResult(missionObjectiveResultString, "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0", false, true, ObjectiveStatus.Succeeded, false);
@@ -375,7 +373,7 @@ namespace Galaxy_at_War
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
-                if (system.BonusCBills && system.HotBox)
+                if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
                     BonusMoney = (int)(__instance.MoneyResults * Core.Settings.BonusCbillsFactor);
                     int newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + BonusMoney);
@@ -390,7 +388,7 @@ namespace Galaxy_at_War
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var system = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem);
-                if (system.BonusXP && system.HotBox)
+                if (system.BonusXP && Core.WarStatus.HotBox.Contains(system.name))
                 {
                     xpEarned = xpEarned + (int)(xpEarned * Core.Settings.BonusXPFactor);
                 }
@@ -403,7 +401,7 @@ namespace Galaxy_at_War
             var system = Core.WarStatus.systems.Find(x => x.starSystem == starSystem);
             System.Random rand = new System.Random();
 
-            if (!system.HotBox)
+            if (!Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
             {
                 system.BonusCBills = false;
                 system.BonusSalvage = false;
@@ -449,7 +447,7 @@ namespace Galaxy_at_War
 
             system.BonusSalvage = false;
             system.BonusXP = false;
-            system.HotBox = false;
+            Core.WarStatus.HotBox.Remove(system.name);
             Core.RefreshContracts(system.starSystem);
             var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
             sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
