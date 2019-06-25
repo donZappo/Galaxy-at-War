@@ -945,18 +945,11 @@ public static class Core
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var TotalSystems = WarStatus.systems.Count;
-        Log(TotalSystems.ToString());
         var DifficultyCutoff = TotalSystems / 10;
-        Log(DifficultyCutoff.ToString());
         int i = 0;
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
             var simSystem2 = sim.StarSystems.Find(x => x.Name == system.name);
-            Log("***********DIFFICULTY******");
-            Log(system.name);
-            Log("Resources: " + system.TotalResources);
-            Log("i :" + i.ToString());
-            Log(simSystem2.Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
             if (i <= DifficultyCutoff)
             { 
                 system.DifficultyRating = 1;
@@ -1037,7 +1030,6 @@ public static class Core
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
             }
-            Log(simSystem2.Def.GetDifficulty(SimGameState.SimGameType.CAREER).ToString());
             i++;
         }
     }

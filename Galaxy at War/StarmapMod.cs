@@ -183,7 +183,6 @@ public class StarmapMod
         {
             if (!Core.WarStatus.StartGameInitialized)
             {
-                Log("Initializing");
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 Galaxy_at_War.HotSpots.ProcessHotSpots();
                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;

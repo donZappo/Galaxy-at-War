@@ -57,6 +57,7 @@ public static class SaveHandling
                 Core.CalculateAttackAndDefenseTargets(system);
                 Core.RefreshContracts(system);
             }
+            StarmapMod.SetupRelationPanel();
         }
     }
 
@@ -72,7 +73,6 @@ public static class SaveHandling
                 Core.WarStatus = new WarStatus();
                 Core.SystemDifficulty();
                 Core.WarTick(true, true);
-                StarmapMod.SetupRelationPanel();
                 SerializeWar();
             }
             else

@@ -51,7 +51,7 @@ namespace Galaxy_at_War
             {
                 WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 var MaxContracts = ProcessReputation(sim.GetRawReputation(faction));
-                FactRepDict.Add(faction, MaxContracts);
+                FactRepDict.Add(faction, MaxContracts - 1);
             }
 
             //Populate lists with planets that are in danger of flipping
@@ -93,9 +93,6 @@ namespace Galaxy_at_War
                 HomeContendedStrings.Add(ContendedSystem.Key.Name);
                 i++;
             }
-            Log(HomeContendedStrings.Count.ToString());
-
-            Log(FullHomeContendedSystems.Count.ToString());
         }
 
         [HarmonyPatch(typeof(StarSystem), "GenerateInitialContracts")]
