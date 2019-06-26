@@ -37,29 +37,41 @@ public static class SaveHandling
                 DeserializeWar();
                 //Galaxy_at_War.HotSpots.ProcessHotSpots(__instance.CurSystem);
             }
-        }
-    }
-    internal static void DeserializeWar()
-    {
-        var sim = UnityGameInstance.BattleTechGame.Simulation;
-        Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
-        LogDebug(">>> Deserialization complete");
-        LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-    }
-    [HarmonyPatch(typeof(GameInstance), "Load")]
-    public static class GameInstance_Load_Patch
-    {
-        public static void Postfix()
-        {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             foreach (var system in sim.StarSystems)
             {
+                foreach (var neighbor in sim.)
+
                 Core.CalculateAttackAndDefenseTargets(system);
                 Core.RefreshContracts(system);
             }
             StarmapMod.SetupRelationPanel();
         }
     }
+    internal static void DeserializeWar()
+    {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
+        Log(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
+        LogDebug(">>> Deserialization complete");
+        LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+    }
+    //[HarmonyPatch(typeof(GameInstance), "Load")]
+    //public static class GameInstance_Load_Patch
+    //{
+    //    public static void Postfix()
+    //    {
+    //        Log("Second");
+    //        var sim = UnityGameInstance.BattleTechGame.Simulation;
+    //        foreach (var system in sim.StarSystems)
+    //        {
+    //            Core.CalculateAttackAndDefenseTargets(system);
+    //            Core.RefreshContracts(system);
+    //        }
+    //        StarmapMod.SetupRelationPanel();
+    //        //Core.GaW_Notification();
+    //    }
+    //}
 
 
     [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
@@ -85,12 +97,13 @@ public static class SaveHandling
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
+        Log("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         LogDebug(">>> Serialization complete");
     }
 
-
-    //Hotkeys
+    //****************************************************************************************************
+    //Hotkeys*********************************************************************************************
     [HarmonyPatch(typeof(SimGameState), "Update")]
     public static class SimGameState_Update_Patch
     {
