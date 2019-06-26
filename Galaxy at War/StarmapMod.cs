@@ -212,7 +212,7 @@ public class StarmapMod
             if (Galaxy_at_War.HotSpots.HomeContendedStrings.Contains(__result.name))
                 HighlightSystem(__result, wasVisited, Color.magenta, true);
             else if (Galaxy_at_War.HotSpots.ContendedStrings.Contains(__result.name))
-                HighlightSystem(__result, wasVisited, Color.yellow, true);
+                HighlightSystem(__result, wasVisited, Color.yellow, false);
             else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                 MakeSystemNormal(__result, wasVisited);
         }
