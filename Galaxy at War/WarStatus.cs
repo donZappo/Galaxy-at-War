@@ -101,6 +101,8 @@ public class SystemStatus
     public bool BonusSalvage = false;
     public bool BonusXP = false;
     public bool BonusCBills = false;
+    public float AttackResources;
+    public float DefenseResources;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
@@ -116,7 +118,9 @@ public class SystemStatus
         name = systemName;
         owner = faction;
         // warFaction = Core.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
-        TotalResources = Core.GetTotalAttackResources(starSystem) + Core.GetTotalDefensiveResources(starSystem);
+        AttackResources = Core.GetTotalAttackResources(starSystem);
+        DefenseResources = Core.GetTotalDefensiveResources(starSystem);
+        TotalResources = AttackResources + DefenseResources;
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();

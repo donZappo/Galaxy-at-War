@@ -35,16 +35,17 @@ public static class SaveHandling
             else
             {
                 DeserializeWar();
+                Core.SystemDifficulty();
+                foreach (var system in Core.WarStatus.systems)
+                    Core.RefreshContracts(system.starSystem);
                 //Galaxy_at_War.HotSpots.ProcessHotSpots(__instance.CurSystem);
             }
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            foreach (var system in sim.StarSystems)
-            {
-                foreach (var neighbor in sim.)
-
-                Core.CalculateAttackAndDefenseTargets(system);
-                Core.RefreshContracts(system);
-            }
+            //foreach (var system in sim.StarSystems)
+            //{
+            //    Core.CalculateAttackAndDefenseTargets(system);
+            //    Core.RefreshContracts(system);
+            //}
             StarmapMod.SetupRelationPanel();
         }
     }
@@ -52,7 +53,6 @@ public static class SaveHandling
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
-        Log(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
         LogDebug(">>> Deserialization complete");
         LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
     }
@@ -86,9 +86,13 @@ public static class SaveHandling
                 Core.SystemDifficulty();
                 Core.WarTick(true, true);
                 SerializeWar();
+                StarmapMod.SetupRelationPanel();
             }
             else
+            {
+                //Galaxy_at_War.HotSpots.ProcessHotSpots();
                 SerializeWar();
+            }
         }
     }
 
@@ -97,7 +101,6 @@ public static class SaveHandling
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
-        Log("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         LogDebug(">>> Serialization complete");
     }

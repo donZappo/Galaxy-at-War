@@ -90,7 +90,9 @@ public class StarmapMod
         var sb = new StringBuilder();
         foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
         {
+            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
+            sb.AppendLine("Attack Resources: " + warFaction.AttackResources + " || Defense Resources: " + warFaction.DefensiveResources +"\n\n");
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
@@ -101,6 +103,7 @@ public class StarmapMod
                 sb.AppendLine($"<u>Allies</u>");
             foreach (var ally in tracker.Allies)
                 sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
+            sb.AppendLine();
             sb.AppendLine();
         }
 
@@ -164,7 +167,7 @@ public class StarmapMod
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
-        factionString.AppendLine("\n\nTotal System Resources: " + tracker.TotalResources);
+        factionString.AppendLine("\n\nAttack Resources: " + tracker.AttackResources + "  Defense Resources: " + tracker.DefenseResources);
         string BonusString = "Escalation Bonuses:";
         if (tracker.BonusCBills)
             BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";
@@ -204,7 +207,6 @@ public class StarmapMod
         public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-
             var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
             var wasVisited = visitedStarSystems.Contains(__result.name);
             if (Galaxy_at_War.HotSpots.HomeContendedStrings.Contains(__result.name))

@@ -15,6 +15,7 @@ using HBS;
 using Error = BestHTTP.SocketIO.Error;
 using UnityEngine.Scripting;
 using System.Runtime.InteropServices;
+using Localize;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -115,6 +116,8 @@ public static class Core
 
         public static void Postfix(SimGameState  __instance)
         {
+            WarTick(true, false);
+            //GaW_Notification();
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
@@ -127,6 +130,7 @@ public static class Core
                 //}
                 //else
                     WarTick(true, true);
+                GaW_Notification();
 
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
@@ -276,7 +280,8 @@ public static class Core
     public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
     {
         SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-        var OwnerNeighborSystems = WarStatus.systems.Find(x => x.name == starSystem.Name).neighborSystems;
+        var warSystem = WarStatus.systems.Find(x => x.name == starSystem.Name);
+        var OwnerNeighborSystems = warSystem.neighborSystems;
         OwnerNeighborSystems.Clear();
         if (starSystem == null || sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
             return;
@@ -391,7 +396,8 @@ public static class Core
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
-                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts)
+                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts 
+                    && system.DifficultyRating >= maxContracts -2)
                 {
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
@@ -909,12 +915,7 @@ public static class Core
                     warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
                     warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
                 }
-                else if (missionResult == MissionResult.Defeat || (missionResult != MissionResult.Victory && !isGoodFaithEffort))
-                {
-                    warsystem.influenceTracker[teamfaction] -= difficulty * Settings.DifficultyFactor;
-                    warsystem.influenceTracker[enemyfaction] += difficulty * Settings.DifficultyFactor;
-                }
-
+               
                 var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
                 var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
                 var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
@@ -1016,7 +1017,7 @@ public static class Core
             }
             if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
             {
-                system.DifficultyRating = 1;
+                system.DifficultyRating = 9;
                 var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 9, 9 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
@@ -1033,4 +1034,30 @@ public static class Core
             i++;
         }
     }
+    //82 characters per line.
+    public static void GaW_Notification()
+    {
+        SimGameResultAction simGameResultAction = new SimGameResultAction();
+        simGameResultAction.Type = SimGameResultAction.ActionType.System_ShowSummaryOverlay;
+        simGameResultAction.value = Strings.T("Galaxy at War");
+        simGameResultAction.additionalValues = new string[1];
+        simGameResultAction.additionalValues[0] = Strings.T("In Galaxy at War, the Great Houses of the Innersphere will not simply wait for a wedding invitation" +
+            " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
+            " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make make" +
+            " their fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
+            "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly spending to spread their influence and protect their own systems." +
+            "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
+            "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
+            "\n• Factions that you have the highest reputation with will offer you travel expenses to go to their most valuable offensive or defensive targets." +
+            "\n• If you accept one of these contracts, the Faction will blockade the system to allow you the opportunity to swing that system in their favor. For 30 days they will provide a bonus for every mission you complete in that system!" +
+            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and how well the war is going for them.");
+
+
+        SimGameState.ApplyEventAction(simGameResultAction, null);
+        UnityGameInstance.BattleTechGame.Simulation.StopPlayMode();
+    }
+
+
+
+
 }

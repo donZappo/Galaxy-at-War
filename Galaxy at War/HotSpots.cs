@@ -26,24 +26,25 @@ namespace Galaxy_at_War
 {
     public static class HotSpots
     {
-        public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static List<string> HomeContendedStrings = new List<string>();
+        public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static List<string> ContendedStrings = new List<string>();
         public static bool isBreadcrumb = false;
         public static System.Random rand = new System.Random();
         public static bool EnemyAdded = false;
         public static Faction EnemyFaction;
         public static int BonusMoney = 0;
+        public static List<StarSystem> FullHomeContendedSystems = new List<StarSystem>();
 
 
         public static void ProcessHotSpots()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var DominantFaction = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem).owner;
+            var DominantFaction = Core.WarStatus.systems.Find(x => x.starSystem.Name == Core.WarStatus.CurSystem).owner;
             System.Random rand = new System.Random();
-            var FullHomeContendedSystems = new Dictionary<StarSystem, int>();
-            WarStatus.ExternalPriorityTargets.Clear();
+            FullHomeContendedSystems.Clear();
             HomeContendedSystems.Clear();
+            WarStatus.ExternalPriorityTargets.Clear();
             HomeContendedStrings.Clear();
             ContendedStrings.Clear();
             var FactRepDict = new Dictionary<Faction, int>();
@@ -51,7 +52,7 @@ namespace Galaxy_at_War
             {
                 WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 var MaxContracts = ProcessReputation(sim.GetRawReputation(faction));
-                FactRepDict.Add(faction, MaxContracts - 1);
+                FactRepDict.Add(faction, MaxContracts);
             }
 
             //Populate lists with planets that are in danger of flipping
@@ -59,12 +60,13 @@ namespace Galaxy_at_War
             {
                 if (systemStatus.Contended)
                     ContendedStrings.Add(systemStatus.name);
-                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner])
+                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
+                    && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 2)
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
                 {
                     if (systemStatus.owner == DominantFaction)
-                        FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
+                        FullHomeContendedSystems.Add(systemStatus.starSystem);
                     else
                         WarStatus.ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                 }
@@ -74,8 +76,8 @@ namespace Galaxy_at_War
                     {
                         if (attacker == DominantFaction)
                         {
-                            if (!FullHomeContendedSystems.ContainsKey(systemStatus.starSystem))
-                                FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
+                            if (!FullHomeContendedSystems.Contains(systemStatus.starSystem))
+                                FullHomeContendedSystems.Add(systemStatus.starSystem);
                         }
                         else
                         {
@@ -86,11 +88,12 @@ namespace Galaxy_at_War
                 }
             }
             var i = 0;
-            foreach (var ContendedSystem in FullHomeContendedSystems.OrderByDescending(key => key.Value))
+            while (i < 6)
             {
-                if (i == 6) break;
-                HomeContendedSystems.Add(ContendedSystem.Key);
-                HomeContendedStrings.Add(ContendedSystem.Key.Name);
+                var rando = rand.Next(0, FullHomeContendedSystems.Count);
+                HomeContendedStrings.Add(FullHomeContendedSystems[rando].Name);
+                HomeContendedSystems.Add(FullHomeContendedSystems[rando]);
+                FullHomeContendedSystems.RemoveAt(rando);
                 i++;
             }
         }
@@ -106,6 +109,7 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
             }
 
+            
             static void Postfix(StarSystem __instance)
             {
                 isBreadcrumb = true;
@@ -121,7 +125,7 @@ namespace Galaxy_at_War
                     {
                         Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
-                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
+                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
@@ -130,7 +134,7 @@ namespace Galaxy_at_War
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
                         SystemBonuses(MainBCTarget);
                         Core.RefreshContracts(MainBCTarget);
-                        HomeContendedSystems.RemoveAt(RandomSystem);
+                        HomeContendedSystems.Remove(MainBCTarget);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
                             break;
                         i = sim.CurSystem.SystemBreadcrumbs.Count;
@@ -146,7 +150,7 @@ namespace Galaxy_at_War
                         if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
                         do
                         {
-                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count / 2);
+                            var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
