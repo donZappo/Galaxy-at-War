@@ -123,7 +123,8 @@ public class SystemStatus
         TotalResources = AttackResources + DefenseResources;
         FindNeighbors();
         CalculateSystemInfluence();
-        InitializeContracts();
+        Core.RefreshContracts(starSystem);
+        //InitializeContracts();
     }
 
     public void FindNeighbors()
@@ -180,32 +181,32 @@ public class SystemStatus
         influenceTracker = tempDict;
     }
 
-    public void InitializeContracts()
-    {
-        var ContractEmployers = starSystem.Def.ContractEmployers;
-        var ContractTargets = starSystem.Def.ContractTargets;
+    //public void InitializeContracts()
+    //{
+    //    var ContractEmployers = starSystem.Def.ContractEmployers;
+    //    var ContractTargets = starSystem.Def.ContractTargets;
 
-        ContractEmployers.Clear();
-        ContractTargets.Clear();
-        ContractEmployers.Add(owner);
-        ContractTargets.Add(owner);
+    //    ContractEmployers.Clear();
+    //    ContractTargets.Clear();
+    //    ContractEmployers.Add(owner);
+    //    ContractTargets.Add(owner);
 
-        foreach (var systemNeighbor in neighborSystems.Keys)
-        {
-            if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractEmployers.Add(systemNeighbor);
+    //    foreach (var systemNeighbor in neighborSystems.Keys)
+    //    {
+    //        if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+    //            ContractEmployers.Add(systemNeighbor);
 
-            if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractTargets.Add(systemNeighbor);
-        }
+    //        if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+    //            ContractTargets.Add(systemNeighbor);
+    //    }
 
-        if (ContractTargets.Count() == 1)
-        {
-            ContractTargets.Clear();
-            foreach (Faction EF in sim.FactionsDict[owner].Enemies)
-                ContractTargets.Add(EF);
-        }
-    }
+    //    if (ContractTargets.Count() == 1)
+    //    {
+    //        ContractTargets.Clear();
+    //        foreach (Faction EF in sim.FactionsDict[owner].Enemies)
+    //            ContractTargets.Add(EF);
+    //    }
+    //}
 }
 
 public class WarFaction

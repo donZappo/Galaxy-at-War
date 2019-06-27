@@ -719,6 +719,8 @@ public static class Core
         ContractEmployers.Add(owner);
         foreach (Faction EF in Settings.DefensiveFactions)
         {
+            if (Settings.ImmuneToWar.Contains(EF))
+                continue;
             ContractTargets.Add(EF);
         }
         if (!ContractTargets.Contains(owner))
@@ -726,19 +728,14 @@ public static class Core
         var neighborSystems = WarStatus.systems.Find(x => x.name == starSystem.Name).neighborSystems;
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
+            if (Settings.ImmuneToWar.Contains(systemNeighbor))
+                continue;
             if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractEmployers.Add(systemNeighbor);
 
             if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
-
-        //if (ContractTargets.Count == 1)
-        //{
-        //    ContractTargets.Clear();
-        //    foreach (Faction EF in Settings.DefensiveFactions)
-        //        ContractTargets.Add(EF);
-        //}
     }
 
     [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
