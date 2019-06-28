@@ -65,7 +65,7 @@ public class ModSettings
     public bool ISMCompatibility = true;
     public float ResourceScale = 1.0f;
     public bool UseSubsetOfSystems = false;
-    public float SubSetFraction = 1.0f;
+    public float SubSetFraction = 0.20f;
     
     public List<Faction> DefensiveFactions = new List<Faction>();
 

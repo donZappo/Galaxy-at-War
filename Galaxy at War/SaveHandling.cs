@@ -10,6 +10,7 @@ using BattleTech.Save;
 using System.Diagnostics;
 using HBS;
 using BattleTech.UI;
+using System.Collections.Generic;
 
 
 public static class SaveHandling
@@ -35,18 +36,10 @@ public static class SaveHandling
             else
             {
                 DeserializeWar();
-                Core.SystemDifficulty();
-                foreach (var system in Core.WarStatus.systems)
-                    Core.RefreshContracts(system.starSystem);
-                //Galaxy_at_War.HotSpots.ProcessHotSpots(__instance.CurSystem);
+                RebuildState();
             }
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            //foreach (var system in sim.StarSystems)
-            //{
-            //    Core.CalculateAttackAndDefenseTargets(system);
-            //    Core.RefreshContracts(system);
-            //}
-            StarmapMod.SetupRelationPanel();
+           // StarmapMod.SetupRelationPanel();
         }
     }
     internal static void DeserializeWar()
@@ -86,11 +79,11 @@ public static class SaveHandling
                 Core.SystemDifficulty();
                 Core.WarTick(true, true);
                 SerializeWar();
-                StarmapMod.SetupRelationPanel();
+               // StarmapMod.SetupRelationPanel();
             }
             else
             {
-                //Galaxy_at_War.HotSpots.ProcessHotSpots();
+                ConvertToSave();
                 SerializeWar();
             }
         }
@@ -103,6 +96,48 @@ public static class SaveHandling
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
         LogDebug(">>> Serialization complete");
+    }
+
+    public static void RebuildState()
+    {
+        Galaxy_at_War.HotSpots.ExternalPriorityTargets.Clear();
+        Galaxy_at_War.HotSpots.FullHomeContendedSystems.Clear();
+        Galaxy_at_War.HotSpots.HomeContendedSystems.Clear();
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        var ssDict = sim.StarSystemDictionary;
+        Core.SystemDifficulty();
+        foreach (var system in Core.WarStatus.systems)
+        {
+            Core.RefreshContracts(system.starSystem);
+        }
+        foreach (var faction in Core.WarStatus.ExternalPriorityTargets.Keys)
+        {
+            Galaxy_at_War.HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
+            foreach (var system in Core.WarStatus.ExternalPriorityTargets[faction])
+                Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
+        }
+        foreach (var system in Core.WarStatus.FullHomeContendedSystems)
+            Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(ssDict[system]);
+        foreach (var system in Core.WarStatus.HomeContendedSystems)
+            Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
+    }
+
+    public static void ConvertToSave()
+    {
+        Core.WarStatus.ExternalPriorityTargets.Clear();
+        Core.WarStatus.FullHomeContendedSystems.Clear();
+        Core.WarStatus.HomeContendedSystems.Clear();
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        foreach (var faction in Galaxy_at_War.HotSpots.ExternalPriorityTargets.Keys)
+        {
+            Core.WarStatus.ExternalPriorityTargets.Add(faction, new List<string>());
+            foreach (var system in Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction])
+                Core.WarStatus.ExternalPriorityTargets[faction].Add(system.Def.CoreSystemID);
+        }
+        foreach (var system in Galaxy_at_War.HotSpots.FullHomeContendedSystems)
+            Core.WarStatus.FullHomeContendedSystems.Add(system.Def.CoreSystemID);
+        foreach (var system in Galaxy_at_War.HotSpots.HomeContendedSystems)
+            Core.WarStatus.HomeContendedSystems.Add(system.Def.CoreSystemID);;
     }
 
     //****************************************************************************************************

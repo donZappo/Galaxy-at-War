@@ -24,33 +24,29 @@ using BattleTech.Data;
 
 namespace Galaxy_at_War
 {
-    public static class HotSpots
+    public class HotSpots
     {
-        public static List<string> HomeContendedStrings = new List<string>();
-        public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
-        public static List<string> ContendedStrings = new List<string>();
         public static bool isBreadcrumb = false;
-        public static System.Random rand = new System.Random();
-        public static bool EnemyAdded = false;
-        public static Faction EnemyFaction;
+        public static Random rand = new Random();
         public static int BonusMoney = 0;
-        public static List<StarSystem> FullHomeContendedSystems = new List<StarSystem>();
 
+        public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets = new Dictionary<Faction, List<StarSystem>>();
+        public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
+        public static List<StarSystem> FullHomeContendedSystems = new List<StarSystem>();
 
         public static void ProcessHotSpots()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var DominantFaction = Core.WarStatus.systems.Find(x => x.starSystem.Name == Core.WarStatus.CurSystem).owner;
-            System.Random rand = new System.Random();
             FullHomeContendedSystems.Clear();
             HomeContendedSystems.Clear();
-            WarStatus.ExternalPriorityTargets.Clear();
-            HomeContendedStrings.Clear();
-            ContendedStrings.Clear();
+            ExternalPriorityTargets.Clear();
+            Core.WarStatus.HomeContendedStrings.Clear();
+            Core.WarStatus.ContendedStrings.Clear();
             var FactRepDict = new Dictionary<Faction, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
-                WarStatus.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
+                ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 var MaxContracts = ProcessReputation(sim.GetRawReputation(faction));
                 FactRepDict.Add(faction, MaxContracts);
             }
@@ -59,7 +55,7 @@ namespace Galaxy_at_War
             foreach (var systemStatus in Core.WarStatus.systems)
             {
                 if (systemStatus.Contended)
-                    ContendedStrings.Add(systemStatus.name);
+                    Core.WarStatus.ContendedStrings.Add(systemStatus.name);
                 if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
                     && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 2)
                     systemStatus.PriorityDefense = true;
@@ -68,7 +64,7 @@ namespace Galaxy_at_War
                     if (systemStatus.owner == DominantFaction)
                         FullHomeContendedSystems.Add(systemStatus.starSystem);
                     else
-                        WarStatus.ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
+                        ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                 }
                 if (systemStatus.PriorityAttack)
                 {
@@ -81,17 +77,17 @@ namespace Galaxy_at_War
                         }
                         else
                         {
-                            if (!WarStatus.ExternalPriorityTargets[attacker].Contains(systemStatus.starSystem))
-                                WarStatus.ExternalPriorityTargets[attacker].Add(systemStatus.starSystem);
+                            if (!ExternalPriorityTargets[attacker].Contains(systemStatus.starSystem))
+                                ExternalPriorityTargets[attacker].Add(systemStatus.starSystem);
                         }
                     }
                 }
             }
             var i = 0;
-            while (i < 6)
+            while (i < 6 && FullHomeContendedSystems.Count != 0)
             {
                 var rando = rand.Next(0, FullHomeContendedSystems.Count);
-                HomeContendedStrings.Add(FullHomeContendedSystems[rando].Name);
+                Core.WarStatus.HomeContendedStrings.Add(FullHomeContendedSystems[rando].Name);
                 HomeContendedSystems.Add(FullHomeContendedSystems[rando]);
                 FullHomeContendedSystems.RemoveAt(rando);
                 i++;
@@ -140,7 +136,6 @@ namespace Galaxy_at_War
                         i = sim.CurSystem.SystemBreadcrumbs.Count;
                     }
                 }
-                var ExternalPriorityTargets = WarStatus.ExternalPriorityTargets;
                 if (ExternalPriorityTargets.Count != 0)
                 {
                     int startBC = sim.CurSystem.SystemBreadcrumbs.Count;
@@ -485,7 +480,7 @@ namespace Galaxy_at_War
                 if (!Core.WarStatus.StartGameInitialized)
                 {
                     ProcessHotSpots();
-                    StarmapMod.SetupRelationPanel();
+                   // StarmapMod.SetupRelationPanel();
                     Core.WarStatus.StartGameInitialized = true;
                 }
             }

@@ -14,8 +14,6 @@ public class WarStatus
     public List<SystemStatus> systems = new List<SystemStatus>();
     public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
-    public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets
-        = new Dictionary<Faction, List<StarSystem>>();
     public bool JustArrived = true;
     public bool Escalation = false;
     public WorkOrderEntry_Notification EscalationOrder;
@@ -27,6 +25,15 @@ public class WarStatus
     public bool InitializeAtStart = true;
     public List<string> SystemChangedOwners = new List<string>();
     public List<string> HotBox = new List<string>();
+    public List<string> LostSystems = new List<string>();
+
+    public List<string> HomeContendedStrings = new List<string>();
+    public List<string> ContendedStrings = new List<string>();
+    
+    public List<string> FullHomeContendedSystems = new List<string>();
+    public List<string> HomeContendedSystems = new List<string>();
+    public Dictionary<Faction, List<string>> ExternalPriorityTargets = new Dictionary<Faction, List<string>>();
+
 
     public WarStatus()
     {
@@ -123,8 +130,7 @@ public class SystemStatus
         TotalResources = AttackResources + DefenseResources;
         FindNeighbors();
         CalculateSystemInfluence();
-        Core.RefreshContracts(starSystem);
-        //InitializeContracts();
+        InitializeContracts();
     }
 
     public void FindNeighbors()
@@ -181,32 +187,35 @@ public class SystemStatus
         influenceTracker = tempDict;
     }
 
-    //public void InitializeContracts()
-    //{
-    //    var ContractEmployers = starSystem.Def.ContractEmployers;
-    //    var ContractTargets = starSystem.Def.ContractTargets;
+    public void InitializeContracts()
+    {
+        var ContractEmployers = starSystem.Def.ContractEmployers;
+        var ContractTargets = starSystem.Def.ContractTargets;
 
-    //    ContractEmployers.Clear();
-    //    ContractTargets.Clear();
-    //    ContractEmployers.Add(owner);
-    //    ContractTargets.Add(owner);
+        ContractEmployers.Clear();
+        ContractTargets.Clear();
+        ContractEmployers.Add(owner);
 
-    //    foreach (var systemNeighbor in neighborSystems.Keys)
-    //    {
-    //        if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
-    //            ContractEmployers.Add(systemNeighbor);
+        foreach (Faction EF in Core.Settings.DefensiveFactions)
+        {
+            if (Core.Settings.ImmuneToWar.Contains(EF))
+                continue;
+            ContractTargets.Add(EF);
+        }
+        if (!ContractTargets.Contains(owner))
+            ContractTargets.Add(owner);
 
-    //        if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
-    //            ContractTargets.Add(systemNeighbor);
-    //    }
+        foreach (var systemNeighbor in neighborSystems.Keys)
+        {
+            if (Core.Settings.ImmuneToWar.Contains(systemNeighbor))
+                continue;
+            if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractEmployers.Add(systemNeighbor);
 
-    //    if (ContractTargets.Count() == 1)
-    //    {
-    //        ContractTargets.Clear();
-    //        foreach (Faction EF in sim.FactionsDict[owner].Enemies)
-    //            ContractTargets.Add(EF);
-    //    }
-    //}
+            if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractTargets.Add(systemNeighbor);
+        }
+    }
 }
 
 public class WarFaction
@@ -221,12 +230,10 @@ public class WarFaction
     public int MonthlySystemsChanged;
     public int TotalSystemsChanged;
 
-    //public List<string> PriorityList = new List<string>();
     public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
-    internal Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
-    internal List<StarSystem> defenseTargets = new List<StarSystem>();
+    public Dictionary<Faction, List<string>> attackTargets = new Dictionary<Faction, List<string>>();
+    public List<string> defenseTargets = new List<string>();
 
-    //internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
     [JsonConstructor]
     public WarFaction()

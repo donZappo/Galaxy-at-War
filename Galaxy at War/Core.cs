@@ -75,7 +75,6 @@ public static class Core
 
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
-    public static List<StarSystem> ChangedSystems = new List<StarSystem>();
     public static readonly Random Random = new Random();
     public static Faction teamfaction;
     public static Faction enemyfaction;
@@ -83,6 +82,8 @@ public static class Core
     public static MissionResult missionResult;
     public static bool isGoodFaithEffort;
     public static List<Faction> FactionEnemyHolder = new List<Faction>();
+    public static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    public static List<StarSystem> defenseTargets = new List<StarSystem>();
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -116,12 +117,12 @@ public static class Core
 
         public static void Postfix(SimGameState  __instance)
         {
-            WarTick(true, false);
-            //GaW_Notification();
+            WarTick(false, false);
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
-                //if (__instance.DayRemainingInQuarter != 30)
+                if (__instance.DayRemainingInQuarter != 30)
+                    WarTick(true, true);
                 //{
                 //    for (int i = 0; i < 1; i++)
                 //    {
@@ -129,12 +130,14 @@ public static class Core
                 //    }
                 //}
                 //else
-                    WarTick(true, true);
-                GaW_Notification();
+                //WarTick(true, true);
+                //GaW_Notification();
 
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
+            //else
+            //    WarTick(false, false);
 
             //Comstar report on ongoing war.
             if (__instance.DayRemainingInQuarter == 30)
@@ -154,7 +157,7 @@ public static class Core
     }
 
 
-    internal static void WarTick(bool UseFullSet, bool UpdateInfluence)
+    internal static void WarTick(bool UseFullSet, bool CheckForSystemChange)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         WarStatus.PrioritySystems.Clear();
@@ -165,17 +168,17 @@ public static class Core
         var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
         // Proc effects
-        foreach (var warFaction in WarStatus.warFactionTracker)
-        {
-            try
-            {
-                warFaction.attackTargets.Clear();
-                warFaction.defenseTargets.Clear();
-            }
-            catch // silent drop
-            {
-            }
-        }
+        //foreach (var warFaction in WarStatus.warFactionTracker)
+        //{
+        //    try
+        //    {
+        //        //warFaction.attackTargets.Clear();
+        //        //warFaction.defenseTargets.Clear();
+        //    }
+        //    catch // silent drop
+        //    {
+        //    }
+        //}
         LogDebug("Calculations and System Push");
 
         foreach (var systemStatus in SystemSubset)
@@ -217,32 +220,29 @@ public static class Core
         {
             AllocateDefensiveResources(warFaction);
         }
-        if (UpdateInfluence)
-        {
-            UpdateInfluenceFromAttacks(sim);
+            UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
             //Increase War Escalation or decay defenses.
-            foreach (var warfaction in WarStatus.warFactionTracker)
+        foreach (var warfaction in WarStatus.warFactionTracker)
+        {
+            if (!warfaction.GainedSystem)
+                warfaction.DaysSinceSystemAttacked += 1;
+            else
             {
-                if (!warfaction.GainedSystem)
-                    warfaction.DaysSinceSystemAttacked += 1;
-                else
-                {
-                    warfaction.DaysSinceSystemAttacked = 0;
-                    warfaction.GainedSystem = false;
-                }
+                warfaction.DaysSinceSystemAttacked = 0;
+                warfaction.GainedSystem = false;
+            }
 
-                if (!warfaction.LostSystem)
-                    warfaction.DaysSinceSystemLost += 1;
-                else
-                {
-                    warfaction.DaysSinceSystemLost = 0;
-                    warfaction.LostSystem = false;
-                }
+            if (!warfaction.LostSystem)
+                warfaction.DaysSinceSystemLost += 1;
+            else
+            {
+                warfaction.DaysSinceSystemLost = 0;
+                warfaction.LostSystem = false;
             }
             if (WarStatus.StartGameInitialized)
             {
                 Galaxy_at_War.HotSpots.ProcessHotSpots();
-                StarmapMod.SetupRelationPanel();
+                //StarmapMod.SetupRelationPanel();
             }
         }
         
@@ -296,16 +296,17 @@ public static class Core
 
                 if (!warFac.attackTargets.ContainsKey(neighborSystem.Owner))
                 {
-                    var tempList = new List<StarSystem> { neighborSystem };
+                    var tempList = new List<string> { neighborSystem.Name };
                     warFac.attackTargets.Add(neighborSystem.Owner, tempList);
                 }
-                else if (warFac.attackTargets.ContainsKey(neighborSystem.Owner) && !warFac.attackTargets[neighborSystem.Owner].Contains(neighborSystem))
+                else if (warFac.attackTargets.ContainsKey(neighborSystem.Owner) 
+                    && !warFac.attackTargets[neighborSystem.Owner].Contains(neighborSystem.Name))
                 {
-                    warFac.attackTargets[neighborSystem.Owner].Add(neighborSystem);
+                    warFac.attackTargets[neighborSystem.Owner].Add(neighborSystem.Name);
                 }
-                if (!warFac.defenseTargets.Contains(starSystem))
+                if (!warFac.defenseTargets.Contains(starSystem.Name))
                 {
-                    warFac.defenseTargets.Add(starSystem);
+                    warFac.defenseTargets.Add(starSystem.Name);
                 }
             }
             RefreshNeighbors(OwnerNeighborSystems, neighborSystem);
@@ -342,7 +343,7 @@ public static class Core
 
     public static void DivideAttackResources(WarFaction warFaction)
     {
-        LogDebug("Attacking");
+        //Log("Attacking");
         var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
         var warFAR = warFaction.warFactionAttackResources;
         warFAR.Clear();
@@ -353,8 +354,8 @@ public static class Core
         }
 
         var total = tempTargets.Values.Sum();
-        float attackResources = 0f;
-        var i = warFaction.AttackResources * Settings.ResourceScale;
+        float attackResources = 0f;;
+        float i = warFaction.AttackResources * Settings.ResourceScale;
         while (i > 0)
         {
             if (i >= 1)
@@ -370,7 +371,6 @@ public static class Core
         }
 
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
-
         foreach (Faction Rfact in tempTargets.Keys)
         {
             warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
@@ -393,7 +393,7 @@ public static class Core
             while (targetFAR > 0.0)
             {
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
-                var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand].Name);
+                var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand]);
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
                 if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts 
@@ -413,7 +413,7 @@ public static class Core
                 //Distribute attacking resources to systems.
                 if (system.Contended || Core.WarStatus.HotBox.Contains(system.name))
                 {
-                    warFaction.attackTargets[targetFaction].Remove(system.starSystem);
+                    warFaction.attackTargets[targetFaction].Remove(system.starSystem.Name);
                     if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
                     {
                         break;
@@ -477,12 +477,12 @@ public static class Core
             float highest = 0f;
             Faction highestFaction = faction;
             var rand = Random.Next(0, warFaction.defenseTargets.Count);
-            var system = warFaction.defenseTargets[rand].Name;
+            var system = warFaction.defenseTargets[rand];
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
 
             if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
             {
-                warFaction.defenseTargets.Remove(systemStatus.starSystem);
+                warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
                 if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
                 {
                     break;
@@ -563,38 +563,7 @@ public static class Core
             var TotalAR = GetTotalAttackResources(system);
             var TotalDR = GetTotalDefensiveResources(system);
             var SystemValue = TotalAR + TotalDR;
-            var KillListDelta = Math.Max(10, SystemValue);
-            var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
-            if (factionTracker.deathList[faction] < 50)
-                factionTracker.deathList[faction] = 50;
-            factionTracker.deathList[faction] += KillListDelta;
-            //Allies are upset that their friend is being beaten up.
-
-            if (!Settings.DefensiveFactions.Contains(OldFaction))
-            {
-                foreach (var ally in sim.FactionsDict[OldFaction].Allies)
-                {
-                    if (!Settings.IncludedFactions.Contains(ally) || faction == ally)
-                        continue;
-
-                    var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
-                    factionAlly.deathList[faction] += KillListDelta / 2;
-                }
-            }
-            //Enemies of the target faction are happy with the faction doing the beating.
-
-            if (!Settings.DefensiveFactions.Contains(OldFaction))
-            {
-                foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
-                {
-                    if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
-                        continue;
-                    var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
-                    factionEnemy.deathList[faction] -= KillListDelta / 2;
-                }
-            }
-            factionTracker.AttackedBy.Add(faction);
-
+            
             WarFaction WFWinner = WarStatus.warFactionTracker.Find(x => x.faction == faction);
             WFWinner.GainedSystem = true;
             WFWinner.MonthlySystemsChanged += 1;
@@ -615,6 +584,7 @@ public static class Core
             WFLoser.LostSystem = true;
             WFLoser.MonthlySystemsChanged -= 1;
             WFLoser.TotalSystemsChanged -= 1;
+            RemoveAndFlagSystems(WFLoser, system);
             if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(WFWinner.faction))
             {
                 WFLoser.DefensiveResources -= TotalAR;
@@ -635,13 +605,66 @@ public static class Core
         }
     }
 
-    private static void UpdateInfluenceFromAttacks(SimGameState sim)
+    public static void ChangeDeathlistFromAggression(StarSystem system, Faction faction, Faction OldFaction)
+    {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
+        var TotalAR = GetTotalAttackResources(system);
+        var TotalDR = GetTotalDefensiveResources(system);
+        var SystemValue = TotalAR + TotalDR;
+        var KillListDelta = Math.Max(10, SystemValue);
+        var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
+        if (factionTracker.deathList[faction] < 50)
+            factionTracker.deathList[faction] = 50;
+        factionTracker.deathList[faction] += KillListDelta;
+        //Allies are upset that their friend is being beaten up.
+        if (!Settings.DefensiveFactions.Contains(OldFaction))
+        {
+            foreach (var ally in sim.FactionsDict[OldFaction].Allies)
+            {
+                if (!Settings.IncludedFactions.Contains(ally) || faction == ally)
+                    continue;
+
+                var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
+                factionAlly.deathList[faction] += KillListDelta / 2;
+            }
+        }
+        //Enemies of the target faction are happy with the faction doing the beating.
+        if (!Settings.DefensiveFactions.Contains(OldFaction))
+        {
+            foreach (var enemy in sim.FactionsDict[OldFaction].Enemies)
+            {
+                if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
+                    continue;
+                var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
+                factionEnemy.deathList[faction] -= KillListDelta / 2;
+            }
+        }
+        factionTracker.AttackedBy.Add(faction);
+    }
+
+    private static void RemoveAndFlagSystems(WarFaction OldOwner, StarSystem system)
+    {
+        OldOwner.defenseTargets.Remove(system.Name);
+        if (!WarStatus.SystemChangedOwners.Contains(system.Name))
+            WarStatus.SystemChangedOwners.Add(system.Name);
+        foreach (var neighborsystem in UnityGameInstance.BattleTechGame.Simulation.Starmap.GetAvailableNeighborSystem(system))
+        {
+            var WFAT = WarStatus.warFactionTracker.Find(x => x.faction == neighborsystem.Owner).attackTargets;
+            if (WFAT.Keys.Contains(OldOwner.faction) && !WFAT[OldOwner.faction].Contains(system.Name))
+                WFAT[OldOwner.faction].Remove(system.Name);
+        }
+    }
+
+    private static void UpdateInfluenceFromAttacks(SimGameState sim, bool CheckForSystemChange)
     {
         var tempRTFactions = WarStatus.deathListTracker;
         foreach (var deathListTracker in tempRTFactions)
         {
             deathListTracker.AttackedBy.Clear();
         }
+
+        if (CheckForSystemChange)
+            WarStatus.LostSystems.Clear();
 
         LogDebug($"Updating influence for {WarStatus.systems.Count.ToString()} systems");
         foreach (var systemStatus in Core.WarStatus.systems)
@@ -662,19 +685,24 @@ public static class Core
 
             systemStatus.influenceTracker = tempDict;
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
+            var starSystem = systemStatus.starSystem;
+            
 
-            if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold))
+            if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold && !Core.WarStatus.HotBox.Contains(systemStatus.name)
+                && !Settings.DefensiveFactions.Contains(highestfaction) && !Settings.ImmuneToWar.Contains(starSystem.Owner)))
             {
-                var starSystem = systemStatus.starSystem;
-
-                if (starSystem != null && systemStatus.Contended && !Core.WarStatus.HotBox.Contains(systemStatus.name) && !Settings.DefensiveFactions.Contains(highestfaction)
-                    && !Settings.ImmuneToWar.Contains(starSystem.Owner))
+                if (!systemStatus.Contended)
                 {
+                    systemStatus.Contended = true;
+                    ChangeDeathlistFromAggression(starSystem, highestfaction, starSystem.Owner);
+                }
+                else if (CheckForSystemChange)
+                { 
                     ChangeSystemOwnership(sim, starSystem, highestfaction, false);
                     systemStatus.Contended = false;
+                    WarStatus.LostSystems.Add(starSystem.Name);
                 }
-                else
-                    systemStatus.Contended = true;
+                   
             }
         }
 
