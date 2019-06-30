@@ -113,40 +113,43 @@ public static class Core
                     }
                 }
             }
+            if (!Core.WarStatus.StartGameInitialized)
+            {
+                Galaxy_at_War.HotSpots.ProcessHotSpots();
+                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                Core.WarStatus.StartGameInitialized = true;
+            }
         }
 
         public static void Postfix(SimGameState  __instance)
         {
-            WarTick(false, false);
+            if (!WarStatus.GaW_Event_PopUp)
+            {
+                GaW_Notification();
+                WarStatus.GaW_Event_PopUp = true;
+            }
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
                 if (__instance.DayRemainingInQuarter != 30)
+                    WarTick(false, false);
+                else
                     WarTick(true, true);
-                //{
-                //    for (int i = 0; i < 1; i++)
-                //    {
-                //        WarTick(false, false);
-                //    }
-                //}
-                //else
-                //WarTick(true, true);
-                //GaW_Notification();
 
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
-            //else
-            //    WarTick(false, false);
 
             //Comstar report on ongoing war.
             if (__instance.DayRemainingInQuarter == 30)
             {
-                var ReportString = MonthlyWarReport();
-                SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
-                    .Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
-                interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
-                __instance.StopPlayMode();
+                //var ReportString = MonthlyWarReport();
+                //WarSummary(ReportString);
+                //SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
+                //    .Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
+                //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
+                //__instance.StopPlayMode();
                 if (!WarStatus.HotBoxTravelling)
                 {
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
@@ -167,18 +170,6 @@ public static class Core
             SystemSubsetSize = (int)(SystemSubsetSize * Settings.SubSetFraction);
         var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
-        // Proc effects
-        //foreach (var warFaction in WarStatus.warFactionTracker)
-        //{
-        //    try
-        //    {
-        //        //warFaction.attackTargets.Clear();
-        //        //warFaction.defenseTargets.Clear();
-        //    }
-        //    catch // silent drop
-        //    {
-        //    }
-        //}
         LogDebug("Calculations and System Push");
 
         foreach (var systemStatus in SystemSubset)
@@ -239,13 +230,13 @@ public static class Core
                 warfaction.DaysSinceSystemLost = 0;
                 warfaction.LostSystem = false;
             }
-            if (WarStatus.StartGameInitialized)
-            {
-                Galaxy_at_War.HotSpots.ProcessHotSpots();
-                //StarmapMod.SetupRelationPanel();
-            }
         }
-        
+        if (WarStatus.StartGameInitialized)
+        {
+            Galaxy_at_War.HotSpots.ProcessHotSpots();
+            StarmapMod.SetupRelationPanel();
+        }
+
 
 
         //Log("===================================================");
@@ -397,7 +388,7 @@ public static class Core
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
                 if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts 
-                    && system.DifficultyRating >= maxContracts -2)
+                    && system.DifficultyRating >= maxContracts - 4)
                 {
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
@@ -423,7 +414,9 @@ public static class Core
                 }
                 
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
-                var PmaxValue = maxValueList[1];
+                float PmaxValue = 200.0f;
+                if (maxValueList.Count > 1)
+                    PmaxValue = maxValueList[1];
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
@@ -764,6 +757,8 @@ public static class Core
             if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
+        if (ContractEmployers.Count == 1)
+            ContractEmployers.Add(Faction.AuriganPirates);
     }
 
     [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
@@ -935,7 +930,8 @@ public static class Core
             {
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
 
-                if (missionResult == MissionResult.Victory)
+                if (missionResult == MissionResult.Victory && teamfaction != Faction.AuriganPirates
+                    && enemyfaction != Faction.AuriganPirates)
                 {
                     warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
                     warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
@@ -1070,19 +1066,46 @@ public static class Core
             " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
             " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make make" +
             " their fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
-            "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly spending to spread their influence and protect their own systems." +
+            "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
+            "spending to spread their influence and protect their own systems." +
             "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
             "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
-            "\n• Factions that you have the highest reputation with will offer you travel expenses to go to their most valuable offensive or defensive targets." +
-            "\n• If you accept one of these contracts, the Faction will blockade the system to allow you the opportunity to swing that system in their favor. For 30 days they will provide a bonus for every mission you complete in that system!" +
-            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and how well the war is going for them.");
-
+            "\n• Factions that you have the highest reputation with will offer you travel expenses to go to their most " +
+            "valuable offensive or defensive targets." +
+            "\n• If you accept a travel contract the Faction will blockade the system for 30 days to allow you the opportunity to swing that system in their favor. A bonus will be granted for every mission you complete within that system during that time." +
+            "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
+            "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
+            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status.");
 
         SimGameState.ApplyEventAction(simGameResultAction, null);
         UnityGameInstance.BattleTechGame.Simulation.StopPlayMode();
     }
 
+    //internal static void WarSummary(string eventString)
+    //{
+    //    var simGame = UnityGameInstance.BattleTechGame.Simulation;
+    //    var eventDef = new SimGameEventDef(
+    //            SimGameEventDef.EventPublishState.PUBLISHED,
+    //            SimGameEventDef.SimEventType.UNSELECTABLE,
+    //            EventScope.Company,
+    //            new DescriptionDef(
+    //                "SalvageOperationsEventID",
+    //                "Salvage Operations",
+    //                eventString,
+    //                "uixTxrSpot_YangWorking.png",
+    //                0, 0, false, "", "", ""),
+    //            new RequirementDef { Scope = EventScope.Company },
+    //            new RequirementDef[0],
+    //            new SimGameEventObject[0],
+    //            null, 1, false);
 
+
+    //    var eventTracker = new SimGameEventTracker();
+    //    eventTracker.Init(new[] { EventScope.Company }, 0, 0, SimGameEventDef.SimEventType.NORMAL, simGame);
+    //    simGame.InterruptQueue.QueueEventPopup(eventDef, EventScope.Company, eventTracker);
+
+
+    //}
 
 
 }

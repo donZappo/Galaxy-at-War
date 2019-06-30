@@ -48,93 +48,94 @@ public class StarmapMod
         }
     }
 
-    //internal static void SetupRelationPanel()
-    //{
-    //    eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
-    //    eventPanel.gameObject.SetActive(true);
-    //    GameObject.Find("uixPrfPanl_spotIllustration_750-MANAGED").SetActive(false);
+    internal static void SetupRelationPanel()
+    {
+        eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
+        eventPanel.gameObject.SetActive(true);
+        GameObject.Find("uixPrfPanl_spotIllustration_750-MANAGED").SetActive(false);
 
-    //    UpdatePanelText();
+        UpdatePanelText();
 
-    //    try
-    //    {
-    //        GameObject.Find("event_ResponseOptions").SetActive(false);
-    //        GameObject.Find("label_chevron").SetActive(false);
-    //    }
-    //    catch
-    //    {
-    //    }
+        try
+        {
+            GameObject.Find("event_ResponseOptions").SetActive(false);
+            GameObject.Find("label_chevron").SetActive(false);
+        }
+        catch
+        {
+        }
 
-    //    var expander = GameObject.Find("ExpanderContainer");
-    //    var rect = expander.GetComponent<RectTransform>();
-    //    rect.anchorMin = new Vector2(0.5f, 0.1f);
-    //    rect.anchorMax = new Vector2(0.5f, 0.9f);
-    //    var viewport = GameObject.Find("ExpandingContentGoesHere");
-    //    var vpRect = viewport.GetComponent<RectTransform>();
-    //    vpRect.anchorMin = new Vector2(0.5f, 0.1f);
-    //    vpRect.anchorMax = new Vector2(0.5f, 0.9f);
-    //    var event_OverallLayout = GameObject.Find("event_OverallLayout");
-    //    var vertLayout = event_OverallLayout.GetComponent<VerticalLayoutGroup>() as HorizontalOrVerticalLayoutGroup;
-    //    vertLayout.childForceExpandHeight = true;
-    //    vertLayout.childControlHeight = true;
-    //    var vertRect = vertLayout.GetComponent<RectTransform>();
-    //    vertRect.anchorMin = new Vector2(0.5f, 0.1f);
-    //    vertRect.anchorMax = new Vector2(0.5f, 0.9f);
-    //    vertLayout.SetLayoutVertical();
-    //    eventPanel.gameObject.SetActive(false);
-    //    LogDebug("RelationPanel created");
-    //}
+        var expander = GameObject.Find("ExpanderContainer");
+        var rect = expander.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.1f);
+        rect.anchorMax = new Vector2(0.5f, 0.9f);
+        var viewport = GameObject.Find("ExpandingContentGoesHere");
+        var vpRect = viewport.GetComponent<RectTransform>();
+        vpRect.anchorMin = new Vector2(0.5f, 0.1f);
+        vpRect.anchorMax = new Vector2(0.5f, 0.9f);
+        var event_OverallLayout = GameObject.Find("event_OverallLayout");
+        var vertLayout = event_OverallLayout.GetComponent<VerticalLayoutGroup>() as HorizontalOrVerticalLayoutGroup;
+        vertLayout.childForceExpandHeight = true;
+        vertLayout.childControlHeight = true;
+        var vertRect = vertLayout.GetComponent<RectTransform>();
+        vertRect.anchorMin = new Vector2(0.5f, 0.1f);
+        vertRect.anchorMax = new Vector2(0.5f, 0.9f);
+        vertLayout.SetLayoutVertical();
+        eventPanel.gameObject.SetActive(false);
+        LogDebug("RelationPanel created");
+    }
 
-    //private static string BuildRelationString()
-    //{
-    //    var sb = new StringBuilder();
-    //    foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
-    //    {
-    //        var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
-    //        sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
-    //        sb.AppendLine("Attack Resources: " + warFaction.AttackResources + " || Defense Resources: " + warFaction.DefensiveResources +"\n\n");
-    //        if (tracker.Enemies.Count > 0)
-    //            sb.AppendLine($"<u>Enemies</u>");
-    //        foreach (var enemy in tracker.Enemies)
-    //            sb.AppendLine($"{Core.Settings.FactionNames[enemy],-20}");
-    //        sb.AppendLine();
+    private static string BuildRelationString()
+    {
+        var sb = new StringBuilder();
+        foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
+        {
+            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
+            sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
+            sb.AppendLine("Attack Resources: " + warFaction.AttackResources + " || Defense Resources: " + warFaction.DefensiveResources 
+                + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n\n");
+            if (tracker.Enemies.Count > 0)
+                sb.AppendLine($"<u>Enemies</u>");
+            foreach (var enemy in tracker.Enemies)
+                sb.AppendLine($"{Core.Settings.FactionNames[enemy],-20}");
+            sb.AppendLine();
 
-    //        if (tracker.Allies.Count > 0)
-    //            sb.AppendLine($"<u>Allies</u>");
-    //        foreach (var ally in tracker.Allies)
-    //            sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
-    //        sb.AppendLine();
-    //        sb.AppendLine();
-    //    }
+            if (tracker.Allies.Count > 0)
+                sb.AppendLine($"<u>Allies</u>");
+            foreach (var ally in tracker.Allies)
+                sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
+            sb.AppendLine();
+            sb.AppendLine();
+        }
 
-    //    sb.AppendLine();
-    //    return sb.ToString();
-    //}
+        sb.AppendLine();
+        return sb.ToString();
+    }
 
-    //internal static void UpdatePanelText()
-    //{
-    //    var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
-    //    foreach (var tm in tmps)
-    //    {
-    //        switch (tm.name)
-    //        {
-    //            case "title_week-day":
-    //                tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
-    //                break;
-    //            case "event_titleText":
-    //                tm.text = "Relationship Summary";
-    //                tm.alignment = TextAlignmentOptions.Center;
-    //                break;
-    //            case "descriptionText":
-    //                tm.text = BuildRelationString();
-    //                tm.alignment = TextAlignmentOptions.Center;
-    //                break;
-    //            case "label_Text":
-    //                tm.gameObject.SetActive(false);
-    //                break;
-    //        }
-    //    }
-    //}
+    internal static void UpdatePanelText()
+    {
+        var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
+        foreach (var tm in tmps)
+        {
+            switch (tm.name)
+            {
+                case "title_week-day":
+                    tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
+                    break;
+                case "event_titleText":
+                    tm.text = "Relationship Summary";
+                    tm.alignment = TextAlignmentOptions.Center;
+                    break;
+                case "descriptionText":
+                    tm.text = BuildRelationString();
+                    tm.alignment = TextAlignmentOptions.Center;
+                    break;
+                case "label_Text":
+                    tm.gameObject.SetActive(false);
+                    break;
+            }
+        }
+    }
 
     [HarmonyPatch(typeof(SimGameState), "Update")]
     public static class FactionPopup_Patch
@@ -142,7 +143,17 @@ public class StarmapMod
         public static void Postfix(SimGameState __instance)
         {
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
-                eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeInHierarchy);
+            {
+                try
+                {
+                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeInHierarchy);
+                }
+                catch
+                {
+                    SetupRelationPanel();
+                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeInHierarchy);
+                }
+            }
         }
     }
 
@@ -184,14 +195,14 @@ public class StarmapMod
     {
         public static void Prefix()
         {
-            if (!Core.WarStatus.StartGameInitialized)
-            {
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
-                Galaxy_at_War.HotSpots.ProcessHotSpots();
-                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                Core.WarStatus.StartGameInitialized = true;
-            }
+            //if (!Core.WarStatus.StartGameInitialized)
+            //{
+            //    var sim = UnityGameInstance.BattleTechGame.Simulation;
+            //    Galaxy_at_War.HotSpots.ProcessHotSpots();
+            //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+            //    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+            //    Core.WarStatus.StartGameInitialized = true;
+            //}
         }
     }
 
@@ -212,13 +223,28 @@ public class StarmapMod
             if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
                 HighlightSystem(__result, wasVisited, Color.magenta, true);
             else if (Core.WarStatus.LostSystems.Contains(__result.name))
-            {
                 HighlightSystem(__result, wasVisited, Color.yellow, false);
-            }
             else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                 MakeSystemNormal(__result, wasVisited);
         }
     }
+
+    [HarmonyPatch(typeof(StarmapScreen), "RefreshStarmap")]
+    public static class StarmapScreen_RefreshStarmap__Patch
+    {
+        public static void Prefix(StarmapRenderer __instance)
+        {
+            if (!Core.WarStatus.StartGameInitialized)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                Galaxy_at_War.HotSpots.ProcessHotSpots();
+                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                Core.WarStatus.StartGameInitialized = true;
+            }
+        }
+    }
+
 
     [HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
     public static class StarmapRenderer_RefreshSystems_Patch
@@ -280,6 +306,12 @@ public class StarmapMod
         Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         __result.starOuter.gameObject.SetActive(wasVisited);
     }
+
+
+
+
+
+
 
     [HarmonyPatch(typeof(SGNavigationScreen), "CreateSystemCallout")]
     public static class SGNavigationScreen_CreateSystemCallout_Patch

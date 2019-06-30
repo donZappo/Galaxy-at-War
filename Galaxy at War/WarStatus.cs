@@ -26,6 +26,7 @@ public class WarStatus
     public List<string> SystemChangedOwners = new List<string>();
     public List<string> HotBox = new List<string>();
     public List<string> LostSystems = new List<string>();
+    public bool GaW_Event_PopUp = false;
 
     public List<string> HomeContendedStrings = new List<string>();
     public List<string> ContendedStrings = new List<string>();

@@ -38,10 +38,9 @@ public static class SaveHandling
                 DeserializeWar();
                 RebuildState();
             }
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-           // StarmapMod.SetupRelationPanel();
         }
     }
+
     internal static void DeserializeWar()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -49,23 +48,6 @@ public static class SaveHandling
         LogDebug(">>> Deserialization complete");
         LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
     }
-    //[HarmonyPatch(typeof(GameInstance), "Load")]
-    //public static class GameInstance_Load_Patch
-    //{
-    //    public static void Postfix()
-    //    {
-    //        Log("Second");
-    //        var sim = UnityGameInstance.BattleTechGame.Simulation;
-    //        foreach (var system in sim.StarSystems)
-    //        {
-    //            Core.CalculateAttackAndDefenseTargets(system);
-    //            Core.RefreshContracts(system);
-    //        }
-    //        StarmapMod.SetupRelationPanel();
-    //        //Core.GaW_Notification();
-    //    }
-    //}
-
 
     [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
     public static class SimGameState_Dehydrate_Patch
@@ -79,7 +61,7 @@ public static class SaveHandling
                 Core.SystemDifficulty();
                 Core.WarTick(true, true);
                 SerializeWar();
-               // StarmapMod.SetupRelationPanel();
+                StarmapMod.SetupRelationPanel();
             }
             else
             {
