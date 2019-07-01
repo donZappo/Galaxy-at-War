@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using BattleTech;
@@ -10,12 +9,9 @@ using Newtonsoft.Json;
 using static Logger;
 using Random = System.Random;
 using BattleTech.UI;
-using fastJSON;
 using HBS;
-using Error = BestHTTP.SocketIO.Error;
-using UnityEngine.Scripting;
-using System.Runtime.InteropServices;
 using Localize;
+using BattleTech.Framework;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -84,6 +80,7 @@ public static class Core
     public static List<Faction> FactionEnemyHolder = new List<Faction>();
     public static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
     public static List<StarSystem> defenseTargets = new List<StarSystem>();
+    public static ContractType contractType;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -133,28 +130,21 @@ public static class Core
             {
                 //LogDebug(">>> PROC");
                 if (__instance.DayRemainingInQuarter != 30)
+                {
                     WarTick(false, false);
+                }
                 else
+                {
                     WarTick(true, true);
+                    if (!WarStatus.HotBoxTravelling)
+                    {
+                        var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                        __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    }
+                }
 
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
-            }
-
-            //Comstar report on ongoing war.
-            if (__instance.DayRemainingInQuarter == 30)
-            {
-                //var ReportString = MonthlyWarReport();
-                //WarSummary(ReportString);
-                //SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools
-                //    .Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
-                //interruptQueue.QueueGenericPopup_NonImmediate("Comstar Bulletin: Galaxy at War", ReportString, true, null);
-                //__instance.StopPlayMode();
-                if (!WarStatus.HotBoxTravelling)
-                {
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                }
             }
         }
     }
@@ -204,12 +194,12 @@ public static class Core
         //LogDebug("Attacking Fool");
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
-            DivideAttackResources(warFaction);
+            DivideAttackResources(warFaction, UseFullSet);
             AllocateAttackResources(warFaction);
         }
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
-            AllocateDefensiveResources(warFaction);
+            AllocateDefensiveResources(warFaction, UseFullSet);
         }
             UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
             //Increase War Escalation or decay defenses.
@@ -332,7 +322,7 @@ public static class Core
     //    }
     //}
 
-    public static void DivideAttackResources(WarFaction warFaction)
+    public static void DivideAttackResources(WarFaction warFaction, bool UseFullSet)
     {
         //Log("Attacking");
         var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
@@ -345,8 +335,11 @@ public static class Core
         }
 
         var total = tempTargets.Values.Sum();
-        float attackResources = 0f;;
-        float i = warFaction.AttackResources * Settings.ResourceScale;
+        float attackResources = 0f;
+        float i = warFaction.AttackResources;
+        if (!UseFullSet)
+            i *= Settings.ResourceScale;
+
         while (i > 0)
         {
             if (i >= 1)
@@ -440,14 +433,17 @@ public static class Core
         }
     }
 
-    public static void AllocateDefensiveResources(WarFaction warFaction)
+    public static void AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
     {
         var faction = warFaction.faction;
         if (warFaction.defenseTargets.Count == 0 || WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
             return;
         
         float defensiveResources = 0f;
-        var i = warFaction.DefensiveResources * Settings.ResourceScale;
+        var i = warFaction.DefensiveResources;
+        if (!UseFullSet)
+            i *= Settings.ResourceScale;
+
         while (i > 0)
         {
             if (i >= 1)
@@ -571,8 +567,7 @@ public static class Core
                 WFWinner.AttackResources += TotalAR;
                 WFWinner.DefensiveResources += TotalDR;
             }
-            WFWinner.AttackResources += TotalAR;
-            WFWinner.DefensiveResources += TotalDR;
+            
             WarFaction WFLoser = WarStatus.warFactionTracker.Find(x => x.faction == OldFaction);
             WFLoser.LostSystem = true;
             WFLoser.MonthlySystemsChanged -= 1;
@@ -588,6 +583,11 @@ public static class Core
                 WFLoser.AttackResources -= TotalAR;
                 WFLoser.DefensiveResources -= TotalDR;
             }
+            if (WFLoser.AttackResources < 0)
+                WFLoser.AttackResources = 0;
+            if (WFLoser.DefensiveResources < 0)
+                WFLoser.DefensiveResources = 0;
+
             if (!WarStatus.SystemChangedOwners.Contains(system.Name))
                 WarStatus.SystemChangedOwners.Add(system.Name);
             foreach (var neighbor in sim.Starmap.GetAvailableNeighborSystem(system))
@@ -921,6 +921,7 @@ public static class Core
             enemyfaction = __instance.Override.targetTeam.faction;
             difficulty = __instance.Difficulty;
             missionResult = result;
+            contractType = __instance.ContractType;
         }
 
         [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
@@ -935,6 +936,18 @@ public static class Core
                 {
                     warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
                     warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
+                }
+
+                if (contractType == ContractType.AttackDefend || contractType == ContractType.FireMission)
+                {
+                    if (Settings.IncludedFactions.Contains(teamfaction))
+                        WarStatus.warFactionTracker.Find(x => x.faction == teamfaction).AttackResources += difficulty;
+                    if (Settings.IncludedFactions.Contains(enemyfaction))
+                    {
+                        WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources -= difficulty;
+                        if (WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources < 0)
+                            WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources = 0;
+                    }
                 }
                
                 var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
@@ -1070,15 +1083,43 @@ public static class Core
             "spending to spread their influence and protect their own systems." +
             "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
             "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
-            "\n• Factions that you have the highest reputation with will offer you travel expenses to go to their most " +
-            "valuable offensive or defensive targets." +
+            "\n• Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
             "\n• If you accept a travel contract the Faction will blockade the system for 30 days to allow you the opportunity to swing that system in their favor. A bonus will be granted for every mission you complete within that system during that time." +
             "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
             "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
-            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status.");
+            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
+            "\n\n******Press Enter to Continue******");
+
 
         SimGameState.ApplyEventAction(simGameResultAction, null);
         UnityGameInstance.BattleTechGame.Simulation.StopPlayMode();
+    }
+
+    [HarmonyPatch(typeof(SGContractsWidget), "GetContractComparePriority")]
+    public static class SGContractsWidget_GetContractComparePriority_Patch
+    {
+        static bool Prefix(ref int __result, Contract contract)
+        {
+            int difficulty = contract.Override.GetUIDifficulty();
+            int result = 100;
+            var Sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Sim.ContractUserMeetsReputation(contract))
+            {
+                if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration)
+                    result = 0;
+                else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+                    result = 1;
+                else if (contract.TargetSystem.Replace("starsystemdef_", "").Equals(Sim.CurSystem.Name))
+                    result = difficulty + 1;
+                else
+                    result = difficulty + 11;
+            }
+            else
+                result = difficulty + 21;
+
+            __result = result;
+            return false;
+        }
     }
 
     //internal static void WarSummary(string eventString)

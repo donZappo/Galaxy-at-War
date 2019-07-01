@@ -61,7 +61,6 @@ public static class SaveHandling
                 Core.SystemDifficulty();
                 Core.WarTick(true, true);
                 SerializeWar();
-                StarmapMod.SetupRelationPanel();
             }
             else
             {
