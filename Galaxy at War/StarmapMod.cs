@@ -178,7 +178,9 @@ public class StarmapMod
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
-        factionString.AppendLine("\n\nAttack Resources: " + tracker.AttackResources + "  Defense Resources: " + tracker.DefenseResources);
+        factionString.AppendLine($"\nPirate Activity: {100 * tracker.PirateActivity:#.0}%");
+        factionString.AppendLine("\n\nAttack Resources: " + ((1 - tracker.PirateActivity) * tracker.AttackResources).ToString("0.0") +
+            "  Defense Resources: " + ((1 - tracker.PirateActivity) * tracker.DefenseResources).ToString("0.0"));
         string BonusString = "Escalation Bonuses:";
         if (tracker.BonusCBills)
             BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";
@@ -222,6 +224,8 @@ public class StarmapMod
             var wasVisited = visitedStarSystems.Contains(__result.name);
             if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
                 HighlightSystem(__result, wasVisited, Color.magenta, true);
+            else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
+                HighlightSystem(__result, wasVisited, Color.red, false);
             else if (Core.WarStatus.LostSystems.Contains(__result.name))
                 HighlightSystem(__result, wasVisited, Color.yellow, false);
             else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)

@@ -66,6 +66,8 @@ public class ModSettings
     public float ResourceScale = 0.5f;
     public bool UseSubsetOfSystems = true;
     public float SubSetFraction = 1.0f;
+    public float StartingPirateActivity = 0.05f;
+    public float StartingPirateResources = 500.0f;
     
     public List<Faction> DefensiveFactions = new List<Faction>();
 

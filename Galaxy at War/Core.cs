@@ -126,6 +126,17 @@ public static class Core
                 GaW_Notification();
                 WarStatus.GaW_Event_PopUp = true;
             }
+
+            //int i = 0;
+            //do
+            //{
+            //    WarTick(true, true);
+            //    i++;
+            //    Log("War Cycle: " + i.ToString());
+            //} while (i < 100);
+            //__instance.StopPlayMode();
+            //return;
+
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
@@ -188,6 +199,16 @@ public static class Core
                     }
                 }
             }
+            if (systemStatus.PirateActivity >= 0.1f)
+            {
+                if (!WarStatus.PirateHighlight.Contains(systemStatus.name))
+                    WarStatus.PirateHighlight.Add(systemStatus.name);
+            }
+            else
+            {
+                if (WarStatus.PirateHighlight.Contains(systemStatus.name))
+                    WarStatus.PirateHighlight.Remove(systemStatus.name);
+            }
         }
         WarStatus.InitializeAtStart = false;
         //Attack!
@@ -201,7 +222,9 @@ public static class Core
         {
             AllocateDefensiveResources(warFaction, UseFullSet);
         }
-            UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
+
+        UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
+
             //Increase War Escalation or decay defenses.
         foreach (var warfaction in WarStatus.warFactionTracker)
         {
@@ -376,6 +399,10 @@ public static class Core
             var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
             while (targetFAR > 0.0)
             {
+                if (!warFaction.attackTargets.Keys.Contains(targetFaction))
+                    break;
+                if (warFaction.attackTargets[targetFaction].Count == 0)
+                    break;
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
                 var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand]);
 
@@ -609,6 +636,7 @@ public static class Core
         if (factionTracker.deathList[faction] < 50)
             factionTracker.deathList[faction] = 50;
         factionTracker.deathList[faction] += KillListDelta;
+
         //Allies are upset that their friend is being beaten up.
         if (!Settings.DefensiveFactions.Contains(OldFaction))
         {
@@ -680,7 +708,6 @@ public static class Core
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
             var starSystem = systemStatus.starSystem;
             
-
             if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold && !Core.WarStatus.HotBox.Contains(systemStatus.name)
                 && !Settings.DefensiveFactions.Contains(highestfaction) && !Settings.ImmuneToWar.Contains(starSystem.Owner)))
             {
@@ -949,7 +976,8 @@ public static class Core
                             WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources = 0;
                     }
                 }
-               
+
+                var Sim = UnityGameInstance.BattleTechGame.Simulation;
                 var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
                 var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
                 var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
@@ -957,12 +985,10 @@ public static class Core
                 var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
                 var oldOwner = warsystem.owner;
 
-                if (highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold && !Settings.DefensiveFactions.Contains(teamfaction)
-                    && warsystem.starSystem.Owner != Faction.ComStar)
+                if (highKey != Sim.CurSystem.Owner && highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold 
+                    && !Settings.DefensiveFactions.Contains(teamfaction) && warsystem.starSystem.Owner != Faction.ComStar)
                 {
                     ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
-
-                    //This is a WIP for the pop-up after a system changes due to player interaction.
 
                     GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
                     SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
@@ -978,6 +1004,7 @@ public static class Core
     }
     public static void SystemDifficulty()
     {
+        bool GetPirateFlex = true;
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var TotalSystems = WarStatus.systems.Count;
         var DifficultyCutoff = TotalSystems / 10;
@@ -1032,6 +1059,11 @@ public static class Core
                 List<int> difficultyList = new List<int> { 6, 6 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
+                if (GetPirateFlex)
+                {
+                    WarStatus.PirateFlex = system.TotalResources;
+                    GetPirateFlex = false;
+                }
             }
             if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
             {

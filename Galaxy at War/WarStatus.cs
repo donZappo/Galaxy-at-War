@@ -34,12 +34,16 @@ public class WarStatus
     public List<string> FullHomeContendedSystems = new List<string>();
     public List<string> HomeContendedSystems = new List<string>();
     public Dictionary<Faction, List<string>> ExternalPriorityTargets = new Dictionary<Faction, List<string>>();
+    public List<string> PirateHighlight = new List<string>();
+    public float PirateFlex = 0.0f;
+    public float PirateResources;
 
 
     public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         CurSystem = sim.CurSystem.Name;
+        PirateResources = Core.Settings.StartingPirateResources;
         StartGameInitialized = false;
         HotBoxTravelling = false;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
@@ -111,6 +115,7 @@ public class SystemStatus
     public bool BonusCBills = false;
     public float AttackResources;
     public float DefenseResources;
+    public float PirateActivity = 0.0f;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
@@ -129,6 +134,8 @@ public class SystemStatus
         AttackResources = Core.GetTotalAttackResources(starSystem);
         DefenseResources = Core.GetTotalDefensiveResources(starSystem);
         TotalResources = AttackResources + DefenseResources;
+        if (starSystem.Tags.Contains("planet_other_pirate"))
+            PirateActivity = Core.Settings.StartingPirateActivity;
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();
