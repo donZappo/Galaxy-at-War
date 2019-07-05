@@ -72,7 +72,12 @@ namespace Galaxy_at_War
                 if (FactionEscalateDefense[warFaction])
                     PAChange = (float)(rand.NextDouble() * (system.PirateActivity - system.PirateActivity / 4) + system.PirateActivity / 4);
                 else
-                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity / 4 - 1) + 1);
+                {
+                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity / 4));
+                    if (system.PirateActivity >= 1)
+                        PAChange = Math.Max(PAChange, 1);
+                }
+                
 
                 if (warFaction.DefensiveResources >= PAChange * system.TotalResources / 100)
                 {
