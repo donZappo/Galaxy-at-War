@@ -32,7 +32,7 @@ namespace Galaxy_at_War
 
         public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets = new Dictionary<Faction, List<StarSystem>>();
         public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
-        public static List<StarSystem> FullHomeContendedSystems = new List<StarSystem>();
+        public static Dictionary<StarSystem, float> FullHomeContendedSystems = new Dictionary<StarSystem, float>();
 
         public static void ProcessHotSpots()
         {
@@ -62,7 +62,7 @@ namespace Galaxy_at_War
                 if (systemStatus.PriorityDefense)
                 {
                     if (systemStatus.owner == DominantFaction)
-                        FullHomeContendedSystems.Add(systemStatus.starSystem);
+                        FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
                     else
                         ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                 }
@@ -72,8 +72,8 @@ namespace Galaxy_at_War
                     {
                         if (attacker == DominantFaction)
                         {
-                            if (!FullHomeContendedSystems.Contains(systemStatus.starSystem))
-                                FullHomeContendedSystems.Add(systemStatus.starSystem);
+                            if (!FullHomeContendedSystems.Keys.Contains(systemStatus.starSystem))
+                                FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
                         }
                         else
                         {
@@ -84,12 +84,12 @@ namespace Galaxy_at_War
                 }
             }
             var i = 0;
-            while (i < 6 && FullHomeContendedSystems.Count != 0)
+            foreach (var system in FullHomeContendedSystems.OrderByDescending(x => x.Value))
             {
-                var rando = rand.Next(0, FullHomeContendedSystems.Count);
-                Core.WarStatus.HomeContendedStrings.Add(FullHomeContendedSystems[rando].Name);
-                HomeContendedSystems.Add(FullHomeContendedSystems[rando]);
-                FullHomeContendedSystems.RemoveAt(rando);
+                if (i < 6)
+                    Core.WarStatus.HomeContendedStrings.Add(system.Key.Name);
+
+                HomeContendedSystems.Add(system.Key);
                 i++;
             }
         }

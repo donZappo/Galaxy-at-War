@@ -92,8 +92,10 @@ public class StarmapMod
         {
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
-            sb.AppendLine("Attack Resources: " + warFaction.AttackResources + " || Defense Resources: " + warFaction.DefensiveResources 
-                + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n\n");
+            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") + 
+                " || Defense Resources: " + warFaction.DefensiveResources.ToString("0") 
+                + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+            sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") +"\n\n");
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
@@ -178,9 +180,9 @@ public class StarmapMod
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
-        factionString.AppendLine($"\nPirate Activity: {100 * tracker.PirateActivity:#.0}%");
-        factionString.AppendLine("\n\nAttack Resources: " + ((1 - tracker.PirateActivity) * tracker.AttackResources).ToString("0.0") +
-            "  Defense Resources: " + ((1 - tracker.PirateActivity) * tracker.DefenseResources).ToString("0.0"));
+        factionString.AppendLine($"\nPirate Activity: {tracker.PirateActivity:#0.0}%");
+        factionString.AppendLine("\n\nAttack Resources: " + ((100 - tracker.PirateActivity) * tracker.AttackResources / 100).ToString("0.0") +
+            "  Defense Resources: " + ((100 - tracker.PirateActivity) * tracker.DefenseResources / 100).ToString("0.0"));
         string BonusString = "Escalation Bonuses:";
         if (tracker.BonusCBills)
             BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";

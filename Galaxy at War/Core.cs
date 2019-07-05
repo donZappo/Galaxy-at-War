@@ -121,21 +121,21 @@ public static class Core
 
         public static void Postfix(SimGameState  __instance)
         {
-            if (!WarStatus.GaW_Event_PopUp)
-            {
-                GaW_Notification();
-                WarStatus.GaW_Event_PopUp = true;
-            }
-
-            //int i = 0;
-            //do
+            //if (!WarStatus.GaW_Event_PopUp)
             //{
-            //    WarTick(true, true);
-            //    i++;
-            //    Log("War Cycle: " + i.ToString());
-            //} while (i < 100);
-            //__instance.StopPlayMode();
-            //return;
+            //    GaW_Notification();
+            //    WarStatus.GaW_Event_PopUp = true;
+            //}
+
+            int i = 0;
+            do
+            {
+                WarTick(true, true);
+                i++;
+                Log("War Cycle: " + i.ToString());
+            } while (i < 100);
+            __instance.StopPlayMode();
+            return;
 
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
@@ -171,7 +171,12 @@ public static class Core
             SystemSubsetSize = (int)(SystemSubsetSize * Settings.SubSetFraction);
         var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
-        LogDebug("Calculations and System Push");
+        //Distribute Pirate Influence throughout the StarSystems
+        Galaxy_at_War.PiratesAndLocals.CorrectResources();
+        Galaxy_at_War.PiratesAndLocals.PiratesStealResources();
+        Galaxy_at_War.PiratesAndLocals.CurrentPAResources = Core.WarStatus.PirateResources;
+        Galaxy_at_War.PiratesAndLocals.DistributePirateResources();
+        Galaxy_at_War.PiratesAndLocals.DefendAgainstPirates();
 
         foreach (var systemStatus in SystemSubset)
         {
@@ -199,7 +204,7 @@ public static class Core
                     }
                 }
             }
-            if (systemStatus.PirateActivity >= 0.1f)
+            if (systemStatus.PirateActivity >= 10f)
             {
                 if (!WarStatus.PirateHighlight.Contains(systemStatus.name))
                     WarStatus.PirateHighlight.Add(systemStatus.name);
@@ -773,7 +778,8 @@ public static class Core
         }
         if (!ContractTargets.Contains(owner))
             ContractTargets.Add(owner);
-        var neighborSystems = WarStatus.systems.Find(x => x.name == starSystem.Name).neighborSystems;
+        var WarSystem = WarStatus.systems.Find(x => x.name == starSystem.Name);
+        var neighborSystems = WarSystem.neighborSystems;
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
             if (Settings.ImmuneToWar.Contains(systemNeighbor))
@@ -784,7 +790,7 @@ public static class Core
             if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
-        if (ContractEmployers.Count == 1)
+        if (ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0)
             ContractEmployers.Add(Faction.AuriganPirates);
     }
 
@@ -957,12 +963,26 @@ public static class Core
             public static void Postfix(SimGameState __instance)
             {
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
-
-                if (missionResult == MissionResult.Victory && teamfaction != Faction.AuriganPirates
-                    && enemyfaction != Faction.AuriganPirates)
+                if (missionResult == MissionResult.Victory)
                 {
-                    warsystem.influenceTracker[teamfaction] += difficulty * Settings.DifficultyFactor;
-                    warsystem.influenceTracker[enemyfaction] -= difficulty * Settings.DifficultyFactor;
+                    if (teamfaction != Faction.AuriganPirates && enemyfaction != Faction.AuriganPirates)
+                    {
+                        warsystem.influenceTracker[teamfaction] += Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                        warsystem.influenceTracker[enemyfaction] -= Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                    }
+                    else if (teamfaction == Faction.AuriganPirates)
+                    {
+                        warsystem.PirateActivity += difficulty;
+                        if (warsystem.PirateActivity > 100)
+                            warsystem.PirateActivity = 100;
+                    }
+                    else if (enemyfaction == Faction.AuriganPirates)
+                    {
+                        warsystem.PirateActivity -= difficulty;
+                        if (warsystem.PirateActivity < 0)
+                            warsystem.PirateActivity = 0;
+                    }
+
                 }
 
                 if (contractType == ContractType.AttackDefend || contractType == ContractType.FireMission)
@@ -974,6 +994,12 @@ public static class Core
                         WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources -= difficulty;
                         if (WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources < 0)
                             WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources = 0;
+                    }
+                    else if (enemyfaction == Faction.AuriganPirates)
+                    {
+                        warsystem.PirateActivity -= difficulty;
+                        if (warsystem.PirateActivity < 0)
+                            warsystem.PirateActivity = 0;
                     }
                 }
 
@@ -1116,7 +1142,8 @@ public static class Core
             "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
             "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
             "\n• Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
-            "\n• If you accept a travel contract the Faction will blockade the system for 30 days to allow you the opportunity to swing that system in their favor. A bonus will be granted for every mission you complete within that system during that time." +
+            "\n• If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
+            "\n• Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
             "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
             "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
             "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +

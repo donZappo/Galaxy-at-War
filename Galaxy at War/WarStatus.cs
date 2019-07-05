@@ -21,7 +21,7 @@ public class WarStatus
     public List<string> PrioritySystems = new List<string>();
     public string CurSystem;
     public bool HotBoxTravelling;
-    public bool StartGameInitialized;
+    public bool StartGameInitialized = false;
     public bool InitializeAtStart = true;
     public List<string> SystemChangedOwners = new List<string>();
     public List<string> HotBox = new List<string>();
@@ -34,9 +34,13 @@ public class WarStatus
     public List<string> FullHomeContendedSystems = new List<string>();
     public List<string> HomeContendedSystems = new List<string>();
     public Dictionary<Faction, List<string>> ExternalPriorityTargets = new Dictionary<Faction, List<string>>();
+    public List<string> FullPirateSystems = new List<string>();
     public List<string> PirateHighlight = new List<string>();
     public float PirateFlex = 0.0f;
     public float PirateResources;
+    public float TempPRGain;
+    public float MinimumPirateResources;
+    public float LastPRGain;
 
 
     public WarStatus()
@@ -44,7 +48,8 @@ public class WarStatus
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         CurSystem = sim.CurSystem.Name;
         PirateResources = Core.Settings.StartingPirateResources;
-        StartGameInitialized = false;
+        MinimumPirateResources = Core.Settings.StartingPirateResources;
+        TempPRGain = 0;
         HotBoxTravelling = false;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
@@ -85,7 +90,13 @@ public class WarStatus
 
         foreach (var system in sim.StarSystems)
         {
-            systems.Add(new SystemStatus(sim, system.Name, system.Owner));
+            var systemStatus = new SystemStatus(sim, system.Name, system.Owner);
+            systems.Add(systemStatus);
+            if (system.Tags.Contains("planet_other_pirate"))
+            {
+                FullPirateSystems.Add(system.Name);
+                Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
+            }
         }
     }
 
@@ -237,6 +248,8 @@ public class WarFaction
     public float DefensiveResources;
     public int MonthlySystemsChanged;
     public int TotalSystemsChanged;
+    public float PirateARLoss;
+    public float PirateDRLoss;
 
     public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     public Dictionary<Faction, List<string>> attackTargets = new Dictionary<Faction, List<string>>();
@@ -260,6 +273,8 @@ public class WarFaction
         DaysSinceSystemLost = 0;
         MonthlySystemsChanged = 0;
         TotalSystemsChanged = 0;
+        PirateARLoss = 0;
+        PirateDRLoss = 0;
     }
 }
 

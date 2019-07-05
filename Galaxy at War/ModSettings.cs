@@ -50,9 +50,9 @@ public class ModSettings
     public float TakeoverThreshold = 10f;
     public float APRPush = 1f;
     public int APRPushRandomizer = 4;
-    public float KLValueAllies = 25f;
+    public float KLValueAllies = 10f;
     public float KLValuesNeutral = 50f;
-    public float KLValuesEnemies = 100f;
+    public float KLValuesEnemies = 90f;
     public bool DefendersUseARforDR = true;
     public float PriorityHatred = 50;
     public int InternalHotSpots = 4;
@@ -66,7 +66,7 @@ public class ModSettings
     public float ResourceScale = 0.5f;
     public bool UseSubsetOfSystems = true;
     public float SubSetFraction = 1.0f;
-    public float StartingPirateActivity = 0.05f;
+    public float StartingPirateActivity = 5.0f;
     public float StartingPirateResources = 500.0f;
     
     public List<Faction> DefensiveFactions = new List<Faction>();

@@ -101,6 +101,8 @@ public static class SaveHandling
             Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(ssDict[system]);
         foreach (var system in Core.WarStatus.HomeContendedSystems)
             Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
+        foreach (var starSystem in Core.WarStatus.FullPirateSystems)
+            Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(Core.WarStatus.systems.Find(x => x.name == starSystem));
     }
 
     public static void ConvertToSave()
@@ -118,7 +120,7 @@ public static class SaveHandling
         foreach (var system in Galaxy_at_War.HotSpots.FullHomeContendedSystems)
             Core.WarStatus.FullHomeContendedSystems.Add(system.Def.CoreSystemID);
         foreach (var system in Galaxy_at_War.HotSpots.HomeContendedSystems)
-            Core.WarStatus.HomeContendedSystems.Add(system.Def.CoreSystemID);;
+            Core.WarStatus.HomeContendedSystems.Add(system.Def.CoreSystemID);
     }
 
     //****************************************************************************************************
