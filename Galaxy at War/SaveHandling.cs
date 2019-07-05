@@ -97,8 +97,9 @@ public static class SaveHandling
             foreach (var system in Core.WarStatus.ExternalPriorityTargets[faction])
                 Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
         }
+
         foreach (var system in Core.WarStatus.FullHomeContendedSystems)
-            Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(ssDict[system]);
+            Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(ssDict[system.Key], system.Value));
         foreach (var system in Core.WarStatus.HomeContendedSystems)
             Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
         foreach (var starSystem in Core.WarStatus.FullPirateSystems)
@@ -118,7 +119,7 @@ public static class SaveHandling
                 Core.WarStatus.ExternalPriorityTargets[faction].Add(system.Def.CoreSystemID);
         }
         foreach (var system in Galaxy_at_War.HotSpots.FullHomeContendedSystems)
-            Core.WarStatus.FullHomeContendedSystems.Add(system.Def.CoreSystemID);
+            Core.WarStatus.FullHomeContendedSystems.Add(system.Key.Def.CoreSystemID, system.Value);
         foreach (var system in Galaxy_at_War.HotSpots.HomeContendedSystems)
             Core.WarStatus.HomeContendedSystems.Add(system.Def.CoreSystemID);
     }

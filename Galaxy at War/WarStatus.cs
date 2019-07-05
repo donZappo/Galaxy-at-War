@@ -31,7 +31,7 @@ public class WarStatus
     public List<string> HomeContendedStrings = new List<string>();
     public List<string> ContendedStrings = new List<string>();
     
-    public List<string> FullHomeContendedSystems = new List<string>();
+    public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
     public List<string> HomeContendedSystems = new List<string>();
     public Dictionary<Faction, List<string>> ExternalPriorityTargets = new Dictionary<Faction, List<string>>();
     public List<string> FullPirateSystems = new List<string>();

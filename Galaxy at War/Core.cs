@@ -117,6 +117,14 @@ public static class Core
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 Core.WarStatus.StartGameInitialized = true;
             }
+            foreach (var system in WarStatus.SystemChangedOwners)
+            {
+                var systemStatus = WarStatus.systems.Find(x => x.name == system);
+                systemStatus.CurrentlyAttackedBy.Clear();
+                CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+                RefreshContracts(systemStatus.starSystem);
+            }
+            WarStatus.SystemChangedOwners.Clear();
         }
 
         public static void Postfix(SimGameState  __instance)
@@ -180,12 +188,22 @@ public static class Core
 
         foreach (var systemStatus in SystemSubset)
         {
+            if (systemStatus.PirateActivity >= 75)
+            {
+                ChangeSystemOwnership(sim, systemStatus.starSystem, Faction.Locals, true);
+                foreach (var system in WarStatus.SystemChangedOwners)
+                {
+                    var ChangesystemStatus = WarStatus.systems.Find(x => x.name == system);
+                    ChangesystemStatus.CurrentlyAttackedBy.Clear();
+                    CalculateAttackAndDefenseTargets(ChangesystemStatus.starSystem);
+                    RefreshContracts(ChangesystemStatus.starSystem);
+                }
+                WarStatus.SystemChangedOwners.Clear();
+            }
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
-            if (WarStatus.InitializeAtStart || WarStatus.SystemChangedOwners.Contains(systemStatus.name))
+            if (WarStatus.InitializeAtStart)
             {
-                if (!WarStatus.InitializeAtStart)
-                    WarStatus.SystemChangedOwners.Remove(systemStatus.name);
                 systemStatus.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                 RefreshContracts(systemStatus.starSystem);
@@ -199,7 +217,8 @@ public static class Core
                 {
                     if (!Settings.ImmuneToWar.Contains(neighbor))
                     {
-                        var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
+         
+               var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
                         systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
                     }
                 }
@@ -363,7 +382,7 @@ public static class Core
         }
 
         var total = tempTargets.Values.Sum();
-        float attackResources = 0f;
+        float attackResources = 0.0f;
         float i = warFaction.AttackResources;
         if (!UseFullSet)
             i *= Settings.ResourceScale;
@@ -377,7 +396,7 @@ public static class Core
             }
             else
             {
-                attackResources = i * Random.Next(1, Settings.APRPushRandomizer + 1);
+                attackResources += i * Random.Next(1, Settings.APRPushRandomizer + 1);
                 i = 0;
             }
         }
@@ -485,7 +504,7 @@ public static class Core
             }
             else
             {
-                defensiveResources = i * Random.Next(1, Settings.APRPushRandomizer + 1);
+                defensiveResources += i * Random.Next(1, Settings.APRPushRandomizer + 1);
                 i = 0;
             }
         }
@@ -622,6 +641,13 @@ public static class Core
 
             if (!WarStatus.SystemChangedOwners.Contains(system.Name))
                 WarStatus.SystemChangedOwners.Add(system.Name);
+
+            if (ForceFlip)
+            {
+                RecalculateSystemInfluence(systemStatus, faction, oldOwner);
+                systemStatus.PirateActivity = 0;
+            }
+
             foreach (var neighbor in sim.Starmap.GetAvailableNeighborSystem(system))
             {
                 if (!WarStatus.SystemChangedOwners.Contains(neighbor.Name))
@@ -1021,6 +1047,16 @@ public static class Core
                         .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
                     interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken! "
                         + Settings.FactionNames[teamfaction] +" conquered from " + Settings.FactionNames[oldOwner], true, null);
+
+                    foreach (var system in WarStatus.SystemChangedOwners)
+                    {
+                        var systemStatus = WarStatus.systems.Find(x => x.name == system);
+                        systemStatus.CurrentlyAttackedBy.Clear();
+                        CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+                        RefreshContracts(systemStatus.starSystem);
+                    }
+                    WarStatus.SystemChangedOwners.Clear();
+
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     __instance.StopPlayMode();
@@ -1178,6 +1214,19 @@ public static class Core
 
             __result = result;
             return false;
+        }
+    }
+
+    public static void RecalculateSystemInfluence(SystemStatus systemStatus, Faction NewOwner, Faction OldOwner)
+    {
+        systemStatus.influenceTracker.Clear();
+        systemStatus.influenceTracker.Add(NewOwner, Settings.DominantInfluence);
+        systemStatus.influenceTracker.Add(OldOwner, Settings.MinorInfluencePool);
+
+        foreach (var faction in Settings.IncludedFactions)
+        {
+            if (!systemStatus.influenceTracker.Keys.Contains(faction))
+                systemStatus.influenceTracker.Add(faction, 0);
         }
     }
 

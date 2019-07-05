@@ -62,7 +62,7 @@ namespace Galaxy_at_War
                 if (systemStatus.PriorityDefense)
                 {
                     if (systemStatus.owner == DominantFaction)
-                        FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
+                        FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
                     else
                         ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                 }
@@ -73,7 +73,7 @@ namespace Galaxy_at_War
                         if (attacker == DominantFaction)
                         {
                             if (!FullHomeContendedSystems.Keys.Contains(systemStatus.starSystem))
-                                FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.DifficultyRating);
+                                FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
                         }
                         else
                         {
@@ -84,8 +84,10 @@ namespace Galaxy_at_War
                 }
             }
             var i = 0;
+            Log(FullHomeContendedSystems.Count.ToString());
             foreach (var system in FullHomeContendedSystems.OrderByDescending(x => x.Value))
             {
+                Log(i.ToString());
                 if (i < 6)
                     Core.WarStatus.HomeContendedStrings.Add(system.Key.Name);
 
