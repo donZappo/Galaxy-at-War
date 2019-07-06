@@ -283,7 +283,6 @@ public static class Core
         if (WarStatus.StartGameInitialized)
         {
             Galaxy_at_War.HotSpots.ProcessHotSpots();
-            //StarmapMod.SetupRelationPanel();
         }
 
 

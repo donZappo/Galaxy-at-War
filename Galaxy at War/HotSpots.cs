@@ -271,6 +271,7 @@ namespace Galaxy_at_War
             {
                 Core.WarStatus.JustArrived = true;
                 Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
+                ProcessHotSpots();
             }
         }
 

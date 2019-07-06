@@ -169,6 +169,21 @@ public class StarmapMod
         else
             factionString.AppendLine("<b>" + starSystem.Name + "</b>");
 
+        string SubString = "(";
+        if (Core.WarStatus.HomeContendedStrings.Contains(starSystem.Name))
+            SubString += "*Valuable Target*";
+        if (Core.WarStatus.LostSystems.Contains(starSystem.Name))
+            SubString += " *Owner Changed*";
+        if (Core.WarStatus.PirateHighlight.Contains(starSystem.Name))
+            SubString += " *ARRRRRGH!*";
+        SubString += ")";
+
+        if (SubString.Length > 2)
+            SubString += "\n";
+        else
+            SubString = "";
+        factionString.AppendLine(SubString);
+
         var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
         foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
         {
