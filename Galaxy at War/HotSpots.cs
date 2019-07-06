@@ -220,7 +220,12 @@ namespace Galaxy_at_War
             }
 
             if (starSystem.Def.ContractTargets.Count == 0)
-                starSystem.Def.ContractTargets.AddRange(Core.Settings.DefensiveFactions);
+            {
+                starSystem.Def.ContractTargets.Add(Faction.AuriganPirates);
+                if (!Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
+                    starSystem.Def.ContractTargets.Add(Faction.Locals);
+            }
+            
         }
 
         //Deployments area.
