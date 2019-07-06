@@ -131,6 +131,7 @@ public class SystemStatus
     public float AttackResources;
     public float DefenseResources;
     public float PirateActivity = 0.0f;
+    public string CoreSystemID;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
@@ -149,6 +150,7 @@ public class SystemStatus
         AttackResources = Core.GetTotalAttackResources(starSystem);
         DefenseResources = Core.GetTotalDefensiveResources(starSystem);
         TotalResources = AttackResources + DefenseResources;
+        CoreSystemID = starSystem.Def.CoreSystemID;
         if (starSystem.Tags.Contains("planet_other_pirate"))
             PirateActivity = Core.Settings.StartingPirateActivity;
         FindNeighbors();

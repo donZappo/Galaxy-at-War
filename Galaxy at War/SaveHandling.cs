@@ -18,6 +18,10 @@ public static class SaveHandling
     [HarmonyPatch(typeof(SimGameState), "Rehydrate")]
     public static class SimGameState_Rehydrate_Patch
     {
+        static void Prefix()
+        {
+            Log("Starting Rehydrate");
+        }
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
             bool NewGaW = true;
@@ -89,7 +93,33 @@ public static class SaveHandling
         Core.SystemDifficulty();
         foreach (var system in Core.WarStatus.systems)
         {
+            var systemDef = ssDict[system.CoreSystemID].Def;
+            Faction systemOwner = systemDef.Owner;
+            Traverse.Create(systemDef).Property("Owner").SetValue(system.owner);
             Core.RefreshContracts(system.starSystem);
+            Log("A");
+            if (systemDef.Owner != systemOwner && systemOwner != Faction.NoFaction)
+            {
+                Log("B");
+                if (systemDef.SystemShopItems.Count != 0)
+                {
+                    List<string> TempList = new List<string>();
+                        TempList.Add(Core.Settings.FactionShops[system.owner]);
+                    Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
+                }
+                
+
+                Log("C");
+                Traverse.Create(systemDef).Property("FactionShopOwner").SetValue(system.owner);
+                Log("D");
+                if (systemDef.FactionShopItems != null)
+                { if (systemDef.FactionShopItems.Contains(Core.Settings.FactionShopItems[systemDef.Owner]))
+                    systemDef.FactionShopItems.Remove(Core.Settings.FactionShopItems[systemDef.Owner]);
+                        Log("E");
+                    systemDef.FactionShopItems.Add(Core.Settings.FactionShopItems[system.owner]);
+                        Log("F");
+                }
+            }
         }
         foreach (var faction in Core.WarStatus.ExternalPriorityTargets.Keys)
         {
@@ -97,13 +127,22 @@ public static class SaveHandling
             foreach (var system in Core.WarStatus.ExternalPriorityTargets[faction])
                 Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
         }
-
         foreach (var system in Core.WarStatus.FullHomeContendedSystems)
+        {
             Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(ssDict[system.Key], system.Value));
+        }
         foreach (var system in Core.WarStatus.HomeContendedSystems)
+        {
             Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
+        }
         foreach (var starSystem in Core.WarStatus.FullPirateSystems)
+        {
             Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(Core.WarStatus.systems.Find(x => x.name == starSystem));
+        }
+        foreach (var deathListTracker in Core.WarStatus.deathListTracker)
+        {
+            Core.AdjustDeathList(deathListTracker, sim, true);
+        }
     }
 
     public static void ConvertToSave()
@@ -111,6 +150,8 @@ public static class SaveHandling
         Core.WarStatus.ExternalPriorityTargets.Clear();
         Core.WarStatus.FullHomeContendedSystems.Clear();
         Core.WarStatus.HomeContendedSystems.Clear();
+        Core.WarStatus.FullPirateSystems.Clear();
+
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         foreach (var faction in Galaxy_at_War.HotSpots.ExternalPriorityTargets.Keys)
         {
@@ -123,41 +164,42 @@ public static class SaveHandling
         foreach (var system in Galaxy_at_War.HotSpots.HomeContendedSystems)
             Core.WarStatus.HomeContendedSystems.Add(system.Def.CoreSystemID);
     }
+}
 
     //****************************************************************************************************
     //Hotkeys*********************************************************************************************
-    [HarmonyPatch(typeof(SimGameState), "Update")]
-    public static class SimGameState_Update_Patch
-    {
-        public static void Postfix(SimGameState __instance)
-        {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
+//    [HarmonyPatch(typeof(SimGameState), "Update")]
+//    public static class SimGameState_Update_Patch
+//    {
+//        public static void Postfix(SimGameState __instance)
+//        {
+//            var sim = UnityGameInstance.BattleTechGame.Simulation;
 
-            // clear the WarStatus completely
-            var hotkeyF10 = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.F10);
-            if (hotkeyF10)
-            {
-                foreach (var tag in sim.CompanyTags)
-                    if (tag.StartsWith("GalaxyAtWar"))
-                        sim.CompanyTags.Remove(tag);
+//            // clear the WarStatus completely
+//            var hotkeyF10 = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.F10);
+//            if (hotkeyF10)
+//            {
+//                foreach (var tag in sim.CompanyTags)
+//                    if (tag.StartsWith("GalaxyAtWar"))
+//                        sim.CompanyTags.Remove(tag);
 
-                LogDebug("Setting up new WarStatus");
-                Core.WarStatus = new WarStatus();
-                Core.WarTick(true, true);
-            }
+//                LogDebug("Setting up new WarStatus");
+//                Core.WarStatus = new WarStatus();
+//                Core.WarTick(true, true);
+//            }
 
-            var hotkeyD = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
-            if (hotkeyD)
-                using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\SaveDump.json"))
-                    writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
+//            var hotkeyD = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
+//            if (hotkeyD)
+//                using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\SaveDump.json"))
+//                    writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
 
-            var hotkeyT = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
-            if (hotkeyT)
-                sim.CompanyTags.Add(new string('=', 50));
+//            var hotkeyT = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
+//            if (hotkeyT)
+//                sim.CompanyTags.Add(new string('=', 50));
 
-            var hotkeyL = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.L);
-            if (hotkeyL)
-                sim.CompanyTags.Do(LogDebug);
-        }
-    }
-}
+//            var hotkeyL = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.L);
+//            if (hotkeyL)
+//                sim.CompanyTags.Do(LogDebug);
+//        }
+//    }
+//}

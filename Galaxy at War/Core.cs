@@ -121,20 +121,20 @@ public static class Core
 
         public static void Postfix(SimGameState  __instance)
         {
-            if (!WarStatus.GaW_Event_PopUp)
-            {
-                GaW_Notification();
-                WarStatus.GaW_Event_PopUp = true;
-            }
-
-            //int i = 0;
-            //do
+            //if (!WarStatus.GaW_Event_PopUp)
             //{
-            //    WarTick(true, true);
-            //    i++;
-            //} while (i < 100);
-            //__instance.StopPlayMode();
-            //return;
+            //    GaW_Notification();
+            //    WarStatus.GaW_Event_PopUp = true;
+            //}
+
+            int i = 0;
+            do
+            {
+                WarTick(true, true);
+                i++;
+            } while (i < 100);
+            __instance.StopPlayMode();
+            return;
 
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
@@ -597,7 +597,12 @@ public static class Core
 
             if (!Core.WarStatus.AbandonedSystems.Contains(system.Name))
             {
-                system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
+                if (system.Def.SystemShopItems.Count != 0)
+                {
+                    List<string> TempList = new List<string>();
+                    TempList.Add(Core.Settings.FactionShops[system.Owner]);
+                    Traverse.Create(system.Def).Property("SystemShopItems").SetValue(TempList);
+                }
 
                 if (system.Def.FactionShopItems != null)
                 {
@@ -679,7 +684,6 @@ public static class Core
         if (factionTracker.deathList[faction] < 50)
             factionTracker.deathList[faction] = 50;
         factionTracker.deathList[faction] += KillListDelta;
-
         //Allies are upset that their friend is being beaten up.
         if (!Settings.DefensiveFactions.Contains(OldFaction))
         {
@@ -771,7 +775,7 @@ public static class Core
 
         foreach (var deathListTracker in tempRTFactions)
         {
-            AdjustDeathList(deathListTracker, sim);
+            AdjustDeathList(deathListTracker, sim, false);
         }
     }
 
@@ -880,7 +884,7 @@ public static class Core
     }
 
 
-    public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim)
+    public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim, bool ReloadFromSave)
     {
         var deathList = deathListTracker.deathList;
         var KL_List = new List<Faction>(deathList.Keys);
@@ -888,26 +892,28 @@ public static class Core
         var deathListFaction = deathListTracker.faction;
         foreach (Faction faction in KL_List)
         {
-            //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
-            if (!deathListTracker.AttackedBy.Contains(faction))
+            if (!ReloadFromSave)
             {
-                if (deathList[faction] > 50)
-                    deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
-                else if (deathList[faction] <= 50)
-                    deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
+                //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
+                if (!deathListTracker.AttackedBy.Contains(faction))
+                {
+                    if (deathList[faction] > 50)
+                        deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
+                    else if (deathList[faction] <= 50)
+                        deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
+                }
+
+                //Ceiling and floor for faction enmity. 
+                if (deathList[faction] > 99)
+                    deathList[faction] = 99;
+
+                if (deathList[faction] < 1)
+                    deathList[faction] = 1;
+
+                //Defensive Only factions are always neutral
+                if (Settings.DefensiveFactions.Contains(faction))
+                    deathList[faction] = 50;
             }
-
-            //Ceiling and floor for faction enmity. 
-            if (deathList[faction] > 99)
-                deathList[faction] = 99;
-
-            if (deathList[faction] < 1)
-                deathList[faction] = 1;
-
-            //Defensive Only factions are always neutral
-            if (Settings.DefensiveFactions.Contains(faction))
-                deathList[faction] = 50;
-
             if (deathList[faction] > 75)
             {
                 if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
