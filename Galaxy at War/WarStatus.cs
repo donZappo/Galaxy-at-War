@@ -270,6 +270,7 @@ public class WarFaction
     public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
     public Dictionary<Faction, List<string>> attackTargets = new Dictionary<Faction, List<string>>();
     public List<string> defenseTargets = new List<string>();
+    public Dictionary<Faction, bool> IncreaseAggression = new Dictionary<Faction, bool>();
 
 
     [JsonConstructor]
@@ -291,6 +292,8 @@ public class WarFaction
         TotalSystemsChanged = 0;
         PirateARLoss = 0;
         PirateDRLoss = 0;
+        foreach (var startfaction in Core.Settings.IncludedFactions)
+            IncreaseAggression.Add(startfaction, false);
     }
 }
 

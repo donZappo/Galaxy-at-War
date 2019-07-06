@@ -20,7 +20,6 @@ public static class SaveHandling
     {
         static void Prefix()
         {
-            Log("Starting Rehydrate");
         }
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
@@ -97,27 +96,23 @@ public static class SaveHandling
             Faction systemOwner = systemDef.Owner;
             Traverse.Create(systemDef).Property("Owner").SetValue(system.owner);
             Core.RefreshContracts(system.starSystem);
-            Log("A");
             if (systemDef.Owner != systemOwner && systemOwner != Faction.NoFaction)
             {
-                Log("B");
                 if (systemDef.SystemShopItems.Count != 0)
                 {
-                    List<string> TempList = new List<string>();
-                        TempList.Add(Core.Settings.FactionShops[system.owner]);
+                    List<string> TempList = systemDef.SystemShopItems;
+                    TempList.Add(Core.Settings.FactionShops[system.owner]);
                     Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
                 }
-                
 
-                Log("C");
-                Traverse.Create(systemDef).Property("FactionShopOwner").SetValue(system.owner);
-                Log("D");
                 if (systemDef.FactionShopItems != null)
-                { if (systemDef.FactionShopItems.Contains(Core.Settings.FactionShopItems[systemDef.Owner]))
-                    systemDef.FactionShopItems.Remove(Core.Settings.FactionShopItems[systemDef.Owner]);
-                        Log("E");
-                    systemDef.FactionShopItems.Add(Core.Settings.FactionShopItems[system.owner]);
-                        Log("F");
+                {
+                    Traverse.Create(systemDef).Property("FactionShopOwner").SetValue(system.owner);
+                    List<string> FactionShops = systemDef.FactionShopItems;
+                    if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner]))
+                        FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner]);
+                    FactionShops.Add(Core.Settings.FactionShopItems[system.owner]);
+                    Traverse.Create(systemDef).Property("FactionShopItems").SetValue(FactionShops);
                 }
             }
         }

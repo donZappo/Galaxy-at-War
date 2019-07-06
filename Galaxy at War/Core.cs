@@ -121,20 +121,20 @@ public static class Core
 
         public static void Postfix(SimGameState  __instance)
         {
-            //if (!WarStatus.GaW_Event_PopUp)
-            //{
-            //    GaW_Notification();
-            //    WarStatus.GaW_Event_PopUp = true;
-            //}
-
-            int i = 0;
-            do
+            if (!WarStatus.GaW_Event_PopUp)
             {
-                WarTick(true, true);
-                i++;
-            } while (i < 100);
-            __instance.StopPlayMode();
-            return;
+                GaW_Notification();
+                WarStatus.GaW_Event_PopUp = true;
+            }
+
+            //int i = 0;
+            //do
+            //{
+            //    WarTick(true, true);
+            //    i++;
+            //} while (i < 100);
+            //__instance.StopPlayMode();
+            //return;
 
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
@@ -599,7 +599,7 @@ public static class Core
             {
                 if (system.Def.SystemShopItems.Count != 0)
                 {
-                    List<string> TempList = new List<string>();
+                    List<string> TempList = system.Def.SystemShopItems;
                     TempList.Add(Core.Settings.FactionShops[system.Owner]);
                     Traverse.Create(system.Def).Property("SystemShopItems").SetValue(TempList);
                 }
@@ -607,9 +607,11 @@ public static class Core
                 if (system.Def.FactionShopItems != null)
                 {
                     Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
-                    if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]))
-                        system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
-                    system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
+                    List<string> FactionShops = system.Def.FactionShopItems;
+                    if (FactionShops.Contains(Settings.FactionShopItems[system.Def.Owner]))
+                        FactionShops.Remove(Settings.FactionShopItems[system.Def.Owner]);
+                    FactionShops.Add(Settings.FactionShopItems[faction]);
+                    Traverse.Create(system.Def).Property("FactionShopItems").SetValue(FactionShops);
                 }
             }
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
@@ -710,6 +712,31 @@ public static class Core
         factionTracker.AttackedBy.Add(faction);
     }
 
+    public static void CalculateHatred()
+    {
+        foreach (var warFaction in WarStatus.warFactionTracker)
+        {
+            Dictionary<Faction, int> AttackCount = new Dictionary<Faction, int>();
+            foreach (var target in warFaction.attackTargets)
+            {
+                if (Settings.DefensiveFactions.Contains(target.Key) || Settings.ImmuneToWar.Contains(target.Key))
+                    continue;
+                AttackCount.Add(target.Key, target.Value.Count);
+            }
+            int i = 0;
+            int tophalf = AttackCount.Count / 2;
+            foreach (var attacktarget in AttackCount.OrderByDescending(x => x.Value))
+            {
+                var warfaction = WarStatus.warFactionTracker.Find(x => x.faction == attacktarget.Key);
+                if (i < tophalf)
+                    warfaction.IncreaseAggression[warFaction.faction] = true;
+                else
+                    warFaction.IncreaseAggression[warFaction.faction] = false;
+                i++;
+            }
+        }
+    }
+
     private static void RemoveAndFlagSystems(WarFaction OldOwner, StarSystem system)
     {
         OldOwner.defenseTargets.Remove(system.Name);
@@ -772,7 +799,7 @@ public static class Core
                    
             }
         }
-
+        CalculateHatred();
         foreach (var deathListTracker in tempRTFactions)
         {
             AdjustDeathList(deathListTracker, sim, false);
@@ -888,19 +915,22 @@ public static class Core
     {
         var deathList = deathListTracker.deathList;
         var KL_List = new List<Faction>(deathList.Keys);
+        var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
 
         var deathListFaction = deathListTracker.faction;
         foreach (Faction faction in KL_List)
         {
             if (!ReloadFromSave)
             {
-                //Factions go towards peace over time if not attacked.But there is diminishing returns further from 50.
-                if (!deathListTracker.AttackedBy.Contains(faction))
+                //Factions adjust hatred based upon how much they are being attacked. But there is diminishing returns further from 50.
+                int direction = -1;
+                if (warFaction.IncreaseAggression.Keys.Contains(faction) && warFaction.IncreaseAggression[faction])
+                    direction = 1;
                 {
                     if (deathList[faction] > 50)
-                        deathList[faction] -= 1 - (deathList[faction] - 50) / 50;
+                        deathList[faction] += direction * (1 - (deathList[faction] - 50) / 50);
                     else if (deathList[faction] <= 50)
-                        deathList[faction] -= 1 - (50 - deathList[faction]) / 50;
+                        deathList[faction] += direction * (1 - (50 - deathList[faction]) / 50);
                 }
 
                 //Ceiling and floor for faction enmity. 
@@ -1115,11 +1145,10 @@ public static class Core
         int i = 0;
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
-            var simSystem2 = sim.StarSystems.Find(x => x.Name == system.name);
+            var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
             if (i <= DifficultyCutoff)
             { 
                 system.DifficultyRating = 1;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 1, 1 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
@@ -1127,7 +1156,6 @@ public static class Core
             if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
             {
                 system.DifficultyRating = 2;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 2, 2 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
@@ -1135,7 +1163,6 @@ public static class Core
             if (i <= DifficultyCutoff * 3 && i > 2* DifficultyCutoff)
             {
                 system.DifficultyRating = 3;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 3, 3 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
@@ -1143,7 +1170,6 @@ public static class Core
             if (i <= DifficultyCutoff * 4 && i > 3 * DifficultyCutoff)
             {
                 system.DifficultyRating = 4;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 4, 4 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
@@ -1151,7 +1177,6 @@ public static class Core
             if (i <= DifficultyCutoff * 5 && i > 4 * DifficultyCutoff)
             {
                 system.DifficultyRating = 5;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 5, 5 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
@@ -1159,7 +1184,6 @@ public static class Core
             if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
             {
                 system.DifficultyRating = 6;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 6, 6 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
@@ -1172,7 +1196,6 @@ public static class Core
             if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
             {
                 system.DifficultyRating = 7;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 7, 7 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
@@ -1180,7 +1203,6 @@ public static class Core
             if (i <= DifficultyCutoff * 8 && i > 7 * DifficultyCutoff)
             {
                 system.DifficultyRating = 8;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 8, 8 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
@@ -1188,7 +1210,6 @@ public static class Core
             if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
             {
                 system.DifficultyRating = 9;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 9, 9 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
@@ -1196,12 +1217,18 @@ public static class Core
             if (i > 9 * DifficultyCutoff)
             {
                 system.DifficultyRating = 10;
-                var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
                 List<int> difficultyList = new List<int> { 10, 10 };
                 Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
             }
             i++;
+
+            if (SimSystem.Def.Owner == Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
+            {
+                List<string> TempList = new List<string>() {
+                    "itemCollection_Weapons_common" , "itemCollection_Upgrades_common"};
+                Traverse.Create(SimSystem.Def).Property("SystemShopItems").SetValue(TempList);
+            }
         }
     }
     //82 characters per line.
@@ -1213,8 +1240,8 @@ public static class Core
         simGameResultAction.additionalValues = new string[1];
         simGameResultAction.additionalValues[0] = Strings.T("In Galaxy at War, the Great Houses of the Innersphere will not simply wait for a wedding invitation" +
             " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
-            " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make make" +
-            " their fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
+            " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their" +
+            " fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
             "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
             "spending to spread their influence and protect their own systems." +
             "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
@@ -1225,7 +1252,7 @@ public static class Core
             "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
             "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
             "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
-            "\n\n******Press Enter to Continue******");
+            "\n\n****Press Enter to Continue****");
 
 
         SimGameState.ApplyEventAction(simGameResultAction, null);
