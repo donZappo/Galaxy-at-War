@@ -89,6 +89,16 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             WarStatus.CurSystem = sim.CurSystem.Name;
+            try
+            {
+                StarmapMod.eventPanel.gameObject.SetActive(false);
+                UnityEngine.Object.Destroy(StarmapMod.eventPanel);
+
+            }
+            catch
+            {
+                UnityEngine.Object.Destroy(StarmapMod.eventPanel);
+            }
             if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
             {
                 WarStatus.EscalationDays--;
@@ -273,7 +283,7 @@ public static class Core
         if (WarStatus.StartGameInitialized)
         {
             Galaxy_at_War.HotSpots.ProcessHotSpots();
-            StarmapMod.SetupRelationPanel();
+            //StarmapMod.SetupRelationPanel();
         }
 
 

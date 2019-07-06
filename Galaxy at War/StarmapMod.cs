@@ -148,12 +148,14 @@ public class StarmapMod
             {
                 try
                 {
-                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeInHierarchy);
+                    eventPanel.gameObject.SetActive(false);
+                    UnityEngine.Object.Destroy(eventPanel);
+                    
                 }
-                catch
+                catch (Exception e)
                 {
                     SetupRelationPanel();
-                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeInHierarchy);
+                    eventPanel.gameObject.SetActive(true);
                 }
             }
         }
