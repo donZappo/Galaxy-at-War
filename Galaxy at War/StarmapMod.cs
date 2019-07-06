@@ -162,7 +162,11 @@ public class StarmapMod
     private static string BuildInfluenceString(StarSystem starSystem)
     {
         var factionString = new StringBuilder();
-        factionString.AppendLine(starSystem.Name);
+        if (Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
+            factionString.AppendLine("<b>" + starSystem.Name + "     ***Abandoned***</b>");
+        else
+            factionString.AppendLine("<b>" + starSystem.Name + "</b>");
+
         var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
         foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
         {
@@ -226,10 +230,10 @@ public class StarmapMod
             var wasVisited = visitedStarSystems.Contains(__result.name);
             if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
                 HighlightSystem(__result, wasVisited, Color.magenta, true);
-            else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
-                HighlightSystem(__result, wasVisited, Color.red, false);
             else if (Core.WarStatus.LostSystems.Contains(__result.name))
                 HighlightSystem(__result, wasVisited, Color.yellow, false);
+            else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
+                HighlightSystem(__result, wasVisited, Color.red, false);
             else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                 MakeSystemNormal(__result, wasVisited);
         }

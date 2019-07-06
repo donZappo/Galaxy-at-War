@@ -117,33 +117,24 @@ public static class Core
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 Core.WarStatus.StartGameInitialized = true;
             }
-            foreach (var system in WarStatus.SystemChangedOwners)
-            {
-                var systemStatus = WarStatus.systems.Find(x => x.name == system);
-                systemStatus.CurrentlyAttackedBy.Clear();
-                CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-                RefreshContracts(systemStatus.starSystem);
-            }
-            WarStatus.SystemChangedOwners.Clear();
         }
 
         public static void Postfix(SimGameState  __instance)
         {
-            //if (!WarStatus.GaW_Event_PopUp)
-            //{
-            //    GaW_Notification();
-            //    WarStatus.GaW_Event_PopUp = true;
-            //}
-
-            int i = 0;
-            do
+            if (!WarStatus.GaW_Event_PopUp)
             {
-                WarTick(true, true);
-                i++;
-                Log("War Cycle: " + i.ToString());
-            } while (i < 100);
-            __instance.StopPlayMode();
-            return;
+                GaW_Notification();
+                WarStatus.GaW_Event_PopUp = true;
+            }
+
+            //int i = 0;
+            //do
+            //{
+            //    WarTick(true, true);
+            //    i++;
+            //} while (i < 100);
+            //__instance.StopPlayMode();
+            //return;
 
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
@@ -188,18 +179,18 @@ public static class Core
 
         foreach (var systemStatus in SystemSubset)
         {
-            if (systemStatus.PirateActivity >= 75)
-            {
-                ChangeSystemOwnership(sim, systemStatus.starSystem, Faction.Locals, true);
-                foreach (var system in WarStatus.SystemChangedOwners)
-                {
-                    var ChangesystemStatus = WarStatus.systems.Find(x => x.name == system);
-                    ChangesystemStatus.CurrentlyAttackedBy.Clear();
-                    CalculateAttackAndDefenseTargets(ChangesystemStatus.starSystem);
-                    RefreshContracts(ChangesystemStatus.starSystem);
-                }
-                WarStatus.SystemChangedOwners.Clear();
-            }
+            //if (systemStatus.PirateActivity >= 75 && systemStatus.owner != Faction.Locals)
+            //{
+            //    ChangeSystemOwnership(sim, systemStatus.starSystem, Faction.Locals, true);
+            //    foreach (var system in WarStatus.SystemChangedOwners)
+            //    {
+            //        var ChangesystemStatus = WarStatus.systems.Find(x => x.name == system);
+            //        ChangesystemStatus.CurrentlyAttackedBy.Clear();
+            //        CalculateAttackAndDefenseTargets(ChangesystemStatus.starSystem);
+            //        RefreshContracts(ChangesystemStatus.starSystem);
+            //    }
+            //    WarStatus.SystemChangedOwners.Clear();
+            //}
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
             if (WarStatus.InitializeAtStart)
@@ -215,15 +206,14 @@ public static class Core
             {
                 foreach (var neighbor in systemStatus.neighborSystems.Keys)
                 {
-                    if (!Settings.ImmuneToWar.Contains(neighbor))
+                    if (!Settings.ImmuneToWar.Contains(neighbor) || !Settings.DefensiveFactions.Contains(neighbor))
                     {
-         
-               var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
+                        var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
                         systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
                     }
                 }
             }
-            if (systemStatus.PirateActivity >= 10f)
+            if (systemStatus.PirateActivity >= Settings.PirateSystemFlagValue)
             {
                 if (!WarStatus.PirateHighlight.Contains(systemStatus.name))
                     WarStatus.PirateHighlight.Add(systemStatus.name);
@@ -234,6 +224,7 @@ public static class Core
                     WarStatus.PirateHighlight.Remove(systemStatus.name);
             }
         }
+
         WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
@@ -249,7 +240,7 @@ public static class Core
 
         UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
 
-            //Increase War Escalation or decay defenses.
+        //Increase War Escalation or decay defenses.
         foreach (var warfaction in WarStatus.warFactionTracker)
         {
             if (!warfaction.GainedSystem)
@@ -268,6 +259,17 @@ public static class Core
                 warfaction.LostSystem = false;
             }
         }
+
+        foreach (var system in WarStatus.SystemChangedOwners)
+        {
+            var systemStatus = WarStatus.systems.Find(x => x.name == system);
+            systemStatus.CurrentlyAttackedBy.Clear();
+            CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+            RefreshContracts(systemStatus.starSystem);
+        }
+
+        WarStatus.SystemChangedOwners.Clear();
+
         if (WarStatus.StartGameInitialized)
         {
             Galaxy_at_War.HotSpots.ProcessHotSpots();
@@ -382,26 +384,28 @@ public static class Core
         }
 
         var total = tempTargets.Values.Sum();
-        float attackResources = 0.0f;
-        float i = warFaction.AttackResources;
-        if (!UseFullSet)
-            i *= Settings.ResourceScale;
+        float attackResources = warFaction.AttackResources;
+        //float attackResources = 0.0f;
+        //float i = warFaction.AttackResources;
+        //if (!UseFullSet)
+        //    i *= Settings.ResourceScale;
 
-        while (i > 0)
-        {
-            if (i >= 1)
-            {
-                attackResources += Random.Next(1, Settings.APRPushRandomizer + 1);
-                i--;
-            }
-            else
-            {
-                attackResources += i * Random.Next(1, Settings.APRPushRandomizer + 1);
-                i = 0;
-            }
-        }
+        //while (i > 0)
+        //{
+        //    if (i >= 1)
+        //    {
+        //        attackResources += Random.Next(1, Settings.APRPushRandomizer + 1);
+        //        i--;
+        //    }
+        //    else
+        //    {
+        //        attackResources += i * Random.Next(1, Settings.APRPushRandomizer + 1);
+        //        i = 0;
+        //    }
+        //}
 
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
+        attackResources = attackResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
         foreach (Faction Rfact in tempTargets.Keys)
         {
             warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
@@ -490,27 +494,30 @@ public static class Core
         if (warFaction.defenseTargets.Count == 0 || WarStatus.warFactionTracker.Find(x => x.faction == faction) == null)
             return;
         
-        float defensiveResources = 0f;
-        var i = warFaction.DefensiveResources;
-        if (!UseFullSet)
-            i *= Settings.ResourceScale;
+        float defensiveResources = warFaction.DefensiveResources;
+        
+        //var i = warFaction.DefensiveResources;
+        //if (!UseFullSet)
+        //    i *= Settings.ResourceScale;
 
-        while (i > 0)
-        {
-            if (i >= 1)
-            {
-                defensiveResources += Random.Next(1, Settings.APRPushRandomizer + 1);
-                i--;
-            }
-            else
-            {
-                defensiveResources += i * Random.Next(1, Settings.APRPushRandomizer + 1);
-                i = 0;
-            }
-        }
+        //while (i > 0)
+        //{
+        //    if (i >= 1)
+        //    {
+        //        defensiveResources += Random.Next(1, Settings.APRPushRandomizer + 1);
+        //        i--;
+        //    }
+        //    else
+        //    {
+        //        defensiveResources += i * Random.Next(1, Settings.APRPushRandomizer + 1);
+        //        i = 0;
+        //    }
+        //}
 
         defensiveResources = defensiveResources * (100 * Settings.GlobalDefenseFactor -
                                                    Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+
+        defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
 
         while (defensiveResources > 0.0)
         {
@@ -587,13 +594,18 @@ public static class Core
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);
-            system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
-            if (system.Def.FactionShopItems != null)
+
+            if (!Core.WarStatus.AbandonedSystems.Contains(system.Name))
             {
-                Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
-                if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]))
-                    system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
-                system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
+                system.Def.SystemShopItems.Add(Settings.FactionShops[faction]);
+
+                if (system.Def.FactionShopItems != null)
+                {
+                    Traverse.Create(system.Def).Property("FactionShopOwner").SetValue(faction);
+                    if (system.Def.FactionShopItems.Contains(Settings.FactionShopItems[system.Def.Owner]))
+                        system.Def.FactionShopItems.Remove(Settings.FactionShopItems[system.Def.Owner]);
+                    system.Def.FactionShopItems.Add(Settings.FactionShopItems[faction]);
+                }
             }
             var systemStatus = WarStatus.systems.Find(x => x.name == system.Name);
             var oldOwner = systemStatus.owner;
@@ -795,20 +807,22 @@ public static class Core
         var owner = starSystem.Owner;
         ContractEmployers.Clear();
         ContractTargets.Clear();
-        ContractEmployers.Add(owner);
-        foreach (Faction EF in Settings.DefensiveFactions)
+        if (owner == Faction.NoFaction)
         {
-            if (Settings.ImmuneToWar.Contains(EF))
-                continue;
-            ContractTargets.Add(EF);
+            ContractEmployers.Add(Faction.AuriganPirates);
+            ContractTargets.Add(Faction.AuriganPirates);
         }
-        if (!ContractTargets.Contains(owner))
+        else
+        {
+            ContractEmployers.Add(owner);
             ContractTargets.Add(owner);
+        }
+
         var WarSystem = WarStatus.systems.Find(x => x.name == starSystem.Name);
         var neighborSystems = WarSystem.neighborSystems;
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
-            if (Settings.ImmuneToWar.Contains(systemNeighbor))
+            if (Settings.ImmuneToWar.Contains(systemNeighbor) || systemNeighbor == Faction.NoFaction)
                 continue;
             if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractEmployers.Add(systemNeighbor);
@@ -816,7 +830,29 @@ public static class Core
             if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
-        if (ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0)
+        if (ContractEmployers.Count == 1 && ContractEmployers.Contains(Faction.AuriganPirates))
+        {
+            Faction faction = Faction.AuriganRestoration;
+            List<Faction> TempFaction = new List<Faction>(Settings.IncludedFactions);
+            do
+            {
+                var randFaction = Random.Next(0, TempFaction.Count);
+                faction = Settings.IncludedFactions[randFaction];
+                if (Settings.DefensiveFactions.Contains(faction))
+                {
+                    TempFaction.RemoveAt(randFaction);
+                    continue;
+                }
+                else
+                    break;
+            } while (TempFaction.Count != 0);
+
+            ContractEmployers.Add(faction);
+            if (!ContractTargets.Contains(faction))
+                ContractTargets.Add(faction);
+        }
+
+        if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains(Faction.AuriganPirates))
             ContractEmployers.Add(Faction.AuriganPirates);
     }
 

@@ -54,7 +54,7 @@ public class ModSettings
     public float KLValuesNeutral = 50f;
     public float KLValuesEnemies = 90f;
     public bool DefendersUseARforDR = true;
-    public float PriorityHatred = 50;
+    public float PriorityHatred = 40;
     public int InternalHotSpots = 4;
     public int ExternalHotSpots = 4;
     public int EscalationDays = 30;
@@ -67,7 +67,10 @@ public class ModSettings
     public bool UseSubsetOfSystems = true;
     public float SubSetFraction = 1.0f;
     public float StartingPirateActivity = 5.0f;
-    public float StartingPirateResources = 500.0f;
+    public float BonusPirateResources = 0.0f;
+    public float FractionPirateResources = 1.0f;
+    public float PirateSystemFlagValue = 25.0f;
+    public double ResourceSpread = 0.25;
     
     public List<Faction> DefensiveFactions = new List<Faction>();
 

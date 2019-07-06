@@ -30,6 +30,7 @@ public class WarStatus
 
     public List<string> HomeContendedStrings = new List<string>();
     public List<string> ContendedStrings = new List<string>();
+    public List<string> AbandonedSystems = new List<string>();
     
     public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
     public List<string> HomeContendedSystems = new List<string>();
@@ -40,6 +41,7 @@ public class WarStatus
     public float PirateResources;
     public float TempPRGain;
     public float MinimumPirateResources;
+    public float StartingPirateResources;
     public float LastPRGain;
 
 
@@ -47,8 +49,6 @@ public class WarStatus
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         CurSystem = sim.CurSystem.Name;
-        PirateResources = Core.Settings.StartingPirateResources;
-        MinimumPirateResources = Core.Settings.StartingPirateResources;
         TempPRGain = 0;
         HotBoxTravelling = false;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
@@ -60,6 +60,8 @@ public class WarStatus
 
         foreach (var system in sim.StarSystems)
         {
+            if (system.Owner == Faction.NoFaction)
+                AbandonedSystems.Add(system.Name);
             var warFaction = warFactionTracker.Find(x => x.faction == system.Owner);
             if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
                 warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
@@ -86,7 +88,9 @@ public class WarStatus
                 warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
             }
         }
-
+        PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
+        MinimumPirateResources = PirateResources;
+        StartingPirateResources = PirateResources;
 
         foreach (var system in sim.StarSystems)
         {
@@ -169,23 +173,31 @@ public class SystemStatus
     public void CalculateSystemInfluence()
     {
         influenceTracker.Clear();
-        influenceTracker.Add(owner, Core.Settings.DominantInfluence);
-        int remainingInfluence = Core.Settings.MinorInfluencePool;
+        if (owner == Faction.NoFaction)
+            influenceTracker.Add(owner, 100);
+        if(owner == Faction.Locals)
+            influenceTracker.Add(owner, 100);
 
-        if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
+        if (owner != Faction.NoFaction && owner != Faction.Locals)
         {
-            while (remainingInfluence > 0)
+            influenceTracker.Add(owner, Core.Settings.DominantInfluence);
+            int remainingInfluence = Core.Settings.MinorInfluencePool;
+
+            if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
             {
-                foreach (var faction in neighborSystems.Keys)
+                while (remainingInfluence > 0)
                 {
-                    if (faction != owner)
+                    foreach (var faction in neighborSystems.Keys)
                     {
-                        var influenceDelta = neighborSystems[faction];
-                        remainingInfluence -= influenceDelta;
-                        if (influenceTracker.ContainsKey(faction))
-                            influenceTracker[faction] += influenceDelta;
-                        else
-                            influenceTracker.Add(faction, influenceDelta);
+                        if (faction != owner)
+                        {
+                            var influenceDelta = neighborSystems[faction];
+                            remainingInfluence -= influenceDelta;
+                            if (influenceTracker.ContainsKey(faction))
+                                influenceTracker[faction] += influenceDelta;
+                            else
+                                influenceTracker.Add(faction, influenceDelta);
+                        }
                     }
                 }
             }

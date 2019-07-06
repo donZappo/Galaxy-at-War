@@ -84,12 +84,12 @@ namespace Galaxy_at_War
                 }
             }
             var i = 0;
-            Log(FullHomeContendedSystems.Count.ToString());
             foreach (var system in FullHomeContendedSystems.OrderByDescending(x => x.Value))
             {
-                Log(i.ToString());
                 if (i < 6)
+                {
                     Core.WarStatus.HomeContendedStrings.Add(system.Key.Name);
+                }
 
                 HomeContendedSystems.Add(system.Key);
                 i++;

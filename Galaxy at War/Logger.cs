@@ -26,7 +26,6 @@ public static class Logger
             writer.WriteLine(line);
         }
     }
-
     public static void Log(string line)
     {
         using (var writer = new StreamWriter(LogFilePath, true))

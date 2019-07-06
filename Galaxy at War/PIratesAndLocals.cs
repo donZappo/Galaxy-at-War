@@ -40,8 +40,8 @@ namespace Galaxy_at_War
             else
             {
                 Core.WarStatus.MinimumPirateResources /= 1.1f;
-                if (Core.WarStatus.MinimumPirateResources < Core.Settings.StartingPirateResources)
-                    Core.WarStatus.MinimumPirateResources = Core.Settings.StartingPirateResources;
+                if (Core.WarStatus.MinimumPirateResources < Core.WarStatus.StartingPirateResources)
+                    Core.WarStatus.MinimumPirateResources = Core.WarStatus.StartingPirateResources;
             }
             foreach (var warFaction in Core.WarStatus.warFactionTracker)
             {
