@@ -193,6 +193,8 @@ public class SystemStatus
                         {
                             var influenceDelta = neighborSystems[faction];
                             remainingInfluence -= influenceDelta;
+                            if (faction == Faction.NoFaction || faction == Faction.Locals)
+                                continue;
                             if (influenceTracker.ContainsKey(faction))
                                 influenceTracker[faction] += influenceDelta;
                             else

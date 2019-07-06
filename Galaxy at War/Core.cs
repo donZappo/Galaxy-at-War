@@ -206,7 +206,7 @@ public static class Core
             {
                 foreach (var neighbor in systemStatus.neighborSystems.Keys)
                 {
-                    if (!Settings.ImmuneToWar.Contains(neighbor) || !Settings.DefensiveFactions.Contains(neighbor))
+                    if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor))
                     {
                         var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
                         systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
