@@ -51,7 +51,7 @@ public static class SaveHandling
         public static void Prefix(SimGameState __instance)
         {
 
-            if (Core.WarStatus != null)
+            if (Core.WarStatus == null)
             {
                 Core.WarStatus = new WarStatus();
                 Core.SystemDifficulty();
