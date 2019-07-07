@@ -136,7 +136,6 @@ public static class Core
                 GaW_Notification();
                 WarStatus.GaW_Event_PopUp = true;
             }
-
             //int i = 0;
             //do
             //{
@@ -1250,7 +1249,7 @@ public static class Core
         simGameResultAction.Type = SimGameResultAction.ActionType.System_ShowSummaryOverlay;
         simGameResultAction.value = Strings.T("Galaxy at War");
         simGameResultAction.additionalValues = new string[1];
-        simGameResultAction.additionalValues[0] = Strings.T("In Galaxy at War, the Great Houses of the Innersphere will not simply wait for a wedding invitation" +
+        simGameResultAction.additionalValues[0] = Strings.T("In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for a wedding invitation" +
             " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
             " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their" +
             " fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
