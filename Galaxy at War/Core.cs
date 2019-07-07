@@ -893,7 +893,10 @@ public static class Core
         }
 
         if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains(Faction.AuriganPirates))
+        {
             ContractEmployers.Add(Faction.AuriganPirates);
+            ContractTargets.Add(Faction.AuriganPirates);
+        }
     }
 
     [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]

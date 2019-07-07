@@ -269,9 +269,15 @@ namespace Galaxy_at_War
         {
             static void Postfix()
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
                 Core.WarStatus.JustArrived = true;
                 Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
                 ProcessHotSpots();
+                if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
+                {
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                }
             }
         }
 

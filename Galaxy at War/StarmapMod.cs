@@ -152,7 +152,7 @@ public class StarmapMod
                     UnityEngine.Object.Destroy(eventPanel);
                     
                 }
-                catch (Exception e)
+                catch
                 {
                     SetupRelationPanel();
                     eventPanel.gameObject.SetActive(true);
