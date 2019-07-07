@@ -242,17 +242,20 @@ public class StarmapMod
 
         public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
-            var wasVisited = visitedStarSystems.Contains(__result.name);
-            if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
-                HighlightSystem(__result, wasVisited, Color.magenta, true);
-            else if (Core.WarStatus.LostSystems.Contains(__result.name))
-                HighlightSystem(__result, wasVisited, Color.yellow, false);
-            else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
-                HighlightSystem(__result, wasVisited, Color.red, false);
-            else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
-                MakeSystemNormal(__result, wasVisited);
+            if (Core.WarStatus != null)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
+                var wasVisited = visitedStarSystems.Contains(__result.name);
+                if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
+                    HighlightSystem(__result, wasVisited, Color.magenta, true);
+                else if (Core.WarStatus.LostSystems.Contains(__result.name))
+                    HighlightSystem(__result, wasVisited, Color.yellow, false);
+                else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
+                    HighlightSystem(__result, wasVisited, Color.red, false);
+                else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
+                    MakeSystemNormal(__result, wasVisited);
+            }
         }
     }
 
@@ -261,7 +264,7 @@ public class StarmapMod
     {
         public static void Prefix(StarmapRenderer __instance)
         {
-            if (!Core.WarStatus.StartGameInitialized)
+            if (Core.WarStatus != null && !Core.WarStatus.StartGameInitialized)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 Galaxy_at_War.HotSpots.ProcessHotSpots();

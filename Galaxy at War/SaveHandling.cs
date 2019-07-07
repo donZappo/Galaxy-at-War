@@ -29,14 +29,7 @@ public static class SaveHandling
                 if (tag.StartsWith("GalaxyAtWarSave{"))
                     NewGaW = false;
             }
-            if (NewGaW)
-            {
-                Core.WarStatus = new WarStatus();
-                Core.SystemDifficulty();
-                Core.WarTick(true, true);
-                SerializeWar();
-            }
-            else
+            if (!NewGaW)
             {
                 DeserializeWar();
                 RebuildState();
@@ -58,7 +51,7 @@ public static class SaveHandling
         public static void Prefix(SimGameState __instance)
         {
 
-            if (Core.WarStatus == null)
+            if (Core.WarStatus != null)
             {
                 Core.WarStatus = new WarStatus();
                 Core.SystemDifficulty();

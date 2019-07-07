@@ -87,6 +87,12 @@ public static class Core
     {
         static void Prefix(SimGameState __instance, int timeLapse)
         {
+            if (WarStatus == null)
+            {
+                WarStatus = new WarStatus();
+                SystemDifficulty();
+                WarTick(true, true);
+            }
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             WarStatus.CurSystem = sim.CurSystem.Name;
             try

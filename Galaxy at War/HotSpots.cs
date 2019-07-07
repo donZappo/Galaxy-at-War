@@ -491,7 +491,7 @@ namespace Galaxy_at_War
         {
             static void Prefix(SGRoomController_CmdCenter __instance)
             {
-                if (!Core.WarStatus.StartGameInitialized)
+                if (Core.WarStatus != null && !Core.WarStatus.StartGameInitialized)
                 {
                     ProcessHotSpots();
                    // StarmapMod.SetupRelationPanel();
