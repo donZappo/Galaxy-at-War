@@ -54,6 +54,13 @@ namespace Galaxy_at_War
             //Populate lists with planets that are in danger of flipping
             foreach (var systemStatus in Core.WarStatus.systems)
             {
+                if (systemStatus.name != sim.CurSystem.Name || (systemStatus.name == sim.CurSystem.Name && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name)))
+                {
+                    systemStatus.BonusCBills = false;
+                    systemStatus.BonusSalvage = false;
+                    systemStatus.BonusXP = false;
+                }
+
                 if (systemStatus.Contended)
                     Core.WarStatus.ContendedStrings.Add(systemStatus.name);
                 if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
@@ -234,9 +241,9 @@ namespace Galaxy_at_War
         {
             static void Postfix(SimGameState __instance, Contract contract)
             {
-                if (contract.TargetSystem != __instance.CurSystem.Def.Description.Id)
+                if (!__instance.CurSystem.Def.Description.Id.StartsWith(contract.TargetSystem))
                 {
-                    var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id == contract.TargetSystem);
+                    var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Core.WarStatus.HotBox.Add(starSystem.Name);
                     Core.WarStatus.HotBoxTravelling = true;
                     TemporaryFlip(starSystem, contract.Override.employerTeam.faction);
@@ -411,7 +418,7 @@ namespace Galaxy_at_War
             var system = Core.WarStatus.systems.Find(x => x.starSystem == starSystem);
             System.Random rand = new System.Random();
 
-            if (!Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
+            if (starSystem.Name != sim.CurSystem.Name || (starSystem.Name == sim.CurSystem.Name && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name)))
             {
                 system.BonusCBills = false;
                 system.BonusSalvage = false;
