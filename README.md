@@ -1,4 +1,4 @@
-# Galaxy-at-War
+# Galaxy At War
 
 In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for a wedding invitation to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their fortune changing the tides of battle and helping a faction dominate the Inner Sphere.
 
