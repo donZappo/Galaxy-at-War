@@ -137,6 +137,7 @@ public static class Core
 
         public static void Postfix(SimGameState  __instance)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (!WarStatus.GaW_Event_PopUp)
             {
                 GaW_Notification();
@@ -160,11 +161,17 @@ public static class Core
                 }
                 else
                 {
+                    bool HasFlashpoint = false;
                     WarTick(true, true);
-                    if (!WarStatus.HotBoxTravelling)
+                    foreach (var contract in sim.CurSystem.SystemContracts)
+                    {
+                        if (contract.IsFlashpointContract)
+                            HasFlashpoint = true;
+                    }
+                    if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
                     {
                         var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                        __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                        sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     }
                 }
 
@@ -1146,8 +1153,18 @@ public static class Core
                     }
                     WarStatus.SystemChangedOwners.Clear();
 
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    bool HasFlashpoint = false;
+                    foreach (var contract in __instance.CurSystem.SystemContracts)
+                    {
+                        if (contract.IsFlashpointContract)
+                            HasFlashpoint = true;
+                    }
+                    if (!HasFlashpoint)
+                    {
+                        var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                        __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    }
+
                     __instance.StopPlayMode();
                 }
             }
@@ -1286,10 +1303,12 @@ public static class Core
             var Sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Sim.ContractUserMeetsReputation(contract))
             {
-                if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration)
+                if (contract.IsFlashpointContract)
                     result = 0;
-                else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+                else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration)
                     result = 1;
+                else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+                    result = 2;
                 else if (contract.TargetSystem.Replace("starsystemdef_", "").Equals(Sim.CurSystem.Name))
                     result = difficulty + 1;
                 else

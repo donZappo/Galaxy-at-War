@@ -276,11 +276,17 @@ namespace Galaxy_at_War
         {
             static void Postfix()
             {
+                bool HasFlashpoint = false;
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 Core.WarStatus.JustArrived = true;
                 Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
                 ProcessHotSpots();
-                if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
+                foreach (var contract in sim.CurSystem.SystemContracts)
+                {
+                    if (contract.IsFlashpointContract)
+                        HasFlashpoint = true;
+                }
+                if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
                 {
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
@@ -466,8 +472,17 @@ namespace Galaxy_at_War
             system.BonusXP = false;
             Core.WarStatus.HotBox.Remove(system.name);
             Core.RefreshContracts(system.starSystem);
-            var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+            bool HasFlashpoint = false;
+            foreach (var contract in sim.CurSystem.SystemContracts)
+            {
+                if (contract.IsFlashpointContract)
+                    HasFlashpoint = true;
+            }
+            if (!HasFlashpoint)
+            {
+                var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+            }
         }
 
         public static int ProcessReputation(float FactionRep)
