@@ -20,3 +20,8 @@ In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for 
 
 - Requires ModTek. 
 - Copy the GalaxyAtWar folder into your BATTLETECH\Mods directory. 
+
+
+### Acknowledgements
+
+This mod takes inspiration from Morphyum's WarTech mod, the previous standard in Battletech sandbox play. Parts of Morphyum's code was also utilized from WarTech, ContractSort, and RandomTravelContracts. 
