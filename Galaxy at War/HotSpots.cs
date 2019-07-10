@@ -36,6 +36,11 @@ namespace Galaxy_at_War
 
         public static void ProcessHotSpots()
         {
+            try { }
+            catch (Exception e)
+            {
+                Error(e);
+            }
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var DominantFaction = Core.WarStatus.systems.Find(x => x.starSystem.Name == Core.WarStatus.CurSystem).owner;
             FullHomeContendedSystems.Clear();

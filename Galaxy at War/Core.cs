@@ -1144,6 +1144,9 @@ public static class Core
                     interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken! "
                         + Settings.FactionNames[teamfaction] +" conquered from " + Settings.FactionNames[oldOwner], true, null);
 
+                    if (WarStatus.HotBox.Contains(Sim.CurSystem.Name))
+                        WarStatus.HotBox.Remove(Sim.CurSystem.Name);
+
                     foreach (var system in WarStatus.SystemChangedOwners)
                     {
                         var systemStatus = WarStatus.systems.Find(x => x.name == system);
