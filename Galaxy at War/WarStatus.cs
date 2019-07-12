@@ -51,6 +51,7 @@ public class WarStatus
         CurSystem = sim.CurSystem.Name;
         TempPRGain = 0;
         HotBoxTravelling = false;
+        HotBox = new List<string>();
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
@@ -151,6 +152,9 @@ public class SystemStatus
         DefenseResources = Core.GetTotalDefensiveResources(starSystem);
         TotalResources = AttackResources + DefenseResources;
         CoreSystemID = starSystem.Def.CoreSystemID;
+        BonusCBills = false;
+        BonusSalvage = false;
+        BonusXP = false;
         if (starSystem.Tags.Contains("planet_other_pirate"))
             PirateActivity = Core.Settings.StartingPirateActivity;
         FindNeighbors();

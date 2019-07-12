@@ -131,11 +131,17 @@ namespace Galaxy_at_War
                 if (HomeContendedSystems.Count != 0)
                 {
                     int i = 0;
+                    int twiddle = 1;
+                    var RandomSystem = 0;
                     while (HomeContendedSystems.Count != 0)
                     {
                         Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
-                        var RandomSystem = rand.Next(0, HomeContendedSystems.Count);
+                        if (twiddle == 1)
+                            RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
+                        if (twiddle == -1)
+                            RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
+
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
@@ -148,6 +154,7 @@ namespace Galaxy_at_War
                         if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
                             break;
                         i = sim.CurSystem.SystemBreadcrumbs.Count;
+                        twiddle *= -1;
                     }
                 }
                 if (ExternalPriorityTargets.Count != 0)
@@ -360,8 +367,15 @@ namespace Galaxy_at_War
         {
             static void Postfix(Contract __instance)
             {
+                Log("GenerateSalvage");
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                Log("A");
                 var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                Log("B");
+                Log("Hotbox Null = " + (Core.WarStatus.HotBox == null).ToString());
+                Log("Bonus Salvage Null = " + (system.BonusSalvage == null).ToString());
+                if (Core.WarStatus.HotBox == null)
+                    Core.WarStatus.HotBox = new List<string>();
 
                 if (system.BonusSalvage && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {

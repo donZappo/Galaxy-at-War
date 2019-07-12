@@ -1259,13 +1259,15 @@ public static class Core
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
             }
             i++;
-
-            if (SimSystem.Def.Owner == Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
+            if (SimSystem.Def.Owner != Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
             {
-                List<string> TempList = new List<string>() {
-                    "itemCollection_Weapons_common" , "itemCollection_Upgrades_common"};
+                List<string> TempList = new List<string>();
+                TempList.Add("itemCollection_minor_Locals");
                 Traverse.Create(SimSystem.Def).Property("SystemShopItems").SetValue(TempList);
+                Shop.RefreshType refreshShop = Shop.RefreshType.RefreshIfEmpty;
+                SimSystem.SystemShop.Rehydrate(sim, SimSystem, SimSystem.Def.SystemShopItems, refreshShop, Shop.ShopType.System);
             }
+            
         }
     }
     //82 characters per line.
