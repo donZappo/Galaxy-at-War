@@ -1087,12 +1087,10 @@ public static class Core
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
                 if (missionResult == MissionResult.Victory)
                 {
-                    if (teamfaction != Faction.AuriganPirates && enemyfaction != Faction.AuriganPirates)
-                    {
-                        warsystem.influenceTracker[teamfaction] += Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
-                        warsystem.influenceTracker[enemyfaction] -= Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
-                    }
-                    else if (teamfaction == Faction.AuriganPirates)
+                    warsystem.influenceTracker[teamfaction] += Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                    warsystem.influenceTracker[enemyfaction] -= Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+
+                    if (teamfaction == Faction.AuriganPirates)
                     {
                         warsystem.PirateActivity += difficulty;
                         if (warsystem.PirateActivity > 100)
