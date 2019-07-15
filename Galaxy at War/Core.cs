@@ -105,8 +105,9 @@ public static class Core
             {
                 UnityEngine.Object.Destroy(StarmapMod.eventPanel);
             }
-            if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
+            if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
+                Log("Escalation Going Down");
                 WarStatus.EscalationDays--;
 
                 if (WarStatus.EscalationDays == 0)

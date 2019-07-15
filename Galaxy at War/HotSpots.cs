@@ -367,13 +367,8 @@ namespace Galaxy_at_War
         {
             static void Postfix(Contract __instance)
             {
-                Log("GenerateSalvage");
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                Log("A");
                 var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
-                Log("B");
-                Log("Hotbox Null = " + (Core.WarStatus.HotBox == null).ToString());
-                Log("Bonus Salvage Null = " + (system.BonusSalvage == null).ToString());
                 if (Core.WarStatus.HotBox == null)
                     Core.WarStatus.HotBox = new List<string>();
 
