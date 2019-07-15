@@ -14,6 +14,7 @@ In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for 
 - Sumire will flag the systems in purple on the Star Map that are the most valuable local targets.
 - Sumire will also highlight systems in yellow that have changed ownership during the previous month.
 - Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status.
+- Shift-Click on any item on the Timeline to accelerate the movement of time until that item is reached.
 
 
 ### Installation Notes:
