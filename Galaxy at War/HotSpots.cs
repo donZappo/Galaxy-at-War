@@ -144,8 +144,13 @@ namespace Galaxy_at_War
                             RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
                         if (twiddle == -1)
                             RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
-
+                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
+                        if (MainBCTarget == sim.CurSystem)
+                        {
+                            HomeContendedSystems.Remove(MainBCTarget);
+                            continue;
+                        }
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
@@ -172,6 +177,11 @@ namespace Galaxy_at_War
                             var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
                             Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
                             Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
+                            if (ExternalPriorityTargets[ExtTarget][RandTarget] == sim.CurSystem)
+                            {
+                                ExternalPriorityTargets[ExtTarget].Remove(sim.CurSystem);
+                                continue;
+                            }
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
                             if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                                 sim.GeneratePotentialContracts(true, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
