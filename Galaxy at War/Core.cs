@@ -81,6 +81,7 @@ public static class Core
     public static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
     public static List<StarSystem> defenseTargets = new List<StarSystem>();
     public static ContractType contractType;
+    public static bool NeedsProcessing = true;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -107,7 +108,6 @@ public static class Core
             }
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
-                Log("Escalation Going Down");
                 WarStatus.EscalationDays--;
 
                 if (WarStatus.EscalationDays == 0)
@@ -129,21 +129,27 @@ public static class Core
             }
             if (!Core.WarStatus.StartGameInitialized)
             {
+                NeedsProcessing = false;
                 Galaxy_at_War.HotSpots.ProcessHotSpots();
                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 Core.WarStatus.StartGameInitialized = true;
+                NeedsProcessing = true;
             }
         }
 
         public static void Postfix(SimGameState  __instance)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (!WarStatus.GaW_Event_PopUp)
-            {
-                GaW_Notification();
-                WarStatus.GaW_Event_PopUp = true;
-            }
+
+            //if (!WarStatus.GaW_Event_PopUp)
+            //{
+            //    GaW_Notification();
+            //    WarStatus.GaW_Event_PopUp = true;
+            //}
+
+
+
             //int i = 0;
             //do
             //{

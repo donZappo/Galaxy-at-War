@@ -59,7 +59,7 @@ namespace Galaxy_at_War
             //Populate lists with planets that are in danger of flipping
             foreach (var systemStatus in Core.WarStatus.systems)
             {
-                if (systemStatus.name != sim.CurSystem.Name || (systemStatus.name == sim.CurSystem.Name && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name)))
+                if (!Core.WarStatus.HotBox.Contains(systemStatus.name))
                 {
                     systemStatus.BonusCBills = false;
                     systemStatus.BonusSalvage = false;
@@ -122,6 +122,9 @@ namespace Galaxy_at_War
             
             static void Postfix(StarSystem __instance)
             {
+                if (Core.NeedsProcessing)
+                    ProcessHotSpots();
+
                 isBreadcrumb = true;
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 sim.CurSystem.SystemBreadcrumbs.Clear();
@@ -292,7 +295,6 @@ namespace Galaxy_at_War
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 Core.WarStatus.JustArrived = true;
                 Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
-                ProcessHotSpots();
                 foreach (var contract in sim.CurSystem.SystemContracts)
                 {
                     if (contract.IsFlashpointContract)
@@ -300,8 +302,11 @@ namespace Galaxy_at_War
                 }
                 if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
                 {
+                    Core.NeedsProcessing = false;
+                    ProcessHotSpots();
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    Core.NeedsProcessing = true;
                 }
             }
         }
@@ -438,7 +443,7 @@ namespace Galaxy_at_War
             var system = Core.WarStatus.systems.Find(x => x.starSystem == starSystem);
             System.Random rand = new System.Random();
 
-            if (starSystem.Name != sim.CurSystem.Name || (starSystem.Name == sim.CurSystem.Name && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name)))
+            if (!Core.WarStatus.HotBox.Contains(starSystem.Name))
             {
                 system.BonusCBills = false;
                 system.BonusSalvage = false;
@@ -481,7 +486,6 @@ namespace Galaxy_at_War
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
             system.BonusCBills = false;
-
             system.BonusSalvage = false;
             system.BonusXP = false;
             Core.WarStatus.HotBox.Remove(system.name);
