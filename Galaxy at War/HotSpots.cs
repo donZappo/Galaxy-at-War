@@ -550,5 +550,20 @@ namespace Galaxy_at_War
             }
         }
 
+        [HarmonyPatch(typeof(TaskTimelineWidget), "OnTaskDetailsClicked")]
+        public static class TaskTimelineWidget_OnTaskDetailsClicked_Patch
+        {
+            public static bool Prefix(TaskManagementElement element)
+            {
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                {
+                    AdvanceToTask.StartAdvancing(element.Entry);
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
     }
 }

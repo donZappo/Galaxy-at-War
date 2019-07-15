@@ -56,6 +56,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdvanceToTask.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="DynamicLogos.cs" />
     <Compile Include="HotSpots.cs" />

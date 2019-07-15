@@ -94,6 +94,7 @@ public static class Core
                 SystemDifficulty();
                 WarTick(true, true);
             }
+
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             WarStatus.CurSystem = sim.CurSystem.Name;
             try

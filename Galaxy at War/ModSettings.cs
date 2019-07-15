@@ -71,7 +71,8 @@ public class ModSettings
     public float FractionPirateResources = 1.0f;
     public float PirateSystemFlagValue = 25.0f;
     public double ResourceSpread = 0.25;
-    
+    public float AdvanceToTaskTime = 0.25f;
+
     public List<Faction> DefensiveFactions = new List<Faction>();
 
     public List<Faction> IncludedFactions = new List<Faction>();

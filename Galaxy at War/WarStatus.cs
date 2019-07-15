@@ -44,7 +44,6 @@ public class WarStatus
     public float StartingPirateResources;
     public float LastPRGain;
 
-
     public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
