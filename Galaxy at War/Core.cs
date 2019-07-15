@@ -143,11 +143,11 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
 
-            //if (!WarStatus.GaW_Event_PopUp)
-            //{
-            //    GaW_Notification();
-            //    WarStatus.GaW_Event_PopUp = true;
-            //}
+            if (!WarStatus.GaW_Event_PopUp)
+            {
+                GaW_Notification();
+                WarStatus.GaW_Event_PopUp = true;
+            }
 
 
 
