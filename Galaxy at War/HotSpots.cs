@@ -429,7 +429,7 @@ namespace Galaxy_at_War
                 {
                     BonusMoney = (int)(__instance.MoneyResults * Core.Settings.BonusCbillsFactor);
                     int newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + BonusMoney);
-                    Traverse.Create(__instance).Property("set_MoneyResults").SetValue(newMoneyResults);
+                    Traverse.Create(__instance).Property("MoneyResults").SetValue(newMoneyResults);
                 }
             }
         }
