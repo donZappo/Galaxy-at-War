@@ -149,6 +149,17 @@ public static class Core
                 WarStatus.GaW_Event_PopUp = true;
             }
 
+
+
+            //int i = 0;
+            //do
+            //{
+            //    WarTick(true, true);
+            //    i++;
+            //} while (i < 100);
+            //__instance.StopPlayMode();
+            //return;
+
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
@@ -454,7 +465,7 @@ public static class Core
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
                 if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts 
-                    && system.DifficultyRating >= maxContracts - 3)
+                    && system.DifficultyRating >= maxContracts - 4)
                 {
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
@@ -1254,21 +1265,15 @@ public static class Core
                 Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
             }
             i++;
-
-
-            if (Settings.ISMCorrectionNeeded)
-            {
-                Galaxy_at_War.ISMCorrection.CorrectFactionStores(system);
-            }
-
             if (SimSystem.Def.Owner != Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
             {
                 List<string> TempList = new List<string>();
                 TempList.Add("itemCollection_minor_Locals");
                 Traverse.Create(SimSystem.Def).Property("SystemShopItems").SetValue(TempList);
-                Shop.RefreshType refreshShop = Shop.RefreshType.ForceRefresh;
+                Shop.RefreshType refreshShop = Shop.RefreshType.RefreshIfEmpty;
                 SimSystem.SystemShop.Rehydrate(sim, SimSystem, SimSystem.Def.SystemShopItems, refreshShop, Shop.ShopType.System);
             }
+            
         }
     }
     //82 characters per line.

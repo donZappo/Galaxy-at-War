@@ -60,7 +60,6 @@
     <Compile Include="Core.cs" />
     <Compile Include="DynamicLogos.cs" />
     <Compile Include="HotSpots.cs" />
-    <Compile Include="ISMCorrection.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="ModSettings.cs" />
     <Compile Include="PiratesAndLocals.cs" />

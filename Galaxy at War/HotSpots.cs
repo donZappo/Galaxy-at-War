@@ -69,7 +69,7 @@ namespace Galaxy_at_War
                 if (systemStatus.Contended)
                     Core.WarStatus.ContendedStrings.Add(systemStatus.name);
                 if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
-                    && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 3)
+                    && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 4)
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
                 {

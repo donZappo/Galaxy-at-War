@@ -153,3 +153,41 @@ public static class SaveHandling
             Core.WarStatus.HomeContendedSystems.Add(system.Def.CoreSystemID);
     }
 }
+
+    //****************************************************************************************************
+    //Hotkeys*********************************************************************************************
+//    [HarmonyPatch(typeof(SimGameState), "Update")]
+//    public static class SimGameState_Update_Patch
+//    {
+//        public static void Postfix(SimGameState __instance)
+//        {
+//            var sim = UnityGameInstance.BattleTechGame.Simulation;
+
+//            // clear the WarStatus completely
+//            var hotkeyF10 = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.F10);
+//            if (hotkeyF10)
+//            {
+//                foreach (var tag in sim.CompanyTags)
+//                    if (tag.StartsWith("GalaxyAtWar"))
+//                        sim.CompanyTags.Remove(tag);
+
+//                LogDebug("Setting up new WarStatus");
+//                Core.WarStatus = new WarStatus();
+//                Core.WarTick(true, true);
+//            }
+
+//            var hotkeyD = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
+//            if (hotkeyD)
+//                using (var writer = new StreamWriter("Mods\\GalaxyAtWar\\SaveDump.json"))
+//                    writer.Write(JsonConvert.SerializeObject(Core.WarStatus));
+
+//            var hotkeyT = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
+//            if (hotkeyT)
+//                sim.CompanyTags.Add(new string('=', 50));
+
+//            var hotkeyL = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.L);
+//            if (hotkeyL)
+//                sim.CompanyTags.Do(LogDebug);
+//        }
+//    }
+//}
