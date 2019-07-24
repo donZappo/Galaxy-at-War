@@ -519,8 +519,10 @@ namespace Galaxy_at_War
             }
             if (!HasFlashpoint)
             {
+                Core.NeedsProcessing = true;
                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                Core.NeedsProcessing = false;
             }
         }
 

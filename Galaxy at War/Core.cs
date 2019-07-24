@@ -177,8 +177,10 @@ public static class Core
                     }
                     if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
                     {
+                        NeedsProcessing = true;
                         var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                         sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                        NeedsProcessing = false;
                     }
                 }
 
@@ -298,12 +300,6 @@ public static class Core
         }
 
         WarStatus.SystemChangedOwners.Clear();
-
-        if (WarStatus.StartGameInitialized)
-        {
-            Galaxy_at_War.HotSpots.ProcessHotSpots();
-        }
-
 
 
         //Log("===================================================");
