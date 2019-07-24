@@ -266,13 +266,12 @@ public class StarmapMod
         {
             if (Core.WarStatus != null && !Core.WarStatus.StartGameInitialized)
             {
-                Core.NeedsProcessing = false;
+                Core.NeedsProcessing = true;
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                Galaxy_at_War.HotSpots.ProcessHotSpots();
                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 Core.WarStatus.StartGameInitialized = true;
-                Core.NeedsProcessing = true;
+                Core.NeedsProcessing = false;
             }
         }
     }

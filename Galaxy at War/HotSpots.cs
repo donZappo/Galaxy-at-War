@@ -200,6 +200,18 @@ namespace Galaxy_at_War
                 isBreadcrumb = false;
             }
         }
+
+        [HarmonyPatch(typeof(SimGameState), "GeneratePotentialContracts")]
+        public static class SimGameState_GeneratePotentialContracts_Patch
+        {
+            static void Prefix(ref StarSystem systemOverride)
+            {
+                if (systemOverride != null && !Core.NeedsProcessing)
+                    systemOverride = null;
+            }
+        }
+
+
         [HarmonyPatch(typeof(StarSystem))]
         [HarmonyPatch("InitialContractsFetched", MethodType.Getter)]
         public static class StarSystem_InitialContractsFetched_Patch
@@ -312,11 +324,10 @@ namespace Galaxy_at_War
                 }
                 if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
                 {
-                    Core.NeedsProcessing = false;
-                    ProcessHotSpots();
+                    Core.NeedsProcessing = true;
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                    Core.NeedsProcessing = true;
+                    Core.NeedsProcessing = false;
                 }
             }
         }
