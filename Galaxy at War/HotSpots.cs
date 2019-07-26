@@ -201,15 +201,15 @@ namespace Galaxy_at_War
             }
         }
 
-        [HarmonyPatch(typeof(SimGameState), "GeneratePotentialContracts")]
-        public static class SimGameState_GeneratePotentialContracts_Patch
-        {
-            static void Prefix(ref StarSystem systemOverride)
-            {
-                if (systemOverride != null && !Core.NeedsProcessing)
-                    systemOverride = null;
-            }
-        }
+        //[HarmonyPatch(typeof(SimGameState), "GeneratePotentialContracts")]
+        //public static class SimGameState_GeneratePotentialContracts_Patch
+        //{
+        //    static void Prefix(ref StarSystem systemOverride)
+        //    {
+        //        if (systemOverride != null && !Core.NeedsProcessing)
+        //            systemOverride = null;
+        //    }
+        //}
 
 
         [HarmonyPatch(typeof(StarSystem))]

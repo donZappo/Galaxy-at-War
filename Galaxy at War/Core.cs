@@ -1146,7 +1146,25 @@ public static class Core
                         + Settings.FactionNames[teamfaction] +" conquered from " + Settings.FactionNames[oldOwner], true, null);
 
                     if (WarStatus.HotBox.Contains(Sim.CurSystem.Name))
+                    {
                         WarStatus.HotBox.Remove(Sim.CurSystem.Name);
+                        WarStatus.EscalationDays = 0;
+                        warsystem.BonusCBills = false;
+                        warsystem.BonusSalvage = false;
+                        warsystem.BonusXP = false;
+                        if (WarStatus.EscalationOrder != null)
+                        {
+                            WarStatus.EscalationOrder.SetCost(0);
+                            TaskManagementElement taskManagementElement4 = null;
+                            TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
+                            Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                                (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                            if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
+                            {
+                                taskManagementElement4.UpdateItem(0);
+                            }
+                        }
+                    }
 
                     foreach (var system in WarStatus.SystemChangedOwners)
                     {
@@ -1165,8 +1183,10 @@ public static class Core
                     }
                     if (!HasFlashpoint)
                     {
+                        NeedsProcessing = true;
                         var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                         __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                        NeedsProcessing = false;
                     }
 
                     __instance.StopPlayMode();
