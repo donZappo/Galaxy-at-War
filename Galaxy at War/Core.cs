@@ -222,6 +222,15 @@ public static class Core
             //    }
             //    WarStatus.SystemChangedOwners.Clear();
             //}
+
+            if (systemStatus.owner != Faction.Locals && systemStatus.influenceTracker.Keys.Contains(Faction.Locals))
+            {
+                systemStatus.influenceTracker[Faction.Locals] *= 1.1f;
+                var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
+                if (!warFaction.defenseTargets.Contains(systemStatus.name))
+                    warFaction.defenseTargets.Add(systemStatus.name);
+            }
+
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
             if (WarStatus.InitializeAtStart)
@@ -230,7 +239,8 @@ public static class Core
                 CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                 RefreshContracts(systemStatus.starSystem);
             }
-            if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name)) continue;
+            if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
+                continue;
 
             //Add resources from neighboring systems.
             if (systemStatus.neighborSystems.Count != 0)
@@ -807,7 +817,7 @@ public static class Core
             var starSystem = systemStatus.starSystem;
             
             if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold && !Core.WarStatus.HotBox.Contains(systemStatus.name)
-                && !Settings.DefensiveFactions.Contains(highestfaction) && !Settings.ImmuneToWar.Contains(starSystem.Owner)))
+                && (!Settings.DefensiveFactions.Contains(highestfaction) || highestfaction == Faction.Locals) && !Settings.ImmuneToWar.Contains(starSystem.Owner)))
             {
                 if (!systemStatus.Contended)
                 {
@@ -911,6 +921,14 @@ public static class Core
         {
             ContractEmployers.Add(Faction.AuriganPirates);
             ContractTargets.Add(Faction.AuriganPirates);
+        }
+
+        if (!starSystem.Tags.Contains("planet_pop_none") && !starSystem.Tags.Contains("planet_civ_primitive") && !starSystem.Tags.Contains("planet_other_empty"))
+        {
+            if (!ContractEmployers.Contains(Faction.Locals))
+                ContractEmployers.Add(Faction.Locals);
+            if (!ContractTargets.Contains(Faction.Locals))
+                ContractTargets.Add(Faction.Locals);
         }
     }
 
@@ -1135,7 +1153,7 @@ public static class Core
                 var oldOwner = warsystem.owner;
 
                 if (highKey != Sim.CurSystem.Owner && highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold 
-                    && !Settings.DefensiveFactions.Contains(teamfaction) && warsystem.starSystem.Owner != Faction.ComStar)
+                    && (!Settings.DefensiveFactions.Contains(teamfaction) || teamfaction == Faction.Locals) && warsystem.starSystem.Owner != Faction.ComStar)
                 {
                     ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
 
