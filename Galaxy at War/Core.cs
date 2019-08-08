@@ -148,8 +148,6 @@ public static class Core
                 WarStatus.GaW_Event_PopUp = true;
             }
 
-
-
             //int i = 0;
             //do
             //{
@@ -923,7 +921,7 @@ public static class Core
             ContractTargets.Add(Faction.AuriganPirates);
         }
 
-        if (!starSystem.Tags.Contains("planet_pop_none") && !starSystem.Tags.Contains("planet_civ_primitive") && !starSystem.Tags.Contains("planet_other_empty"))
+        if (!WarStatus.AbandonedSystems.Contains(starSystem.Name))
         {
             if (!ContractEmployers.Contains(Faction.Locals))
                 ContractEmployers.Add(Faction.Locals);
