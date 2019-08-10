@@ -430,7 +430,7 @@ namespace Galaxy_at_War
             static void Postfix(AAR_ContractObjectivesWidget __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                var system = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
 
                 if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
@@ -447,7 +447,7 @@ namespace Galaxy_at_War
             static void Postfix(Contract __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                var system = Core.WarStatus.systems.Find(x => x.starSystem == sim.CurSystem);
+                var system = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
                 if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
                     BonusMoney = (int)(__instance.MoneyResults * Core.Settings.BonusCbillsFactor);
