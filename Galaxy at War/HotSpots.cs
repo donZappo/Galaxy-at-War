@@ -68,7 +68,7 @@ namespace Galaxy_at_War
 
                 if (systemStatus.Contended)
                     Core.WarStatus.ContendedStrings.Add(systemStatus.name);
-                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
+                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner]
                     && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 4)
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
@@ -119,7 +119,7 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
             }
 
-            
+
             static void Postfix(StarSystem __instance)
             {
                 if (Core.NeedsProcessing)
@@ -144,7 +144,7 @@ namespace Galaxy_at_War
                             RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
                         if (twiddle == -1)
                             RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
-                        
+
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         if (MainBCTarget == sim.CurSystem)
                         {
@@ -269,7 +269,7 @@ namespace Galaxy_at_War
                 if (!Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
                     starSystem.Def.ContractTargets.Add(Faction.Locals);
             }
-            
+
         }
 
         //Deployments area.
@@ -569,7 +569,7 @@ namespace Galaxy_at_War
                 if (Core.WarStatus != null && !Core.WarStatus.StartGameInitialized)
                 {
                     ProcessHotSpots();
-                   // StarmapMod.SetupRelationPanel();
+                    // StarmapMod.SetupRelationPanel();
                     Core.WarStatus.StartGameInitialized = true;
                 }
             }
@@ -590,5 +590,22 @@ namespace Galaxy_at_War
             }
         }
 
+        //Make contracts always available for escalations
+        [HarmonyPatch(typeof(StarSystem), "CompletedContract")]
+        public static class StarSystem_CompletedContract_Patch
+        {
+            public static void Prefix(StarSystem __instance, ref float __state)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                __state = __instance.Sim.Constants.Story.ContractSuccessReduction;
+                if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
+                    __instance.Sim.Constants.Story.ContractSuccessReduction = 0;
+            }
+
+            public static void Postfix(StarSystem __instance, ref float __state)
+            {
+                __instance.Sim.Constants.Story.ContractSuccessReduction = __state;
+            }
+        }
     }
 }
