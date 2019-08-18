@@ -1377,6 +1377,26 @@ public static class Core
         }
     }
 
+    //Disable the campaign start button in order to avoid infinite sadness
+    [HarmonyPatch(typeof(MainMenu), "Init")]
+    public static class MainMenu_Init_Patch
+    {
+
+        static void Prefix(MainMenu __instance)
+        {
+            try
+            {
+                HBSRadioSet topLevelMenu = Traverse.Create(__instance).Field("topLevelMenu").GetValue<HBSRadioSet>();
+                topLevelMenu.RadioButtons.Find((HBSButton x) => x.GetText() == "Campaign").gameObject.SetActive(false);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+
+            }
+        }
+    }
+
     //internal static void WarSummary(string eventString)
     //{
     //    var simGame = UnityGameInstance.BattleTechGame.Simulation;
