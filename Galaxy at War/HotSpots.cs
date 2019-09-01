@@ -459,13 +459,16 @@ namespace Galaxy_at_War
         [HarmonyPatch(typeof(AAR_UnitStatusWidget), "FillInPilotData")]
         public static class AAR_UnitStatusWidget_Patch
         {
-            static void Prefix(ref int xpEarned)
+            static void Prefix(ref int xpEarned, UnitResult ___UnitData)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var system = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem);
                 if (system.BonusXP && Core.WarStatus.HotBox.Contains(system.name))
                 {
                     xpEarned = xpEarned + (int)(xpEarned * Core.Settings.BonusXPFactor);
+                    int unspentXP = ___UnitData.pilot.UnspentXP;
+                    int XPCorrection = (int)(xpEarned * Core.Settings.BonusXPFactor);
+                    ___UnitData.pilot.StatCollection.Set<int>("ExperienceUnspent", unspentXP + XPCorrection);
                 }
             }
         }
