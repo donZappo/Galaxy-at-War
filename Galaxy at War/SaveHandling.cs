@@ -23,6 +23,10 @@ public static class SaveHandling
         }
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                return;
+
             bool NewGaW = true;
             foreach (string tag in __instance.CompanyTags)
             {
@@ -50,6 +54,9 @@ public static class SaveHandling
     {
         public static void Prefix(SimGameState __instance)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                return;
 
             if (Core.WarStatus == null)
             {

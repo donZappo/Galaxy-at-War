@@ -25,6 +25,10 @@ public class StarmapMod
     {
         public static void Prefix(TooltipPrefab_Planet __instance, object data, ref string __state)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             var starSystem = (StarSystem)data;
             if (starSystem == null)
             {
@@ -38,6 +42,10 @@ public class StarmapMod
 
         public static void Postfix(TooltipPrefab_Planet __instance, object data, string __state)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             var starSystem = (StarSystem)data;
             if (starSystem == null)
             {
@@ -144,6 +152,10 @@ public class StarmapMod
     {
         public static void Postfix(SimGameState __instance)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
             {
                 try
@@ -220,6 +232,10 @@ public class StarmapMod
     {
         public static void Prefix()
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             //if (!Core.WarStatus.StartGameInitialized)
             //{
             //    var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -242,9 +258,12 @@ public class StarmapMod
 
         public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             if (Core.WarStatus != null)
             {
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
                 var wasVisited = visitedStarSystems.Contains(__result.name);
                 if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
@@ -264,10 +283,13 @@ public class StarmapMod
     {
         public static void Prefix(StarmapRenderer __instance)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             if (Core.WarStatus != null && !Core.WarStatus.StartGameInitialized)
             {
                 Core.NeedsProcessing = true;
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 Core.WarStatus.StartGameInitialized = true;
@@ -282,6 +304,10 @@ public class StarmapMod
     {
         public static void Postfix(StarmapRenderer __instance)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             if (!Core.Settings.ISMCompatibility)
                 Galaxy_at_War.DynamicLogos.PlaceAndScaleLogos(Core.Settings.LogoNames, __instance);
         }
@@ -292,6 +318,10 @@ public class StarmapMod
     {
         public static void Prefix(SGNavStarSystemCallout __instance, TextMeshProUGUI ___LabelField, TextMeshProUGUI ___NameField)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             // set font in the most roundabout way ever
             var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
             foreach (var o in fonts)

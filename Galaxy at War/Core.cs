@@ -88,6 +88,10 @@ public static class Core
     {
         static void Prefix(SimGameState __instance, int timeLapse)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                return;
+
             if (WarStatus == null)
             {
                 WarStatus = new WarStatus();
@@ -95,7 +99,7 @@ public static class Core
                 WarTick(true, true);
             }
 
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            
             WarStatus.CurSystem = sim.CurSystem.Name;
             try
             {
@@ -141,6 +145,8 @@ public static class Core
         public static void Postfix(SimGameState  __instance)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
 
             if (!WarStatus.GaW_Event_PopUp)
             {
@@ -935,6 +941,10 @@ public static class Core
     {
         public static void Prefix(FactionDef employer, StarSystemDef system)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             FactionEnemyHolder.Clear();
             var NewEnemies = system.ContractTargets;
             FactionEnemyHolder = employer.Enemies.ToList();
@@ -949,6 +959,10 @@ public static class Core
 
         public static void Postfix(FactionDef employer)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             Traverse.Create(employer).Property("Enemies").SetValue(FactionEnemyHolder.ToArray());
         }
     }
@@ -1091,6 +1105,9 @@ public static class Core
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             teamfaction = __instance.Override.employerTeam.faction;
             enemyfaction = __instance.Override.targetTeam.faction;
             difficulty = __instance.Difficulty;
@@ -1103,6 +1120,10 @@ public static class Core
         {
             public static void Postfix(SimGameState __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
                 if (missionResult == MissionResult.Victory)
                 {
@@ -1342,6 +1363,10 @@ public static class Core
     {
         static bool Prefix(ref int __result, Contract contract)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return true;
+
             int difficulty = contract.Override.GetUIDifficulty();
             int result = 100;
             var Sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -1383,19 +1408,18 @@ public static class Core
     [HarmonyPatch(typeof(MainMenu), "Init")]
     public static class MainMenu_Init_Patch
     {
-
         static void Prefix(MainMenu __instance)
         {
-            try
-            {
-                HBSRadioSet topLevelMenu = Traverse.Create(__instance).Field("topLevelMenu").GetValue<HBSRadioSet>();
-                topLevelMenu.RadioButtons.Find((HBSButton x) => x.GetText() == "Campaign").gameObject.SetActive(false);
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
+            //try
+            //{
+            //    HBSRadioSet topLevelMenu = Traverse.Create(__instance).Field("topLevelMenu").GetValue<HBSRadioSet>();
+            //    topLevelMenu.RadioButtons.Find((HBSButton x) => x.GetText() == "Campaign").gameObject.SetActive(false);
+            //}
+            //catch (Exception e)
+            //{
+            //    Logger.Error(e);
 
-            }
+            //}
         }
     }
 

@@ -114,6 +114,9 @@ namespace Galaxy_at_War
             static void Prefix(StarSystem __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(0);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(0);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
@@ -122,11 +125,14 @@ namespace Galaxy_at_War
 
             static void Postfix(StarSystem __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (Core.NeedsProcessing)
                     ProcessHotSpots();
 
                 isBreadcrumb = true;
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
                 sim.CurSystem.SystemBreadcrumbs.Clear();
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
@@ -218,6 +224,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(ref bool __result)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 __result = true;
             }
         }
@@ -227,6 +237,10 @@ namespace Galaxy_at_War
         {
             static void Prefix(SimGameState __instance, ref int __state)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (isBreadcrumb)
                 {
                     __state = __instance.Constants.Story.ContractDifficultyVariance;
@@ -236,6 +250,10 @@ namespace Galaxy_at_War
 
             static void Postfix(SimGameState __instance, ref int __state)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (isBreadcrumb)
                 {
                     __instance.Constants.Story.ContractDifficultyVariance = __state;
@@ -278,6 +296,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(SimGameState __instance, Contract contract)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (!__instance.CurSystem.Def.Description.Id.StartsWith(contract.TargetSystem))
                 {
                     var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
@@ -300,6 +322,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(SGNavigationScreen __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
                 Core.WarStatus.HotBox.Remove(system.Name);
                 Core.WarStatus.Escalation = false;
@@ -313,8 +339,11 @@ namespace Galaxy_at_War
         {
             static void Postfix()
             {
-                bool HasFlashpoint = false;
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                bool HasFlashpoint = false;
                 Core.WarStatus.JustArrived = true;
                 Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
                 foreach (var contract in sim.CurSystem.SystemContracts)
@@ -337,6 +366,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(AAR_SalvageScreen __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 Core.WarStatus.JustArrived = false;
                 Core.WarStatus.HotBoxTravelling = false;
             }
@@ -347,6 +380,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(TaskTimelineWidget __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (Core.WarStatus != null && Core.WarStatus.Escalation)
                 {
                     Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
@@ -363,6 +400,10 @@ namespace Galaxy_at_War
         {
             static bool Prefix(WorkOrderEntry entry)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return true;
+
                 if (!Core.WarStatus.JustArrived && (entry.ID.Equals("Escalation Days Remaining")) && Core.WarStatus.EscalationDays > 0)
                 {
                     return false;
@@ -376,6 +417,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(SimGameState __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (!__instance.ActiveTravelContract.IsPriorityContract)
                 {
                     Core.WarStatus.Escalation = true;
@@ -406,6 +451,9 @@ namespace Galaxy_at_War
                 //}
 
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 var system = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
                 if (Core.WarStatus.HotBox == null)
                     Core.WarStatus.HotBox = new List<string>();
@@ -430,6 +478,9 @@ namespace Galaxy_at_War
             static void Postfix(AAR_ContractObjectivesWidget __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 var system = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
 
                 if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
@@ -447,6 +498,9 @@ namespace Galaxy_at_War
             static void Postfix(Contract __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 var system = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
                 if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
@@ -462,6 +516,9 @@ namespace Galaxy_at_War
             static void Prefix(ref int xpEarned, UnitResult ___UnitData)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 var system = Core.WarStatus.systems.Find(x => x.name == Core.WarStatus.CurSystem);
                 if (system.BonusXP && Core.WarStatus.HotBox.Contains(system.name))
                 {
@@ -569,6 +626,10 @@ namespace Galaxy_at_War
         {
             static void Prefix(SGRoomController_CmdCenter __instance)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 if (Core.WarStatus != null && !Core.WarStatus.StartGameInitialized)
                 {
                     ProcessHotSpots();
@@ -583,6 +644,10 @@ namespace Galaxy_at_War
         {
             public static bool Prefix(TaskManagementElement element)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return true;
+
                 if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
                 {
                     AdvanceToTask.StartAdvancing(element.Entry);
@@ -600,6 +665,9 @@ namespace Galaxy_at_War
             public static void Prefix(StarSystem __instance, ref float __state)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 __state = __instance.Sim.Constants.Story.ContractSuccessReduction;
                 if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                     __instance.Sim.Constants.Story.ContractSuccessReduction = 0;
@@ -607,6 +675,10 @@ namespace Galaxy_at_War
 
             public static void Postfix(StarSystem __instance, ref float __state)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
                 __instance.Sim.Constants.Story.ContractSuccessReduction = __state;
             }
         }
