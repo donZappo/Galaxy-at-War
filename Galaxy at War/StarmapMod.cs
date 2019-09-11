@@ -11,6 +11,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Logger;
+using BattleTech.UI.TMProWrapper;
 
 // ReSharper disable InconsistentNaming
 

@@ -1112,7 +1112,7 @@ public static class Core
             enemyfaction = __instance.Override.targetTeam.faction;
             difficulty = __instance.Difficulty;
             missionResult = result;
-            contractType = __instance.ContractType;
+            contractType = Traverse.Create(__instance).Property("ContractType").GetValue<ContractType>();
         }
 
         [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
