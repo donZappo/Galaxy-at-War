@@ -329,10 +329,22 @@ public class StarmapMod
             {
                 var font = (TMP_FontAsset)o;
                 if (font.name == "UnitedSansSemiExt-Light")
-                    ___LabelField.SetFont(font);
-                ___NameField.SetFont(font);
+                    SetFont(___LabelField, font);
+                Traverse.Create(___NameField).Field("m_fontAsset").SetValue(font);
             }
         }
+    }
+
+    void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
+    {
+        Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
+        Traverse.Create(mesh).Field("m_baseFont").SetValue(font);
+        Traverse.Create(mesh).Method("LoadFontAsset").GetValue();
+        Traverse.Create(mesh).Field("m_havePropertiesChanged").SetValue(true);
+        Traverse.Create(mesh).Field("m_isCalculateSizeRequired").SetValue(true);
+        Traverse.Create(mesh).Field("m_isInputParsingRequired").SetValue(true);
+        Traverse.Create(mesh).Method("SetVerticesDirty").GetValue();
+        Traverse.Create(mesh).Method("SetLayoutDirty").GetValue();
     }
 
     private static void HighlightSystem(StarmapSystemRenderer __result, bool wasVisited, Color color, bool resize)
