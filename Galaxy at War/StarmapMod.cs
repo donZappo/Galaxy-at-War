@@ -319,32 +319,33 @@ public class StarmapMod
     {
         public static void Prefix(SGNavStarSystemCallout __instance, TextMeshProUGUI ___LabelField, TextMeshProUGUI ___NameField)
         {
+            void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
+            {
+                Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
+                Traverse.Create(mesh).Field("m_baseFont").SetValue(font);
+                Traverse.Create(mesh).Method("LoadFontAsset").GetValue();
+                Traverse.Create(mesh).Field("m_havePropertiesChanged").SetValue(true);
+                Traverse.Create(mesh).Field("m_isCalculateSizeRequired").SetValue(true);
+                Traverse.Create(mesh).Field("m_isInputParsingRequired").SetValue(true);
+                Traverse.Create(mesh).Method("SetVerticesDirty").GetValue();
+                Traverse.Create(mesh).Method("SetLayoutDirty").GetValue();
+            }
+
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
-
             // set font in the most roundabout way ever
             var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
             foreach (var o in fonts)
             {
                 var font = (TMP_FontAsset)o;
                 if (font.name == "UnitedSansSemiExt-Light")
+                {
                     SetFont(___LabelField, font);
-                Traverse.Create(___NameField).Field("m_fontAsset").SetValue(font);
+                    SetFont(___NameField, font);
+                }
             }
         }
-    }
-
-    void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
-    {
-        Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
-        Traverse.Create(mesh).Field("m_baseFont").SetValue(font);
-        Traverse.Create(mesh).Method("LoadFontAsset").GetValue();
-        Traverse.Create(mesh).Field("m_havePropertiesChanged").SetValue(true);
-        Traverse.Create(mesh).Field("m_isCalculateSizeRequired").SetValue(true);
-        Traverse.Create(mesh).Field("m_isInputParsingRequired").SetValue(true);
-        Traverse.Create(mesh).Method("SetVerticesDirty").GetValue();
-        Traverse.Create(mesh).Method("SetLayoutDirty").GetValue();
     }
 
     private static void HighlightSystem(StarmapSystemRenderer __result, bool wasVisited, Color color, bool resize)
