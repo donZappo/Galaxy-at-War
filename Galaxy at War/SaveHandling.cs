@@ -138,6 +138,19 @@ public static class SaveHandling
         {
             Core.AdjustDeathList(deathListTracker, sim, true);
         }
+        foreach (var defensivefaction in Core.Settings.DefensiveFactions)
+        {
+            if (Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction) == null)
+                continue;
+
+            var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction);
+
+            if (targetfaction.AttackResources != 0)
+            {
+                targetfaction.DefensiveResources += targetfaction.AttackResources;
+                targetfaction.AttackResources = 0;
+            }
+        }
     }
 
     public static void ConvertToSave()

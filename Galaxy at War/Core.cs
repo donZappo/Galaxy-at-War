@@ -162,7 +162,6 @@ public static class Core
             //} while (i < 100);
             //__instance.StopPlayMode();
             //return;
-
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
@@ -187,7 +186,6 @@ public static class Core
                         NeedsProcessing = false;
                     }
                 }
-
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
@@ -1150,7 +1148,13 @@ public static class Core
                 if (contractType == ContractType.AttackDefend || contractType == ContractType.FireMission)
                 {
                     if (Settings.IncludedFactions.Contains(teamfaction))
-                        WarStatus.warFactionTracker.Find(x => x.faction == teamfaction).AttackResources += difficulty;
+                    {
+                        if (!Settings.DefensiveFactions.Contains(teamfaction))
+                            WarStatus.warFactionTracker.Find(x => x.faction == teamfaction).AttackResources += difficulty;
+                        else
+                            WarStatus.warFactionTracker.Find(x => x.faction == teamfaction).DefensiveResources += difficulty;
+                    }
+
                     if (Settings.IncludedFactions.Contains(enemyfaction))
                     {
                         WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources -= difficulty;
@@ -1233,6 +1237,7 @@ public static class Core
             }
         }
     }
+
     public static void SystemDifficulty()
     {
         bool GetPirateFlex = true;

@@ -131,12 +131,13 @@ namespace Galaxy_at_War
 
                 if (Core.NeedsProcessing)
                     ProcessHotSpots();
-
+                
                 isBreadcrumb = true;
                 sim.CurSystem.SystemBreadcrumbs.Clear();
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
+                
                 if (HomeContendedSystems.Count != 0)
                 {
                     int i = 0;
@@ -150,23 +151,30 @@ namespace Galaxy_at_War
                             RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
                         if (twiddle == -1)
                             RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
-
+                       
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
-                        if (MainBCTarget == sim.CurSystem)
+                        
+                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.Owner == Faction.Locals && MainBCTarget.Owner != Faction.Locals))
                         {
                             HomeContendedSystems.Remove(MainBCTarget);
                             continue;
                         }
                         TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
+                        {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
+                        }
                         else
+                        {
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
-                        SystemBonuses(MainBCTarget);
+                            SystemBonuses(MainBCTarget);
+                        }
+
                         Core.RefreshContracts(MainBCTarget);
                         HomeContendedSystems.Remove(MainBCTarget);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
                             break;
+
                         i = sim.CurSystem.SystemBreadcrumbs.Count;
                         twiddle *= -1;
                     }
@@ -280,14 +288,12 @@ namespace Galaxy_at_War
                     break;
                 }
             }
-
-            if (starSystem.Def.ContractTargets.Count == 0)
+            if (starSystem.Def.ContractTargets.Count <= 1)
             {
                 starSystem.Def.ContractTargets.Add(Faction.AuriganPirates);
                 if (!Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
                     starSystem.Def.ContractTargets.Add(Faction.Locals);
             }
-
         }
 
         //Deployments area.
