@@ -12,29 +12,53 @@ using UnityEngine;
 using UnityEngine.UI;
 using static Logger;
 using BattleTech.UI.TMProWrapper;
+using HBS.Extensions;
 
 // ReSharper disable InconsistentNaming
 
 public class StarmapMod
 {
-    //internal static GameObject textPanel;
-    //internal static TextMeshProUGUI panelText;
     internal static SGEventPanel eventPanel;
+    internal static TMP_FontAsset font;
 
+    [HarmonyPatch(typeof(UnityGameInstance), "Awake")]
+    public static class UnityGameInstance_Awake_Patch
+    {
+        public static void Postfix()
+        {
+            try
+            {
+                var prefab = AssetBundle.LoadFromFile(@"Mods\GalaxyAtWar\firacode");
+                var asset = (GameObject) prefab.LoadAsset("fira");
+                var tmp = asset.FindFirstChildNamed("regular").GetComponent<TextMeshPro>();
+                var boldFont = asset.FindFirstChildNamed("bold").GetComponent<TextMeshPro>().font;
+                font.fontWeights[7].regularTypeface = boldFont;
+                font = tmp.font;
+            }
+            catch (Exception ex)
+            {
+                LogDebug(ex.ToString());
+            }
+        }
+    }
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
     public static class TooltipPrefab_Planet_SetData_Patch
     {
-        public static void Prefix(TooltipPrefab_Planet __instance, object data, ref string __state)
+        public static void Prefix(LocalizableText ___Description, object data, ref string __state)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
-            var starSystem = (StarSystem)data;
+            var starSystem = (StarSystem) data;
             if (starSystem == null)
             {
                 return;
             }
+
+            var tmp = ___Description.GetComponent<TextMeshProUGUI>();
+            tmp.font = font;
+            tmp.fontSize = 10f;
 
             __state = starSystem.Def.Description.Details;
             var factionString = BuildInfluenceString(starSystem);
@@ -59,39 +83,45 @@ public class StarmapMod
 
     internal static void SetupRelationPanel()
     {
-        eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
-        eventPanel.gameObject.SetActive(true);
-        GameObject.Find("uixPrfPanl_spotIllustration_750-MANAGED").SetActive(false);
-
-        UpdatePanelText();
-
         try
         {
-            GameObject.Find("event_ResponseOptions").SetActive(false);
-            GameObject.Find("label_chevron").SetActive(false);
-        }
-        catch
-        {
-        }
+            eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
+            eventPanel.gameObject.SetActive(true);
+            UpdatePanelText();
 
-        var expander = GameObject.Find("ExpanderContainer");
-        var rect = expander.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.1f);
-        rect.anchorMax = new Vector2(0.5f, 0.9f);
-        var viewport = GameObject.Find("ExpandingContentGoesHere");
-        var vpRect = viewport.GetComponent<RectTransform>();
-        vpRect.anchorMin = new Vector2(0.5f, 0.1f);
-        vpRect.anchorMax = new Vector2(0.5f, 0.9f);
-        var event_OverallLayout = GameObject.Find("event_OverallLayout");
-        var vertLayout = event_OverallLayout.GetComponent<VerticalLayoutGroup>() as HorizontalOrVerticalLayoutGroup;
-        vertLayout.childForceExpandHeight = true;
-        vertLayout.childControlHeight = true;
-        var vertRect = vertLayout.GetComponent<RectTransform>();
-        vertRect.anchorMin = new Vector2(0.5f, 0.1f);
-        vertRect.anchorMax = new Vector2(0.5f, 0.9f);
-        vertLayout.SetLayoutVertical();
-        eventPanel.gameObject.SetActive(false);
-        LogDebug("RelationPanel created");
+            var go = eventPanel.gameObject.FindFirstChildNamed("Representation");
+            go.FindFirstChildNamed("event_ResponseOptions").SetActive(false);
+            go.FindFirstChildNamed("label_chevron").SetActive(false);
+            go.FindFirstChildNamed("uixPrfPanl_spotIllustration_750-MANAGED").SetActive(false);
+            go.FindFirstChildNamed("event_TopBar").SetActive(false);
+            go.FindFirstChildNamed("T_brackets_cap").SetActive(false);
+            go.FindFirstChildNamed("event_ResponseOptions").SetActive(false);
+
+            var event_OverallLayoutVlg = go.FindFirstChildNamed("event_OverallLayout").GetComponent<VerticalLayoutGroup>();
+            event_OverallLayoutVlg.childControlHeight = true;
+            event_OverallLayoutVlg.childForceExpandHeight = true;
+
+            var textAndChoicesVlg = go.FindFirstChildNamed("event_TextAndChoices-FIRSTSHOWN").GetComponent<VerticalLayoutGroup>();
+            textAndChoicesVlg.childControlHeight = true;
+            textAndChoicesVlg.childForceExpandHeight = true;
+
+            var textAndChoices = go.FindFirstChildNamed("event_TextAndChoices-FIRSTSHOWN").GetComponent<RectTransform>();
+            textAndChoices.anchoredPosition = new Vector2(380f, -400f);
+
+            var event_ContentScrollerRt = go.FindFirstChildNamed("event_ContentScroller").GetComponent<RectTransform>();
+            event_ContentScrollerRt.sizeDelta = new Vector2(750f, 860f);
+
+            // jebus there is a space after Viewport
+            var viewport = go.GetComponentsInChildren<RectTransform>().FirstOrDefault(x => x.name == "Viewport ");
+            viewport.sizeDelta = new Vector2(0f, 900f);
+
+            eventPanel.gameObject.SetActive(false);
+            LogDebug("RelationPanel created");
+        }
+        catch (Exception ex)
+        {
+            LogDebug(ex.ToString());
+        }
     }
 
     private static string BuildRelationString()
