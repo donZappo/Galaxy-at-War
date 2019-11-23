@@ -24,17 +24,17 @@ public class ModSettings
     public float planet_other_hub = 6;
     public float planet_other_comstar = 0;
 
-    public List<Faction> ImmuneToWar = new List<Faction>();
+    public List<FactionValue> ImmuneToWar = new List<FactionValue>();
 
-    public Dictionary<Faction, int> BonusAttackResources = new Dictionary<Faction, int>();
+    public Dictionary<FactionValue, int> BonusAttackResources = new Dictionary<FactionValue, int>();
 
-    public Dictionary<Faction, int> BonusDefensiveResources = new Dictionary<Faction, int>();
+    public Dictionary<FactionValue, int> BonusDefensiveResources = new Dictionary<FactionValue, int>();
 
-    public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>();
+    public Dictionary<FactionValue, string> FactionTags = new Dictionary<FactionValue, string>();
 
-    public Dictionary<Faction, string> FactionShops = new Dictionary<Faction, string>();
+    public Dictionary<FactionValue, string> FactionShops = new Dictionary<FactionValue, string>();
 
-    public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>();
+    public Dictionary<FactionValue, string> FactionShopItems = new Dictionary<FactionValue, string>();
 
     public int WarFrequency = 10;
     public bool Debug = false;
@@ -74,11 +74,11 @@ public class ModSettings
     public float AdvanceToTaskTime = 0.25f;
     public bool ChangeDifficulty = true;
 
-    public List<Faction> DefensiveFactions = new List<Faction>();
+    public List<FactionValue> DefensiveFactions = new List<FactionValue>();
 
-    public List<Faction> IncludedFactions = new List<Faction>();
+    public List<FactionValue> IncludedFactions = new List<FactionValue>();
 
-    public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>();
+    public Dictionary<FactionValue, string> FactionNames = new Dictionary<FactionValue, string>();
 
-    public Dictionary<Faction, string> LogoNames = new Dictionary<Faction, string>();
+    public Dictionary<FactionValue, string> LogoNames = new Dictionary<FactionValue, string>();
 }

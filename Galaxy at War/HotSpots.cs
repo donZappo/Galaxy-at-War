@@ -30,7 +30,7 @@ namespace Galaxy_at_War
         public static Random rand = new Random();
         public static int BonusMoney = 0;
 
-        public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets = new Dictionary<Faction, List<StarSystem>>();
+        public static Dictionary<FactionValue, List<StarSystem>> ExternalPriorityTargets = new Dictionary<FactionValue, List<StarSystem>>();
         public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static Dictionary<StarSystem, float> FullHomeContendedSystems = new Dictionary<StarSystem, float>();
 
@@ -48,7 +48,7 @@ namespace Galaxy_at_War
             ExternalPriorityTargets.Clear();
             Core.WarStatus.HomeContendedStrings.Clear();
             Core.WarStatus.ContendedStrings.Clear();
-            var FactRepDict = new Dictionary<Faction, int>();
+            var FactRepDict = new Dictionary<FactionValue, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
                 ExternalPriorityTargets.Add(faction, new List<StarSystem>());
@@ -270,7 +270,7 @@ namespace Galaxy_at_War
         }
 
 
-        public static void TemporaryFlip(StarSystem starSystem, Faction faction)
+        public static void TemporaryFlip(StarSystem starSystem, FactionValue faction)
         {
             var FactionDef = UnityGameInstance.BattleTechGame.Simulation.FactionsDict[faction];
             starSystem.Def.ContractEmployers.Clear();

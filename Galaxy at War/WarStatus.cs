@@ -34,7 +34,7 @@ public class WarStatus
     
     public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
     public List<string> HomeContendedSystems = new List<string>();
-    public Dictionary<Faction, List<string>> ExternalPriorityTargets = new Dictionary<Faction, List<string>>();
+    public Dictionary<FactionValue, List<string>> ExternalPriorityTargets = new Dictionary<FactionValue, List<string>>();
     public List<string> FullPirateSystems = new List<string>();
     public List<string> PirateHighlight = new List<string>();
     public float PirateFlex = 0.0f;
@@ -113,16 +113,16 @@ public class WarStatus
 public class SystemStatus
 {
     public string name;
-    public Faction owner;
+    public FactionValue owner;
 
-    public Dictionary<Faction, int> neighborSystems = new Dictionary<Faction, int>();
-    public Dictionary<Faction, float> influenceTracker = new Dictionary<Faction, float>();
+    public Dictionary<FactionValue, int> neighborSystems = new Dictionary<FactionValue, int>();
+    public Dictionary<FactionValue, float> influenceTracker = new Dictionary<FactionValue, float>();
 
     internal SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
     public float TotalResources;
     public bool PriorityDefense = false;
     public bool PriorityAttack = false;
-    public List<Faction> CurrentlyAttackedBy = new List<Faction>();
+    public List<FactionValue> CurrentlyAttackedBy = new List<FactionValue>();
     public bool Contended = false;
     public int DifficultyRating;
     public bool BonusSalvage = false;
@@ -141,7 +141,7 @@ public class SystemStatus
         // don't want our ctor running at deserialization
     }
 
-    public SystemStatus(SimGameState sim, string systemName, Faction faction)
+    public SystemStatus(SimGameState sim, string systemName, FactionValue faction)
     {
         //  LogDebug("SystemStatus ctor");
         name = systemName;
@@ -217,7 +217,7 @@ public class SystemStatus
 
         // need percentages from InfluenceTracker data 
         var totalInfluence = influenceTracker.Values.Sum();
-        var tempDict = new Dictionary<Faction, float>();
+        var tempDict = new Dictionary<FactionValue, float>();
         foreach (var kvp in influenceTracker)
         {
             tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
@@ -234,7 +234,7 @@ public class SystemStatus
         ContractTargets.Clear();
         ContractEmployers.Add(owner);
 
-        foreach (Faction EF in Core.Settings.DefensiveFactions)
+        foreach (FactionValue EF in Core.Settings.DefensiveFactions)
         {
             if (Core.Settings.ImmuneToWar.Contains(EF))
                 continue;
@@ -258,7 +258,7 @@ public class SystemStatus
 
 public class WarFaction
 {
-    public Faction faction;
+    public FactionValue faction;
     public bool GainedSystem;
     public bool LostSystem;
     public float DaysSinceSystemAttacked;
@@ -270,10 +270,10 @@ public class WarFaction
     public float PirateARLoss;
     public float PirateDRLoss;
 
-    public Dictionary<Faction, float> warFactionAttackResources = new Dictionary<Faction, float>();
-    public Dictionary<Faction, List<string>> attackTargets = new Dictionary<Faction, List<string>>();
+    public Dictionary<FactionValue, float> warFactionAttackResources = new Dictionary<FactionValue, float>();
+    public Dictionary<FactionValue, List<string>> attackTargets = new Dictionary<FactionValue, List<string>>();
     public List<string> defenseTargets = new List<string>();
-    public Dictionary<Faction, bool> IncreaseAggression = new Dictionary<Faction, bool>();
+    public Dictionary<FactionValue, bool> IncreaseAggression = new Dictionary<FactionValue, bool>();
 
 
     [JsonConstructor]
@@ -283,7 +283,7 @@ public class WarFaction
     }
 
 
-    public WarFaction(Faction faction)
+    public WarFaction(FactionValue faction)
     {
         LogDebug("WarFaction ctor");
         this.faction = faction;
@@ -302,13 +302,13 @@ public class WarFaction
 
 public class DeathListTracker
 {
-    public Faction faction;
+    public FactionValue faction;
     private FactionDef factionDef;
-    public Dictionary<Faction, float> deathList = new Dictionary<Faction, float>();
-    public List<Faction> AttackedBy = new List<Faction>();
+    public Dictionary<FactionValue, float> deathList = new Dictionary<FactionValue, float>();
+    public List<FactionValue> AttackedBy = new List<FactionValue>();
 
-    public List<Faction> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
-    public List<Faction> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
+    public List<FactionValue> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
+    public List<FactionValue> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
 
     // can't serialize these so make them private
     private SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -319,7 +319,7 @@ public class DeathListTracker
         // deser ctor
     }
 
-    public DeathListTracker(Faction faction)
+    public DeathListTracker(FactionValue faction)
     {
         LogDebug("DeathListTracker ctor");
         this.faction = faction;

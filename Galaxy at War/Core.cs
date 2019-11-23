@@ -72,13 +72,13 @@ public static class Core
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
     public static readonly Random Random = new Random();
-    public static Faction teamfaction;
-    public static Faction enemyfaction;
+    public static FactionValue teamfaction;
+    public static FactionValue enemyfaction;
     public static int difficulty;
     public static MissionResult missionResult;
     public static bool isGoodFaithEffort;
-    public static List<Faction> FactionEnemyHolder = new List<Faction>();
-    public static Dictionary<Faction, List<StarSystem>> attackTargets = new Dictionary<Faction, List<StarSystem>>();
+    public static List<FactionValue> FactionEnemyHolder = new List<FactionValue>();
+    public static Dictionary<FactionValue, List<StarSystem>> attackTargets = new Dictionary<FactionValue, List<StarSystem>>();
     public static List<StarSystem> defenseTargets = new List<StarSystem>();
     public static ContractType contractType;
     public static bool NeedsProcessing = false;
@@ -354,7 +354,7 @@ public static class Core
 
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (neighborSystem.Owner != starSystem.Owner && !Settings.ImmuneToWar.Contains(neighborSystem.Owner))
+            if (!neighborSystem.OwnerValue.Equals(starSystem.OwnerValue) && !Settings.ImmuneToWar.Contains(neighborSystem.Owner))
             {
                 var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
                 if (warFac == null)
@@ -379,7 +379,7 @@ public static class Core
         }
     }
 
-    public static void RefreshNeighbors(Dictionary<Faction, int> starSystem, StarSystem neighborSystem)
+    public static void RefreshNeighbors(Dictionary<FactionValue, int> starSystem, StarSystem neighborSystem)
     {
 
         if (starSystem.ContainsKey(neighborSystem.Owner))
@@ -413,8 +413,8 @@ public static class Core
         var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
         var warFAR = warFaction.warFactionAttackResources;
         warFAR.Clear();
-        var tempTargets = new Dictionary<Faction, float>();
-        foreach (Faction fact in warFaction.attackTargets.Keys)
+        var tempTargets = new Dictionary<FactionValue, float>();
+        foreach (FactionValue fact in warFaction.attackTargets.Keys)
         {
             tempTargets.Add(fact, deathList.deathList[fact]);
         }
@@ -442,7 +442,7 @@ public static class Core
 
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
         attackResources = attackResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
-        foreach (Faction Rfact in tempTargets.Keys)
+        foreach (FactionValue Rfact in tempTargets.Keys)
         {
             warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
         }
@@ -558,7 +558,7 @@ public static class Core
         while (defensiveResources > 0.0)
         {
             float highest = 0f;
-            Faction highestFaction = faction;
+            FactionValue highestFaction = faction;
             var rand = Random.Next(0, warFaction.defenseTargets.Count);
             var system = warFaction.defenseTargets[rand];
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
@@ -574,7 +574,7 @@ public static class Core
                     continue;
             }
 
-            foreach (Faction tempfaction in systemStatus.influenceTracker.Keys)
+            foreach (FactionValue tempfaction in systemStatus.influenceTracker.Keys)
             {
                 if (systemStatus.influenceTracker[tempfaction] > highest)
 
@@ -622,11 +622,11 @@ public static class Core
         }
     }
 
-    public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, Faction faction, bool ForceFlip)
+    public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, FactionValue faction, bool ForceFlip)
     {
         if (faction != system.Owner || ForceFlip)
         {
-            Faction OldFaction = system.Owner;
+            FactionValue OldFaction = system.Owner;
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);
@@ -711,7 +711,7 @@ public static class Core
         }
     }
 
-    public static void ChangeDeathlistFromAggression(StarSystem system, Faction faction, Faction OldFaction)
+    public static void ChangeDeathlistFromAggression(StarSystem system, FactionValue faction, FactionValue OldFaction)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var TotalAR = GetTotalAttackResources(system);
@@ -752,7 +752,7 @@ public static class Core
     {
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
-            Dictionary<Faction, int> AttackCount = new Dictionary<Faction, int>();
+            Dictionary<FactionValue, int> AttackCount = new Dictionary<FactionValue, int>();
             foreach (var target in warFaction.attackTargets)
             {
                 if (Settings.DefensiveFactions.Contains(target.Key) || Settings.ImmuneToWar.Contains(target.Key))
@@ -800,7 +800,7 @@ public static class Core
         LogDebug($"Updating influence for {WarStatus.systems.Count.ToString()} systems");
         foreach (var systemStatus in Core.WarStatus.systems)
         {
-            var tempDict = new Dictionary<Faction, float>();
+            var tempDict = new Dictionary<FactionValue, float>();
             var totalInfluence = systemStatus.influenceTracker.Values.Sum();
             var highest = 0f;
             var highestfaction = systemStatus.owner;
@@ -848,7 +848,7 @@ public static class Core
         string summaryString2 = "";
         string combinedString = "";
 
-        foreach (Faction faction in Settings.IncludedFactions)
+        foreach (FactionValue faction in Settings.IncludedFactions)
         {
             WarFaction warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
             combinedString = combinedString + "<b><u>" + Settings.FactionNames[faction] + "</b></u>\n";
@@ -899,8 +899,8 @@ public static class Core
         }
         if (ContractEmployers.Count == 1 && ContractEmployers.Contains(Faction.AuriganPirates))
         {
-            Faction faction = Faction.AuriganRestoration;
-            List<Faction> TempFaction = new List<Faction>(Settings.IncludedFactions);
+            FactionValue faction = Faction.AuriganRestoration;
+            List<FactionValue> TempFaction = new List<FactionValue>(Settings.IncludedFactions);
             do
             {
                 var randFaction = Random.Next(0, TempFaction.Count);
@@ -969,11 +969,11 @@ public static class Core
     public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim, bool ReloadFromSave)
     {
         var deathList = deathListTracker.deathList;
-        var KL_List = new List<Faction>(deathList.Keys);
+        var KL_List = new List<FactionValue>(deathList.Keys);
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
 
         var deathListFaction = deathListTracker.faction;
-        foreach (Faction faction in KL_List)
+        foreach (FactionValue faction in KL_List)
         {
             if (!ReloadFromSave)
             {
@@ -1003,14 +1003,14 @@ public static class Core
             {
                 if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                 {
-                    var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
+                    var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
                     enemies.Add(faction);
                     Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
                 if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
                 {
-                    var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
+                    var allies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Allies);
                     allies.Remove(faction);
                     Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
@@ -1020,14 +1020,14 @@ public static class Core
             {
                 if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                 {
-                    var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
+                    var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
                     enemies.Remove(faction);
                     Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
                 if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
                 {
-                    var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
+                    var allies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Allies);
                     allies.Remove(faction);
                     Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
@@ -1037,14 +1037,14 @@ public static class Core
             {
                 if (!sim.FactionsDict[deathListFaction].Allies.Contains(faction))
                 {
-                    var allies = new List<Faction>(sim.FactionsDict[deathListFaction].Allies);
+                    var allies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Allies);
                     allies.Add(faction);
                     Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
                 }
 
                 if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                 {
-                    var enemies = new List<Faction>(sim.FactionsDict[deathListFaction].Enemies);
+                    var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
                     enemies.Remove(faction);
                     Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
                 }
@@ -1407,7 +1407,7 @@ public static class Core
         }
     }
 
-    public static void RecalculateSystemInfluence(SystemStatus systemStatus, Faction NewOwner, Faction OldOwner)
+    public static void RecalculateSystemInfluence(SystemStatus systemStatus, FactionValue NewOwner, FactionValue OldOwner)
     {
         systemStatus.influenceTracker.Clear();
         systemStatus.influenceTracker.Add(NewOwner, Settings.DominantInfluence);
