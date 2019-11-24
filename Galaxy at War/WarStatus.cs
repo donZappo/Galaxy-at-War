@@ -322,20 +322,22 @@ public class DeathListTracker
     public DeathListTracker(FactionValue faction)
     {
         LogDebug("DeathListTracker ctor");
+        
+        
         this.faction = faction;
-        factionDef = sim.FactionsDict
-            .Where(kvp => kvp.Key == faction)
-            .Select(kvp => kvp.Value).First();
-        foreach (var def in sim.FactionsDict.Values)
+        factionDef = sim.GetFactionDef(faction.Name);
+        
+        foreach (var factionNames in Core.Settings.FactionValues.Keys)
         {
-            if (!Core.Settings.IncludedFactions.Contains(def.Faction))
+            var def = sim.GetFactionDef(factionNames);
+            if (!Core.Settings.IncludedFactions.Contains(def.FactionValue))
                 continue;
-            if (factionDef != def && factionDef.Enemies.Contains(def.Faction))
-                deathList.Add(def.Faction, Core.Settings.KLValuesEnemies);
-            else if (factionDef != def && factionDef.Allies.Contains(def.Faction))
-                deathList.Add(def.Faction, Core.Settings.KLValueAllies);
+            if (factionDef != def && factionDef.Enemies.Contains(def.Name))
+                deathList.Add(def.FactionValue, Core.Settings.KLValuesEnemies);
+            else if (factionDef != def && factionDef.Allies.Contains(def.Name))
+                deathList.Add(def.FactionValue, Core.Settings.KLValueAllies);
             else if (factionDef != def)
-                deathList.Add(def.Faction, Core.Settings.KLValuesNeutral);
+                deathList.Add(def.FactionValue, Core.Settings.KLValuesNeutral);
         }
     }
 }
