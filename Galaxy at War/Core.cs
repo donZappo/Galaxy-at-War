@@ -725,7 +725,7 @@ public static class Core
         //Allies are upset that their friend is being beaten up.
         if (!Settings.DefensiveFactions.Contains(OldFaction))
         {
-            foreach (var ally in OldFaction.FactionDef.Allies)
+            foreach (var ally in sim.GetFactionDef(OldFaction.Name).Allies)
             {
                 if (!Settings.IncludedFactions.Contains(Settings.FactionValues[ally]) || faction  == Settings.FactionValues[ally])
                     continue;
@@ -737,7 +737,7 @@ public static class Core
         //Enemies of the target faction are happy with the faction doing the beating.
         if (!Settings.DefensiveFactions.Contains(OldFaction))
         {
-            foreach (var enemy in OldFaction.FactionDef.Enemies)
+            foreach (var enemy in sim.GetFactionDef(OldFaction.Name).Enemies)
             {
                 if (!Settings.IncludedFactions.Contains(Settings.FactionValues[enemy]) || Settings.FactionValues[enemy] == faction)
                     continue;
@@ -780,7 +780,7 @@ public static class Core
             WarStatus.SystemChangedOwners.Add(system.Name);
         foreach (var neighborsystem in UnityGameInstance.BattleTechGame.Simulation.Starmap.GetAvailableNeighborSystem(system))
         {
-            var WFAT = WarStatus.warFactionTracker.Find(x => x.faction == neighborsystem.Owner).attackTargets;
+            var WFAT = WarStatus.warFactionTracker.Find(x => x.faction == neighborsystem.OwnerValue).attackTargets;
             if (WFAT.Keys.Contains(OldOwner.faction) && !WFAT[OldOwner.faction].Contains(system.Name))
                 WFAT[OldOwner.faction].Remove(system.Name);
         }
@@ -1001,53 +1001,52 @@ public static class Core
             }
             if (deathList[faction] > 75)
             {
-                sim.GetFactionDef(deathListFaction.Name).Enemies.Contains((faction.Name))
-                if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
+                if (!sim.GetFactionDef(deathListFaction.Name).Enemies.Contains((faction.Name)))
                 {
-                    var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
-                    enemies.Add(faction);
-                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                    var enemies = new List<string>(sim.GetFactionDef(deathListFaction.Name).Enemies);
+                    enemies.Add(faction.Name);
+                    Traverse.Create(sim.GetFactionDef(deathListFaction.Name)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
-                if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
+                if (sim.GetFactionDef(deathListFaction.Name).Allies.Contains(faction.Name))
                 {
-                    var allies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Allies);
-                    allies.Remove(faction);
-                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
+                    var allies = new List<String>(sim.GetFactionDef(deathListFaction.Name).Allies);
+                    allies.Remove(faction.Name);
+                    Traverse.Create(sim.GetFactionDef(deathListFaction.Name)).Property("Allies").SetValue(allies.ToArray());
                 }
             }
 
             if (deathList[faction] <= 75 && deathList[faction] > 25)
             {
-                if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
+                if (sim.GetFactionDef(deathListFaction.Name).Enemies.Contains(faction.Name))
                 {
-                    var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
-                    enemies.Remove(faction);
-                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                    var enemies = new List<string>(sim.GetFactionDef(deathListFaction.Name).Enemies);
+                    enemies.Remove(faction.Name);
+                    Traverse.Create(sim.GetFactionDef(deathListFaction.Name)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
-                if (sim.FactionsDict[deathListFaction].Allies.Contains(faction))
+                if (sim.GetFactionDef(deathListFaction.Name).Allies.Contains(faction.Name))
                 {
-                    var allies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Allies);
-                    allies.Remove(faction);
-                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
+                    var allies = new List<string>(sim.GetFactionDef(deathListFaction.Name).Allies);
+                    allies.Remove(faction.Name);
+                    Traverse.Create(sim.GetFactionDef(deathListFaction.Name)).Property("Allies").SetValue(allies.ToArray());
                 }
             }
 
             if (deathList[faction] <= 25)
             {
-                if (!sim.FactionsDict[deathListFaction].Allies.Contains(faction))
+                if (!sim.GetFactionDef(deathListFaction.Name).Allies.Contains(faction.Name))
                 {
-                    var allies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Allies);
-                    allies.Add(faction);
-                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Allies").SetValue(allies.ToArray());
+                    var allies = new List<string>(sim.GetFactionDef(deathListFaction.Name).Allies);
+                    allies.Add(faction.Name);
+                    Traverse.Create(sim.GetFactionDef(deathListFaction.Name)).Property("Allies").SetValue(allies.ToArray());
                 }
 
-                if (sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
+                if (sim.GetFactionDef(deathListFaction.Name).Enemies.Contains(faction.Name))
                 {
-                    var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
-                    enemies.Remove(faction);
-                    Traverse.Create(sim.FactionsDict[deathListFaction]).Property("Enemies").SetValue(enemies.ToArray());
+                    var enemies = new List<string>(sim.GetFactionDef(deathListFaction.Name).Enemies);
+                    enemies.Remove(faction.Name);
+                    Traverse.Create(sim.GetFactionDef(deathListFaction.Name)).Property("Enemies").SetValue(enemies.ToArray());
                 }
             }
         }
@@ -1107,8 +1106,8 @@ public static class Core
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
-            teamfaction = __instance.Override.employerTeam.faction;
-            enemyfaction = __instance.Override.targetTeam.faction;
+            teamfaction = __instance.Override.employerTeam.FactionValue;
+            enemyfaction = __instance.Override.targetTeam.FactionValue;
             difficulty = __instance.Difficulty;
             missionResult = result;
             contractType = Traverse.Create(__instance).Property("ContractType").GetValue<ContractType>();
@@ -1126,13 +1125,13 @@ public static class Core
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
                 if (missionResult == MissionResult.Victory)
                 {
-                    if (teamfaction == Faction.AuriganPirates)
+                    if (teamfaction == Settings.FactionValues["AuriganPirates"])
                     {
                         warsystem.PirateActivity += difficulty;
                         if (warsystem.PirateActivity > 100)
                             warsystem.PirateActivity = 100;
                     }
-                    else if (enemyfaction == Faction.AuriganPirates)
+                    else if (enemyfaction == Settings.FactionValues["AuriganPirates"])
                     {
                         warsystem.PirateActivity -= difficulty;
                         if (warsystem.PirateActivity < 0)
@@ -1162,7 +1161,7 @@ public static class Core
                         if (WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources < 0)
                             WarStatus.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources = 0;
                     }
-                    else if (enemyfaction == Faction.AuriganPirates)
+                    else if (enemyfaction == Settings.FactionValues["AuriganPirates"])
                     {
                         warsystem.PirateActivity -= difficulty;
                         if (warsystem.PirateActivity < 0)
@@ -1171,15 +1170,15 @@ public static class Core
                 }
 
                 var Sim = UnityGameInstance.BattleTechGame.Simulation;
-                var tempIT = new Dictionary<Faction, float>(warsystem.influenceTracker);
+                var tempIT = new Dictionary<FactionValue, float>(warsystem.influenceTracker);
                 var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
                 var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
                 tempIT.Remove(highKey);
                 var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
                 var oldOwner = warsystem.owner;
 
-                if (highKey != Sim.CurSystem.Owner && highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold 
-                    && (!Settings.DefensiveFactions.Contains(teamfaction) || teamfaction == Faction.Locals) && warsystem.starSystem.Owner != Faction.ComStar)
+                if (highKey != Sim.CurSystem.OwnerValue && highKey == teamfaction && highValue - secondValue > Settings.TakeoverThreshold 
+                    && (!Settings.DefensiveFactions.Contains(teamfaction) || teamfaction == Settings.FactionValues["Locals"]) && warsystem.starSystem.OwnerValue != Settings.FactionValues["ComStar"])
                 {
                     ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
 
@@ -1336,7 +1335,7 @@ public static class Core
                     GetPirateFlex = false;
                 }
             }
-            if (SimSystem.Def.Owner != Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
+            if (SimSystem.Def.OwnerValue != Settings.FactionValues["NoFaction"] && SimSystem.Def.SystemShopItems.Count == 0)
             {
                 List<string> TempList = new List<string>();
                 TempList.Add("itemCollection_minor_Locals");

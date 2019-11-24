@@ -21,7 +21,7 @@ namespace Galaxy_at_War
             
             foreach (var starNode in renderer.starmap.VisisbleSystem)
             {
-                var faction = starNode.System.Owner;
+                var faction = starNode.System.OwnerValue;
                 if (!logos.ContainsKey(faction))
                     continue;
 

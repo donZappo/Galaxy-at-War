@@ -60,9 +60,9 @@ public class WarStatus
 
         foreach (var system in sim.StarSystems)
         {
-            if (system.Owner == Faction.NoFaction)
+            if (system.OwnerValue == Core.Settings.FactionValues["NoFaction"])
                 AbandonedSystems.Add(system.Name);
-            var warFaction = warFactionTracker.Find(x => x.faction == system.Owner);
+            var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue);
             if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
                 warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
             else
@@ -94,7 +94,7 @@ public class WarStatus
 
         foreach (var system in sim.StarSystems)
         {
-            var systemStatus = new SystemStatus(sim, system.Name, system.Owner);
+            var systemStatus = new SystemStatus(sim, system.Name, system.OwnerValue);
             systems.Add(systemStatus);
             if (system.Tags.Contains("planet_other_pirate"))
             {
@@ -167,10 +167,10 @@ public class SystemStatus
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
         foreach (var neighborSystem in neighbors)
         {
-            if (neighborSystems.ContainsKey(neighborSystem.Owner))
-                neighborSystems[neighborSystem.Owner] += 1;
+            if (neighborSystems.ContainsKey(neighborSystem.OwnerValue))
+                neighborSystems[neighborSystem.OwnerValue] += 1;
             else
-                neighborSystems.Add(neighborSystem.Owner, 1);
+                neighborSystems.Add(neighborSystem.OwnerValue, 1);
         }
     }
 
@@ -178,12 +178,12 @@ public class SystemStatus
     public void CalculateSystemInfluence()
     {
         influenceTracker.Clear();
-        if (owner == Faction.NoFaction)
+        if (owner == Core.Settings.FactionValues["NoFaction"])
             influenceTracker.Add(owner, 100);
-        if(owner == Faction.Locals)
+        if(owner == Core.Settings.FactionValues["Locals"])
             influenceTracker.Add(owner, 100);
 
-        if (owner != Faction.NoFaction && owner != Faction.Locals)
+        if (owner != Core.Settings.FactionValues["NoFaction"] && owner != Core.Settings.FactionValues["Locals"])
         {
             influenceTracker.Add(owner, Core.Settings.DominantInfluence);
             int remainingInfluence = Core.Settings.MinorInfluencePool;
@@ -198,7 +198,7 @@ public class SystemStatus
                         {
                             var influenceDelta = neighborSystems[faction];
                             remainingInfluence -= influenceDelta;
-                            if (faction == Faction.NoFaction || faction == Faction.Locals)
+                            if (faction == Core.Settings.FactionValues["NoFaction"] || faction == Core.Settings.FactionValues["'Locals"])
                                 continue;
                             if (influenceTracker.ContainsKey(faction))
                                 influenceTracker[faction] += influenceDelta;
@@ -227,31 +227,31 @@ public class SystemStatus
 
     public void InitializeContracts()
     {
-        var ContractEmployers = starSystem.Def.ContractEmployers;
-        var ContractTargets = starSystem.Def.ContractTargets;
+        var ContractEmployers = starSystem.Def.ContractEmployerIDList;
+        var ContractTargets = starSystem.Def.ContractTargetIDList;
 
         ContractEmployers.Clear();
         ContractTargets.Clear();
-        ContractEmployers.Add(owner);
+        ContractEmployers.Add(owner.Name);
 
         foreach (FactionValue EF in Core.Settings.DefensiveFactions)
         {
             if (Core.Settings.ImmuneToWar.Contains(EF))
                 continue;
-            ContractTargets.Add(EF);
+            ContractTargets.Add(EF.Name);
         }
-        if (!ContractTargets.Contains(owner))
-            ContractTargets.Add(owner);
+        if (!ContractTargets.Contains(owner.Name))
+            ContractTargets.Add(owner.Name);
 
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
             if (Core.Settings.ImmuneToWar.Contains(systemNeighbor))
                 continue;
-            if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractEmployers.Add(systemNeighbor);
+            if (!ContractEmployers.Contains(systemNeighbor.Name) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractEmployers.Add(systemNeighbor.Name);
 
-            if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractTargets.Add(systemNeighbor);
+            if (!ContractTargets.Contains(systemNeighbor.Name) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractTargets.Add(systemNeighbor.Name);
         }
     }
 }

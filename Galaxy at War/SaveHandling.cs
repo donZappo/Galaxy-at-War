@@ -93,10 +93,10 @@ public static class SaveHandling
         foreach (var system in Core.WarStatus.systems)
         {
             var systemDef = ssDict[system.CoreSystemID].Def;
-            FactionValue systemOwner = systemDef.Owner;
+            FactionValue systemOwner = systemDef.OwnerValue;
             Traverse.Create(systemDef).Property("Owner").SetValue(system.owner);
             Core.RefreshContracts(system.starSystem);
-            if (systemDef.Owner != systemOwner && systemOwner != Faction.NoFaction)
+            if (systemDef.OwnerValue != systemOwner && systemOwner != Core.Settings.FactionValues["NoFaction"])
             {
                 if (systemDef.SystemShopItems.Count != 0)
                 {

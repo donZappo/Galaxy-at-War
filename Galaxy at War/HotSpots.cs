@@ -154,12 +154,12 @@ namespace Galaxy_at_War
                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         
-                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.Owner == Faction.Locals && MainBCTarget.Owner != Faction.Locals))
+                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue == Core.Settings.FactionValues["Locals"] && MainBCTarget.OwnerValue != Core.Settings.FactionValues["Locals"]))
                         {
                             HomeContendedSystems.Remove(MainBCTarget);
                             continue;
                         }
-                        TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
+                        TemporaryFlip(MainBCTarget, sim.CurSystem.OwnerValue);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
@@ -272,11 +272,11 @@ namespace Galaxy_at_War
 
         public static void TemporaryFlip(StarSystem starSystem, FactionValue faction)
         {
-            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.FactionsDict[faction];
-            starSystem.Def.ContractEmployers.Clear();
-            starSystem.Def.ContractTargets.Clear();
+            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction.Name);
+            starSystem.Def.ContractEmployerIDList.Clear();
+            starSystem.Def.ContractTargetIDList.Clear();
 
-            starSystem.Def.ContractEmployers.Add(faction);
+            starSystem.Def.ContractEmployerIDList.Add(faction.Name);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
@@ -284,15 +284,15 @@ namespace Galaxy_at_War
                 if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
                     && influence.Key != faction)
                 {
-                    starSystem.Def.ContractTargets.Add(influence.Key);
+                    starSystem.Def.ContractTargetIDList.Add(influence.Key.Name);
                     break;
                 }
             }
-            if (starSystem.Def.ContractTargets.Count <= 1)
+            if (starSystem.Def.ContractTargetIDList.Count <= 1)
             {
-                starSystem.Def.ContractTargets.Add(Faction.AuriganPirates);
+                starSystem.Def.ContractTargetIDList.Add("AuriganPirates");
                 if (!Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
-                    starSystem.Def.ContractTargets.Add(Faction.Locals);
+                    starSystem.Def.ContractTargetIDList.Add("Locals");
             }
         }
 
@@ -311,7 +311,7 @@ namespace Galaxy_at_War
                     var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Core.WarStatus.HotBox.Add(starSystem.Name);
                     Core.WarStatus.HotBoxTravelling = true;
-                    TemporaryFlip(starSystem, contract.Override.employerTeam.faction);
+                    TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue);
                     var curSystem = Core.WarStatus.systems.Find(x => x.starSystem == __instance.CurSystem);
                     if (Core.WarStatus.HotBox.Contains(__instance.CurSystem.Name))
                     {
