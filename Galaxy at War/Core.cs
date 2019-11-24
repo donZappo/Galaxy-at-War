@@ -1248,93 +1248,82 @@ public static class Core
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
             var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
-            if (Settings.ChangeDifficulty)
-            {
-                if (i <= DifficultyCutoff)
-                {
-                    system.DifficultyRating = 1;
-                    List<int> difficultyList = new List<int> { 1, 1 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
-                }
-                if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
-                {
-                    system.DifficultyRating = 2;
-                    List<int> difficultyList = new List<int> { 2, 2 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
-                }
-                if (i <= DifficultyCutoff * 3 && i > 2 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 3;
-                    List<int> difficultyList = new List<int> { 3, 3 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
-                }
-                if (i <= DifficultyCutoff * 4 && i > 3 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 4;
-                    List<int> difficultyList = new List<int> { 4, 4 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
-                }
-                if (i <= DifficultyCutoff * 5 && i > 4 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 5;
-                    List<int> difficultyList = new List<int> { 5, 5 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
-                }
-                if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 6;
-                    List<int> difficultyList = new List<int> { 6, 6 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
-                    if (GetPirateFlex)
-                    {
-                        WarStatus.PirateFlex = system.TotalResources;
-                        GetPirateFlex = false;
-                    }
-                }
-                if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 7;
-                    List<int> difficultyList = new List<int> { 7, 7 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
-                }
-                if (i <= DifficultyCutoff * 8 && i > 7 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 8;
-                    List<int> difficultyList = new List<int> { 8, 8 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
-                }
-                if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 9;
-                    List<int> difficultyList = new List<int> { 9, 9 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
-                }
-                if (i > 9 * DifficultyCutoff)
-                {
-                    system.DifficultyRating = 10;
-                    List<int> difficultyList = new List<int> { 10, 10 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
-                }
-                i++;
+            if (i <= DifficultyCutoff)
+            { 
+                system.DifficultyRating = 1;
+                List<int> difficultyList = new List<int> { 1, 1 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
             }
-            else
+            if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
             {
+                system.DifficultyRating = 2;
+                List<int> difficultyList = new List<int> { 2, 2 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
+            }
+            if (i <= DifficultyCutoff * 3 && i > 2* DifficultyCutoff)
+            {
+                system.DifficultyRating = 3;
+                List<int> difficultyList = new List<int> { 3, 3 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
+            }
+            if (i <= DifficultyCutoff * 4 && i > 3 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 4;
+                List<int> difficultyList = new List<int> { 4, 4 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
+            }
+            if (i <= DifficultyCutoff * 5 && i > 4 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 5;
+                List<int> difficultyList = new List<int> { 5, 5 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
+            }
+            if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 6;
+                List<int> difficultyList = new List<int> { 6, 6 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
                 if (GetPirateFlex)
                 {
-                    WarStatus.PirateFlex = 50;
+                    WarStatus.PirateFlex = system.TotalResources;
                     GetPirateFlex = false;
                 }
             }
+            if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 7;
+                List<int> difficultyList = new List<int> { 7, 7 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
+            }
+            if (i <= DifficultyCutoff * 8 && i > 7 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 8;
+                List<int> difficultyList = new List<int> { 8, 8 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
+            }
+            if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 9;
+                List<int> difficultyList = new List<int> { 9, 9 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
+            }
+            if (i > 9 * DifficultyCutoff)
+            {
+                system.DifficultyRating = 10;
+                List<int> difficultyList = new List<int> { 10, 10 };
+                Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
+            }
+            i++;
             if (SimSystem.Def.Owner != Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
             {
                 List<string> TempList = new List<string>();
