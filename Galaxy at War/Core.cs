@@ -225,9 +225,9 @@ public static class Core
             //    WarStatus.SystemChangedOwners.Clear();
             //}
 
-            if (systemStatus.owner.Equals(Settings.FactionValues["Locals"]) && systemStatus.influenceTracker.Keys.Contains(Faction.Locals))
+            if (!systemStatus.owner.Equals(Settings.FactionValues["Locals"]) && systemStatus.influenceTracker.Keys.Contains(Settings.FactionValues["Locals"]))
             {
-                systemStatus.influenceTracker[Faction.Locals] *= 1.1f;
+                systemStatus.influenceTracker[Settings.FactionValues["Locals"]] *= 1.1f;
                 var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
                 if (!warFaction.defenseTargets.Contains(systemStatus.name))
                     warFaction.defenseTargets.Add(systemStatus.name);
@@ -354,16 +354,16 @@ public static class Core
 
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!neighborSystem.OwnerValue.Equals(starSystem.OwnerValue) && !Settings.ImmuneToWar.Contains(neighborSystem.Owner))
+            if (!neighborSystem.OwnerValue.Equals(starSystem.OwnerValue) && !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue))
             {
-                var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.Owner);
+                var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue);
                 if (warFac == null)
                     return;
 
-                if (!warFac.attackTargets.ContainsKey(neighborSystem.Owner))
+                if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue))
                 {
                     var tempList = new List<string> { neighborSystem.Name };
-                    warFac.attackTargets.Add(neighborSystem.Owner, tempList);
+                    warFac.attackTargets.Add(neighborSystem.OwnerValue, tempList);
                 }
                 else if (warFac.attackTargets.ContainsKey(neighborSystem.Owner) 
                     && !warFac.attackTargets[neighborSystem.Owner].Contains(neighborSystem.Name))
