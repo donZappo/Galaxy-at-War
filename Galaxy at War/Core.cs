@@ -77,7 +77,7 @@ public static class Core
     public static int difficulty;
     public static MissionResult missionResult;
     public static bool isGoodFaithEffort;
-    public static List<FactionValue> FactionEnemyHolder = new List<FactionValue>();
+    public static List<string> FactionEnemyHolder = new List<string>();
     public static Dictionary<FactionValue, List<StarSystem>> attackTargets = new Dictionary<FactionValue, List<StarSystem>>();
     public static List<StarSystem> defenseTargets = new List<StarSystem>();
     public static ContractType contractType;
@@ -889,17 +889,17 @@ public static class Core
         var neighborSystems = WarSystem.neighborSystems;
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
-            if (Settings.ImmuneToWar.Contains(systemNeighbor) || systemNeighbor == Faction.NoFaction)
+            if (Settings.ImmuneToWar.Contains(systemNeighbor) || systemNeighbor == Settings.FactionValues["NoFaction"])
                 continue;
-            if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractEmployers.Add(systemNeighbor);
+            if (!ContractEmployers.Contains(systemNeighbor.Name) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractEmployers.Add(systemNeighbor.Name);
 
-            if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
-                ContractTargets.Add(systemNeighbor);
+            if (!ContractTargets.Contains(systemNeighbor.Name) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+                ContractTargets.Add(systemNeighbor.Name);
         }
-        if (ContractEmployers.Count == 1 && ContractEmployers.Contains(Faction.AuriganPirates))
+        if (ContractEmployers.Count == 1 && ContractEmployers.Contains("AuriganPirates"))
         {
-            FactionValue faction = Faction.AuriganRestoration;
+            FactionValue faction = Settings.FactionValues["AuriganRestoration"];
             List<FactionValue> TempFaction = new List<FactionValue>(Settings.IncludedFactions);
             do
             {
@@ -914,23 +914,23 @@ public static class Core
                     break;
             } while (TempFaction.Count != 0);
 
-            ContractEmployers.Add(faction);
-            if (!ContractTargets.Contains(faction))
-                ContractTargets.Add(faction);
+            ContractEmployers.Add(faction.Name);
+            if (!ContractTargets.Contains(faction.Name))
+                ContractTargets.Add(faction.Name);
         }
 
-        if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains(Faction.AuriganPirates))
+        if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains("AuriganPirates"))
         {
-            ContractEmployers.Add(Faction.AuriganPirates);
-            ContractTargets.Add(Faction.AuriganPirates);
+            ContractEmployers.Add("AuriganPirates");
+            ContractTargets.Add("AuriganPirates");
         }
 
         if (!WarStatus.AbandonedSystems.Contains(starSystem.Name))
         {
-            if (!ContractEmployers.Contains(Faction.Locals))
-                ContractEmployers.Add(Faction.Locals);
-            if (!ContractTargets.Contains(Faction.Locals))
-                ContractTargets.Add(Faction.Locals);
+            if (!ContractEmployers.Contains("Locals"))
+                ContractEmployers.Add("Locals");
+            if (!ContractTargets.Contains("Locals"))
+                ContractTargets.Add("Locals");
         }
     }
 
@@ -944,12 +944,12 @@ public static class Core
                 return;
 
             FactionEnemyHolder.Clear();
-            var NewEnemies = system.ContractTargets;
+            var NewEnemies = system.ContractTargetIDList;
             FactionEnemyHolder = employer.Enemies.ToList();
             var NewFactionEnemies = FactionEnemyHolder;
             foreach (var Enemy in NewEnemies)
             {
-                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.Faction)
+                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.Name)
                     NewFactionEnemies.Add(Enemy);
             }
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
@@ -1001,6 +1001,7 @@ public static class Core
             }
             if (deathList[faction] > 75)
             {
+                sim.GetFactionDef(deathListFaction.Name).Enemies.Contains((faction.Name))
                 if (!sim.FactionsDict[deathListFaction].Enemies.Contains(faction))
                 {
                     var enemies = new List<FactionValue>(sim.FactionsDict[deathListFaction].Enemies);
