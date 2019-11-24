@@ -60,19 +60,29 @@ public class WarStatus
 
         foreach (var system in sim.StarSystems)
         {
+            Log(system.OwnerDef.Name +" " + system.OwnerValue);
+            Log("0");
+            Log(Core.Settings.FactionValues.Keys.Count().ToString());
+            foreach (var test in Core.Settings.FactionValues.Keys)
+            {
+                Log("1");
+                Log(test);
+                Log((Core.Settings.FactionValues[test].ToString()));
+            }
             if (system.OwnerValue == Core.Settings.FactionValues["NoFaction"])
                 AbandonedSystems.Add(system.Name);
+            Log("A");
             var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue);
             if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
                 warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
             else
                 warFaction.AttackResources += Core.GetTotalAttackResources(system);
-
+            Log("B");
             warFaction.DefensiveResources += Core.GetTotalDefensiveResources(system);
         }
         var MaxAR = warFactionTracker.Select(x => x.AttackResources).Max();
         var MaxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
-
+        Log("C");
         foreach (var faction in Core.Settings.IncludedFactions)
         {
             var warFaction = warFactionTracker.Find(x => x.faction == faction);
@@ -88,10 +98,11 @@ public class WarStatus
                 warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
             }
         }
+        Log("D");
         PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
-
+        Log("E");
         foreach (var system in sim.StarSystems)
         {
             var systemStatus = new SystemStatus(sim, system.Name, system.OwnerValue);
@@ -102,6 +113,7 @@ public class WarStatus
                 Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
         }
+        Log("F");
     }
 
     [JsonConstructor]
