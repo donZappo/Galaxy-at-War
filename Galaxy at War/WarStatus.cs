@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
+using BattleTech.Rendering;
 using Newtonsoft.Json;
 using static Logger;
 using Harmony;
@@ -331,9 +332,9 @@ public class DeathListTracker
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction.Name);
         
-        foreach (var factionNames in Core.FactionValues)
+        foreach (var factionNames in Core.Settings.IncludedFactions)
         {
-            var def = sim.GetFactionDef(factionNames.Name);
+            var def = sim.GetFactionDef(factionNames);
             if (!Core.Settings.IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.Name))
