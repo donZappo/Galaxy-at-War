@@ -225,7 +225,7 @@ public static class Core
             //    WarStatus.SystemChangedOwners.Clear();
             //}
 
-            if (systemStatus.owner != Faction.Locals && systemStatus.influenceTracker.Keys.Contains(Faction.Locals))
+            if (systemStatus.owner.Equals(Settings.FactionValues["Locals"]) && systemStatus.influenceTracker.Keys.Contains(Faction.Locals))
             {
                 systemStatus.influenceTracker[Faction.Locals] *= 1.1f;
                 var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));

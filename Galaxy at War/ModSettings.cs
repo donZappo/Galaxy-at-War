@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BattleTech;
 using UnityEngine;
@@ -81,4 +82,6 @@ public class ModSettings
     public Dictionary<FactionValue, string> FactionNames = new Dictionary<FactionValue, string>();
 
     public Dictionary<FactionValue, string> LogoNames = new Dictionary<FactionValue, string>();
+    
+    public Dictionary<string, FactionValue> FactionValues = new Dictionary<string, FactionValue>();
 }
