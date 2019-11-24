@@ -82,6 +82,7 @@ public static class Core
     public static List<StarSystem> defenseTargets = new List<StarSystem>();
     public static ContractType contractType;
     public static bool NeedsProcessing = false;
+    public static List<FactionValue> FactionValues = new List<FactionValue>();
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch

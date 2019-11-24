@@ -25,17 +25,17 @@ public class ModSettings
     public float planet_other_hub = 6;
     public float planet_other_comstar = 0;
 
-    public List<FactionValue> ImmuneToWar = new List<FactionValue>();
+    public List<string> ImmuneToWar = new List<string>();
 
-    public Dictionary<FactionValue, int> BonusAttackResources = new Dictionary<FactionValue, int>();
+    public Dictionary<string, int> BonusAttackResources = new Dictionary<string, int>();
 
-    public Dictionary<FactionValue, int> BonusDefensiveResources = new Dictionary<FactionValue, int>();
+    public Dictionary<string, int> BonusDefensiveResources = new Dictionary<string, int>();
 
-    public Dictionary<FactionValue, string> FactionTags = new Dictionary<FactionValue, string>();
+    public Dictionary<string, string> FactionTags = new Dictionary<string, string>();
 
-    public Dictionary<FactionValue, string> FactionShops = new Dictionary<FactionValue, string>();
+    public Dictionary<string, string> FactionShops = new Dictionary<string, string>();
 
-    public Dictionary<FactionValue, string> FactionShopItems = new Dictionary<FactionValue, string>();
+    public Dictionary<string, string> FactionShopItems = new Dictionary<string, string>();
 
     public int WarFrequency = 10;
     public bool Debug = false;
@@ -75,13 +75,11 @@ public class ModSettings
     public float AdvanceToTaskTime = 0.25f;
     public bool ChangeDifficulty = true;
 
-    public List<FactionValue> DefensiveFactions = new List<FactionValue>();
+    public List<string> DefensiveFactions = new List<string>();
 
-    public List<FactionValue> IncludedFactions = new List<FactionValue>();
+    public List<string> IncludedFactions = new List<string>();
 
-    public Dictionary<FactionValue, string> FactionNames = new Dictionary<FactionValue, string>();
+    public Dictionary<string, string> FactionNames = new Dictionary<string, string>();
 
-    public Dictionary<FactionValue, string> LogoNames = new Dictionary<FactionValue, string>();
-    
-    public Dictionary<string, FactionValue> FactionValues = new Dictionary<string, FactionValue>();
+    public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
 }

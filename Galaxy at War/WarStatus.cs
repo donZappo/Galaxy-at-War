@@ -47,6 +47,7 @@ public class WarStatus
     public WarStatus()
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
+        Core.FactionValues = FactionEnumeration.FactionList;
         CurSystem = sim.CurSystem.Name;
         TempPRGain = 0;
         HotBoxTravelling = false;
@@ -54,7 +55,7 @@ public class WarStatus
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            warFactionTracker.Add(new WarFaction(faction));
+            warFactionTracker.Add(new WarFaction(Core.FactionValues.
             deathListTracker.Add(new DeathListTracker(faction));
         }
 
