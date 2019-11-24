@@ -96,12 +96,12 @@ public static class SaveHandling
             FactionValue systemOwner = systemDef.OwnerValue;
             Traverse.Create(systemDef).Property("Owner").SetValue(system.owner);
             Core.RefreshContracts(system.starSystem);
-            if (systemDef.OwnerValue != systemOwner && systemOwner != Core.Settings.FactionValues["NoFaction"])
+            if (systemDef.OwnerValue != systemOwner && systemOwner.Name != "NoFaction")
             {
                 if (systemDef.SystemShopItems.Count != 0)
                 {
                     List<string> TempList = systemDef.SystemShopItems;
-                    TempList.Add(Core.Settings.FactionShops[system.owner]);
+                    TempList.Add(Core.Settings.FactionShops[system.owner.Name]);
                     Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
                 }
 
@@ -109,9 +109,9 @@ public static class SaveHandling
                 {
                     Traverse.Create(systemDef).Property("FactionShopOwner").SetValue(system.owner);
                     List<string> FactionShops = systemDef.FactionShopItems;
-                    if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner]))
-                        FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner]);
-                    FactionShops.Add(Core.Settings.FactionShopItems[system.owner]);
+                    if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner.Name]))
+                        FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner.Name]);
+                    FactionShops.Add(Core.Settings.FactionShopItems[system.owner.Name]);
                     Traverse.Create(systemDef).Property("FactionShopItems").SetValue(FactionShops);
                 }
             }
@@ -140,10 +140,10 @@ public static class SaveHandling
         }
         foreach (var defensivefaction in Core.Settings.DefensiveFactions)
         {
-            if (Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction) == null)
+            if (Core.WarStatus.warFactionTracker.Find(x => x.faction.Name == defensivefaction) == null)
                 continue;
 
-            var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction);
+            var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction.Name == defensivefaction);
 
             if (targetfaction.AttackResources != 0)
             {

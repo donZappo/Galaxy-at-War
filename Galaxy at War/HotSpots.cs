@@ -51,9 +51,9 @@ namespace Galaxy_at_War
             var FactRepDict = new Dictionary<FactionValue, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
-                ExternalPriorityTargets.Add(faction, new List<StarSystem>());
-                var MaxContracts = ProcessReputation(sim.GetRawReputation(faction));
-                FactRepDict.Add(faction, MaxContracts);
+                ExternalPriorityTargets.Add(Core.FactionValues.Find(x => x.Name == faction), new List<StarSystem>());
+                var MaxContracts = ProcessReputation(sim.GetRawReputation(Core.FactionValues.Find(x => x.Name == faction)));
+                FactRepDict.Add(Core.FactionValues.Find(x => x.Name == faction), MaxContracts);
             }
 
             //Populate lists with planets that are in danger of flipping
@@ -154,7 +154,7 @@ namespace Galaxy_at_War
                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         
-                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue == Core.Settings.FactionValues["Locals"] && MainBCTarget.OwnerValue != Core.Settings.FactionValues["Locals"]))
+                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue.Name == "Locals" && MainBCTarget.OwnerValue.Name != "Locals"))
                         {
                             HomeContendedSystems.Remove(MainBCTarget);
                             continue;
@@ -281,7 +281,7 @@ namespace Galaxy_at_War
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
+                if (!Core.Settings.DefensiveFactions.Contains(influence.Key.Name) && influence.Value > 1
                     && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargetIDList.Add(influence.Key.Name);

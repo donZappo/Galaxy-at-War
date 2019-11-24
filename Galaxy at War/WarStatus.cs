@@ -55,26 +55,17 @@ public class WarStatus
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            warFactionTracker.Add(new WarFaction(Core.FactionValues.
-            deathListTracker.Add(new DeathListTracker(faction));
+            warFactionTracker.Add(new WarFaction(Core.FactionValues.FirstOrDefault(f => f.Name == faction)));
+            deathListTracker.Add(new DeathListTracker(Core.FactionValues.FirstOrDefault(f => f.Name == faction)));
         }
 
         foreach (var system in sim.StarSystems)
         {
-            Log(system.OwnerDef.Name +" " + system.OwnerValue);
-            Log("0");
-            Log(Core.Settings.FactionValues.Keys.Count().ToString());
-            foreach (var test in Core.Settings.FactionValues.Keys)
-            {
-                Log("1");
-                Log(test);
-                Log((Core.Settings.FactionValues[test].ToString()));
-            }
-            if (system.OwnerValue == Core.Settings.FactionValues["NoFaction"])
+            if (system.OwnerValue  == Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction"))
                 AbandonedSystems.Add(system.Name);
             Log("A");
             var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue);
-            if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
+            if (Core.Settings.DefensiveFactions.Contains(warFaction.faction.Name) && Core.Settings.DefendersUseARforDR)
                 warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
             else
                 warFaction.AttackResources += Core.GetTotalAttackResources(system);
@@ -86,7 +77,7 @@ public class WarStatus
         Log("C");
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            var warFaction = warFactionTracker.Find(x => x.faction == faction);
+            var warFaction = warFactionTracker.Find(x => x.faction == Core.FactionValues.FirstOrDefault(f => f.Name == faction));
             if (Core.Settings.DefensiveFactions.Contains(faction) && Core.Settings.DefendersUseARforDR)
             {
                 warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources[faction] +
@@ -191,12 +182,12 @@ public class SystemStatus
     public void CalculateSystemInfluence()
     {
         influenceTracker.Clear();
-        if (owner == Core.Settings.FactionValues["NoFaction"])
+        if (owner == Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction"))
             influenceTracker.Add(owner, 100);
-        if(owner == Core.Settings.FactionValues["Locals"])
+        if(owner == Core.FactionValues.FirstOrDefault(f => f.Name == "Locals"))
             influenceTracker.Add(owner, 100);
 
-        if (owner != Core.Settings.FactionValues["NoFaction"] && owner != Core.Settings.FactionValues["Locals"])
+        if (owner != Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction") && owner != Core.FactionValues.FirstOrDefault(f => f.Name == "Locals"))
         {
             influenceTracker.Add(owner, Core.Settings.DominantInfluence);
             int remainingInfluence = Core.Settings.MinorInfluencePool;
@@ -211,7 +202,7 @@ public class SystemStatus
                         {
                             var influenceDelta = neighborSystems[faction];
                             remainingInfluence -= influenceDelta;
-                            if (faction == Core.Settings.FactionValues["NoFaction"] || faction == Core.Settings.FactionValues["'Locals"])
+                            if (faction == Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction") || faction == Core.FactionValues.FirstOrDefault(f => f.Name == "Locals"))
                                 continue;
                             if (influenceTracker.ContainsKey(faction))
                                 influenceTracker[faction] += influenceDelta;
@@ -224,8 +215,8 @@ public class SystemStatus
         }
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            if (!influenceTracker.Keys.Contains(faction))
-                influenceTracker.Add(faction, 0);
+            if (!influenceTracker.Keys.Contains(Core.FactionValues.FirstOrDefault(f => f.Name == faction)))
+                influenceTracker.Add(Core.FactionValues.FirstOrDefault(f => f.Name == faction), 0);
         }
 
         // need percentages from InfluenceTracker data 
@@ -247,23 +238,23 @@ public class SystemStatus
         ContractTargets.Clear();
         ContractEmployers.Add(owner.Name);
 
-        foreach (FactionValue EF in Core.Settings.DefensiveFactions)
+        foreach (string EF in Core.Settings.DefensiveFactions)
         {
             if (Core.Settings.ImmuneToWar.Contains(EF))
                 continue;
-            ContractTargets.Add(EF.Name);
+            ContractTargets.Add(EF);
         }
         if (!ContractTargets.Contains(owner.Name))
             ContractTargets.Add(owner.Name);
 
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
-            if (Core.Settings.ImmuneToWar.Contains(systemNeighbor))
+            if (Core.Settings.ImmuneToWar.Contains(systemNeighbor.Name))
                 continue;
-            if (!ContractEmployers.Contains(systemNeighbor.Name) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+            if (!ContractEmployers.Contains(systemNeighbor.Name) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor.Name))
                 ContractEmployers.Add(systemNeighbor.Name);
 
-            if (!ContractTargets.Contains(systemNeighbor.Name) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+            if (!ContractTargets.Contains(systemNeighbor.Name) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor.Name))
                 ContractTargets.Add(systemNeighbor.Name);
         }
     }
@@ -309,7 +300,7 @@ public class WarFaction
         PirateARLoss = 0;
         PirateDRLoss = 0;
         foreach (var startfaction in Core.Settings.IncludedFactions)
-            IncreaseAggression.Add(startfaction, false);
+            IncreaseAggression.Add(Core.FactionValues.FirstOrDefault(f => f.Name == startfaction), false);
     }
 }
 
@@ -340,10 +331,10 @@ public class DeathListTracker
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction.Name);
         
-        foreach (var factionNames in Core.Settings.FactionValues.Keys)
+        foreach (var factionNames in Core.FactionValues)
         {
-            var def = sim.GetFactionDef(factionNames);
-            if (!Core.Settings.IncludedFactions.Contains(def.FactionValue))
+            var def = sim.GetFactionDef(factionNames.Name);
+            if (!Core.Settings.IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.Name))
                 deathList.Add(def.FactionValue, Core.Settings.KLValuesEnemies);
