@@ -133,7 +133,7 @@ namespace Galaxy_at_War
             {
                 var RandSystem = rand.Next(0, Core.WarStatus.systems.Count);
                 var systemStatus = Core.WarStatus.systems[RandSystem];
-                if (systemStatus.owner.Name == "NoFaction" || Core.Settings.ImmuneToWar.Contains(systemStatus.owner.Name)
+                if (systemStatus.owner == "NoFaction" || Core.Settings.ImmuneToWar.Contains(systemStatus.owner)
                     || Core.WarStatus.HotBox.Contains(systemStatus.name))
                     continue;
                 float CurrentPA = systemStatus.PirateActivity;

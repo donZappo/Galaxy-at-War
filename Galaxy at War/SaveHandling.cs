@@ -84,6 +84,7 @@ public static class SaveHandling
 
     public static void RebuildState()
     {
+        Core.FactionValues = FactionEnumeration.FactionList;
         Galaxy_at_War.HotSpots.ExternalPriorityTargets.Clear();
         Galaxy_at_War.HotSpots.FullHomeContendedSystems.Clear();
         Galaxy_at_War.HotSpots.HomeContendedSystems.Clear();
@@ -93,25 +94,27 @@ public static class SaveHandling
         foreach (var system in Core.WarStatus.systems)
         {
             var systemDef = ssDict[system.CoreSystemID].Def;
-            FactionValue systemOwner = systemDef.OwnerValue;
-            Traverse.Create(systemDef).Property("Owner").SetValue(system.owner);
+            string systemOwner = systemDef.OwnerValue.Name;
+            Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
+            Traverse.Create(systemDef).Property("OwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
             Core.RefreshContracts(system.starSystem);
-            if (systemDef.OwnerValue != systemOwner && systemOwner.Name != "NoFaction")
+            if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
             {
                 if (systemDef.SystemShopItems.Count != 0)
                 {
                     List<string> TempList = systemDef.SystemShopItems;
-                    TempList.Add(Core.Settings.FactionShops[system.owner.Name]);
+                    TempList.Add(Core.Settings.FactionShops[system.owner]);
                     Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
                 }
 
                 if (systemDef.FactionShopItems != null)
                 {
-                    Traverse.Create(systemDef).Property("FactionShopOwner").SetValue(system.owner);
+                    Traverse.Create(systemDef).Property("FactionShopOwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
+                    Traverse.Create(systemDef).Property("FactionShopOwnerID").SetValue(system.owner);
                     List<string> FactionShops = systemDef.FactionShopItems;
-                    if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner.Name]))
-                        FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner.Name]);
-                    FactionShops.Add(Core.Settings.FactionShopItems[system.owner.Name]);
+                    if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner]))
+                        FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner]);
+                    FactionShops.Add(Core.Settings.FactionShopItems[system.owner]);
                     Traverse.Create(systemDef).Property("FactionShopItems").SetValue(FactionShops);
                 }
             }
@@ -140,10 +143,10 @@ public static class SaveHandling
         }
         foreach (var defensivefaction in Core.Settings.DefensiveFactions)
         {
-            if (Core.WarStatus.warFactionTracker.Find(x => x.faction.Name == defensivefaction) == null)
+            if (Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction) == null)
                 continue;
 
-            var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction.Name == defensivefaction);
+            var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction);
 
             if (targetfaction.AttackResources != 0)
             {

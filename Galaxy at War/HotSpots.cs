@@ -30,7 +30,7 @@ namespace Galaxy_at_War
         public static Random rand = new Random();
         public static int BonusMoney = 0;
 
-        public static Dictionary<FactionValue, List<StarSystem>> ExternalPriorityTargets = new Dictionary<FactionValue, List<StarSystem>>();
+        public static Dictionary<string, List<StarSystem>> ExternalPriorityTargets = new Dictionary<string, List<StarSystem>>();
         public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static Dictionary<StarSystem, float> FullHomeContendedSystems = new Dictionary<StarSystem, float>();
 
@@ -48,12 +48,12 @@ namespace Galaxy_at_War
             ExternalPriorityTargets.Clear();
             Core.WarStatus.HomeContendedStrings.Clear();
             Core.WarStatus.ContendedStrings.Clear();
-            var FactRepDict = new Dictionary<FactionValue, int>();
+            var FactRepDict = new Dictionary<string, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
-                ExternalPriorityTargets.Add(Core.FactionValues.Find(x => x.Name == faction), new List<StarSystem>());
+                ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 var MaxContracts = ProcessReputation(sim.GetRawReputation(Core.FactionValues.Find(x => x.Name == faction)));
-                FactRepDict.Add(Core.FactionValues.Find(x => x.Name == faction), MaxContracts);
+                FactRepDict.Add(faction, MaxContracts);
             }
 
             //Populate lists with planets that are in danger of flipping
@@ -159,7 +159,7 @@ namespace Galaxy_at_War
                             HomeContendedSystems.Remove(MainBCTarget);
                             continue;
                         }
-                        TemporaryFlip(MainBCTarget, sim.CurSystem.OwnerValue);
+                        TemporaryFlip(MainBCTarget, sim.CurSystem.OwnerValue.Name);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
@@ -270,21 +270,21 @@ namespace Galaxy_at_War
         }
 
 
-        public static void TemporaryFlip(StarSystem starSystem, FactionValue faction)
+        public static void TemporaryFlip(StarSystem starSystem, string faction)
         {
-            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction.Name);
+            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction);
             starSystem.Def.ContractEmployerIDList.Clear();
             starSystem.Def.ContractTargetIDList.Clear();
 
-            starSystem.Def.ContractEmployerIDList.Add(faction.Name);
+            starSystem.Def.ContractEmployerIDList.Add(faction);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                if (!Core.Settings.DefensiveFactions.Contains(influence.Key.Name) && influence.Value > 1
+                if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
                     && influence.Key != faction)
                 {
-                    starSystem.Def.ContractTargetIDList.Add(influence.Key.Name);
+                    starSystem.Def.ContractTargetIDList.Add(influence.Key);
                     break;
                 }
             }
@@ -311,7 +311,7 @@ namespace Galaxy_at_War
                     var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Core.WarStatus.HotBox.Add(starSystem.Name);
                     Core.WarStatus.HotBoxTravelling = true;
-                    TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue);
+                    TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue.Name);
                     var curSystem = Core.WarStatus.systems.Find(x => x.starSystem == __instance.CurSystem);
                     if (Core.WarStatus.HotBox.Contains(__instance.CurSystem.Name))
                     {

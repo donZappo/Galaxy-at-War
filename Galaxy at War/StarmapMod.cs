@@ -127,10 +127,10 @@ public class StarmapMod
     private static string BuildRelationString()
     {
         var sb = new StringBuilder();
-        foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction.Name)))
+        foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
         {
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
-            sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction.Name]}</b></u>\n");
+            sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
             sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") + 
                 " || Defense Resources: " + warFaction.DefensiveResources.ToString("0") 
                 + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
@@ -138,13 +138,13 @@ public class StarmapMod
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
-                sb.AppendLine($"{Core.Settings.FactionNames[enemy.Name],-20}");
+                sb.AppendLine($"{Core.Settings.FactionNames[enemy],-20}");
             sb.AppendLine();
 
             if (tracker.Allies.Count > 0)
                 sb.AppendLine($"<u>Allies</u>");
             foreach (var ally in tracker.Allies)
-                sb.AppendLine($"{Core.Settings.FactionNames[ally.Name],-20}");
+                sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
             sb.AppendLine();
             sb.AppendLine();
         }
@@ -242,7 +242,7 @@ public class StarmapMod
             else
                 number = $"{influence.Value:#.0}%";
 
-            factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key.Name]}");
+            factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
         factionString.AppendLine($"\nPirate Activity: {tracker.PirateActivity:#0.0}%");
         factionString.AppendLine("\n\nAttack Resources: " + ((100 - tracker.PirateActivity) * tracker.AttackResources / 100).ToString("0.0") +
