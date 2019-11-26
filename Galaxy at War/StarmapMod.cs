@@ -85,7 +85,7 @@ public class StarmapMod
     {
         try
         {
-            eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
+            eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>();
             eventPanel.gameObject.SetActive(true);
             UpdatePanelText();
 
@@ -96,24 +96,24 @@ public class StarmapMod
             go.FindFirstChildNamed("event_TopBar").SetActive(false);
             go.FindFirstChildNamed("T_brackets_cap").SetActive(false);
             go.FindFirstChildNamed("event_ResponseOptions").SetActive(false);
+            go.FindFirstChildNamed("results_buttonContainer").SetActive(false);
+            go.FindFirstChildNamed("choiceCrumb").SetActive(false);
+            go.FindFirstChildNamed("resultTagsContent").SetActive(false);
+            go.FindFirstChildNamed("B_brackets_results").SetActive(false);
 
             var event_OverallLayoutVlg = go.FindFirstChildNamed("event_OverallLayout").GetComponent<VerticalLayoutGroup>();
             event_OverallLayoutVlg.childControlHeight = true;
             event_OverallLayoutVlg.childForceExpandHeight = true;
 
-            var textAndChoicesVlg = go.FindFirstChildNamed("event_TextAndChoices-FIRSTSHOWN").GetComponent<VerticalLayoutGroup>();
-            textAndChoicesVlg.childControlHeight = true;
-            textAndChoicesVlg.childForceExpandHeight = true;
+            var event_OverallLayout = go.FindFirstChildNamed("event_OverallLayout").GetComponent<RectTransform>();
+            event_OverallLayout.sizeDelta = new Vector2(750, 580);
 
-            var textAndChoices = go.FindFirstChildNamed("event_TextAndChoices-FIRSTSHOWN").GetComponent<RectTransform>();
-            textAndChoices.anchoredPosition = new Vector2(380f, -400f);
+            var results_TextllLayout = go.FindFirstChildNamed("results_TextllLayout").GetComponent<RectTransform>();
+            results_TextllLayout.sizeDelta = new Vector2(750, 900);
 
-            var event_ContentScrollerRt = go.FindFirstChildNamed("event_ContentScroller").GetComponent<RectTransform>();
-            event_ContentScrollerRt.sizeDelta = new Vector2(750f, 860f);
-
-            // jebus there is a space after Viewport
+            // jebus there is a space after "Viewport"
             var viewport = go.GetComponentsInChildren<RectTransform>().FirstOrDefault(x => x.name == "Viewport ");
-            viewport.sizeDelta = new Vector2(0f, 900f);
+            viewport.sizeDelta = new Vector2(0, 900);
 
             eventPanel.gameObject.SetActive(false);
             LogDebug("RelationPanel created");
@@ -193,7 +193,6 @@ public class StarmapMod
                 {
                     eventPanel.gameObject.SetActive(false);
                     UnityEngine.Object.Destroy(eventPanel);
-                    
                 }
                 catch
                 {
@@ -411,108 +410,4 @@ public class StarmapMod
         Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         __result.starOuter.gameObject.SetActive(wasVisited);
     }
-
-
-
-
-
-
-
-    [HarmonyPatch(typeof(SGNavigationScreen), "CreateSystemCallout")]
-    public static class SGNavigationScreen_CreateSystemCallout_Patch
-    {
-        // keep for reference
-        //public static bool Prefix(SGNavigationScreen __instance, List<SGNavStarSystemCallout> ___AllCallouts, ref SGNavStarSystemCallout __result)
-        //{
-        //    if (__instance == null)
-        //        LogCritical("NULL");
-        //
-        //    var flyoutContainer = Traverse.Create(__instance).Field("FlyoutContainer").GetValue<Transform>();
-        //
-        //    GameObject gameObject = UnityGameInstance.BattleTechGame.DataManager
-        //        .PooledInstantiate("uixPrfIndc_NAV_locationInfoCalloutV2-Element",
-        //            BattleTechResourceType.UIModulePrefabs, new Vector3?(), new Quaternion?(), flyoutContainer);
-        //    gameObject.transform.localScale = Vector3.one;
-        //
-        //    SGNavStarSystemCallout component = gameObject.GetComponent<SGNavStarSystemCallout>();
-        //
-        //    ___AllCallouts.Add(component);
-        //    __result = component;
-        //    
-        //    GameObject testObject;
-        //    TextMeshProUGUI objectText;
-        //    testObject = new GameObject("Test Object");
-        //    testObject.AddComponent<RectTransform>().sizeDelta = new Vector2(200, 200);
-        //    var rectangle = testObject.GetComponent<RectTransform>();
-        //    objectText = testObject.AddComponent<TextMeshProUGUI>();
-        //    objectText.text = "POOOOOOOOOOOOOOOOOOOOOOP";
-        //
-        //    testObject.transform.SetParent(__instance.CachedTransform);
-        //
-        //    rectangle.anchorMin = new Vector2(0.5f, 1);
-        //
-        //    rectangle.anchorMax = new Vector2(0.5f, 1);
-        //    rectangle.anchoredPosition = new Vector3(0, -75, 0);
-        //    testObject.SetActive(true);
-        //    
-        //    return false;
-        //}
-        //}
-
-        //[HarmonyPatch(typeof(SGNavigationScreen), "Init")]
-        //[HarmonyPatch(new[] { typeof(SimGameState), typeof(SGRoomController_Navigation) })]
-        //public static class SGNavigationScreen_Init_Patch
-        //{
-        //    internal static GameObject testObject;
-        //    internal static TextMeshProUGUI objectText;
-
-        //    public static void Prefix(SGNavigationScreen __instance, SimGameState simGame)
-        //    {
-        //        if (!Core.WarStatus.StartGameInitialize)
-        //        {
-        //            Galaxy_at_War.HotSpots.ProcessHotSpots();
-        //            Core.WarStatus.StartGameInitialize = true;
-        //        }
-        //    }
-        //}
-    }
 }
-
-    //public static void ConfigurePopup(SGNavigationScreen navScreen)
-    //{
-        // keep for reference
-        //textPanel = new GameObject("Faction Relationships");
-        //textPanel.AddComponent(typeof(ScrollRect));
-        //var scrollRect = textPanel.GetComponent(typeof(ScrollRect));
-        //
-        //scrollRect.transform.SetParent(navScreen.transform);
-        //
-        //scrollRect.gameObject.AddComponent<RectTransform>().sizeDelta = new Vector2(200, 200);
-        //var rectangle = scrollRect.GetComponent<RectTransform>();
-        //panelText = scrollRect.gameObject.AddComponent<TextMeshProUGUI>();
-        //
-        //// set font in the most roundabout way ever
-        //var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
-        //foreach (var o in fonts)
-        //{
-        //    var font = (TMP_FontAsset) o;
-        //    if (font.name == "UnitedSansSemiExt-Light")
-        //        panelText.SetFont(font);
-        //}
-        //
-        //textPanel.transform.SetParent(navScreen.transform);
-        //rectangle.anchorMin = new Vector2(0.28f, 1);
-        //rectangle.anchorMax = new Vector2(0.28f, 1);
-        //rectangle.anchoredPosition = new Vector3(0, -200, 0);
-
-        //textPanel.SetActive(true);
-        //textPanel.AddComponent<Canvas>();
-        //textPanel.AddComponent<CanvasRenderer>();
-        //var canvas = textPanel.GetComponent<CanvasRenderer>();
-        //var canvasRenderer = textPanel.GetComponent<CanvasRenderer>();
-        //canvas.transform.SetParent(navScreen.transform);
-        //canvasRenderer.transform.SetParent(navScreen.transform);
-        //canvasRenderer.SetColor(Color.red);
-        //var texture = new Texture2D(1, 1);
-        //texture.SetPixel(1, 1, Color.red);
-        //canvasRenderer.SetTexture(texture);
