@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,6 +42,7 @@ public class StarmapMod
             }
         }
     }
+
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
     public static class TooltipPrefab_Planet_SetData_Patch
     {
@@ -71,7 +73,7 @@ public class StarmapMod
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
-            var starSystem = (StarSystem)data;
+            var starSystem = (StarSystem) data;
             if (starSystem == null)
             {
                 return;
@@ -131,10 +133,10 @@ public class StarmapMod
         {
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
-            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") + 
-                " || Defense Resources: " + warFaction.DefensiveResources.ToString("0") 
-                + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
-            sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") +"\n\n");
+            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
+                          " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
+                          + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+            sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") + "\n\n");
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
@@ -196,6 +198,7 @@ public class StarmapMod
                 }
                 catch
                 {
+                    //__instance.Starmap.StartCoroutine(SetupRelationPanel());
                     SetupRelationPanel();
                     eventPanel.gameObject.SetActive(true);
                 }
@@ -243,9 +246,10 @@ public class StarmapMod
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
+
         factionString.AppendLine($"\nPirate Activity: {tracker.PirateActivity:#0.0}%");
         factionString.AppendLine("\n\nAttack Resources: " + ((100 - tracker.PirateActivity) * tracker.AttackResources / 100).ToString("0.0") +
-            "  Defense Resources: " + ((100 - tracker.PirateActivity) * tracker.DefenseResources / 100).ToString("0.0"));
+                                 "  Defense Resources: " + ((100 - tracker.PirateActivity) * tracker.DefenseResources / 100).ToString("0.0"));
         string BonusString = "Escalation Bonuses:";
         if (tracker.BonusCBills)
             BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";
@@ -277,9 +281,8 @@ public class StarmapMod
         }
     }
 
-
     [HarmonyPatch(typeof(StarmapRenderer), "GetSystemRenderer")]
-    [HarmonyPatch(new[] { typeof(StarSystemNode) })]
+    [HarmonyPatch(new[] {typeof(StarSystemNode)})]
     public static class StarmapRenderer_GetSystemRenderer_Patch
     {
         public static void Prefix()
@@ -328,7 +331,6 @@ public class StarmapMod
         }
     }
 
-
     [HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
     public static class StarmapRenderer_RefreshSystems_Patch
     {
@@ -367,7 +369,7 @@ public class StarmapMod
             var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
             foreach (var o in fonts)
             {
-                var font = (TMP_FontAsset)o;
+                var font = (TMP_FontAsset) o;
                 if (font.name == "UnitedSansSemiExt-Light")
                 {
                     SetFont(___LabelField, font);
@@ -399,7 +401,6 @@ public class StarmapMod
             Traverse.Create(__result).Field("selectedScale").SetValue(4f);
             Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         }
-        
     }
 
     private static void MakeSystemNormal(StarmapSystemRenderer __result, bool wasVisited)
