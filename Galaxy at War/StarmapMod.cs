@@ -22,26 +22,26 @@ public class StarmapMod
     internal static SGEventPanel eventPanel;
     internal static TMP_FontAsset font;
 
-    [HarmonyPatch(typeof(UnityGameInstance), "Awake")]
-    public static class UnityGameInstance_Awake_Patch
-    {
-        public static void Postfix()
-        {
-            try
-            {
-                var prefab = AssetBundle.LoadFromFile(@"Mods\GalaxyAtWar\firacode");
-                var asset = (GameObject) prefab.LoadAsset("fira");
-                var tmp = asset.FindFirstChildNamed("regular").GetComponent<TextMeshPro>();
-                var boldFont = asset.FindFirstChildNamed("bold").GetComponent<TextMeshPro>().font;
-                font.fontWeights[7].regularTypeface = boldFont;
-                font = tmp.font;
-            }
-            catch (Exception ex)
-            {
-                LogDebug(ex.ToString());
-            }
-        }
-    }
+    //[HarmonyPatch(typeof(UnityGameInstance), "Awake")]
+    //public static class UnityGameInstance_Awake_Patch
+    //{
+    //    public static void Postfix()
+    //    {
+    //        try
+    //        {
+    //            var prefab = AssetBundle.LoadFromFile(@"Mods\GalaxyAtWar\firacode");
+    //            var asset = (GameObject) prefab.LoadAsset("fira");
+    //            var tmp = asset.FindFirstChildNamed("regular").GetComponent<TextMeshPro>();
+    //            var boldFont = asset.FindFirstChildNamed("bold").GetComponent<TextMeshPro>().font;
+    //            font.fontWeights[7].regularTypeface = boldFont;
+    //            font = tmp.font;
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            LogDebug(ex.ToString());
+    //        }
+    //    }
+    //}
 
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
     public static class TooltipPrefab_Planet_SetData_Patch
@@ -58,9 +58,9 @@ public class StarmapMod
                 return;
             }
 
-            var tmp = ___Description.GetComponent<TextMeshProUGUI>();
-            tmp.font = font;
-            tmp.fontSize = 10f;
+            //var tmp = ___Description.GetComponent<TextMeshProUGUI>();
+            //tmp.font = font;
+            //tmp.fontSize = 10f;
 
             __state = starSystem.Def.Description.Details;
             var factionString = BuildInfluenceString(starSystem);
