@@ -315,33 +315,34 @@ public static class Core
         WarStatus.SystemChangedOwners.Clear();
 
 
-        //Log("===================================================");
-        //Log("TESTING ZONE");
-        //Log("===================================================");
-        ////TESTING ZONE
-        //foreach (WarFaction WF in WarStatus.warFactionTracker)
-        //{
-        //    Log("----------------------------------------------");
-        //    Log(WF.faction.ToString());
-        //    try
-        //    {
-        //        //Log("\tAttacked By :");
-        //        //foreach (Faction fac in DLT.AttackedBy)
-        //        //    Log("\t\t" + fac.ToString());
-        //        //Log("\tOwner :" + DLT.);
-        //        Log("\tAttack Resources :" + WF.AttackResources.ToString());
-        //        Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
-        //        //Log("\tDeath List:");
-        //        //foreach (Faction faction in DLT.deathList.Keys)
-        //        //{
-        //        //    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
-        //        //}
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Error(e);
-        //    }
-        //}
+//        Log("===================================================");
+//        Log("TESTING ZONE");
+//        Log("===================================================");
+//        ////TESTING ZONE
+//        foreach (WarFaction WF in WarStatus.warFactionTracker)
+//        {
+//            Log("----------------------------------------------");
+//            Log(WF.faction.ToString());
+//            try
+//            {
+//                var DLT = WarStatus.deathListTracker.Find(x => x.faction == WF.faction);
+////                Log("\tAttacked By :");
+////                foreach (Faction fac in DLT.AttackedBy)
+////                    Log("\t\t" + fac.ToString());
+////                Log("\tOwner :" + DLT.);
+////                Log("\tAttack Resources :" + WF.AttackResources.ToString());
+////                Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
+//                Log("\tDeath List:");
+//                foreach (var faction in DLT.deathList.Keys)
+//                {
+//                    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+//                }
+//            }
+//            catch (Exception e)
+//            {
+//                Error(e);
+//            }
+ //       }
     }
 
     public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
@@ -953,8 +954,10 @@ public static class Core
             var NewFactionEnemies = FactionEnemyHolder;
             foreach (var Enemy in NewEnemies)
             {
-                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.Name)
+                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.FactionValue.Name)
+                {
                     NewFactionEnemies.Add(Enemy);
+                }
             }
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
         }
@@ -1344,8 +1347,12 @@ public static class Core
                 List<string> TempList = new List<string>();
                 TempList.Add("itemCollection_minor_Locals");
                 Traverse.Create(SimSystem.Def).Property("SystemShopItems").SetValue(TempList);
-                Shop.RefreshType refreshShop = Shop.RefreshType.RefreshIfEmpty;
-                SimSystem.SystemShop.Rehydrate(sim, SimSystem, SimSystem.Def.SystemShopItems, refreshShop, Shop.ShopType.System);
+                if (sim.CurSystem.Name == SimSystem.Def.Description.Name)
+                {
+                    Shop.RefreshType refreshShop = Shop.RefreshType.RefreshIfEmpty;
+                    SimSystem.SystemShop.Rehydrate(sim, SimSystem, SimSystem.Def.SystemShopItems, refreshShop,
+                        Shop.ShopType.System);
+                }
             }
             
         }

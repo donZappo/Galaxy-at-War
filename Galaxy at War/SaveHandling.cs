@@ -11,6 +11,7 @@ using System.Diagnostics;
 using HBS;
 using BattleTech.UI;
 using System.Collections.Generic;
+using BattleTech.Save.Core;
 
 
 public static class SaveHandling
