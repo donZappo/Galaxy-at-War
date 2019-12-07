@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,26 +22,27 @@ public class StarmapMod
     internal static SGEventPanel eventPanel;
     internal static TMP_FontAsset font;
 
-    [HarmonyPatch(typeof(UnityGameInstance), "Awake")]
-    public static class UnityGameInstance_Awake_Patch
-    {
-        public static void Postfix()
-        {
-            try
-            {
-                var prefab = AssetBundle.LoadFromFile(@"Mods\GalaxyAtWar\firacode");
-                var asset = (GameObject) prefab.LoadAsset("fira");
-                var tmp = asset.FindFirstChildNamed("regular").GetComponent<TextMeshPro>();
-                var boldFont = asset.FindFirstChildNamed("bold").GetComponent<TextMeshPro>().font;
-                font.fontWeights[7].regularTypeface = boldFont;
-                font = tmp.font;
-            }
-            catch (Exception ex)
-            {
-                LogDebug(ex.ToString());
-            }
-        }
-    }
+    //[HarmonyPatch(typeof(UnityGameInstance), "Awake")]
+    //public static class UnityGameInstance_Awake_Patch
+    //{
+    //    public static void Postfix()
+    //    {
+    //        try
+    //        {
+    //            var prefab = AssetBundle.LoadFromFile(@"Mods\GalaxyAtWar\firacode");
+    //            var asset = (GameObject) prefab.LoadAsset("fira");
+    //            var tmp = asset.FindFirstChildNamed("regular").GetComponent<TextMeshPro>();
+    //            var boldFont = asset.FindFirstChildNamed("bold").GetComponent<TextMeshPro>().font;
+    //            font.fontWeights[7].regularTypeface = boldFont;
+    //            font = tmp.font;
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            LogDebug(ex.ToString());
+    //        }
+    //    }
+    //}
+
     [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
     public static class TooltipPrefab_Planet_SetData_Patch
     {
@@ -56,9 +58,9 @@ public class StarmapMod
                 return;
             }
 
-            var tmp = ___Description.GetComponent<TextMeshProUGUI>();
-            tmp.font = font;
-            tmp.fontSize = 10f;
+            //var tmp = ___Description.GetComponent<TextMeshProUGUI>();
+            //tmp.font = font;
+            //tmp.fontSize = 10f;
 
             __state = starSystem.Def.Description.Details;
             var factionString = BuildInfluenceString(starSystem);
@@ -71,7 +73,7 @@ public class StarmapMod
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
-            var starSystem = (StarSystem)data;
+            var starSystem = (StarSystem) data;
             if (starSystem == null)
             {
                 return;
@@ -85,7 +87,7 @@ public class StarmapMod
     {
         try
         {
-            eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>("");
+            eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>();
             eventPanel.gameObject.SetActive(true);
             UpdatePanelText();
 
@@ -96,24 +98,24 @@ public class StarmapMod
             go.FindFirstChildNamed("event_TopBar").SetActive(false);
             go.FindFirstChildNamed("T_brackets_cap").SetActive(false);
             go.FindFirstChildNamed("event_ResponseOptions").SetActive(false);
+            go.FindFirstChildNamed("results_buttonContainer").SetActive(false);
+            go.FindFirstChildNamed("choiceCrumb").SetActive(false);
+            go.FindFirstChildNamed("resultTagsContent").SetActive(false);
+            go.FindFirstChildNamed("B_brackets_results").SetActive(false);
 
             var event_OverallLayoutVlg = go.FindFirstChildNamed("event_OverallLayout").GetComponent<VerticalLayoutGroup>();
             event_OverallLayoutVlg.childControlHeight = true;
             event_OverallLayoutVlg.childForceExpandHeight = true;
 
-            var textAndChoicesVlg = go.FindFirstChildNamed("event_TextAndChoices-FIRSTSHOWN").GetComponent<VerticalLayoutGroup>();
-            textAndChoicesVlg.childControlHeight = true;
-            textAndChoicesVlg.childForceExpandHeight = true;
+            var event_OverallLayout = go.FindFirstChildNamed("event_OverallLayout").GetComponent<RectTransform>();
+            event_OverallLayout.sizeDelta = new Vector2(750, 580);
 
-            var textAndChoices = go.FindFirstChildNamed("event_TextAndChoices-FIRSTSHOWN").GetComponent<RectTransform>();
-            textAndChoices.anchoredPosition = new Vector2(380f, -400f);
+            var results_TextllLayout = go.FindFirstChildNamed("results_TextllLayout").GetComponent<RectTransform>();
+            results_TextllLayout.sizeDelta = new Vector2(750, 900);
 
-            var event_ContentScrollerRt = go.FindFirstChildNamed("event_ContentScroller").GetComponent<RectTransform>();
-            event_ContentScrollerRt.sizeDelta = new Vector2(750f, 860f);
-
-            // jebus there is a space after Viewport
+            // jebus there is a space after "Viewport"
             var viewport = go.GetComponentsInChildren<RectTransform>().FirstOrDefault(x => x.name == "Viewport ");
-            viewport.sizeDelta = new Vector2(0f, 900f);
+            viewport.sizeDelta = new Vector2(0, 900);
 
             eventPanel.gameObject.SetActive(false);
             LogDebug("RelationPanel created");
@@ -131,10 +133,10 @@ public class StarmapMod
         {
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
-            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") + 
-                " || Defense Resources: " + warFaction.DefensiveResources.ToString("0") 
-                + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
-            sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") +"\n\n");
+            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
+                          " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
+                          + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+            sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") + "\n\n");
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
@@ -193,10 +195,10 @@ public class StarmapMod
                 {
                     eventPanel.gameObject.SetActive(false);
                     UnityEngine.Object.Destroy(eventPanel);
-                    
                 }
                 catch
                 {
+                    //__instance.Starmap.StartCoroutine(SetupRelationPanel());
                     SetupRelationPanel();
                     eventPanel.gameObject.SetActive(true);
                 }
@@ -244,9 +246,10 @@ public class StarmapMod
 
             factionString.AppendLine($"{number,-15}{Core.Settings.FactionNames[influence.Key]}");
         }
+
         factionString.AppendLine($"\nPirate Activity: {tracker.PirateActivity:#0.0}%");
         factionString.AppendLine("\n\nAttack Resources: " + ((100 - tracker.PirateActivity) * tracker.AttackResources / 100).ToString("0.0") +
-            "  Defense Resources: " + ((100 - tracker.PirateActivity) * tracker.DefenseResources / 100).ToString("0.0"));
+                                 "  Defense Resources: " + ((100 - tracker.PirateActivity) * tracker.DefenseResources / 100).ToString("0.0"));
         string BonusString = "Escalation Bonuses:";
         if (tracker.BonusCBills)
             BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";
@@ -278,9 +281,8 @@ public class StarmapMod
         }
     }
 
-
     [HarmonyPatch(typeof(StarmapRenderer), "GetSystemRenderer")]
-    [HarmonyPatch(new[] { typeof(StarSystemNode) })]
+    [HarmonyPatch(new[] {typeof(StarSystemNode)})]
     public static class StarmapRenderer_GetSystemRenderer_Patch
     {
         public static void Prefix()
@@ -329,7 +331,6 @@ public class StarmapMod
         }
     }
 
-
     [HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
     public static class StarmapRenderer_RefreshSystems_Patch
     {
@@ -368,7 +369,7 @@ public class StarmapMod
             var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
             foreach (var o in fonts)
             {
-                var font = (TMP_FontAsset)o;
+                var font = (TMP_FontAsset) o;
                 if (font.name == "UnitedSansSemiExt-Light")
                 {
                     SetFont(___LabelField, font);
@@ -400,7 +401,6 @@ public class StarmapMod
             Traverse.Create(__result).Field("selectedScale").SetValue(4f);
             Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         }
-        
     }
 
     private static void MakeSystemNormal(StarmapSystemRenderer __result, bool wasVisited)
@@ -411,108 +411,4 @@ public class StarmapMod
         Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         __result.starOuter.gameObject.SetActive(wasVisited);
     }
-
-
-
-
-
-
-
-    [HarmonyPatch(typeof(SGNavigationScreen), "CreateSystemCallout")]
-    public static class SGNavigationScreen_CreateSystemCallout_Patch
-    {
-        // keep for reference
-        //public static bool Prefix(SGNavigationScreen __instance, List<SGNavStarSystemCallout> ___AllCallouts, ref SGNavStarSystemCallout __result)
-        //{
-        //    if (__instance == null)
-        //        LogCritical("NULL");
-        //
-        //    var flyoutContainer = Traverse.Create(__instance).Field("FlyoutContainer").GetValue<Transform>();
-        //
-        //    GameObject gameObject = UnityGameInstance.BattleTechGame.DataManager
-        //        .PooledInstantiate("uixPrfIndc_NAV_locationInfoCalloutV2-Element",
-        //            BattleTechResourceType.UIModulePrefabs, new Vector3?(), new Quaternion?(), flyoutContainer);
-        //    gameObject.transform.localScale = Vector3.one;
-        //
-        //    SGNavStarSystemCallout component = gameObject.GetComponent<SGNavStarSystemCallout>();
-        //
-        //    ___AllCallouts.Add(component);
-        //    __result = component;
-        //    
-        //    GameObject testObject;
-        //    TextMeshProUGUI objectText;
-        //    testObject = new GameObject("Test Object");
-        //    testObject.AddComponent<RectTransform>().sizeDelta = new Vector2(200, 200);
-        //    var rectangle = testObject.GetComponent<RectTransform>();
-        //    objectText = testObject.AddComponent<TextMeshProUGUI>();
-        //    objectText.text = "POOOOOOOOOOOOOOOOOOOOOOP";
-        //
-        //    testObject.transform.SetParent(__instance.CachedTransform);
-        //
-        //    rectangle.anchorMin = new Vector2(0.5f, 1);
-        //
-        //    rectangle.anchorMax = new Vector2(0.5f, 1);
-        //    rectangle.anchoredPosition = new Vector3(0, -75, 0);
-        //    testObject.SetActive(true);
-        //    
-        //    return false;
-        //}
-        //}
-
-        //[HarmonyPatch(typeof(SGNavigationScreen), "Init")]
-        //[HarmonyPatch(new[] { typeof(SimGameState), typeof(SGRoomController_Navigation) })]
-        //public static class SGNavigationScreen_Init_Patch
-        //{
-        //    internal static GameObject testObject;
-        //    internal static TextMeshProUGUI objectText;
-
-        //    public static void Prefix(SGNavigationScreen __instance, SimGameState simGame)
-        //    {
-        //        if (!Core.WarStatus.StartGameInitialize)
-        //        {
-        //            Galaxy_at_War.HotSpots.ProcessHotSpots();
-        //            Core.WarStatus.StartGameInitialize = true;
-        //        }
-        //    }
-        //}
-    }
 }
-
-    //public static void ConfigurePopup(SGNavigationScreen navScreen)
-    //{
-        // keep for reference
-        //textPanel = new GameObject("Faction Relationships");
-        //textPanel.AddComponent(typeof(ScrollRect));
-        //var scrollRect = textPanel.GetComponent(typeof(ScrollRect));
-        //
-        //scrollRect.transform.SetParent(navScreen.transform);
-        //
-        //scrollRect.gameObject.AddComponent<RectTransform>().sizeDelta = new Vector2(200, 200);
-        //var rectangle = scrollRect.GetComponent<RectTransform>();
-        //panelText = scrollRect.gameObject.AddComponent<TextMeshProUGUI>();
-        //
-        //// set font in the most roundabout way ever
-        //var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
-        //foreach (var o in fonts)
-        //{
-        //    var font = (TMP_FontAsset) o;
-        //    if (font.name == "UnitedSansSemiExt-Light")
-        //        panelText.SetFont(font);
-        //}
-        //
-        //textPanel.transform.SetParent(navScreen.transform);
-        //rectangle.anchorMin = new Vector2(0.28f, 1);
-        //rectangle.anchorMax = new Vector2(0.28f, 1);
-        //rectangle.anchoredPosition = new Vector3(0, -200, 0);
-
-        //textPanel.SetActive(true);
-        //textPanel.AddComponent<Canvas>();
-        //textPanel.AddComponent<CanvasRenderer>();
-        //var canvas = textPanel.GetComponent<CanvasRenderer>();
-        //var canvasRenderer = textPanel.GetComponent<CanvasRenderer>();
-        //canvas.transform.SetParent(navScreen.transform);
-        //canvasRenderer.transform.SetParent(navScreen.transform);
-        //canvasRenderer.SetColor(Color.red);
-        //var texture = new Texture2D(1, 1);
-        //texture.SetPixel(1, 1, Color.red);
-        //canvasRenderer.SetTexture(texture);
