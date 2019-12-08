@@ -92,6 +92,8 @@ public static class SaveHandling
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var ssDict = sim.StarSystemDictionary;
         Core.SystemDifficulty();
+
+
         foreach (var system in Core.WarStatus.systems)
         {
             var systemDef = ssDict[system.CoreSystemID].Def;
