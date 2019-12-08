@@ -141,7 +141,7 @@ namespace Galaxy_at_War
                 if (HomeContendedSystems.Count != 0)
                 {
                     int i = 0;
-                    int twiddle = 1;
+                    int twiddle = 0;
                     var RandomSystem = 0;
                     while (HomeContendedSystems.Count != 0)
                     {
@@ -151,6 +151,8 @@ namespace Galaxy_at_War
                             RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
                         if (twiddle == -1)
                             RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
+                        if (twiddle == 0)
+                            twiddle = 1;
                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         
@@ -163,7 +165,9 @@ namespace Galaxy_at_War
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
-                            
+
+                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.FirstOrDefault(x => x.Name != sim.CurSystem.Name);
+                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
                         else
                         {
@@ -180,9 +184,7 @@ namespace Galaxy_at_War
                         twiddle *= -1;
                     }
                 }
-                var PrioritySystem =
-                    sim.CurSystem.SystemBreadcrumbs.FirstOrDefault(x => x.Name != sim.CurSystem.Name);
-                Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                
                 if (ExternalPriorityTargets.Count != 0)
                 {
                     int startBC = sim.CurSystem.SystemBreadcrumbs.Count;

@@ -825,7 +825,7 @@ public static class Core
             var starSystem = systemStatus.starSystem;
             
             if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold && !Core.WarStatus.HotBox.Contains(systemStatus.name)
-                                                                                                 && (!Settings.DefensiveFactions.Contains(highestfaction) || highestfaction == "Locals") && !Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name)))
+                && (!Settings.DefensiveFactions.Contains(highestfaction) || highestfaction == "Locals") && !Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name)))
             {
                 if (!systemStatus.Contended)
                 {
@@ -1143,11 +1143,11 @@ public static class Core
                     {
                         warsystem.PirateActivity -= difficulty;
                         if (warsystem.PirateActivity < 0)
-                            warsystem.PirateActivity = 0;
-                    }
+                            warsystem.PirateActivity = 0; }
                     else
                     {
-                        warsystem.influenceTracker[teamfaction] += Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]); warsystem.influenceTracker[enemyfaction] -= Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                        warsystem.influenceTracker[teamfaction] += Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                        warsystem.influenceTracker[enemyfaction] -= Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
                     }
 
                 }

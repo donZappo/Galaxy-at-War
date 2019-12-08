@@ -43,9 +43,9 @@ public class ModSettings
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
-    public float GlobalDefenseFactor = 1.25f;
+    public float GlobalDefenseFactor = 1.5f;
     public int AResourceAdjustmentPerCycle = 1;
-    public int DResourceAdjustmentPerCycle = 0;
+    public int DResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
     public float TakeoverThreshold = 10f;
