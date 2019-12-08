@@ -163,6 +163,7 @@ namespace Galaxy_at_War
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
+                            
                         }
                         else
                         {
@@ -179,6 +180,9 @@ namespace Galaxy_at_War
                         twiddle *= -1;
                     }
                 }
+                var PrioritySystem =
+                    sim.CurSystem.SystemBreadcrumbs.FirstOrDefault(x => x.Name != sim.CurSystem.Name);
+                Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                 if (ExternalPriorityTargets.Count != 0)
                 {
                     int startBC = sim.CurSystem.SystemBreadcrumbs.Count;

@@ -552,9 +552,10 @@ public static class Core
         //    }
         //}
 
-        defensiveResources = defensiveResources * (100 * Settings.GlobalDefenseFactor -
-                                                   Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+        var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
+                                   Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
 
+        defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
 
         while (defensiveResources > 0.0)
