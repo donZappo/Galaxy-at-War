@@ -75,6 +75,7 @@ public static class Core
     public static string teamfaction;
     public static string enemyfaction;
     public static int difficulty;
+    public static int Reversedifficulty;
     public static MissionResult missionResult;
     public static bool isGoodFaithEffort;
     public static List<string> FactionEnemyHolder = new List<string>();
@@ -1106,8 +1107,7 @@ public static class Core
         return result;
     }
 
-    [
-        HarmonyPatch(typeof(Contract), "CompleteContract")]
+    [HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
@@ -1119,6 +1119,7 @@ public static class Core
             teamfaction = __instance.Override.employerTeam.FactionValue.Name;
             enemyfaction = __instance.Override.targetTeam.FactionValue.Name;
             difficulty = __instance.Difficulty;
+            Reversedifficulty = 11 - difficulty;
             missionResult = result;
             contractType = Traverse.Create(__instance).Property("ContractType").GetValue<ContractType>();
         }
@@ -1137,19 +1138,19 @@ public static class Core
                 {
                     if (teamfaction == "AuriganPirates")
                     {
-                        warsystem.PirateActivity += difficulty;
+                        warsystem.PirateActivity += Reversedifficulty;
                         if (warsystem.PirateActivity > 100)
                             warsystem.PirateActivity = 100;
                     }
                     else if (enemyfaction == "AuriganPirates")
                     {
-                        warsystem.PirateActivity -= difficulty;
+                        warsystem.PirateActivity -= Reversedifficulty;
                         if (warsystem.PirateActivity < 0)
                             warsystem.PirateActivity = 0; }
                     else
                     {
-                        warsystem.influenceTracker[teamfaction] += Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
-                        warsystem.influenceTracker[enemyfaction] -= Math.Min(difficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                        warsystem.influenceTracker[teamfaction] += Math.Min(Reversedifficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
+                        warsystem.influenceTracker[enemyfaction] -= Math.Min(Reversedifficulty * Settings.DifficultyFactor, warsystem.influenceTracker[enemyfaction]);
                     }
 
                 }
@@ -1406,14 +1407,14 @@ public static class Core
                 else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration)
                     result = 1;
                 else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
-                    result = 2;
+                    result = difficulty + 11;
                 else if (contract.TargetSystem.Replace("starsystemdef_", "").Equals(Sim.CurSystem.Name))
                     result = difficulty + 1;
                 else
-                    result = difficulty + 11;
+                    result = difficulty + 21;
             }
             else
-                result = difficulty + 21;
+                result = difficulty + 31;
 
             __result = result;
             return false;
@@ -1432,6 +1433,20 @@ public static class Core
                 systemStatus.influenceTracker.Add(faction, 0);
         }
     }
+
+    //Show on the Contract Description how this will impact the war. 
+    [HarmonyPatch(typeof(Briefing), "SetContractInfo")]
+    public static class Briefing_SetContractInfo_Patch
+    {
+        static void Postfix(Briefing __instance, ref Contract contract)
+        {
+            var StringHolder = contract.Override.ShortDescription;
+            StringHolder = "Impact on System Conflict:\n\nArano Restoration: +10 Influence\n\nSteiner: -10 Influence\n\n\n\n" 
+                + "Overall War Impact: Arano Restoration + 10 Attack Resources" + StringHolder;
+            Traverse.Create(__instance).Field("contractShortDescription").SetValue(StringHolder);
+        }
+    }
+
 
     //Disable the campaign start button in order to avoid infinite sadness
     [HarmonyPatch(typeof(MainMenu), "Init")]

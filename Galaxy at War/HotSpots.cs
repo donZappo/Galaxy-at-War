@@ -137,7 +137,7 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-                
+
                 if (HomeContendedSystems.Count != 0)
                 {
                     int i = 0;
@@ -147,12 +147,12 @@ namespace Galaxy_at_War
                     {
                         Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
-                        if (twiddle == 1)
-                            RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
-                        if (twiddle == -1)
-                            RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
                         if (twiddle == 0)
-                            twiddle = 1;
+                            twiddle = -1;
+                        else if (twiddle == 1)
+                            RandomSystem = rand.Next(0 , HomeContendedSystems.Count / 2);
+                        else if (twiddle == -1)
+                            RandomSystem = rand.Next(HomeContendedSystems.Count / 4, 3 * HomeContendedSystems.Count / 4);
                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         
@@ -166,13 +166,21 @@ namespace Galaxy_at_War
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
 
-                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.FirstOrDefault(x => x.Name != sim.CurSystem.Name);
+                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
                             Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
-                        else
+                        else if (twiddle == -1)
                         {
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
                             SystemBonuses(MainBCTarget);
+                        }
+                        else if (twiddle == 1)
+                        {
+                            sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
+                            SystemBonuses(MainBCTarget);
+
+                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
+                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
 
                         Core.RefreshContracts(MainBCTarget);
