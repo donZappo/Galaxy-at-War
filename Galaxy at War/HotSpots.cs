@@ -339,10 +339,13 @@ namespace Galaxy_at_War
                     return;
 
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
-                Core.WarStatus.HotBox.Remove(system.Name);
+                if (Core.WarStatus.HotBox.Contains(system.Name))
+                    Core.WarStatus.HotBox.Remove(system.Name);
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
                 Core.RefreshContracts(system);
+                if (Core.WarStatus.HotBox.Count == 0)
+                    Core.WarStatus.HotBoxTravelling = false;
             }
         }
 
@@ -445,6 +448,30 @@ namespace Galaxy_at_War
                 }
             }
         }
+
+        //Need to clear out the old stuff if a contract is cancelled to prevent crashing.
+        [HarmonyPatch(typeof(SimGameState), "OnBreadcrumbCancelledByUser")]
+        public static class SimGameState_BreadCrumbCancelled_Patch
+        {
+            static void Postfix()
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
+
+                if (Core.WarStatus.HotBox.Contains(system.Name))
+                    Core.WarStatus.HotBox.Remove(system.Name);
+                Core.WarStatus.Escalation = false;
+                Core.WarStatus.EscalationDays = 0;
+                Core.RefreshContracts(system);
+                if (Core.WarStatus.HotBox.Count == 0)
+                    Core.WarStatus.HotBoxTravelling = false;
+            }
+        }
+
+
         [HarmonyPatch(typeof(Contract), "GenerateSalvage")]
         public static class Contract_GenerateSalvage_Patch
         {

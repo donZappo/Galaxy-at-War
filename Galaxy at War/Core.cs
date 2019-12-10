@@ -83,6 +83,7 @@ public static class Core
     public static ContractType contractType;
     public static bool NeedsProcessing = false;
     public static List<FactionValue> FactionValues = new List<FactionValue>();
+    public static bool BorkedSave;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -93,11 +94,12 @@ public static class Core
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
-            if (WarStatus == null)
+            if (WarStatus == null || BorkedSave)
             {
                 WarStatus = new WarStatus();
                 SystemDifficulty();
                 WarTick(true, true);
+                BorkedSave = false;
             }
 
             
