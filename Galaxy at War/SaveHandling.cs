@@ -28,16 +28,25 @@ public static class SaveHandling
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
-            bool NewGaW = true;
-            foreach (string tag in __instance.CompanyTags)
+            try
             {
-                if (tag.StartsWith("GalaxyAtWarSave{"))
-                    NewGaW = false;
+                bool NewGaW = true;
+                Core.BorkedSave = false;
+                foreach (string tag in __instance.CompanyTags)
+                {
+                    if (tag.StartsWith("GalaxyAtWarSave{"))
+                        NewGaW = false;
+                }
+                if (!NewGaW)
+                {
+                    DeserializeWar();
+                    RebuildState();
+                }
             }
-            if (!NewGaW)
+            catch
             {
-                DeserializeWar();
-                RebuildState();
+                sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
+                Core.BorkedSave = true;
             }
         }
     }
@@ -93,69 +102,77 @@ public static class SaveHandling
         var ssDict = sim.StarSystemDictionary;
         Core.SystemDifficulty();
 
-
-        foreach (var system in Core.WarStatus.systems)
+        try
         {
-            var systemDef = ssDict[system.CoreSystemID].Def;
-            string systemOwner = systemDef.OwnerValue.Name;
-            Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
-            Traverse.Create(systemDef).Property("OwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
-            Core.RefreshContracts(system.starSystem);
-            if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
+            foreach (var system in Core.WarStatus.systems)
             {
-                if (systemDef.SystemShopItems.Count != 0)
+                var systemDef = ssDict[system.CoreSystemID].Def;
+                string systemOwner = systemDef.OwnerValue.Name;
+                Traverse.Create(systemDef).Property("OwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
+                Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
+                Core.RefreshContracts(system.starSystem);
+                if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
                 {
-                    List<string> TempList = systemDef.SystemShopItems;
-                    TempList.Add(Core.Settings.FactionShops[system.owner]);
-                    Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
-                }
+                    if (systemDef.SystemShopItems.Count != 0)
+                    {
+                        List<string> TempList = systemDef.SystemShopItems;
+                        TempList.Add(Core.Settings.FactionShops[system.owner]);
+                        Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
+                    }
 
-                if (systemDef.FactionShopItems != null)
+                    if (systemDef.FactionShopItems != null)
+                    {
+                        Traverse.Create(systemDef).Property("FactionShopOwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
+                        Traverse.Create(systemDef).Property("FactionShopOwnerID").SetValue(system.owner);
+                        List<string> FactionShops = systemDef.FactionShopItems;
+                        if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner]))
+                            FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner]);
+                        FactionShops.Add(Core.Settings.FactionShopItems[system.owner]);
+                        Traverse.Create(systemDef).Property("FactionShopItems").SetValue(FactionShops);
+                    }
+                }
+            }
+
+            foreach (var faction in Core.WarStatus.ExternalPriorityTargets.Keys)
+            {
+                Galaxy_at_War.HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
+                foreach (var system in Core.WarStatus.ExternalPriorityTargets[faction])
+                    Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
+            }
+            foreach (var system in Core.WarStatus.FullHomeContendedSystems)
+            {
+                Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(ssDict[system.Key], system.Value));
+            }
+            foreach (var system in Core.WarStatus.HomeContendedSystems)
+            {
+                Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
+            }
+            foreach (var starSystem in Core.WarStatus.FullPirateSystems)
+            {
+                Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(Core.WarStatus.systems.Find(x => x.name == starSystem));
+            }
+            foreach (var deathListTracker in Core.WarStatus.deathListTracker)
+            {
+                Core.AdjustDeathList(deathListTracker, sim, true);
+            }
+            foreach (var defensivefaction in Core.Settings.DefensiveFactions)
+            {
+                if (Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction) == null)
+                    continue;
+
+                var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction);
+
+                if (targetfaction.AttackResources != 0)
                 {
-                    Traverse.Create(systemDef).Property("FactionShopOwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
-                    Traverse.Create(systemDef).Property("FactionShopOwnerID").SetValue(system.owner);
-                    List<string> FactionShops = systemDef.FactionShopItems;
-                    if (FactionShops.Contains(Core.Settings.FactionShopItems[systemOwner]))
-                        FactionShops.Remove(Core.Settings.FactionShopItems[systemOwner]);
-                    FactionShops.Add(Core.Settings.FactionShopItems[system.owner]);
-                    Traverse.Create(systemDef).Property("FactionShopItems").SetValue(FactionShops);
+                    targetfaction.DefensiveResources += targetfaction.AttackResources;
+                    targetfaction.AttackResources = 0;
                 }
             }
         }
-        foreach (var faction in Core.WarStatus.ExternalPriorityTargets.Keys)
+        catch
         {
-            Galaxy_at_War.HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
-            foreach (var system in Core.WarStatus.ExternalPriorityTargets[faction])
-                Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
-        }
-        foreach (var system in Core.WarStatus.FullHomeContendedSystems)
-        {
-            Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(ssDict[system.Key], system.Value));
-        }
-        foreach (var system in Core.WarStatus.HomeContendedSystems)
-        {
-            Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
-        }
-        foreach (var starSystem in Core.WarStatus.FullPirateSystems)
-        {
-            Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(Core.WarStatus.systems.Find(x => x.name == starSystem));
-        }
-        foreach (var deathListTracker in Core.WarStatus.deathListTracker)
-        {
-            Core.AdjustDeathList(deathListTracker, sim, true);
-        }
-        foreach (var defensivefaction in Core.Settings.DefensiveFactions)
-        {
-            if (Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction) == null)
-                continue;
-
-            var targetfaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction);
-
-            if (targetfaction.AttackResources != 0)
-            {
-                targetfaction.DefensiveResources += targetfaction.AttackResources;
-                targetfaction.AttackResources = 0;
-            }
+            sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
+            Core.BorkedSave = true;
         }
     }
 
