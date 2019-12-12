@@ -12,6 +12,8 @@ using BattleTech.UI;
 using HBS;
 using Localize;
 using BattleTech.Framework;
+using BattleTech.UI.TMProWrapper;
+using UnityEngine.UI;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -1435,15 +1437,20 @@ public static class Core
     }
 
     //Show on the Contract Description how this will impact the war. 
-    [HarmonyPatch(typeof(Briefing), "SetContractInfo")]
-    public static class Briefing_SetContractInfo_Patch
+    [HarmonyPatch(typeof(SGContractsWidget), "PopulateContract")]
+    public static class SGContractsWidget_PopulateContract_Patch
     {
-        static void Postfix(Briefing __instance, ref Contract contract)
+        static void Prefix(ref Contract contract, ref string __state)
         {
-            var StringHolder = contract.Override.ShortDescription;
-            StringHolder = "Impact on System Conflict:\n\nArano Restoration: +10 Influence\n\nSteiner: -10 Influence\n\n\n\n" 
-                + "Overall War Impact: Arano Restoration + 10 Attack Resources" + StringHolder;
-            Traverse.Create(__instance).Field("contractShortDescription").SetValue(StringHolder);
+            __state = contract.Override.shortDescription;
+            var StringHolder = contract.Override.shortDescription;
+            StringHolder = "<b>Impact on System Conflict:</b> Arano Restoration: +10; Steiner: -10 Influence\n"
+                + "<b>Overall War Impact:</b> Arano Restoration + 10 Attack Resources\n\n" + StringHolder;
+            contract.Override.shortDescription = StringHolder;
+        }
+        static void Postfix(ref Contract contract, ref string __state)
+        {
+            contract.Override.shortDescription = __state;
         }
     }
 
