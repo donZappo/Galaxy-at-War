@@ -111,6 +111,13 @@ public static class SaveHandling
                 Traverse.Create(systemDef).Property("OwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
                 Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
                 Core.RefreshContracts(system.starSystem);
+
+                if (!system.influenceTracker.Keys.Contains("AuriganPirates"))
+                {
+                    system.influenceTracker.Add("AuriganPirates", system.influenceTracker["NoFaction"]);
+                    system.influenceTracker.Remove("NoFaction");
+                }
+
                 if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
                 {
                     if (systemDef.SystemShopItems.Count != 0)

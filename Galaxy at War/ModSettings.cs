@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BattleTech;
-using UnityEngine;
+using BattleTech.Framework;
 
 public class ModSettings
 {
@@ -82,4 +82,6 @@ public class ModSettings
     public Dictionary<string, string> FactionNames = new Dictionary<string, string>();
 
     public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
+
+    public Dictionary<string, double> ContractImpact = new Dictionary<string, double>();
 }

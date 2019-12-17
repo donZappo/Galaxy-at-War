@@ -1341,6 +1341,7 @@ public static class Core
             }
             else
             {
+                system.DifficultyRating = SimSystem.Def.DefaultDifficulty;
                 if (GetPirateFlex)
                 {
                     WarStatus.PirateFlex = 50;
@@ -1442,16 +1443,76 @@ public static class Core
     {
         static void Prefix(ref Contract contract, ref string __state)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             __state = contract.Override.shortDescription;
             var StringHolder = contract.Override.shortDescription;
-            StringHolder = "<b>Impact on System Conflict:</b> Arano Restoration: +10; Steiner: -10 Influence\n"
-                + "<b>Overall War Impact:</b> Arano Restoration + 10 Attack Resources\n\n" + StringHolder;
+            var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230");
+            var DefenseFaction = contract.GetTeamFaction(("be77cadd-e245-4240-a93e-b99cc98902a5"));
+            var TargetSystem = contract.TargetSystem;
+            var SystemName = sim.StarSystems.Find(x => x.ID == TargetSystem);
+
+            double DeltaInfluence = Core.DeltaInfluence(SystemName.Name, contract.Difficulty, contract.Override.contractTypeID, DefenseFaction.Name);
+
+            bool SystemFlip = false;
+            if (EmployerFaction.Name != "AuriganPirates" && DefenseFaction.Name != "AuriganPirates")
+                SystemFlip = Core.WillSystemFlip(SystemName.Name, EmployerFaction.Name, DefenseFaction.Name, DeltaInfluence, true);
+
+            string AttackerString = Settings.FactionNames[EmployerFaction.Name] + ": +" + DeltaInfluence.ToString();
+            string DefenderString = Settings.FactionNames[DefenseFaction.Name] + ": -" + DeltaInfluence.ToString();
+
+            if (EmployerFaction.Name != "AuriganPirates" && DefenseFaction.Name != "AuriganPirates")
+            {
+                if (!SystemFlip)
+                    StringHolder = "<b>Impact on System Conflict:</b>\n " + AttackerString + "; " + DefenderString + "\n\n" + StringHolder;
+                else
+                    StringHolder = "<b>***SYSTEM WILL CHANGE OWNERS*** Impact on System Conflict:</b>\n " + AttackerString + "; " + DefenderString + "\n\n" + StringHolder;
+            }
+            else
+                StringHolder = "<b>Impact on Pirate Activity:</b>\n " + AttackerString + "; " + DefenderString + "\n\n" + StringHolder;
+
             contract.Override.shortDescription = StringHolder;
         }
         static void Postfix(ref Contract contract, ref string __state)
         {
             contract.Override.shortDescription = __state;
         }
+    }
+
+    internal static double DeltaInfluence(string system, int contractDifficulty, string contractTypeID, string DefenseFaction)
+    {
+        var TargetSystem = WarStatus.systems.Find(x => x.name == system);
+        var MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
+        var InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID];
+        InfluenceChange = Math.Max(InfluenceChange, 0.4);
+        InfluenceChange = Math.Min(InfluenceChange, MaximumInfluence);
+        InfluenceChange = Math.Round(InfluenceChange, 1);
+        return InfluenceChange;
+    }
+
+    internal static bool WillSystemFlip(string system, string Winner, string Loser, double deltainfluence, bool PreBattle)
+    {
+        var Sim = UnityGameInstance.BattleTechGame.Simulation;
+        var warsystem = WarStatus.systems.Find(x => x.name == system);
+        var tempIT = new Dictionary<string, float>(warsystem.influenceTracker);
+
+        if (PreBattle)
+        {
+            tempIT[Winner] += (float)deltainfluence;
+            tempIT[Loser] -= (float)deltainfluence;
+        }
+        var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
+        var highValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
+        tempIT.Remove(highKey);
+        var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
+
+        if (highKey != warsystem.owner && highKey == Winner && highValue - secondValue > Settings.TakeoverThreshold
+            && (!Settings.DefensiveFactions.Contains(Winner) || teamfaction == "Locals") && warsystem.starSystem.OwnerValue.Name != "ComStar")
+            return true;
+        else
+            return false;
     }
 
 
