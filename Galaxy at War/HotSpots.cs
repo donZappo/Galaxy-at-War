@@ -68,7 +68,7 @@ namespace Galaxy_at_War
 
                 if (systemStatus.Contended)
                     Core.WarStatus.ContendedStrings.Add(systemStatus.name);
-                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner]
+                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
                     && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 4)
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
@@ -137,8 +137,8 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-
-                if (HomeContendedSystems.Count != 0)
+               
+                if (HomeContendedSystems.Count != 0  && !Core.Settings.DefensiveFactions.Contains(sim.CurSystem.OwnerValue.Name))
                 {
                     int i = 0;
                     int twiddle = 0;
@@ -199,7 +199,7 @@ namespace Galaxy_at_War
                     int j = startBC;
                     foreach (var ExtTarget in ExternalPriorityTargets.Keys)
                     {
-                        if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
+                        if (ExternalPriorityTargets[ExtTarget].Count == 0 || Core.Settings.DefensiveFactions.Contains(ExtTarget)) continue;
                         do
                         {
                             var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
@@ -210,6 +210,7 @@ namespace Galaxy_at_War
                                 ExternalPriorityTargets[ExtTarget].Remove(sim.CurSystem);
                                 continue;
                             }
+
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
                             if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                                 sim.GeneratePotentialContracts(true, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
@@ -229,16 +230,7 @@ namespace Galaxy_at_War
             }
         }
 
-        //[HarmonyPatch(typeof(SimGameState), "GeneratePotentialContracts")]
-        //public static class SimGameState_GeneratePotentialContracts_Patch
-        //{
-        //    static void Prefix(ref StarSystem systemOverride)
-        //    {
-        //        if (systemOverride != null && !Core.NeedsProcessing)
-        //            systemOverride = null;
-        //    }
-        //}
-
+       
 
         [HarmonyPatch(typeof(StarSystem))]
         [HarmonyPatch("InitialContractsFetched", MethodType.Getter)]
