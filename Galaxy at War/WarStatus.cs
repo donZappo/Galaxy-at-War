@@ -56,57 +56,44 @@ public class WarStatus
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            if (Core.Settings.DefensiveFactions.Contains(faction))
-                continue;
             warFactionTracker.Add(new WarFaction(faction));
             deathListTracker.Add(new DeathListTracker(faction));
         }
-        warFactionTracker.Add(new WarFaction("Local Factions"));
-        deathListTracker.Add(new DeathListTracker("Local Factions"));
 
         foreach (var system in sim.StarSystems)
         {
-            var warFaction1 = warFactionTracker.Find(x => x.faction == "Local Factions");
-            if (system.OwnerValue  == Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction"))
+            if (system.OwnerValue == Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction"))
                 AbandonedSystems.Add(system.Name);
-            
-            if (!Core.Settings.DefensiveFactions.Contains(system.OwnerValue.Name))
-                warFaction1 = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
-            if (warFaction1.faction == "Local Factions" && Core.Settings.DefendersUseARforDR)
-                warFaction1.DefensiveResources += Core.GetTotalAttackResources(system);
+            var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
+            if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
+                warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
             else
-                warFaction1.AttackResources += Core.GetTotalAttackResources(system);
-            warFaction1.DefensiveResources += Core.GetTotalDefensiveResources(system);
+                warFaction.AttackResources += Core.GetTotalAttackResources(system);
+            warFaction.DefensiveResources += Core.GetTotalDefensiveResources(system);
         }
         var MaxAR = warFactionTracker.Select(x => x.AttackResources).Max();
         var MaxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
         foreach (var faction in Core.Settings.IncludedFactions)
         {
-            if (Core.Settings.DefensiveFactions.Contains(faction))
-                continue;
-            var warFaction2 = warFactionTracker.Find(x => x.faction == faction);
-            warFaction2.AttackResources = MaxAR + Core.Settings.BonusAttackResources[faction];
-            warFaction2.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
-        }
-         var warFaction3 = warFactionTracker.Find(x => x.faction == "Local Factions");
-        warFaction3.AttackResources = MaxAR + Core.Settings.BonusAttackResources["Local Factions"];
-        warFaction3.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources["Local Factions"];
-
-        if (Core.Settings.DefendersUseARforDR)
+            var warFaction = warFactionTracker.Find(x => x.faction == faction);
+            if (Core.Settings.DefensiveFactions.Contains(faction) && Core.Settings.DefendersUseARforDR)
             {
-                warFaction3.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources["Local Factions"] +
-                    Core.Settings.BonusDefensiveResources["Local Factions"];
-                warFaction3.AttackResources = 0;
+                warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources[faction] +
+                    Core.Settings.BonusDefensiveResources[faction];
+                warFaction.AttackResources = 0;
             }
+            else
+            {
+                warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources[faction];
+                warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
+            }
+        }
         PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
         foreach (var system in sim.StarSystems)
         {
             var systemStatus = new SystemStatus(sim, system.Name, system.OwnerValue.Name);
-            if (Core.Settings.DefensiveFactions.Contains(system.OwnerValue.Name))
-                systemStatus.owner = "Local Factions";
-                
             systems.Add(systemStatus);
             if (system.Tags.Contains("planet_other_pirate"))
             {
@@ -179,14 +166,10 @@ public class SystemStatus
         var neighbors = sim.Starmap.GetAvailableNeighborSystem(starSystem);
         foreach (var neighborSystem in neighbors)
         {
-            var neighborName = neighborSystem.OwnerValue.Name;
-            if (Core.Settings.DefensiveFactions.Contains(neighborSystem.OwnerValue.Name))
-                neighborName = "Local Factions";
-
-            if (neighborSystems.ContainsKey(neighborName))
-                neighborSystems[neighborName] += 1;
+            if (neighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
+                neighborSystems[neighborSystem.OwnerValue.Name] += 1;
             else
-                neighborSystems.Add(neighborName, 1);
+                neighborSystems.Add(neighborSystem.OwnerValue.Name, 1);
         }
     }
 
@@ -194,9 +177,12 @@ public class SystemStatus
     public void CalculateSystemInfluence()
     {
         influenceTracker.Clear();
-        if (Core.Settings.DefensiveFactions.Contains(owner))
-            influenceTracker.Add("Local Factions", 100);
-        else
+        if (owner == "NoFaction")
+            influenceTracker.Add(owner, 100);
+        if (owner == "Locals")
+            influenceTracker.Add(owner, 100);
+
+        if (owner != "NoFaction" && owner != "Locals")
         {
             influenceTracker.Add(owner, Core.Settings.DominantInfluence);
             int remainingInfluence = Core.Settings.MinorInfluencePool;
@@ -211,7 +197,7 @@ public class SystemStatus
                         {
                             var influenceDelta = neighborSystems[faction];
                             remainingInfluence -= influenceDelta;
-                            if (Core.Settings.DefensiveFactions.Contains(faction))
+                            if (faction == "NoFaction" || faction == "Locals")
                                 continue;
                             if (influenceTracker.ContainsKey(faction))
                                 influenceTracker[faction] += influenceDelta;
@@ -227,8 +213,6 @@ public class SystemStatus
             if (!influenceTracker.Keys.Contains(faction))
                 influenceTracker.Add(faction, 0);
         }
-        if (!influenceTracker.Keys.Contains("Local Factions"))
-            influenceTracker.Add("Local Factions", 0);
 
         // need percentages from InfluenceTracker data 
         var totalInfluence = influenceTracker.Values.Sum();
@@ -337,26 +321,15 @@ public class DeathListTracker
     public DeathListTracker(string faction)
     {
         LogDebug("DeathListTracker ctor");
-        
-        if (faction == "Local Factions")
-        {
-            this.faction = faction;
-            foreach (var factionName in Core.Settings.IncludedFactions)
-            {
-                if (Core.Settings.DefensiveFactions.Contains(factionName))
-                    continue;
-                deathList.Add(factionName, 50);
-            }
-            return;
-        }
-        
+
+
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction);
-        
+
         foreach (var factionNames in Core.Settings.IncludedFactions)
         {
             var def = sim.GetFactionDef(factionNames);
-            if (!Core.Settings.IncludedFactions.Contains(def.FactionValue.Name) || Core.Settings.DefensiveFactions.Contains(factionNames))
+            if (!Core.Settings.IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.Name))
                 deathList.Add(def.FactionValue.Name, Core.Settings.KLValuesEnemies);
@@ -365,6 +338,5 @@ public class DeathListTracker
             else if (factionDef != def)
                 deathList.Add(def.FactionValue.Name, Core.Settings.KLValuesNeutral);
         }
-        deathList.Add("Local Factions", 50);
     }
 }
