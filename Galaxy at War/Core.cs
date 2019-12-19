@@ -230,9 +230,9 @@ public static class Core
             //    WarStatus.SystemChangedOwners.Clear();
             //}
 
-            if (!systemStatus.owner.Equals(Core.FactionValues.FirstOrDefault(f => f.Name == "Local Factions")) && systemStatus.influenceTracker.Keys.Contains("Local Factions"))
+            if (!systemStatus.owner.Equals(Core.FactionValues.FirstOrDefault(f => f.Name == "Locals")) && systemStatus.influenceTracker.Keys.Contains("Locals"))
             {
-                systemStatus.influenceTracker["Local Factions"] *= 1.1f;
+                systemStatus.influenceTracker["Locals"] *= 1.1f;
                 var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
                 if (!warFaction.defenseTargets.Contains(systemStatus.name))
                     warFaction.defenseTargets.Add(systemStatus.name);
@@ -360,29 +360,21 @@ public static class Core
 
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            var neighborSystemOwner = neighborSystem.OwnerValue.Name;
-            if (Settings.DefensiveFactions.Contains(neighborSystemOwner))
-                neighborSystemOwner = "Local Factions";
-
-            var starSystemOwner = starSystem.OwnerValue.Name;
-            if (Settings.DefensiveFactions.Contains(starSystemOwner))
-                starSystemOwner = "Local Factions";
-
-            if (!neighborSystemOwner.Equals(starSystemOwner) && !Settings.ImmuneToWar.Contains(neighborSystemOwner))
+            if (!neighborSystem.OwnerValue.Equals(starSystem.OwnerValue.Name) && !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
             {
-                var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystemOwner);
+                var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
                 if (warFac == null)
                     return;
 
-                if (!warFac.attackTargets.ContainsKey(neighborSystemOwner))
+                if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                 {
                     var tempList = new List<string> { neighborSystem.Name };
-                    warFac.attackTargets.Add(neighborSystemOwner, tempList);
+                    warFac.attackTargets.Add(neighborSystem.OwnerValue.Name, tempList);
                 }
-                else if (warFac.attackTargets.ContainsKey(neighborSystemOwner) 
-                         && !warFac.attackTargets[neighborSystemOwner].Contains(neighborSystem.Name))
+                else if (warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name) 
+                         && !warFac.attackTargets[neighborSystem.OwnerValue.Name].Contains(neighborSystem.Name))
                 {
-                    warFac.attackTargets[neighborSystemOwner].Add(neighborSystem.Name);
+                    warFac.attackTargets[neighborSystem.OwnerValue.Name].Add(neighborSystem.Name);
                 }
                 if (!warFac.defenseTargets.Contains(starSystem.Name))
                 {
