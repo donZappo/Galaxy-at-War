@@ -230,7 +230,7 @@ public static class Core
             //    WarStatus.SystemChangedOwners.Clear();
             //}
 
-            if (!systemStatus.owner.Equals(Core.FactionValues.FirstOrDefault(f => f.Name == "Locals")) && systemStatus.influenceTracker.Keys.Contains("Locals"))
+            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
             {
                 systemStatus.influenceTracker["Locals"] *= 1.1f;
                 var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
@@ -360,7 +360,7 @@ public static class Core
 
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!neighborSystem.OwnerValue.Equals(starSystem.OwnerValue.Name) && !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
+            if (!neighborSystem.OwnerValue.Name.Equals(starSystem.OwnerValue.Name) && !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
             {
                 var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
                 if (warFac == null)
@@ -388,8 +388,6 @@ public static class Core
     public static void RefreshNeighbors(Dictionary<string, int> starSystem, StarSystem neighborSystem)
     {
         var neighborSystemOwner = neighborSystem.OwnerValue.Name;
-        if (Settings.DefensiveFactions.Contains(neighborSystemOwner))
-            neighborSystemOwner = "Local Factions";
 
         if (starSystem.ContainsKey(neighborSystemOwner))
             starSystem[neighborSystemOwner] += 1;
@@ -696,6 +694,7 @@ public static class Core
         var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
         if (factionTracker.deathList[faction] < 50)
             factionTracker.deathList[faction] = 50;
+
         factionTracker.deathList[faction] += KillListDelta;
         //Allies are upset that their friend is being beaten up.
         if (!Settings.DefensiveFactions.Contains(OldFaction))
@@ -704,9 +703,10 @@ public static class Core
             {
                 if (!Settings.IncludedFactions.Contains(ally) || faction  == ally)
                     continue;
-
+                Log(ally);
                 var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
                 factionAlly.deathList[faction] += KillListDelta / 2;
+                Log("Ally Passed");
             }
         }
         //Enemies of the target faction are happy with the faction doing the beating.
@@ -714,10 +714,12 @@ public static class Core
         {
             foreach (var enemy in sim.GetFactionDef(OldFaction).Enemies)
             {
+                Log(enemy);
                 if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
                     continue;
                 var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
                 factionEnemy.deathList[faction] -= KillListDelta / 2;
+                Log("Enemy Passed");
             }
         }
         factionTracker.AttackedBy.Add(faction);
@@ -1449,7 +1451,7 @@ public static class Core
         if (PiratesInvolved)
             MaximumInfluence = TargetSystem.PirateActivity;
         
-        var InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / 2;
+        var InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / 1.5;
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);

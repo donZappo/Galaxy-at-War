@@ -62,7 +62,7 @@ public class WarStatus
 
         foreach (var system in sim.StarSystems)
         {
-            if (system.OwnerValue == Core.FactionValues.FirstOrDefault(f => f.Name == "NoFaction"))
+            if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                 AbandonedSystems.Add(system.Name);
             var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
             if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
@@ -178,7 +178,7 @@ public class SystemStatus
     {
         influenceTracker.Clear();
         if (owner == "NoFaction")
-            influenceTracker.Add(owner, 100);
+            influenceTracker.Add("NoFaction", 100);
         if (owner == "Locals")
             influenceTracker.Add(owner, 100);
 
@@ -197,7 +197,7 @@ public class SystemStatus
                         {
                             var influenceDelta = neighborSystems[faction];
                             remainingInfluence -= influenceDelta;
-                            if (faction == "NoFaction" || faction == "Locals")
+                            if (Core.Settings.DefensiveFactions.Contains(faction))
                                 continue;
                             if (influenceTracker.ContainsKey(faction))
                                 influenceTracker[faction] += influenceDelta;
@@ -321,7 +321,6 @@ public class DeathListTracker
     public DeathListTracker(string faction)
     {
         LogDebug("DeathListTracker ctor");
-
 
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction);

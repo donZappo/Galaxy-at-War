@@ -166,8 +166,8 @@ namespace Galaxy_at_War
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
 
-                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
-                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                            //var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
+                            //Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
                         else if (twiddle == -1)
                         {

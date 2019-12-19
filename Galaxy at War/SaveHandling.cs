@@ -112,10 +112,11 @@ public static class SaveHandling
                 Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
                 Core.RefreshContracts(system.starSystem);
 
-                //if (!system.influenceTracker.Keys.Contains("AuriganPirates") && system.influenceTracker.Keys.Contains("NoFaction"))
-                //{
-                //    system.influenceTracker.Add("AuriganPirates", system.influenceTracker["NoFaction"]);
-                //}
+                if (system.influenceTracker.Keys.Contains("AuriganPirates") && !system.influenceTracker.Keys.Contains("NoFaction"))
+                {
+                    system.influenceTracker.Add("NoFaction", system.influenceTracker["AuriganPirates"]);
+                    system.influenceTracker.Remove("AuriganPirates");
+                }
                 //if (!system.influenceTracker.Keys.Contains("NoFaction"))
                 //    system.influenceTracker.Add("NoFaction", 0);
 
