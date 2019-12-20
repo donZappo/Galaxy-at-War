@@ -14,6 +14,7 @@ using Localize;
 using BattleTech.Framework;
 using BattleTech.UI.TMProWrapper;
 using UnityEngine.UI;
+using BattleTech.Data;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -874,7 +875,7 @@ public static class Core
             if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
-        if (ContractEmployers.Count == 1 && ContractEmployers.Contains("AuriganPirates"))
+        if (ContractEmployers.Count == 1 && Settings.DefensiveFactions.Contains(ContractEmployers[0]))
         {
             FactionValue faction = Core.FactionValues.Find(x => x.Name == "AuriganRestoration");
             List<string> TempFaction = new List<string>(Settings.IncludedFactions);
@@ -1408,6 +1409,7 @@ public static class Core
             var StringHolder = contract.Override.shortDescription;
             var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230");
             var DefenseFaction = contract.GetTeamFaction(("be77cadd-e245-4240-a93e-b99cc98902a5"));
+
             var TargetSystem = contract.TargetSystem;
             var SystemName = sim.StarSystems.Find(x => x.ID == TargetSystem);
 
@@ -1447,10 +1449,10 @@ public static class Core
     internal static double DeltaInfluence(string system, int contractDifficulty, string contractTypeID, string DefenseFaction, bool PiratesInvolved)
     {
         var TargetSystem = WarStatus.systems.Find(x => x.name == system);
-        var MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
-        if (PiratesInvolved)
-            MaximumInfluence = TargetSystem.PirateActivity;
-        
+        var MaximumInfluence = TargetSystem.PirateActivity;
+        if (!PiratesInvolved)
+            MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
+
         var InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / 1.5;
         if (PiratesInvolved)
             InfluenceChange *= 2;
@@ -1485,25 +1487,26 @@ public static class Core
             return false;
     }
 
-
-    //Disable the campaign start button in order to avoid infinite sadness
-    [HarmonyPatch(typeof(MainMenu), "Init")]
-    public static class MainMenu_Init_Patch
-    {
-        static void Prefix(MainMenu __instance)
-        {
-            //try
-            //{
-            //    HBSRadioSet topLevelMenu = Traverse.Create(__instance).Field("topLevelMenu").GetValue<HBSRadioSet>();
-            //    topLevelMenu.RadioButtons.Find((HBSButton x) => x.GetText() == "Campaign").gameObject.SetActive(false);
-            //}
-            //catch (Exception e)
-            //{
-            //    Logger.Error(e);
-
-            //}
-        }
-    }
+    //Logging a part of contract generation to see if I can track down an infinite load problem. 
+    //[HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
+    //public static class MainMenu_Init_Patch
+    //{
+    //    static void Prefix(StarSystem system, SimGameState.ContractDifficultyRange diffRange, Dictionary<int, List<ContractOverride>> potentialContracts,
+    //        Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets, MapAndEncounters level)
+    //    {
+    //        Log("-------------------");
+    //        Log("Stuck in here?");
+    //        Log(system.Name);
+    //        foreach (var i in potentialContracts)
+    //            Log(potentialContracts[i.Key].Count().ToString());
+    //        foreach (var targets in validTargets)
+    //        {
+    //            Log(targets.Key);
+    //            foreach (var participant in validTargets[targets.Key])
+    //                Log("    " + participant.Target.Name);
+    //        }
+    //    }
+    //}
 
     //internal static void WarSummary(string eventString)
     //{
