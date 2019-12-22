@@ -73,7 +73,7 @@ public class ModSettings
     public float PirateSystemFlagValue = 25.0f;
     public double ResourceSpread = 0.25;
     public float AdvanceToTaskTime = 0.25f;
-    public bool ChangeDifficulty;
+    public bool ChangeDifficulty = true;
 
     public List<string> DefensiveFactions = new List<string>();
 

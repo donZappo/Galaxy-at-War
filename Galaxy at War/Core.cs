@@ -1308,19 +1308,24 @@ public static class Core
             }
             else
             {
+                system.DifficultyRating = SimSystem.Def.DefaultDifficulty;
                 if (GetPirateFlex)
                 {
                     WarStatus.PirateFlex = 50;
                     GetPirateFlex = false;
                 }
             }
-            if (SimSystem.Def.Owner != Faction.NoFaction && SimSystem.Def.SystemShopItems.Count == 0)
+            if (SimSystem.Def.OwnerValue.Name != "NoFaction" && SimSystem.Def.SystemShopItems.Count == 0)
             {
                 List<string> TempList = new List<string>();
                 TempList.Add("itemCollection_minor_Locals");
                 Traverse.Create(SimSystem.Def).Property("SystemShopItems").SetValue(TempList);
-                Shop.RefreshType refreshShop = Shop.RefreshType.RefreshIfEmpty;
-                SimSystem.SystemShop.Rehydrate(sim, SimSystem, SimSystem.Def.SystemShopItems, refreshShop, Shop.ShopType.System);
+                if (sim.CurSystem.Name == SimSystem.Def.Description.Name)
+                {
+                    Shop.RefreshType refreshShop = Shop.RefreshType.RefreshIfEmpty;
+                    SimSystem.SystemShop.Rehydrate(sim, SimSystem, SimSystem.Def.SystemShopItems, refreshShop,
+                        Shop.ShopType.System);
+                }
             }
 
         }
