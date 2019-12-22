@@ -1,6 +1,7 @@
+using System;
 using System.Collections.Generic;
 using BattleTech;
-using UnityEngine;
+using BattleTech.Framework;
 
 public class ModSettings
 {
@@ -24,17 +25,17 @@ public class ModSettings
     public float planet_other_hub = 6;
     public float planet_other_comstar = 0;
 
-    public List<Faction> ImmuneToWar = new List<Faction>();
+    public List<string> ImmuneToWar = new List<string>();
 
-    public Dictionary<Faction, int> BonusAttackResources = new Dictionary<Faction, int>();
+    public Dictionary<string, int> BonusAttackResources = new Dictionary<string, int>();
 
-    public Dictionary<Faction, int> BonusDefensiveResources = new Dictionary<Faction, int>();
+    public Dictionary<string, int> BonusDefensiveResources = new Dictionary<string, int>();
 
-    public Dictionary<Faction, string> FactionTags = new Dictionary<Faction, string>();
+    public Dictionary<string, string> FactionTags = new Dictionary<string, string>();
 
-    public Dictionary<Faction, string> FactionShops = new Dictionary<Faction, string>();
+    public Dictionary<string, string> FactionShops = new Dictionary<string, string>();
 
-    public Dictionary<Faction, string> FactionShopItems = new Dictionary<Faction, string>();
+    public Dictionary<string, string> FactionShopItems = new Dictionary<string, string>();
 
     public int WarFrequency = 10;
     public bool Debug = false;
@@ -42,9 +43,9 @@ public class ModSettings
     public string modDirectory;
     public int DominantInfluence = 75;
     public int MinorInfluencePool = 25;
-    public float GlobalDefenseFactor = 1.25f;
+    public float GlobalDefenseFactor = 1.5f;
     public int AResourceAdjustmentPerCycle = 1;
-    public int DResourceAdjustmentPerCycle = 0;
+    public int DResourceAdjustmentPerCycle = 1;
     public int ResourceRandomizer = 4;
     public float DifficultyFactor = 1f;
     public float TakeoverThreshold = 10f;
@@ -73,11 +74,13 @@ public class ModSettings
     public double ResourceSpread = 0.25;
     public float AdvanceToTaskTime = 0.25f;
 
-    public List<Faction> DefensiveFactions = new List<Faction>();
+    public List<string> DefensiveFactions = new List<string>();
 
-    public List<Faction> IncludedFactions = new List<Faction>();
+    public List<string> IncludedFactions = new List<string>();
 
-    public Dictionary<Faction, string> FactionNames = new Dictionary<Faction, string>();
+    public Dictionary<string, string> FactionNames = new Dictionary<string, string>();
 
-    public Dictionary<Faction, string> LogoNames = new Dictionary<Faction, string>();
+    public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
+
+    public Dictionary<string, double> ContractImpact = new Dictionary<string, double>();
 }

@@ -30,7 +30,7 @@ namespace Galaxy_at_War
         public static Random rand = new Random();
         public static int BonusMoney = 0;
 
-        public static Dictionary<Faction, List<StarSystem>> ExternalPriorityTargets = new Dictionary<Faction, List<StarSystem>>();
+        public static Dictionary<string, List<StarSystem>> ExternalPriorityTargets = new Dictionary<string, List<StarSystem>>();
         public static List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static Dictionary<StarSystem, float> FullHomeContendedSystems = new Dictionary<StarSystem, float>();
 
@@ -48,11 +48,11 @@ namespace Galaxy_at_War
             ExternalPriorityTargets.Clear();
             Core.WarStatus.HomeContendedStrings.Clear();
             Core.WarStatus.ContendedStrings.Clear();
-            var FactRepDict = new Dictionary<Faction, int>();
+            var FactRepDict = new Dictionary<string, int>();
             foreach (var faction in Core.Settings.IncludedFactions)
             {
                 ExternalPriorityTargets.Add(faction, new List<StarSystem>());
-                var MaxContracts = ProcessReputation(sim.GetRawReputation(faction));
+                var MaxContracts = ProcessReputation(sim.GetRawReputation(Core.FactionValues.Find(x => x.Name == faction)));
                 FactRepDict.Add(faction, MaxContracts);
             }
 
@@ -68,7 +68,7 @@ namespace Galaxy_at_War
 
                 if (systemStatus.Contended)
                     Core.WarStatus.ContendedStrings.Add(systemStatus.name);
-                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner]
+                if (systemStatus.Contended && systemStatus.DifficultyRating <= FactRepDict[systemStatus.owner] 
                     && systemStatus.DifficultyRating >= FactRepDict[systemStatus.owner] - 4)
                     systemStatus.PriorityDefense = true;
                 if (systemStatus.PriorityDefense)
@@ -137,37 +137,50 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-                
-                if (HomeContendedSystems.Count != 0)
+               
+                if (HomeContendedSystems.Count != 0  && !Core.Settings.DefensiveFactions.Contains(sim.CurSystem.OwnerValue.Name))
                 {
                     int i = 0;
-                    int twiddle = 1;
+                    int twiddle = 0;
                     var RandomSystem = 0;
                     while (HomeContendedSystems.Count != 0)
                     {
                         Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
-                        if (twiddle == 1)
-                            RandomSystem = rand.Next(HomeContendedSystems.Count / 2, HomeContendedSystems.Count);
-                        if (twiddle == -1)
-                            RandomSystem = rand.Next(0, HomeContendedSystems.Count / 2);
+                        if (twiddle == 0)
+                            twiddle = -1;
+                        else if (twiddle == 1)
+                            RandomSystem = rand.Next(0 , HomeContendedSystems.Count / 2);
+                        else if (twiddle == -1)
+                            RandomSystem = rand.Next(HomeContendedSystems.Count / 4, 3 * HomeContendedSystems.Count / 4);
                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         
-                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.Owner == Faction.Locals && MainBCTarget.Owner != Faction.Locals))
+                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue.Name == "Locals" && MainBCTarget.OwnerValue.Name != "Locals"))
                         {
                             HomeContendedSystems.Remove(MainBCTarget);
                             continue;
                         }
-                        TemporaryFlip(MainBCTarget, sim.CurSystem.Owner);
+                        TemporaryFlip(MainBCTarget, sim.CurSystem.OwnerValue.Name);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
+
+                            //var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
+                            //Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
-                        else
+                        else if (twiddle == -1)
                         {
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
                             SystemBonuses(MainBCTarget);
+                        }
+                        else if (twiddle == 1)
+                        {
+                            sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
+                            SystemBonuses(MainBCTarget);
+
+                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
+                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
 
                         Core.RefreshContracts(MainBCTarget);
@@ -179,13 +192,14 @@ namespace Galaxy_at_War
                         twiddle *= -1;
                     }
                 }
+                
                 if (ExternalPriorityTargets.Count != 0)
                 {
                     int startBC = sim.CurSystem.SystemBreadcrumbs.Count;
                     int j = startBC;
                     foreach (var ExtTarget in ExternalPriorityTargets.Keys)
                     {
-                        if (ExternalPriorityTargets[ExtTarget].Count == 0) continue;
+                        if (ExternalPriorityTargets[ExtTarget].Count == 0 || Core.Settings.DefensiveFactions.Contains(ExtTarget)) continue;
                         do
                         {
                             var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
@@ -196,6 +210,7 @@ namespace Galaxy_at_War
                                 ExternalPriorityTargets[ExtTarget].Remove(sim.CurSystem);
                                 continue;
                             }
+
                             TemporaryFlip(ExternalPriorityTargets[ExtTarget][RandTarget], ExtTarget);
                             if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                                 sim.GeneratePotentialContracts(true, null, ExternalPriorityTargets[ExtTarget][RandTarget], false);
@@ -215,16 +230,7 @@ namespace Galaxy_at_War
             }
         }
 
-        //[HarmonyPatch(typeof(SimGameState), "GeneratePotentialContracts")]
-        //public static class SimGameState_GeneratePotentialContracts_Patch
-        //{
-        //    static void Prefix(ref StarSystem systemOverride)
-        //    {
-        //        if (systemOverride != null && !Core.NeedsProcessing)
-        //            systemOverride = null;
-        //    }
-        //}
-
+       
 
         [HarmonyPatch(typeof(StarSystem))]
         [HarmonyPatch("InitialContractsFetched", MethodType.Getter)]
@@ -270,13 +276,13 @@ namespace Galaxy_at_War
         }
 
 
-        public static void TemporaryFlip(StarSystem starSystem, Faction faction)
+        public static void TemporaryFlip(StarSystem starSystem, string faction)
         {
-            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.FactionsDict[faction];
-            starSystem.Def.ContractEmployers.Clear();
-            starSystem.Def.ContractTargets.Clear();
+            var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction);
+            starSystem.Def.ContractEmployerIDList.Clear();
+            starSystem.Def.ContractTargetIDList.Clear();
 
-            starSystem.Def.ContractEmployers.Add(faction);
+            starSystem.Def.ContractEmployerIDList.Add(faction);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
@@ -284,15 +290,15 @@ namespace Galaxy_at_War
                 if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
                     && influence.Key != faction)
                 {
-                    starSystem.Def.ContractTargets.Add(influence.Key);
+                    starSystem.Def.ContractTargetIDList.Add(influence.Key);
                     break;
                 }
             }
-            if (starSystem.Def.ContractTargets.Count <= 1)
+            if (starSystem.Def.ContractTargetIDList.Count <= 1)
             {
-                starSystem.Def.ContractTargets.Add(Faction.AuriganPirates);
+                starSystem.Def.ContractTargetIDList.Add("AuriganPirates");
                 if (!Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
-                    starSystem.Def.ContractTargets.Add(Faction.Locals);
+                    starSystem.Def.ContractTargetIDList.Add("Locals");
             }
         }
 
@@ -311,7 +317,7 @@ namespace Galaxy_at_War
                     var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Core.WarStatus.HotBox.Add(starSystem.Name);
                     Core.WarStatus.HotBoxTravelling = true;
-                    TemporaryFlip(starSystem, contract.Override.employerTeam.faction);
+                    TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue.Name);
                     var curSystem = Core.WarStatus.systems.Find(x => x.starSystem == __instance.CurSystem);
                     if (Core.WarStatus.HotBox.Contains(__instance.CurSystem.Name))
                     {
@@ -333,10 +339,13 @@ namespace Galaxy_at_War
                     return;
 
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
-                Core.WarStatus.HotBox.Remove(system.Name);
+                if (Core.WarStatus.HotBox.Contains(system.Name))
+                    Core.WarStatus.HotBox.Remove(system.Name);
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
                 Core.RefreshContracts(system);
+                if (Core.WarStatus.HotBox.Count == 0)
+                    Core.WarStatus.HotBoxTravelling = false;
             }
         }
 
@@ -439,6 +448,30 @@ namespace Galaxy_at_War
                 }
             }
         }
+
+        //Need to clear out the old stuff if a contract is cancelled to prevent crashing.
+        [HarmonyPatch(typeof(SimGameState), "OnBreadcrumbCancelledByUser")]
+        public static class SimGameState_BreadCrumbCancelled_Patch
+        {
+            static void Postfix()
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
+
+                if (Core.WarStatus.HotBox.Contains(system.Name))
+                    Core.WarStatus.HotBox.Remove(system.Name);
+                Core.WarStatus.Escalation = false;
+                Core.WarStatus.EscalationDays = 0;
+                Core.RefreshContracts(system);
+                if (Core.WarStatus.HotBox.Count == 0)
+                    Core.WarStatus.HotBoxTravelling = false;
+            }
+        }
+
+
         [HarmonyPatch(typeof(Contract), "GenerateSalvage")]
         public static class Contract_GenerateSalvage_Patch
         {

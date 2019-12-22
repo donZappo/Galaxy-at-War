@@ -10,18 +10,18 @@ namespace Galaxy_at_War
 {
     public static class DynamicLogos
     {
-        public static void PlaceAndScaleLogos(Dictionary<Faction, string> logoNames, StarmapRenderer renderer)
+        public static void PlaceAndScaleLogos(Dictionary<string, string> logoNames, StarmapRenderer renderer)
         {
-            var boundingRects = new Dictionary<Faction, BoundingRect>();
-            var logos = new Dictionary<Faction, GameObject>();
-            foreach (Faction faction in logoNames.Keys)
+            var boundingRects = new Dictionary<FactionValue, BoundingRect>();
+            var logos = new Dictionary<FactionValue, GameObject>();
+            foreach (string faction in logoNames.Keys)
             {
-                logos.Add(faction, GameObject.Find(logoNames[faction]));
+                logos.Add(Core.FactionValues.Find(x => x.Name == faction), GameObject.Find(logoNames[faction]));
             }
             
             foreach (var starNode in renderer.starmap.VisisbleSystem)
             {
-                var faction = starNode.System.Owner;
+                var faction = starNode.System.OwnerValue;
                 if (!logos.ContainsKey(faction))
                     continue;
 
