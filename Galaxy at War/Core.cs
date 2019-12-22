@@ -87,6 +87,7 @@ public static class Core
     public static bool NeedsProcessing = false;
     public static List<FactionValue> FactionValues = new List<FactionValue>();
     public static bool BorkedSave;
+    public static bool IsFlashpointContract;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -1090,6 +1091,11 @@ public static class Core
             difficulty = __instance.Difficulty;
             missionResult = result;
             contractType = __instance.Override.contractTypeID;
+            if (__instance.IsFlashpointContract || __instance.IsFlashpointCampaignContract)
+                IsFlashpointContract = true;
+            else
+                IsFlashpointContract = false;
+            
         }
 
         [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
@@ -1099,6 +1105,9 @@ public static class Core
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                if (IsFlashpointContract)
                     return;
 
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
@@ -1403,6 +1412,9 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                 return;
 
             __state = contract.Override.shortDescription;
