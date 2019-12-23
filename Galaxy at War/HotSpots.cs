@@ -166,8 +166,8 @@ namespace Galaxy_at_War
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
 
-                            //var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
-                            //Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                            var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
+                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                         }
                         else if (twiddle == -1)
                         {
@@ -461,8 +461,11 @@ namespace Galaxy_at_War
 
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
 
-                if (Core.WarStatus.HotBox.Contains(system.Name))
-                    Core.WarStatus.HotBox.Remove(system.Name);
+                if (Core.WarStatus.HotBox.Count() == 2)
+                    Core.WarStatus.HotBox.RemoveAt(0);
+                else
+                    Core.WarStatus.HotBox.Clear();
+
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
                 Core.RefreshContracts(system);

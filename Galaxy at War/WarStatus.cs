@@ -131,6 +131,7 @@ public class SystemStatus
     public float DefenseResources;
     public float PirateActivity = 0.0f;
     public string CoreSystemID;
+    public bool Deployment = false;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 
