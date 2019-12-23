@@ -308,6 +308,7 @@ public static class Core
                 warfaction.DaysSinceSystemLost = 0;
                 warfaction.LostSystem = false;
             }
+            warfaction.adjacentFactions.Clear();
         }
 
         foreach (var system in WarStatus.SystemChangedOwners)
@@ -382,6 +383,8 @@ public static class Core
                 {
                     warFac.defenseTargets.Add(starSystem.Name);
                 }
+                if (!warFac.adjacentFactions.Contains(starSystem.OwnerValue.Name) && !Settings.DefensiveFactions.Contains(starSystem.OwnerValue.Name))
+                    warFac.adjacentFactions.Add(starSystem.OwnerValue.Name);
             }
             RefreshNeighbors(OwnerNeighborSystems, neighborSystem);
         }
@@ -899,7 +902,7 @@ public static class Core
         }
 
         if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains("AuriganPirates"))
-        {
+            {
             ContractEmployers.Add("AuriganPirates");
             ContractTargets.Add("AuriganPirates");
         }
@@ -933,6 +936,14 @@ public static class Core
                     NewFactionEnemies.Add(Enemy);
                 }
             }
+            foreach (var faction in Settings.DefensiveFactions)
+            {
+                if (!NewFactionEnemies.Contains(faction) && faction != employer.FactionValue.Name)
+                {
+                    NewFactionEnemies.Add(faction);
+                }
+            }
+
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
         }
 
@@ -952,6 +963,7 @@ public static class Core
         var deathList = deathListTracker.deathList;
         var KL_List = new List<string>(deathList.Keys);
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
+        bool HasEnemy = false;
 
         var deathListFaction = deathListTracker.faction;
         foreach (string faction in KL_List)
@@ -959,6 +971,7 @@ public static class Core
             if (!ReloadFromSave)
             {
                 //Factions adjust hatred based upon how much they are being attacked. But there is diminishing returns further from 50.
+                
                 int direction = -1;
                 if (warFaction.IncreaseAggression.Keys.Contains(faction) && warFaction.IncreaseAggression[faction])
                     direction = 1;
@@ -1016,6 +1029,7 @@ public static class Core
 
             if (deathList[faction] <= 25)
             {
+                HasEnemy = true;
                 if (!sim.GetFactionDef(deathListFaction).Allies.Contains(faction))
                 {
                     var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
@@ -1030,6 +1044,25 @@ public static class Core
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
             }
+        }
+        if (!HasEnemy)
+        {
+            var rand = Random.Next(0, warFaction.adjacentFactions.Count() - 1);
+            var NewEnemy = warFaction.adjacentFactions[rand];
+            if (!sim.GetFactionDef(deathListFaction).Allies.Contains(NewEnemy))
+            {
+                var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
+                allies.Add(NewEnemy);
+                Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
+            }
+
+            if (sim.GetFactionDef(deathListFaction).Enemies.Contains(NewEnemy))
+            {
+                var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
+                enemies.Remove(NewEnemy);
+                Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
+            }
+            deathList[NewEnemy] = 20;
         }
     }
 
