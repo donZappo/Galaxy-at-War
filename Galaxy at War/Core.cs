@@ -98,7 +98,7 @@ public static class Core
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
-            if (WarStatus == null || BorkedSave)
+            if (WarStatus == null || BorkedSave || Settings.ResetMap)
             {
                 WarStatus = new WarStatus();
                 SystemDifficulty();
@@ -521,7 +521,7 @@ public static class Core
     public static void AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
     {
         var faction = warFaction.faction;
-        if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction) || faction == "NoFaction")
+        if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
             return;
 
         float defensiveResources = warFaction.DefensiveResources;
@@ -708,10 +708,8 @@ public static class Core
             {
                 if (!Settings.IncludedFactions.Contains(ally) || faction  == ally)
                     continue;
-                Log(ally);
                 var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
                 factionAlly.deathList[faction] += KillListDelta / 2;
-                Log("Ally Passed");
             }
         }
         //Enemies of the target faction are happy with the faction doing the beating.
@@ -719,12 +717,10 @@ public static class Core
         {
             foreach (var enemy in sim.GetFactionDef(OldFaction).Enemies)
             {
-                Log(enemy);
                 if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
                     continue;
                 var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
                 factionEnemy.deathList[faction] -= KillListDelta / 2;
-                Log("Enemy Passed");
             }
         }
         factionTracker.AttackedBy.Add(faction);
@@ -1045,7 +1041,7 @@ public static class Core
                 }
             }
         }
-        if (!HasEnemy)
+        if (!HasEnemy && warFaction.adjacentFactions.Count() != 0)
         {
             var rand = Random.Next(0, warFaction.adjacentFactions.Count() - 1);
             var NewEnemy = warFaction.adjacentFactions[rand];
@@ -1474,15 +1470,28 @@ public static class Core
             if (EmployerFaction.Name != "AuriganPirates" && DefenseFaction.Name != "AuriganPirates")
             {
                 if (!SystemFlip)
-                    StringHolder = "<b>Impact on System Conflict:</b>\n " + AttackerString + "; " + DefenderString + "\n\n" + StringHolder;
+                    StringHolder = "<b>Impact on System Conflict:</b>\n   " + AttackerString + "; " + DefenderString;
                 else
-                    StringHolder = "<b>***SYSTEM WILL CHANGE OWNERS*** Impact on System Conflict:</b>\n " + AttackerString + "; " + DefenderString + "\n\n" + StringHolder;
+                    StringHolder = "<b>***SYSTEM WILL CHANGE OWNERS*** Impact on System Conflict:</b>\n   " + AttackerString + "; " + DefenderString;
             }
             else if (EmployerFaction.Name == "AuriganPirates")
-                StringHolder = "<b>Impact on Pirate Activity:</b>\n " + AttackerString + "\n\n" + StringHolder;
+                StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + AttackerString;
             else if (DefenseFaction.Name == "AuriganPirates")
-                StringHolder = "<b>Impact on Pirate Activity:</b>\n " + DefenderString + "\n\n" + StringHolder;
+                StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + DefenderString;
 
+            var system = WarStatus.systems.Find(x => x.name == SystemName.Name);
+
+            if (system.BonusCBills || system.BonusSalvage || system.BonusXP)
+            {
+                StringHolder = StringHolder + "\n<b>Escalation Bonuses:</b> ";
+                if (system.BonusCBills)
+                    StringHolder = StringHolder + "+C-Bills ";
+                if (system.BonusSalvage)
+                    StringHolder = StringHolder + "+Salvage ";
+                if (system.BonusXP)
+                    StringHolder = StringHolder + "+XP";
+            }
+            StringHolder = StringHolder + "\n\n" + __state;
             contract.Override.shortDescription = StringHolder;
         }
         static void Postfix(ref Contract contract, ref string __state)

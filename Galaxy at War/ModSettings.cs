@@ -74,6 +74,7 @@ public class ModSettings
     public double ResourceSpread = 0.25;
     public float AdvanceToTaskTime = 0.25f;
     public bool ChangeDifficulty = true;
+    public bool ResetMap = false;
 
     public List<string> DefensiveFactions = new List<string>();
 

@@ -524,7 +524,7 @@ namespace Galaxy_at_War
 
                 if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
-                    string missionObjectiveResultString = $"BONUS FROM ESCALTION: ¢{String.Format("{0:n0}", BonusMoney)}";
+                    string missionObjectiveResultString = $"BONUS FROM ESCALATION: ¢{String.Format("{0:n0}", BonusMoney)}";
                     MissionObjectiveResult missionObjectiveResult = new MissionObjectiveResult(missionObjectiveResultString, "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0", false, true, ObjectiveStatus.Succeeded, false);
                     Traverse.Create(__instance).Method("AddObjective", missionObjectiveResult).GetValue();
                 }
