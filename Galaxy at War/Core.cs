@@ -733,6 +733,9 @@ public static class Core
         var TotalDR = GetTotalDefensiveResources(system);
         var SystemValue = TotalAR + TotalDR;
         var KillListDelta = Math.Max(10, SystemValue);
+        if (WarStatus.deathListTracker.Find(x => x.faction == OldFaction) == null)
+            return;
+
         var factionTracker = WarStatus.deathListTracker.Find(x => x.faction == OldFaction);
         if (factionTracker.deathList[faction] < 50)
             factionTracker.deathList[faction] = 50;
@@ -743,7 +746,7 @@ public static class Core
         {
             foreach (var ally in sim.GetFactionDef(OldFaction).Allies)
             {
-                if (!Settings.IncludedFactions.Contains(ally) || faction  == ally)
+                if (!Settings.IncludedFactions.Contains(ally) || faction  == ally || WarStatus.deathListTracker.Find(x => x.faction == ally) == null)
                     continue;
                 var factionAlly = WarStatus.deathListTracker.Find(x => x.faction == ally);
                 factionAlly.deathList[faction] += KillListDelta / 2;
@@ -754,7 +757,7 @@ public static class Core
         {
             foreach (var enemy in sim.GetFactionDef(OldFaction).Enemies)
             {
-                if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction)
+                if (!Settings.IncludedFactions.Contains(enemy) || enemy == faction || WarStatus.deathListTracker.Find(x => x.faction == enemy) == null)
                     continue;
                 var factionEnemy = WarStatus.deathListTracker.Find(x => x.faction == enemy);
                 factionEnemy.deathList[faction] -= KillListDelta / 2;
@@ -1548,7 +1551,7 @@ public static class Core
         if (!PiratesInvolved)
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
-        var InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / 1.5;
+        var InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);

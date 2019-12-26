@@ -987,7 +987,9 @@ namespace Galaxy_at_War
                 if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
                     if (!Core.WarStatus.Deployment)
-                        __instance.Sim.Constants.Story.ContractSuccessReduction = 0;
+                    {
+                        //__instance.Sim.Constants.Story.ContractSuccessReduction = 0;
+                    }
                     else
                     {
                         __instance.Sim.Constants.Story.ContractSuccessReduction = 100;

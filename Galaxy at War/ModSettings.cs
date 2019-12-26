@@ -80,6 +80,7 @@ public class ModSettings
     public float DeploymentContracts = 2.0f;
     public double DeploymentInfluenceFactor = 1.1;
     public double DeploymentRerollBound = 0.33;
+    public double InfluenceFactor = 1.0;
 
     public List<string> DefensiveFactions = new List<string>();
 
