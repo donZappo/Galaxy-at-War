@@ -17,6 +17,7 @@ public class WarStatus
     public List<WarFaction> warFactionTracker = new List<WarFaction>();
     public bool JustArrived = true;
     public bool Escalation = false;
+    public bool Deployment = false;
     public WorkOrderEntry_Notification EscalationOrder;
     public int EscalationDays = 0;
     public List<string> PrioritySystems = new List<string>();
@@ -32,6 +33,9 @@ public class WarStatus
     public List<string> HomeContendedStrings = new List<string>();
     public List<string> ContendedStrings = new List<string>();
     public List<string> AbandonedSystems = new List<string>();
+    public List<string> DeploymentContracts = new List<string>();
+    public string DeploymentEmployer = "Marik";
+    public double DeploymentInfluenceIncrease = 1.0;
     
     public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
     public List<string> HomeContendedSystems = new List<string>();
@@ -131,7 +135,6 @@ public class SystemStatus
     public float DefenseResources;
     public float PirateActivity = 0.0f;
     public string CoreSystemID;
-    public bool Deployment = false;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 

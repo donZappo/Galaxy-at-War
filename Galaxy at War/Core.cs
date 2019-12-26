@@ -112,7 +112,6 @@ public static class Core
             {
                 StarmapMod.eventPanel.gameObject.SetActive(false);
                 UnityEngine.Object.Destroy(StarmapMod.eventPanel);
-
             }
             catch
             {
@@ -121,21 +120,59 @@ public static class Core
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
                 WarStatus.EscalationDays--;
+                var system = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
 
-                if (WarStatus.EscalationDays == 0)
+                if (!WarStatus.Deployment)
                 {
-                    Galaxy_at_War.HotSpots.CompleteEscalation();
-                }
-                if (WarStatus.EscalationOrder != null)
-                {
-                    WarStatus.EscalationOrder.PayCost(1);
-                    TaskManagementElement taskManagementElement4 = null;
-                    TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
-                    Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems = 
-                        (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
-                    if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
+                    if (WarStatus.EscalationDays == 0)
                     {
-                        taskManagementElement4.UpdateItem(0);
+                        Galaxy_at_War.HotSpots.CompleteEscalation();
+                    }
+                    if (WarStatus.EscalationOrder != null)
+                    {
+                        WarStatus.EscalationOrder.PayCost(1);
+                        TaskManagementElement taskManagementElement4 = null;
+                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
+                        Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                            (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                        if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
+                        {
+                            taskManagementElement4.UpdateItem(0);
+                        }
+                    }
+                }
+                else
+                {
+                    if (WarStatus.EscalationOrder != null)
+                    {
+                        WarStatus.EscalationOrder.PayCost(1);
+                        TaskManagementElement taskManagementElement4 = null;
+                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
+                        Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                            (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                        if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
+                        {
+                            taskManagementElement4.UpdateItem(0);
+                        }
+                    }
+                    if (WarStatus.EscalationDays <= 0)
+                    {
+                        sim.StopPlayMode();
+
+                        sim.CurSystem.SystemContracts.Clear();
+                        sim.CurSystem.SystemBreadcrumbs.Clear();
+                        Galaxy_at_War.HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
+                        var MaxHolder = sim.CurSystem.CurMaxBreadcrumbs;
+                        Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue((int)Core.Settings.DeploymentContracts);
+                        sim.GeneratePotentialContracts(true, null, sim.CurSystem, false);
+                        Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(MaxHolder);
+
+                        SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools.Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
+                        Action primaryAction = delegate () {
+                            __instance.QueueCompleteBreadcrumbProcess(true);
+                        };
+                        interruptQueue.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation!", __instance.GetCrewPortrait(SimGameCrew.Crew_Darius),
+                            string.Empty, null, "Proceed", null, null);
                     }
                 }
             }
@@ -881,7 +918,7 @@ public static class Core
             List<string> TempFaction = new List<string>(Settings.IncludedFactions);
             do
             {
-                var randFaction = Random.Next(0, TempFaction.Count);
+                var randFaction = Random.Next(0, TempFaction.Count());
                 faction = Core.FactionValues.Find(x => x.Name == Settings.IncludedFactions[randFaction]);
                 if (Settings.DefensiveFactions.Contains(faction.Name))
                 {
@@ -1043,7 +1080,7 @@ public static class Core
         }
         if (!HasEnemy && warFaction.adjacentFactions.Count() != 0)
         {
-            var rand = Random.Next(0, warFaction.adjacentFactions.Count() - 1);
+            var rand = Random.Next(0, warFaction.adjacentFactions.Count());
             var NewEnemy = warFaction.adjacentFactions[rand];
             if (!sim.GetFactionDef(deathListFaction).Allies.Contains(NewEnemy))
             {
@@ -1197,11 +1234,15 @@ public static class Core
 
                         if (WarStatus.HotBox.Contains(sim.CurSystem.Name))
                         {
+                            if (WarStatus.Deployment)
+                                sim.InterruptQueue.QueueRewardsPopup("itemCollection_HM_careerStarter");
                             WarStatus.HotBox.Remove(sim.CurSystem.Name);
                             WarStatus.EscalationDays = 0;
                             warsystem.BonusCBills = false;
                             warsystem.BonusSalvage = false;
                             warsystem.BonusXP = false;
+                            WarStatus.Deployment = false;
+                            WarStatus.DeploymentInfluenceIncrease = 1.0;
                             if (WarStatus.EscalationOrder != null)
                             {
                                 WarStatus.EscalationOrder.SetCost(0);
@@ -1407,7 +1448,7 @@ public static class Core
                     result = 1;
                 else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
                     result = difficulty + 11;
-                else if (contract.TargetSystem.Replace("starsystemdef_", "").Equals(Sim.CurSystem.Name))
+                else if (contract.TargetSystem.Equals(Sim.CurSystem.Def.Description.Id))
                     result = difficulty + 1;
                 else
                     result = difficulty + 21;
@@ -1507,7 +1548,7 @@ public static class Core
         if (!PiratesInvolved)
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
-        var InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / 1.5;
+        var InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / 1.5;
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);

@@ -12,6 +12,7 @@ using HBS;
 using BattleTech.UI;
 using System.Collections.Generic;
 using BattleTech.Save.Core;
+using BattleTech.Framework;
 
 
 public static class SaveHandling
@@ -176,6 +177,11 @@ public static class SaveHandling
                     targetfaction.DefensiveResources += targetfaction.AttackResources;
                     targetfaction.AttackResources = 0;
                 }
+            }
+            foreach (var contract in sim.CurSystem.activeSystemBreadcrumbs)
+            {
+                if (Core.WarStatus.DeploymentContracts.Contains(contract.Override.contractName))
+                    Traverse.Create(contract.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
             }
         }
         catch

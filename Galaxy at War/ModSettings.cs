@@ -75,6 +75,11 @@ public class ModSettings
     public float AdvanceToTaskTime = 0.25f;
     public bool ChangeDifficulty = true;
     public bool ResetMap = false;
+    public int DeploymentMinDays = 2;
+    public int DeploymentMaxDays = 6;
+    public float DeploymentContracts = 2.0f;
+    public double DeploymentInfluenceFactor = 1.1;
+    public double DeploymentRerollBound = 0.33;
 
     public List<string> DefensiveFactions = new List<string>();
 

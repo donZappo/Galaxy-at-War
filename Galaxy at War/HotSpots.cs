@@ -98,7 +98,7 @@ namespace Galaxy_at_War
             var i = 0;
             foreach (var system in FullHomeContendedSystems.OrderByDescending(x => x.Value))
             {
-                if (i < 6)
+                if (i < FullHomeContendedSystems.Count())
                 {
                     Core.WarStatus.HomeContendedStrings.Add(system.Key.Name);
                 }
@@ -111,7 +111,7 @@ namespace Galaxy_at_War
         [HarmonyPatch(typeof(StarSystem), "GenerateInitialContracts")]
         public static class SimGameState_GenerateInitialContracts_Patch
         {
-            static void Prefix(StarSystem __instance)
+            static void Prefix(StarSystem __instance, ref float __state)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
@@ -120,10 +120,17 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(0);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(0);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
+                __state = sim.CurSystem.CurMaxContracts;
+
+                if (Core.WarStatus.Deployment)
+                {
+                    Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(Core.Settings.DeploymentContracts);
+
+                }
             }
 
 
-            static void Postfix(StarSystem __instance)
+            static void Postfix(StarSystem __instance, ref float __state)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
@@ -137,8 +144,10 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
+
+                Core.WarStatus.DeploymentContracts.Clear();
                
-                if (HomeContendedSystems.Count != 0  && !Core.Settings.DefensiveFactions.Contains(sim.CurSystem.OwnerValue.Name))
+                if (HomeContendedSystems.Count != 0  && !Core.Settings.DefensiveFactions.Contains(sim.CurSystem.OwnerValue.Name) && !Core.WarStatus.Deployment)
                 {
                     int i = 0;
                     int twiddle = 0;
@@ -165,9 +174,11 @@ namespace Galaxy_at_War
                         if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
+                            SystemBonuses(MainBCTarget);
 
                             var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
                             Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                            Core.WarStatus.DeploymentContracts.Add(PrioritySystem.Override.contractName);
                         }
                         else if (twiddle == -1)
                         {
@@ -181,9 +192,11 @@ namespace Galaxy_at_War
 
                             var PrioritySystem = sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
                             Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                            Core.WarStatus.DeploymentContracts.Add(PrioritySystem.Override.contractName);
                         }
 
                         Core.RefreshContracts(MainBCTarget);
+
                         HomeContendedSystems.Remove(MainBCTarget);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
                             break;
@@ -227,6 +240,7 @@ namespace Galaxy_at_War
                     }
                 }
                 isBreadcrumb = false;
+                Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(__state);
             }
         }
 
@@ -285,21 +299,21 @@ namespace Galaxy_at_War
             starSystem.Def.ContractEmployerIDList.Add(faction);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
+
+            if (starSystem.OwnerValue.Name != faction)
+                starSystem.Def.ContractTargetIDList.Add(starSystem.OwnerValue.Name);
+
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
                 if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
                     && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargetIDList.Add(influence.Key);
-                    break;
                 }
+                if (starSystem.Def.ContractTargetIDList.Count() == 2)
+                    break;
             }
-            if (starSystem.Def.ContractTargetIDList.Count <= 1)
-            {
-                starSystem.Def.ContractTargetIDList.Add("AuriganPirates");
-                if (!Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
-                    starSystem.Def.ContractTargetIDList.Add("Locals");
-            }
+            
         }
 
         //Deployments area.
@@ -317,6 +331,19 @@ namespace Galaxy_at_War
                     var starSystem = __instance.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Core.WarStatus.HotBox.Add(starSystem.Name);
                     Core.WarStatus.HotBoxTravelling = true;
+
+                    if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+                    {
+                        Core.WarStatus.Deployment = true;
+                        Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
+                        Core.WarStatus.DeploymentEmployer = contract.Override.employerTeam.FactionValue.Name;
+                    }
+                    else
+                    {
+                        Core.WarStatus.Deployment = false;
+                        Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
+                    }
+
                     TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue.Name);
                     var curSystem = Core.WarStatus.systems.Find(x => x.starSystem == __instance.CurSystem);
                     if (Core.WarStatus.HotBox.Contains(__instance.CurSystem.Name))
@@ -332,6 +359,84 @@ namespace Galaxy_at_War
         [HarmonyPatch(typeof(SGNavigationScreen), "OnTravelCourseAccepted")]
         public static class SGNavigationScreen_OnTravelCourseAccepted_Patch
         {
+            static bool Prefix(SGNavigationScreen __instance)
+            {
+                try
+                {
+                    if (Core.WarStatus.Deployment)
+                    {
+                        UIManager uiManager = (UIManager)AccessTools.Field(typeof(SGNavigationScreen), "uiManager").GetValue(__instance);
+                        SimGameState simState = (SimGameState)AccessTools.Field(typeof(SGNavigationScreen), "simState").GetValue(__instance);
+                        Action cleanup = delegate () {
+                            uiManager.ResetFader(UIManagerRootType.PopupRoot);
+                            simState.Starmap.Screen.AllowInput(true);
+                        };
+                        string primaryButtonText = "Break Deployment";
+                        string message = "WARNING: This action will break your current Deployment. Your reputation with the employer and the MRB will be negatively impacted.";
+                        PauseNotification.Show("Navigation Change", message, simState.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
+                            cleanup();
+                            Core.WarStatus.Deployment = false;
+                            if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
+                            {
+                                float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
+                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.DefaultDifficulty * employerRepBadFaithMod);
+                                if (num != 0)
+                                {
+                                    simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);
+                                    simState.SetReputation(simState.GetFactionValueFromString("faction_MercenaryReviewBoard"), num, StatCollection.StatOperation.Int_Add, null);
+                                    string targetsystem = "";
+                                    if (Core.WarStatus.HotBox.Count() == 2)
+                                    {
+                                        targetsystem = Core.WarStatus.HotBox[0];
+                                        Core.WarStatus.HotBox.RemoveAt(0);
+                                    }
+                                    else if (Core.WarStatus.HotBox.Count() != 0)
+                                    {
+                                        targetsystem = Core.WarStatus.HotBox[0];
+                                        Core.WarStatus.HotBox.Clear();
+                                    }
+
+                                    Core.WarStatus.Deployment = false;
+                                    Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
+                                    Core.WarStatus.Escalation = false;
+                                    Core.WarStatus.EscalationDays = 0;
+                                    Core.RefreshContracts(simState.CurSystem);
+                                    if (Core.WarStatus.HotBox.Count == 0)
+                                        Core.WarStatus.HotBoxTravelling = false;
+
+                                    if (Core.WarStatus.EscalationOrder != null)
+                                    {
+                                        Core.WarStatus.EscalationOrder.SetCost(0);
+                                        TaskManagementElement taskManagementElement = null;
+                                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(simState.RoomManager);
+                                        Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                                            (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                                        if (ActiveItems.TryGetValue(Core.WarStatus.EscalationOrder, out taskManagementElement))
+                                        {
+                                            taskManagementElement.UpdateItem(0);
+                                        }
+                                    }
+                                }
+                            }
+                            simState.Starmap.SetActivePath();
+                            simState.SetSimRoomState(DropshipLocation.SHIP);
+                        }, primaryButtonText, cleanup, "Cancel");
+                        simState.Starmap.Screen.AllowInput(false);
+                        uiManager.SetFaderColor(uiManager.UILookAndColorConstants.PopupBackfill, UIManagerFader.FadePosition.FadeInBack, UIManagerRootType.PopupRoot, true);
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                    return true;
+                }
+            }
+
             static void Postfix(SGNavigationScreen __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -340,7 +445,9 @@ namespace Galaxy_at_War
 
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
                 if (Core.WarStatus.HotBox.Contains(system.Name))
+                {
                     Core.WarStatus.HotBox.Remove(system.Name);
+                }
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
                 Core.RefreshContracts(system);
@@ -358,9 +465,21 @@ namespace Galaxy_at_War
                 if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                     return;
 
+                var TargetSystem = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
                 bool HasFlashpoint = false;
                 Core.WarStatus.JustArrived = true;
-                Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
+
+                if (!Core.WarStatus.Deployment)
+                    Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
+                else
+                {
+                    Random rand = new Random();
+                    Core.WarStatus.EscalationDays = rand.Next(Core.Settings.DeploymentMinDays, Core.Settings.DeploymentMaxDays + 1);
+                    if (Core.WarStatus.EscalationDays < Core.Settings.DeploymentRerollBound * Core.WarStatus.EscalationDays || 
+                        Core.WarStatus.EscalationDays > (1 - Core.Settings.DeploymentRerollBound) * Core.WarStatus.EscalationDays)
+                        Core.WarStatus.EscalationDays = rand.Next(Core.Settings.DeploymentMinDays, Core.Settings.DeploymentMaxDays + 1);
+                }
+
                 foreach (var contract in sim.CurSystem.SystemContracts)
                 {
                     if (contract.IsFlashpointContract)
@@ -401,11 +520,22 @@ namespace Galaxy_at_War
 
                 if (Core.WarStatus != null && Core.WarStatus.Escalation)
                 {
-                    Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
-                        "Escalation Days Remaining", "Escalation Days Remaining");
-                    Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
-                    __instance.AddEntry(Core.WarStatus.EscalationOrder, false);
-                    __instance.RefreshEntries();
+                    if (!Core.WarStatus.Deployment)
+                    {
+                        Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
+                            "Escalation Days Remaining", "Escalation Days Remaining");
+                        Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                        __instance.AddEntry(Core.WarStatus.EscalationOrder, false);
+                        __instance.RefreshEntries();
+                    }
+                    else
+                    {
+                        Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric,
+                            "Escalation Days Remaining", "Forced Deployment Mission");
+                        Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                        __instance.AddEntry(Core.WarStatus.EscalationOrder, false);
+                        __instance.RefreshEntries();
+                    }
                 }
             }
         }
@@ -419,7 +549,7 @@ namespace Galaxy_at_War
                 if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                     return true;
 
-                if (!Core.WarStatus.JustArrived && (entry.ID.Equals("Escalation Days Remaining")) && Core.WarStatus.EscalationDays > 0)
+                if (!Core.WarStatus.JustArrived && (entry.ID.Equals("Escalation Days Remaining")) && entry.GetRemainingCost() != 0)
                 {
                     return false;
                 }
@@ -438,13 +568,31 @@ namespace Galaxy_at_War
 
                 if (!__instance.ActiveTravelContract.IsPriorityContract)
                 {
-                    Core.WarStatus.Escalation = true;
-                    Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
-                    Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Escalation Days Remaining");
-                    Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
-                    __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
-                    __instance.RoomManager.SortTimeline();
-                    __instance.RoomManager.RefreshTimeline();
+                    if (!Core.WarStatus.Deployment)
+                    {
+                        Core.WarStatus.Escalation = true;
+                        Core.WarStatus.EscalationDays = Core.Settings.EscalationDays;
+                        Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Escalation Days Remaining");
+                        Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                        __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
+                        __instance.RoomManager.SortTimeline();
+                        __instance.RoomManager.RefreshTimeline();
+                    }
+                    else
+                    {
+                        var rand = new Random();
+                        Core.WarStatus.EscalationDays = rand.Next(Core.Settings.DeploymentMinDays, Core.Settings.DeploymentMaxDays + 1);
+                        if (Core.WarStatus.EscalationDays < Core.Settings.DeploymentRerollBound * Core.WarStatus.EscalationDays ||
+                        Core.WarStatus.EscalationDays > (1 - Core.Settings.DeploymentRerollBound) * Core.WarStatus.EscalationDays)
+                            Core.WarStatus.EscalationDays = rand.Next(Core.Settings.DeploymentMinDays, Core.Settings.DeploymentMaxDays + 1);
+
+                        Core.WarStatus.Escalation = true;
+                        Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Forced Deployment Mission");
+                        Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                        __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
+                        __instance.RoomManager.SortTimeline();
+                        __instance.RoomManager.RefreshTimeline();
+                    }
                 }
             }
         }
@@ -453,6 +601,38 @@ namespace Galaxy_at_War
         [HarmonyPatch(typeof(SimGameState), "OnBreadcrumbCancelledByUser")]
         public static class SimGameState_BreadCrumbCancelled_Patch
         {
+            //static bool Prefix(SimGameState __instance)
+            //{
+            //    try
+            //    {
+            //        var sim = __instance;
+            //        if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+            //            return true;
+
+            //        SimGameState Sim = (SimGameState)AccessTools.Property(typeof(SGContractsWidget), "Sim").GetValue(__instance, null);
+
+            //        if (__instance.SelectedContract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+            //        {
+            //            string message = "Commander, this contract will bring us right to the front lines. If we accept it, we will be forced to take missions when our employer needs us to simultaneously attack in support of their war effort. We will be commited to this Deployment until the system is taken or properly defended and will lose significant reputation if we end up backing out before the job is done. But, oh man, they will certainly reward us well if their operation is ultimately successful! This Deployment may require missions to be done without time between them for repairs or to properly rest our pilots. I strongly encourage you to only accept this arrangement if you think we're up to it.";
+            //            PauseNotification.Show("Deployment", message,
+            //                Sim.GetCrewPortrait(SimGameCrew.Crew_Darius), string.Empty, true, delegate {
+            //                    __instance.NegotiateContract(__instance.SelectedContract, null);
+            //                }, "Do it anyways", null, "Cancel");
+            //            return false;
+            //        }
+            //        else
+            //        {
+            //            return true;
+            //        }
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Logger.Error(e);
+            //        return true;
+            //    }
+            //}
+
+
             static void Postfix()
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -460,12 +640,20 @@ namespace Galaxy_at_War
                     return;
 
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
-
+                string targetsystem = "";
                 if (Core.WarStatus.HotBox.Count() == 2)
+                {
+                    targetsystem = Core.WarStatus.HotBox[0];
                     Core.WarStatus.HotBox.RemoveAt(0);
+                }
                 else
+                {
+                    targetsystem = Core.WarStatus.HotBox[0];
                     Core.WarStatus.HotBox.Clear();
+                }
 
+                Core.WarStatus.Deployment = false;
+                Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
                 Core.RefreshContracts(system);
@@ -528,6 +716,8 @@ namespace Galaxy_at_War
                 if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
                 {
                     string missionObjectiveResultString = $"BONUS FROM ESCALATION: ¢{String.Format("{0:n0}", BonusMoney)}";
+                    if (Core.WarStatus.Deployment)
+                        missionObjectiveResultString = $"BONUS FROM DEPLOYMENT: ¢{String.Format("{0:n0}", BonusMoney)}";
                     MissionObjectiveResult missionObjectiveResult = new MissionObjectiveResult(missionObjectiveResultString, "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0", false, true, ObjectiveStatus.Succeeded, false);
                     Traverse.Create(__instance).Method("AddObjective", missionObjectiveResult).GetValue();
                 }
@@ -623,6 +813,8 @@ namespace Galaxy_at_War
             system.BonusCBills = false;
             system.BonusSalvage = false;
             system.BonusXP = false;
+            Core.WarStatus.Deployment = false;
+            Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
             Core.WarStatus.HotBox.Remove(system.name);
             Core.RefreshContracts(system.starSystem);
             bool HasFlashpoint = false;
@@ -637,6 +829,16 @@ namespace Galaxy_at_War
                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                 sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                 Core.NeedsProcessing = false;
+            }
+        }
+
+        [HarmonyPatch(typeof(SimGameState), "ContractUserMeetsReputation")]
+        public static class SimGameState_ContractUserMeetsReputation_Patch
+        {
+            static void Postfix(ref bool __result, Contract c)
+            {
+                if (Core.WarStatus.Deployment)
+                    __result = true;
             }
         }
 
@@ -681,6 +883,70 @@ namespace Galaxy_at_War
             }
         }
 
+        [HarmonyPatch(typeof(SGContractsWidget), "OnNegotiateClicked")]
+        public static class SGContractsWidget_OnNegotiateClicked_Patch
+        {
+            static bool Prefix(SGContractsWidget __instance)
+            {
+                try
+                {
+                    var sim = UnityGameInstance.BattleTechGame.Simulation;
+                    if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                        return true;
+
+                    SimGameState Sim = (SimGameState)AccessTools.Property(typeof(SGContractsWidget), "Sim").GetValue(__instance, null);
+
+                    if (__instance.SelectedContract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+                    {
+                        string message = "Commander, this contract will bring us right to the front lines. If we accept it, we will be forced to take missions when our employer needs us to simultaneously attack in support of their war effort. We will be commited to this Deployment until the system is taken or properly defended and will lose significant reputation if we end up backing out before the job is done. But, oh man, they will certainly reward us well if their operation is ultimately successful! This Deployment may require missions to be done without time between them for repairs or to properly rest our pilots. I strongly encourage you to only accept this arrangement if you think we're up to it.";
+                        PauseNotification.Show("Deployment", message,
+                            Sim.GetCrewPortrait(SimGameCrew.Crew_Darius), string.Empty, true, delegate {
+                                __instance.NegotiateContract(__instance.SelectedContract, null);
+                            }, "Do it anyways", null, "Cancel");
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                    return true;
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(SGTimePlayPause), "ToggleTime")]
+        public static class SGTimePlayPause_ToggleTime_Patch
+        {
+            static bool Prefix(SGTimePlayPause __instance)
+            {
+                try
+                {
+                    var sim = UnityGameInstance.BattleTechGame.Simulation;
+                    if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                        return true;
+
+                    if (Core.WarStatus.Deployment && !Core.WarStatus.HotBoxTravelling && Core.WarStatus.EscalationDays <= 0)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                    return true;
+                }
+            }
+        }
+
+
         [HarmonyPatch(typeof(TaskTimelineWidget), "OnTaskDetailsClicked")]
         public static class TaskTimelineWidget_OnTaskDetailsClicked_Patch
         {
@@ -711,8 +977,54 @@ namespace Galaxy_at_War
                     return;
 
                 __state = __instance.Sim.Constants.Story.ContractSuccessReduction;
+
+                bool HasFlashpoint = false;
+                foreach (var contract in sim.CurSystem.SystemContracts)
+                {
+                    if (contract.IsFlashpointContract)
+                        HasFlashpoint = true;
+                }
                 if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
-                    __instance.Sim.Constants.Story.ContractSuccessReduction = 0;
+                {
+                    if (!Core.WarStatus.Deployment)
+                        __instance.Sim.Constants.Story.ContractSuccessReduction = 0;
+                    else
+                    {
+                        __instance.Sim.Constants.Story.ContractSuccessReduction = 100;
+                        Core.WarStatus.DeploymentInfluenceIncrease *= Core.Settings.DeploymentInfluenceFactor;
+                        if (!HasFlashpoint)
+                        {
+                            sim.CurSystem.SystemBreadcrumbs.Clear();
+                            sim.CurSystem.SystemContracts.Clear();
+                        }
+
+                        if (Core.WarStatus.EscalationOrder != null)
+                        {
+                            Core.WarStatus.EscalationOrder.SetCost(0);
+                            TaskManagementElement taskManagementElement = null;
+                            TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(sim.RoomManager);
+                            Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                                (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                            if (ActiveItems.TryGetValue(Core.WarStatus.EscalationOrder, out taskManagementElement))
+                            {
+                                taskManagementElement.UpdateItem(0);
+                            }
+                        }
+                        Core.WarStatus.Escalation = true;
+                        var rand = new Random();
+                        Core.WarStatus.EscalationDays = rand.Next(Core.Settings.DeploymentMinDays, Core.Settings.DeploymentMaxDays + 1);
+                        if (Core.WarStatus.EscalationDays < Core.Settings.DeploymentRerollBound * Core.WarStatus.EscalationDays ||
+                        Core.WarStatus.EscalationDays > (1 - Core.Settings.DeploymentRerollBound) * Core.WarStatus.EscalationDays)
+                            Core.WarStatus.EscalationDays = rand.Next(Core.Settings.DeploymentMinDays, Core.Settings.DeploymentMaxDays + 1);
+
+                        Core.WarStatus.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Forced Deployment Mission");
+                        Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
+                        sim.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
+                        sim.RoomManager.SortTimeline();
+                        sim.RoomManager.RefreshTimeline();
+                    }
+                }
+                 
             }
 
             public static void Postfix(StarSystem __instance, ref float __state)
