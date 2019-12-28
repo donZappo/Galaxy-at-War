@@ -1238,7 +1238,7 @@ public static class Core
                         if (WarStatus.HotBox.Contains(sim.CurSystem.Name))
                         {
                             if (WarStatus.Deployment)
-                                sim.InterruptQueue.QueueRewardsPopup("itemCollection_HM_careerStarter");
+                                sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward);
                             WarStatus.HotBox.Remove(sim.CurSystem.Name);
                             WarStatus.EscalationDays = 0;
                             warsystem.BonusCBills = false;

@@ -81,6 +81,7 @@ public class ModSettings
     public double DeploymentInfluenceFactor = 1.1;
     public double DeploymentRerollBound = 0.33;
     public double InfluenceFactor = 1.0;
+    public string DeploymentReward = "";
 
     public List<string> DefensiveFactions = new List<string>();
 
