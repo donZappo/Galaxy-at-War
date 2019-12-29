@@ -363,6 +363,10 @@ namespace Galaxy_at_War
             {
                 try
                 {
+                    var sim = UnityGameInstance.BattleTechGame.Simulation;
+                    if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                        return true;
+
                     if (Core.WarStatus.Deployment)
                     {
                         UIManager uiManager = (UIManager)AccessTools.Field(typeof(SGNavigationScreen), "uiManager").GetValue(__instance);
@@ -837,6 +841,10 @@ namespace Galaxy_at_War
         {
             static void Postfix(ref bool __result, Contract c)
             {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                    return;
+
                 if (Core.WarStatus.Deployment)
                     __result = true;
             }

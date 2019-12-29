@@ -350,6 +350,10 @@ public class StarmapMod
     {
         public static void Prefix(SGNavStarSystemCallout __instance, TextMeshProUGUI ___LabelField, TextMeshProUGUI ___NameField)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                return;
+
             void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
             {
                 Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
@@ -362,7 +366,6 @@ public class StarmapMod
                 Traverse.Create(mesh).Method("SetLayoutDirty").GetValue();
             }
 
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
             // set font in the most roundabout way ever
