@@ -335,9 +335,9 @@ public class DeathListTracker
             var def = sim.GetFactionDef(factionNames);
             if (!Core.Settings.IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
-            if (factionDef != def && factionDef.Enemies.Contains(def.Name))
+            if (factionDef != def && factionDef.Enemies.Contains(def.FactionValue.Name))
                 deathList.Add(def.FactionValue.Name, Core.Settings.KLValuesEnemies);
-            else if (factionDef != def && factionDef.Allies.Contains(def.Name))
+            else if (factionDef != def && factionDef.Allies.Contains(def.FactionValue.Name))
                 deathList.Add(def.FactionValue.Name, Core.Settings.KLValueAllies);
             else if (factionDef != def)
                 deathList.Add(def.FactionValue.Name, Core.Settings.KLValuesNeutral);

@@ -122,6 +122,13 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
                 __state = sim.CurSystem.CurMaxContracts;
 
+                foreach (var theFaction in Core.Settings.IncludedFactions)
+                {
+                    var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
+                    Core.AdjustDeathList(deathListTracker, sim, true);
+                }
+
+
                 if (Core.WarStatus.Deployment)
                 {
                     Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(Core.Settings.DeploymentContracts);
@@ -300,13 +307,14 @@ namespace Galaxy_at_War
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
 
-            if (starSystem.OwnerValue.Name != faction)
-                starSystem.Def.ContractTargetIDList.Add(starSystem.OwnerValue.Name);
+            //if (starSystem.OwnerValue.Name != faction)
+            //    starSystem.Def.ContractTargetIDList.Add(starSystem.OwnerValue.Name);
 
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
-                    && influence.Key != faction)
+                //if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
+                //    && influence.Key != faction)
+                if (influence.Value > 1 && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargetIDList.Add(influence.Key);
                 }
@@ -388,38 +396,38 @@ namespace Galaxy_at_War
                                 {
                                     simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);
                                     simState.SetReputation(simState.GetFactionValueFromString("faction_MercenaryReviewBoard"), num, StatCollection.StatOperation.Int_Add, null);
-                                    string targetsystem = "";
-                                    if (Core.WarStatus.HotBox.Count() == 2)
-                                    {
-                                        targetsystem = Core.WarStatus.HotBox[0];
-                                        Core.WarStatus.HotBox.RemoveAt(0);
-                                    }
-                                    else if (Core.WarStatus.HotBox.Count() != 0)
-                                    {
-                                        targetsystem = Core.WarStatus.HotBox[0];
-                                        Core.WarStatus.HotBox.Clear();
-                                    }
+                                }
+                            }
+                            string targetsystem = "";
+                            if (Core.WarStatus.HotBox.Count() == 2)
+                            {
+                                targetsystem = Core.WarStatus.HotBox[0];
+                                Core.WarStatus.HotBox.RemoveAt(0);
+                            }
+                            else if (Core.WarStatus.HotBox.Count() != 0)
+                            {
+                                targetsystem = Core.WarStatus.HotBox[0];
+                                Core.WarStatus.HotBox.Clear();
+                            }
 
-                                    Core.WarStatus.Deployment = false;
-                                    Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
-                                    Core.WarStatus.Escalation = false;
-                                    Core.WarStatus.EscalationDays = 0;
-                                    Core.RefreshContracts(simState.CurSystem);
-                                    if (Core.WarStatus.HotBox.Count == 0)
-                                        Core.WarStatus.HotBoxTravelling = false;
+                            Core.WarStatus.Deployment = false;
+                            Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
+                            Core.WarStatus.Escalation = false;
+                            Core.WarStatus.EscalationDays = 0;
+                            Core.RefreshContracts(simState.CurSystem);
+                            if (Core.WarStatus.HotBox.Count == 0)
+                                Core.WarStatus.HotBoxTravelling = false;
 
-                                    if (Core.WarStatus.EscalationOrder != null)
-                                    {
-                                        Core.WarStatus.EscalationOrder.SetCost(0);
-                                        TaskManagementElement taskManagementElement = null;
-                                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(simState.RoomManager);
-                                        Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
-                                            (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
-                                        if (ActiveItems.TryGetValue(Core.WarStatus.EscalationOrder, out taskManagementElement))
-                                        {
-                                            taskManagementElement.UpdateItem(0);
-                                        }
-                                    }
+                            if (Core.WarStatus.EscalationOrder != null)
+                            {
+                                Core.WarStatus.EscalationOrder.SetCost(0);
+                                TaskManagementElement taskManagementElement = null;
+                                TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(simState.RoomManager);
+                                Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                                    (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                                if (ActiveItems.TryGetValue(Core.WarStatus.EscalationOrder, out taskManagementElement))
+                                {
+                                    taskManagementElement.UpdateItem(0);
                                 }
                             }
                             simState.Starmap.SetActivePath();

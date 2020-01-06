@@ -345,7 +345,6 @@ public static class Core
                 warfaction.DaysSinceSystemLost = 0;
                 warfaction.LostSystem = false;
             }
-            warfaction.adjacentFactions.Clear();
         }
 
         foreach (var system in WarStatus.SystemChangedOwners)
@@ -997,6 +996,25 @@ public static class Core
     public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim, bool ReloadFromSave)
     {
         var deathList = deathListTracker.deathList;
+
+        //Check to see if it is an ally or enemy of itself and remove it if so.
+        if (deathList.ContainsKey(deathListTracker.faction))
+        {
+            deathList.Remove(deathListTracker.faction);
+            if (sim.GetFactionDef(deathListTracker.faction).Allies.Contains(deathListTracker.faction))
+            {
+                var allies = new List<string>(sim.GetFactionDef(deathListTracker.faction).Allies);
+                allies.Remove(deathListTracker.faction);
+                Traverse.Create(sim.GetFactionDef(deathListTracker.faction)).Property("Allies").SetValue(allies.ToArray());
+            }
+            if (sim.GetFactionDef(deathListTracker.faction).Enemies.Contains(deathListTracker.faction))
+            {
+                var enemies = new List<string>(sim.GetFactionDef(deathListTracker.faction).Enemies);
+                enemies.Remove(deathListTracker.faction);
+                Traverse.Create(sim.GetFactionDef(deathListTracker.faction)).Property("Enemies").SetValue(enemies.ToArray());
+            }
+        }
+
         var KL_List = new List<string>(deathList.Keys);
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
         bool HasEnemy = false;
@@ -1024,13 +1042,22 @@ public static class Core
 
                 if (deathList[faction] < 1)
                     deathList[faction] = 1;
-
-                //Defensive Only factions are always neutral
-                if (Settings.DefensiveFactions.Contains(faction))
-                    deathList[faction] = 50;
             }
+
+            //Defensive Only factions are always neutral
+            if (Settings.DefensiveFactions.Contains(faction))
+                deathList[faction] = 50;
+
+            if (faction == "AuriganPirates")
+                deathList[faction] = 80;
+
+            if (deathListFaction == "AuriganPirates")
+                deathList[faction] = 80;
+
             if (deathList[faction] > 75)
             {
+                if (faction != "AuriganPirates")
+                    HasEnemy = true;
                 if (!sim.GetFactionDef(deathListFaction).Enemies.Contains((faction)))
                 {
                     var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
@@ -1055,6 +1082,7 @@ public static class Core
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
+
                 if (sim.GetFactionDef(deathListFaction).Allies.Contains(faction))
                 {
                     var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
@@ -1065,7 +1093,6 @@ public static class Core
 
             if (deathList[faction] <= 25)
             {
-                HasEnemy = true;
                 if (!sim.GetFactionDef(deathListFaction).Allies.Contains(faction))
                 {
                     var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
@@ -1081,24 +1108,99 @@ public static class Core
                 }
             }
         }
-        if (!HasEnemy && warFaction.adjacentFactions.Count() != 0)
+
+        if (!HasEnemy)
         {
-            var rand = Random.Next(0, warFaction.adjacentFactions.Count());
-            var NewEnemy = warFaction.adjacentFactions[rand];
-            if (!sim.GetFactionDef(deathListFaction).Allies.Contains(NewEnemy))
+            var rand = Random.Next(0, Settings.IncludedFactions.Count());
+            var NewEnemy =  Settings.IncludedFactions[rand];
+
+            while (Settings.DefensiveFactions.Contains(NewEnemy) || Settings.ImmuneToWar.Contains(NewEnemy) || NewEnemy == deathListFaction)
+            {
+                rand = Random.Next(0, Settings.IncludedFactions.Count());
+                NewEnemy = Settings.IncludedFactions[rand];
+            }
+
+            if (warFaction.adjacentFactions.Count() != 0)
+            {
+                rand = Random.Next(0, warFaction.adjacentFactions.Count());
+                NewEnemy = warFaction.adjacentFactions[rand];
+            }
+            if (sim.GetFactionDef(deathListFaction).Allies.Contains(NewEnemy))
             {
                 var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
-                allies.Add(NewEnemy);
+                allies.Remove(NewEnemy);
                 Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
             }
 
-            if (sim.GetFactionDef(deathListFaction).Enemies.Contains(NewEnemy))
+            if (!sim.GetFactionDef(deathListFaction).Enemies.Contains(NewEnemy))
             {
                 var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
-                enemies.Remove(NewEnemy);
+                enemies.Add(NewEnemy);
                 Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
             }
-            deathList[NewEnemy] = 20;
+            deathList[NewEnemy] = 80;
+        }
+    }
+
+    [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]
+    public static class SGFactionRelationShipDisplay_DisplayEnemiesOfFaction_Patch
+    {
+        public static void Prefix(FactionValue theFaction, SGFactionRelationshipDisplay __instance)
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction.Name);
+            AdjustDeathList(deathListTracker, sim, true);
+        }
+    }
+
+    [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayAlliesOfFaction")]
+    public static class SGFactionRelationShipDisplay_DisplayAlliesOfFaction_Patch
+    {
+        public static void Prefix(SGFactionRelationshipDisplay __instance, string theFactionID)
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFactionID);
+            AdjustDeathList(deathListTracker, sim, true);
+        }
+    }
+
+    [HarmonyPatch(typeof(SGCaptainsQuartersReputationScreen), "Init", new Type[] { typeof(SimGameState) })]
+    public static class SGCQRS_Init_Patch
+    {
+        public static void Prefix()
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            foreach (var theFaction in Settings.IncludedFactions)
+            {
+                var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
+                AdjustDeathList(deathListTracker, sim, true);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SGCaptainsQuartersReputationScreen), "RefreshWidgets")]
+    public static class SGCQRS_RefreshWidgets_Patch
+    {
+        public static void Prefix()
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            foreach (var theFaction in Settings.IncludedFactions)
+            {
+                var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
+                AdjustDeathList(deathListTracker, sim, true);
+            }
         }
     }
 
@@ -1540,6 +1642,10 @@ public static class Core
         }
         static void Postfix(ref Contract contract, ref string __state)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
             contract.Override.shortDescription = __state;
         }
     }
