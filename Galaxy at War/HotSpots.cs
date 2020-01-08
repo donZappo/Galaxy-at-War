@@ -124,6 +124,9 @@ namespace Galaxy_at_War
 
                 foreach (var theFaction in Core.Settings.IncludedFactions)
                 {
+                    if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction) == null)
+                        continue;
+
                     var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
                     Core.AdjustDeathList(deathListTracker, sim, true);
                 }

@@ -1181,6 +1181,8 @@ public static class Core
 
             foreach (var theFaction in Settings.IncludedFactions)
             {
+                if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction) == null)
+                    continue;
                 var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
                 AdjustDeathList(deathListTracker, sim, true);
             }
@@ -1198,6 +1200,9 @@ public static class Core
 
             foreach (var theFaction in Settings.IncludedFactions)
             {
+                if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction) == null)
+                    continue;
+
                 var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
                 AdjustDeathList(deathListTracker, sim, true);
             }
