@@ -1153,6 +1153,9 @@ public static class Core
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
+            if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction.Name) == null)
+                return;
+
             var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction.Name);
             AdjustDeathList(deathListTracker, sim, true);
         }
@@ -1165,6 +1168,9 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFactionID) == null)
                 return;
 
             var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFactionID);
@@ -1185,6 +1191,7 @@ public static class Core
             {
                 if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction) == null)
                     continue;
+
                 var deathListTracker = Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction);
                 AdjustDeathList(deathListTracker, sim, true);
             }
