@@ -163,7 +163,9 @@ public static class Core
                         sim.CurSystem.SystemBreadcrumbs.Clear();
                         Galaxy_at_War.HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
                         var MaxHolder = sim.CurSystem.CurMaxBreadcrumbs;
-                        Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue((int)Core.Settings.DeploymentContracts);
+                        var rand = Random.Next(1, (int)Settings.DeploymentContracts);
+
+                        Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(rand);
                         sim.GeneratePotentialContracts(true, null, sim.CurSystem, false);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(MaxHolder);
 
@@ -171,7 +173,7 @@ public static class Core
                         Action primaryAction = delegate () {
                             __instance.QueueCompleteBreadcrumbProcess(true);
                         };
-                        interruptQueue.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation!", __instance.GetCrewPortrait(SimGameCrew.Crew_Darius),
+                        interruptQueue.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation. Let's check out our contracts and get to it!", __instance.GetCrewPortrait(SimGameCrew.Crew_Darius),
                             string.Empty, null, "Proceed", null, null);
                     }
                 }
