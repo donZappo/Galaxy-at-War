@@ -88,12 +88,15 @@ public static class Core
     public static List<FactionValue> FactionValues = new List<FactionValue>();
     public static bool BorkedSave;
     public static bool IsFlashpointContract;
+    public static int LoopCounter = 0;
+    public static Contract LoopContract;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
         static void Prefix(SimGameState __instance, int timeLapse)
         {
+            LoopCounter = 0;
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
@@ -1064,6 +1067,8 @@ public static class Core
                 {
                     var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                     enemies.Add(faction);
+                    if (enemies.Contains(deathListFaction))
+                        enemies.Remove(deathListFaction);
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
@@ -1071,6 +1076,8 @@ public static class Core
                 {
                     var allies = new List<String>(sim.GetFactionDef(deathListFaction).Allies);
                     allies.Remove(faction);
+                    if (allies.Contains(deathListFaction))
+                        allies.Remove(deathListFaction);
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
                 }
             }
@@ -1081,6 +1088,8 @@ public static class Core
                 {
                     var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                     enemies.Remove(faction);
+                    if (enemies.Contains(deathListFaction))
+                        enemies.Remove(deathListFaction);
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
@@ -1089,6 +1098,8 @@ public static class Core
                 {
                     var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
                     allies.Remove(faction);
+                    if (allies.Contains(deathListFaction))
+                        allies.Remove(deathListFaction);
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
                 }
             }
@@ -1099,6 +1110,8 @@ public static class Core
                 {
                     var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
                     allies.Add(faction);
+                    if (allies.Contains(deathListFaction))
+                        allies.Remove(deathListFaction);
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
                 }
 
@@ -1106,6 +1119,8 @@ public static class Core
                 {
                     var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                     enemies.Remove(faction);
+                    if (enemies.Contains(deathListFaction))
+                        enemies.Remove(deathListFaction);
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
             }
@@ -1131,6 +1146,8 @@ public static class Core
             {
                 var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
                 allies.Remove(NewEnemy);
+                if (allies.Contains(deathListFaction))
+                    allies.Remove(deathListFaction);
                 Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
             }
 
@@ -1138,6 +1155,8 @@ public static class Core
             {
                 var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                 enemies.Add(NewEnemy);
+                if (enemies.Contains(deathListFaction))
+                    enemies.Remove(deathListFaction);
                 Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
             }
             deathList[NewEnemy] = 80;
@@ -1418,12 +1437,15 @@ public static class Core
             var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
             if (Settings.ChangeDifficulty)
             {
+                sim.Constants.Story.ContractDifficultyMod = 0;
+                sim.CompanyStats.Set<float>("Difficulty", 0);
                 if (i <= DifficultyCutoff)
                 {
                     system.DifficultyRating = 1;
                     List<int> difficultyList = new List<int> { 1, 1 };
                     Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
                     Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
+
                 }
                 if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
                 {
@@ -1705,26 +1727,34 @@ public static class Core
             return false;
     }
 
-    //Logging a part of contract generation to see if I can track down an infinite load problem. 
-    //[HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
-    //public static class MainMenu_Init_Patch
-    //{
-    //    static void Prefix(StarSystem system, SimGameState.ContractDifficultyRange diffRange, Dictionary<int, List<ContractOverride>> potentialContracts,
-    //        Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets, MapAndEncounters level)
-    //    {
-    //        Log("-------------------");
-    //        Log("Stuck in here?");
-    //        Log(system.Name);
-    //        foreach (var i in potentialContracts)
-    //            Log(potentialContracts[i.Key].Count().ToString());
-    //        foreach (var targets in validTargets)
-    //        {
-    //            Log(targets.Key);
-    //            foreach (var participant in validTargets[targets.Key])
-    //                Log("    " + participant.Target.Name);
-    //        }
-    //    }
-    //}
+    //Logging a part of contract generation to see if I can track down an infinite load problem.
+    [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
+    public static class MainMenu_Init_Patch
+    {
+        static bool Prefix(StarSystem system, SimGameState.ContractDifficultyRange diffRange, Dictionary<int, List<ContractOverride>> potentialContracts,
+            Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets, MapAndEncounters level)
+        {
+            if (LoopCounter >= 100)
+            {
+                LoopCounter = 0;
+                return false;
+            }
+            LoopCounter++;
+            return true;
+            //Log("-------------------");
+            //Log("Stuck in here?");
+            //Log(system.Name);
+            //foreach (var i in potentialContracts)
+            //    Log(potentialContracts[i.Key].Count().ToString());
+            //foreach (var targets in validTargets)
+            //{
+            //    Log(targets.Key);
+            //    foreach (var participant in validTargets[targets.Key])
+            //        Log("    " + participant.Target.Name);
+            //}
+            //LoopCounter++;
+        }
+    }
 
     //internal static void WarSummary(string eventString)
     //{
