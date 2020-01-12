@@ -165,6 +165,7 @@ public static class Core
                         sim.CurSystem.SystemContracts.Clear();
                         sim.CurSystem.SystemBreadcrumbs.Clear();
                         Galaxy_at_War.HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
+
                         var MaxHolder = sim.CurSystem.CurMaxBreadcrumbs;
                         var rand = Random.Next(1, (int)Settings.DeploymentContracts);
 
@@ -1069,6 +1070,8 @@ public static class Core
                     enemies.Add(faction);
                     if (enemies.Contains(deathListFaction))
                         enemies.Remove(deathListFaction);
+                    if (enemies.Contains("AuriganDirectorate"))
+                        enemies.Remove("AuriganDirectorate");
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
@@ -1078,6 +1081,8 @@ public static class Core
                     allies.Remove(faction);
                     if (allies.Contains(deathListFaction))
                         allies.Remove(deathListFaction);
+                    if (allies.Contains("AuriganDirectorate"))
+                        allies.Remove("AuriganDirectorate");
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
                 }
             }
@@ -1090,6 +1095,8 @@ public static class Core
                     enemies.Remove(faction);
                     if (enemies.Contains(deathListFaction))
                         enemies.Remove(deathListFaction);
+                    if (enemies.Contains("AuriganDirectorate"))
+                        enemies.Remove("AuriganDirectorate");
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
@@ -1100,6 +1107,8 @@ public static class Core
                     allies.Remove(faction);
                     if (allies.Contains(deathListFaction))
                         allies.Remove(deathListFaction);
+                    if (allies.Contains("AuriganDirectorate"))
+                        allies.Remove("AuriganDirectorate");
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
                 }
             }
@@ -1112,6 +1121,8 @@ public static class Core
                     allies.Add(faction);
                     if (allies.Contains(deathListFaction))
                         allies.Remove(deathListFaction);
+                    if (allies.Contains("AuriganDirectorate"))
+                        allies.Remove("AuriganDirectorate");
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
                 }
 
@@ -1121,6 +1132,8 @@ public static class Core
                     enemies.Remove(faction);
                     if (enemies.Contains(deathListFaction))
                         enemies.Remove(deathListFaction);
+                    if (enemies.Contains("AuriganDirectorate"))
+                        enemies.Remove("AuriganDirectorate");
                     Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
                 }
             }
@@ -1148,6 +1161,8 @@ public static class Core
                 allies.Remove(NewEnemy);
                 if (allies.Contains(deathListFaction))
                     allies.Remove(deathListFaction);
+                if (allies.Contains("AuriganDirectorate"))
+                    allies.Remove("AuriganDirectorate");
                 Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
             }
 
@@ -1157,6 +1172,8 @@ public static class Core
                 enemies.Add(NewEnemy);
                 if (enemies.Contains(deathListFaction))
                     enemies.Remove(deathListFaction);
+                if (enemies.Contains("AuriganDirectorate"))
+                    enemies.Remove("AuriganDirectorate");
                 Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
             }
             deathList[NewEnemy] = 80;

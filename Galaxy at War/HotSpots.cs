@@ -302,6 +302,7 @@ namespace Galaxy_at_War
 
         public static void TemporaryFlip(StarSystem starSystem, string faction)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
             var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction);
             starSystem.Def.ContractEmployerIDList.Clear();
             starSystem.Def.ContractTargetIDList.Clear();
@@ -309,17 +310,25 @@ namespace Galaxy_at_War
             starSystem.Def.ContractEmployerIDList.Add(faction);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
-
-            //if (starSystem.OwnerValue.Name != faction)
-            //    starSystem.Def.ContractTargetIDList.Add(starSystem.OwnerValue.Name);
-
+            
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
-                //if (!Core.Settings.DefensiveFactions.Contains(influence.Key) && influence.Value > 1
-                //    && influence.Key != faction)
                 if (influence.Value > 1 && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargetIDList.Add(influence.Key);
+                    if (!FactionDef.Enemies.Contains(influence.Key))  
+                    {
+                        var enemies = new List<string>(FactionDef.Enemies);
+                        enemies.Add(influence.Key);
+                        Traverse.Create(FactionDef).Property("Enemies").SetValue(enemies.ToArray());
+                    }
+                    if (FactionDef.Allies.Contains(influence.Key))
+                    {
+                        var allies = new List<string>(FactionDef.Allies);
+                        allies.Remove(influence.Key);
+                        Traverse.Create(FactionDef).Property("Allies").SetValue(allies.ToArray());
+                    }
+
                 }
                 if (starSystem.Def.ContractTargetIDList.Count() == 2)
                     break;
@@ -452,6 +461,110 @@ namespace Galaxy_at_War
                 }
             }
 
+                static void Postfix(SGNavigationScreen __instance)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
+                if (Core.WarStatus.HotBox.Contains(system.Name))
+                {
+                    Core.WarStatus.HotBox.Remove(system.Name);
+                }
+                Core.WarStatus.Escalation = false;
+                Core.WarStatus.EscalationDays = 0;
+                Core.RefreshContracts(system);
+                if (Core.WarStatus.HotBox.Count == 0)
+                    Core.WarStatus.HotBoxTravelling = false;
+            }
+        }
+
+        [HarmonyPatch(typeof(SGNavigationScreen), "OnFlashpointAccepted")]
+        public static class SGNavigationScreen_OnFlashpointAccepted_Patch
+        {
+            static bool Prefix(SGNavigationScreen __instance)
+            {
+                try
+                {
+                    var sim = UnityGameInstance.BattleTechGame.Simulation;
+                    if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                        return true;
+
+                    if (Core.WarStatus.Deployment)
+                    {
+                        UIManager uiManager = (UIManager)AccessTools.Field(typeof(SGNavigationScreen), "uiManager").GetValue(__instance);
+                        SimGameState simState = (SimGameState)AccessTools.Field(typeof(SGNavigationScreen), "simState").GetValue(__instance);
+                        Action cleanup = delegate () {
+                            uiManager.ResetFader(UIManagerRootType.PopupRoot);
+                            simState.Starmap.Screen.AllowInput(true);
+                        };
+                        string primaryButtonText = "Break Deployment";
+                        string message = "WARNING: This action will break your current Deployment. Your reputation with the employer and the MRB will be negatively impacted.";
+                        PauseNotification.Show("Navigation Change", message, simState.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
+                            cleanup();
+                            Core.WarStatus.Deployment = false;
+                            if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
+                            {
+                                float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
+                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.DefaultDifficulty * employerRepBadFaithMod);
+                                if (num != 0)
+                                {
+                                    simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);
+                                    simState.SetReputation(simState.GetFactionValueFromString("faction_MercenaryReviewBoard"), num, StatCollection.StatOperation.Int_Add, null);
+                                }
+                            }
+                            string targetsystem = "";
+                            if (Core.WarStatus.HotBox.Count() == 2)
+                            {
+                                targetsystem = Core.WarStatus.HotBox[0];
+                                Core.WarStatus.HotBox.RemoveAt(0);
+                            }
+                            else if (Core.WarStatus.HotBox.Count() != 0)
+                            {
+                                targetsystem = Core.WarStatus.HotBox[0];
+                                Core.WarStatus.HotBox.Clear();
+                            }
+
+                            Core.WarStatus.Deployment = false;
+                            Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
+                            Core.WarStatus.Escalation = false;
+                            Core.WarStatus.EscalationDays = 0;
+                            Core.RefreshContracts(simState.CurSystem);
+                            if (Core.WarStatus.HotBox.Count == 0)
+                                Core.WarStatus.HotBoxTravelling = false;
+
+                            if (Core.WarStatus.EscalationOrder != null)
+                            {
+                                Core.WarStatus.EscalationOrder.SetCost(0);
+                                TaskManagementElement taskManagementElement = null;
+                                TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(simState.RoomManager);
+                                Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
+                                    (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                                if (ActiveItems.TryGetValue(Core.WarStatus.EscalationOrder, out taskManagementElement))
+                                {
+                                    taskManagementElement.UpdateItem(0);
+                                }
+                            }
+                            simState.Starmap.SetActivePath();
+                            simState.SetSimRoomState(DropshipLocation.SHIP);
+                        }, primaryButtonText, cleanup, "Cancel");
+                        simState.Starmap.Screen.AllowInput(false);
+                        uiManager.SetFaderColor(uiManager.UILookAndColorConstants.PopupBackfill, UIManagerFader.FadePosition.FadeInBack, UIManagerRootType.PopupRoot, true);
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                    return true;
+                }
+            }
+
             static void Postfix(SGNavigationScreen __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
@@ -470,6 +583,7 @@ namespace Galaxy_at_War
                     Core.WarStatus.HotBoxTravelling = false;
             }
         }
+
 
         [HarmonyPatch(typeof(SGTravelManager), "DisplayEnteredOrbitPopup")]
         public static class Entered_Orbit_Patch
