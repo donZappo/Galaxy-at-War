@@ -13,6 +13,7 @@ using BattleTech.UI;
 using System.Collections.Generic;
 using BattleTech.Save.Core;
 using BattleTech.Framework;
+using Stopwatch = HBS.Stopwatch;
 
 
 public static class SaveHandling
@@ -72,8 +73,13 @@ public static class SaveHandling
             if (Core.WarStatus == null)
             {
                 Core.WarStatus = new WarStatus();
+                var timer = new Stopwatch();
+                timer.Restart();
                 Core.SystemDifficulty();
+                LogDebug("SystemDifficulties " + timer.Elapsed);
+                timer.Restart();
                 Core.WarTick(true, true);
+                LogDebug("WarTick " + timer.Elapsed);
                 SerializeWar();
             }
             else

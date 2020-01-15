@@ -10,10 +10,11 @@ using Harmony;
 using HBS;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+
 using static Logger;
 using BattleTech.UI.TMProWrapper;
 using HBS.Extensions;
+using UnityEngine.UI;
 
 // ReSharper disable InconsistentNaming
 
@@ -114,9 +115,8 @@ public class StarmapMod
             results_TextllLayout.sizeDelta = new Vector2(750, 900);
 
             // jebus there is a space after "Viewport"
-            var viewport = go.GetComponentsInChildren<RectTransform>().FirstOrDefault(x => x.name == "Viewport ");
+            var viewport = go.GetComponentsInChildren<RectTransform>().First(x => x.name == "Viewport ");
             viewport.sizeDelta = new Vector2(0, 900);
-
             eventPanel.gameObject.SetActive(false);
             LogDebug("RelationPanel created");
         }
@@ -193,14 +193,15 @@ public class StarmapMod
             {
                 try
                 {
-                    eventPanel.gameObject.SetActive(false);
-                    UnityEngine.Object.Destroy(eventPanel);
+                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
+                    if (eventPanel.gameObject.activeSelf)
+                    {
+                        UpdatePanelText();
+                    }
                 }
-                catch
+                catch(Exception ex)
                 {
-                    //__instance.Starmap.StartCoroutine(SetupRelationPanel());
-                    SetupRelationPanel();
-                    eventPanel.gameObject.SetActive(true);
+                    LogDebug(ex.ToString());
                 }
             }
         }
@@ -295,9 +296,11 @@ public class StarmapMod
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
+            Core.timer.Restart();
             if (Core.WarStatus != null)
             {
-                var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
+                var visitedStarSystems = AccessTools.FieldRefAccess<SimGameState, List<string>>("VisitedStarSystems")(sim);
+                //var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
                 var wasVisited = visitedStarSystems.Contains(__result.name);
                 if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
                     HighlightSystem(__result, wasVisited, Color.magenta, true);
@@ -308,6 +311,8 @@ public class StarmapMod
                 else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                     MakeSystemNormal(__result, wasVisited);
             }
+
+            LogDebug($"Renderer " + Core.timer.Elapsed);
         }
     }
 
@@ -356,6 +361,14 @@ public class StarmapMod
 
             void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
             {
+                Core.timer.Restart();
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, TMP_FontAsset>("m_fontAsset")(mesh) = font;
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, TMP_FontAsset>("m_baseFont")(mesh) = font;
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("m_havePropertiesChanged")(mesh) = true;
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("m_isCalculateSizeRequired")(mesh) = true;
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("m_isInputParsingRequired")(mesh) = true;
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("SetVerticesDirty")(mesh) = true;
+                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("SetVerticesDirty")(mesh) = true;
                 Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
                 Traverse.Create(mesh).Field("m_baseFont").SetValue(font);
                 Traverse.Create(mesh).Method("LoadFontAsset").GetValue();
@@ -364,6 +377,7 @@ public class StarmapMod
                 Traverse.Create(mesh).Field("m_isInputParsingRequired").SetValue(true);
                 Traverse.Create(mesh).Method("SetVerticesDirty").GetValue();
                 Traverse.Create(mesh).Method("SetLayoutDirty").GetValue();
+                LogDebug("SetFont " + Core.timer.Elapsed);
             }
 
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
@@ -384,6 +398,7 @@ public class StarmapMod
 
     private static void HighlightSystem(StarmapSystemRenderer __result, bool wasVisited, Color color, bool resize)
     {
+        Core.timer.Restart();
         var blackMarketIsActive = __result.blackMarketObj.gameObject.activeInHierarchy;
         var fpAvailableIsActive = __result.flashpointAvailableObj.gameObject.activeInHierarchy;
         var fpActiveIsActive = __result.flashpointActiveObj.gameObject.activeInHierarchy;
@@ -396,22 +411,28 @@ public class StarmapMod
             __result.blackMarketObj.gameObject.SetActive(true);
         if (resize)
         {
-            Traverse.Create(__result).Field("selectedScale").SetValue(10f);
-            Traverse.Create(__result).Field("deselectedScale").SetValue(8f);
+            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("selectedScale")(__result) = 10;
+            //Traverse.Create(__result).Field("selectedScale").SetValue(10f);
+            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("deselectedScale")(__result) = 8;
+            //Traverse.Create(__result).Field("deselectedScale").SetValue(8f);
         }
         else
         {
-            Traverse.Create(__result).Field("selectedScale").SetValue(4f);
-            Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
+            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("selectedScale")(__result) = 4;
+            //Traverse.Create(__result).Field("selectedScale").SetValue(4f);
+            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("deselectedScale")(__result) = 4;
+            //Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         }
     }
 
     private static void MakeSystemNormal(StarmapSystemRenderer __result, bool wasVisited)
     {
+        Core.timer.Restart();
         __result.Init(__result.system, __result.systemColor, __result.CanTravel, wasVisited);
         __result.transform.localScale = new Vector3(1, 1, 1);
         Traverse.Create(__result).Field("selectedScale").SetValue(6f);
         Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
         __result.starOuter.gameObject.SetActive(wasVisited);
+        LogDebug("MakeSystemNormal "+ Core.timer.Elapsed);
     }
 }

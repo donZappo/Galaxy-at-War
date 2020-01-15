@@ -15,6 +15,7 @@ using BattleTech.Framework;
 using BattleTech.UI.TMProWrapper;
 using UnityEngine.UI;
 using BattleTech.Data;
+using Galaxy_at_War;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -40,36 +41,8 @@ public static class Core
 
         // blank the logfile
         Clear();
-        // PrintObjectFields(Settings, "Settings");
     }
-
-    // logs out all the settings and their values at runtime
-    internal static void PrintObjectFields(object obj, string name)
-    {
-        LogDebug($"[START {name}]");
-
-        var settingsFields = typeof(ModSettings)
-            .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-        foreach (var field in settingsFields)
-        {
-            if (field.GetValue(obj) is IEnumerable &&
-                !(field.GetValue(obj) is string))
-            {
-                LogDebug(field.Name);
-                foreach (var item in (IEnumerable) field.GetValue(obj))
-                {
-                    LogDebug("\t" + item);
-                }
-            }
-            else
-            {
-                LogDebug($"{field.Name,-30}: {field.GetValue(obj)}");
-            }
-        }
-
-        LogDebug($"[END {name}]");
-    }
-
+    
     #endregion
 
     internal static ModSettings Settings;
@@ -321,17 +294,27 @@ public static class Core
         WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
+        timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             DivideAttackResources(warFaction, UseFullSet);
+
             AllocateAttackResources(warFaction);
         }
+
+        LogDebug("AllocateAR " + timer.Elapsed);
+
+        timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             AllocateDefensiveResources(warFaction, UseFullSet);
         }
 
+        LogDebug("AllocateDR " + timer.Elapsed);
+
+        timer.Restart();
         UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
+        LogDebug("UpdateInfluenceFromAttacks " + timer.Elapsed);
 
         //Increase War Escalation or decay defenses.
         foreach (var warfaction in WarStatus.warFactionTracker)
@@ -357,8 +340,12 @@ public static class Core
         {
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
             systemStatus.CurrentlyAttackedBy.Clear();
+            timer.Restart();
             CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+            LogDebug($"Calc targets " + timer.Elapsed.ToString());
+            timer.Restart();
             RefreshContracts(systemStatus.starSystem);
+            Log("Refresh contracts " + timer.Elapsed.ToString());
         }
 
         WarStatus.SystemChangedOwners.Clear();
@@ -396,6 +383,7 @@ public static class Core
 
     public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
     {
+
         SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
         var warSystem = WarStatus.systems.Find(x => x.name == starSystem.Name);
         var OwnerNeighborSystems = warSystem.neighborSystems;
@@ -430,6 +418,7 @@ public static class Core
             }
             RefreshNeighbors(OwnerNeighborSystems, neighborSystem);
         }
+
     }
 
     public static void RefreshNeighbors(Dictionary<string, int> starSystem, StarSystem neighborSystem)
@@ -493,22 +482,24 @@ public static class Core
             return;
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
+        var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
         foreach (var targetFaction in warFAR.Keys)
         {
+            if (!warFaction.attackTargets.Keys.Contains(targetFaction))
+                break;
             var targetFAR = warFAR[targetFaction];
-            var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
-            while (targetFAR > 0.0)
+            var targets = warFaction.attackTargets[targetFaction];
+            while (targetFAR > 0)
             {
-                if (!warFaction.attackTargets.Keys.Contains(targetFaction))
-                    break;
-                if (warFaction.attackTargets[targetFaction].Count == 0)
+                if (targets.Count == 0)
                     break;
                 var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
-                var system = WarStatus.systems.Find(f => f.name == warFaction.attackTargets[targetFaction][rand]);
+                var system = WarStatus.systems.Find(f => f.name == targets[rand]);
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
-                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred && system.DifficultyRating <= maxContracts 
-                    && system.DifficultyRating >= maxContracts - 4)
+                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred &&
+                    system.DifficultyRating <= maxContracts &&
+                    system.DifficultyRating >= maxContracts - 4)
                 {
                     system.PriorityAttack = true;
                     if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
@@ -524,19 +515,20 @@ public static class Core
                 //Distribute attacking resources to systems.
                 if (system.Contended || Core.WarStatus.HotBox.Contains(system.name))
                 {
-                    warFaction.attackTargets[targetFaction].Remove(system.starSystem.Name);
-                    if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
+                    targets.Remove(system.starSystem.Name);
+                    if (targets.Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
                     {
                         break;
                     }
-                    else
-                        continue;
+
+                    continue;
                 }
                 
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
                 if (maxValueList.Count > 1)
                     PmaxValue = maxValueList[1];
+                // TODO watch for bugs here from reusing ITValue
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
@@ -548,12 +540,12 @@ public static class Core
 
                 if (targetFAR > TotalAR)
                 {
-                    system.influenceTracker[warFaction.faction] += TotalAR;
+                    ITValue += TotalAR;
                     targetFAR -= TotalAR;
                 }
                 else
                 {
-                    system.influenceTracker[warFaction.faction] += targetFAR;
+                    ITValue += targetFAR;
                     targetFAR = 0;
                 }
             }
@@ -574,7 +566,7 @@ public static class Core
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
 
-            while (defensiveResources > 0.0)
+            while (defensiveResources > 0)
             {
                 float highest = 0f;
                 string highestFaction = faction;
@@ -604,7 +596,7 @@ public static class Core
                 {
                     if (defensiveResources > 0)
                     {
-                        systemStatus.influenceTracker[faction] += 1;
+                        highest += 1;
                         defensiveResources -= 1;
                     }
                     else
@@ -855,7 +847,6 @@ public static class Core
                     systemStatus.Contended = false;
                     WarStatus.LostSystems.Add(starSystem.Name);
                 }
-                   
             }
         }
         CalculateHatred();
@@ -943,7 +934,7 @@ public static class Core
         }
 
         if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains("AuriganPirates"))
-            {
+        {
             ContractEmployers.Add("AuriganPirates");
             ContractTargets.Add("AuriganPirates");
         }
@@ -1256,6 +1247,8 @@ public static class Core
 
     public static float GetTotalAttackResources(StarSystem system)
     {
+        var GTARTimer = new Stopwatch();
+        GTARTimer.Restart();
         float result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
             result += Settings.planet_industry_poor;
@@ -1269,11 +1262,14 @@ public static class Core
             result += Settings.planet_industry_research;
         if (system.Tags.Contains("planet_other_starleague"))
             result += Settings.planet_other_starleague;
+        Log("GetTotalAttackResources " + GTARTimer.Elapsed);
         return result;
     }
 
     public static float GetTotalDefensiveResources(StarSystem system)
     {
+        var GTARTimer = new Stopwatch();
+        GTARTimer.Restart();
         float result = 0;
         if (system.Tags.Contains("planet_industry_agriculture"))
             result += Settings.planet_industry_agriculture;
@@ -1295,6 +1291,7 @@ public static class Core
             result += Settings.planet_other_hub;
         if (system.Tags.Contains("planet_other_comstar"))
             result += Settings.planet_other_comstar;
+        Log("GetTotalDefensiveResources " + GTARTimer.Elapsed);
         return result;
     }
 
@@ -1442,6 +1439,7 @@ public static class Core
         }
     }
 
+    internal static Stopwatch timer = new Stopwatch();
     public static void SystemDifficulty()
     {
         bool GetPirateFlex = true;
@@ -1449,9 +1447,13 @@ public static class Core
         var TotalSystems = WarStatus.systems.Count;
         var DifficultyCutoff = TotalSystems / 10;
         int i = 0;
+        
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
+            timer.Restart();
             var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
+
+
             if (Settings.ChangeDifficulty)
             {
                 sim.Constants.Story.ContractDifficultyMod = 0;
@@ -1459,45 +1461,58 @@ public static class Core
                 if (i <= DifficultyCutoff)
                 {
                     system.DifficultyRating = 1;
-                    List<int> difficultyList = new List<int> { 1, 1 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
+                    List<int> difficultyList = new List<int> {1, 1};
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 1;
+
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
 
                 }
                 if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
                 {
                     system.DifficultyRating = 2;
                     List<int> difficultyList = new List<int> { 2, 2 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 2; 
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
                 }
                 if (i <= DifficultyCutoff * 3 && i > 2 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 3;
                     List<int> difficultyList = new List<int> { 3, 3 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 3; 
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
                 }
                 if (i <= DifficultyCutoff * 4 && i > 3 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 4;
                     List<int> difficultyList = new List<int> { 4, 4 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 4; 
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
                 }
                 if (i <= DifficultyCutoff * 5 && i > 4 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 5;
                     List<int> difficultyList = new List<int> { 5, 5 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 5; 
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
                 }
                 if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 6;
                     List<int> difficultyList = new List<int> { 6, 6 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 6; 
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
                     if (GetPirateFlex)
                     {
                         WarStatus.PirateFlex = system.TotalResources;
@@ -1508,29 +1523,38 @@ public static class Core
                 {
                     system.DifficultyRating = 7;
                     List<int> difficultyList = new List<int> { 7, 7 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
+                    
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 7; 
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
                 }
                 if (i <= DifficultyCutoff * 8 && i > 7 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 8;
                     List<int> difficultyList = new List<int> { 8, 8 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 8; 
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
                 }
                 if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 9;
                     List<int> difficultyList = new List<int> { 9, 9 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 9; 
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
                 }
                 if (i > 9 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 10;
                     List<int> difficultyList = new List<int> { 10, 10 };
-                    Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
+                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 10; 
+                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
+                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
                 }
                 i++;
             }
@@ -1545,6 +1569,7 @@ public static class Core
             }
             if (SimSystem.Def.OwnerValue.Name != "NoFaction" && SimSystem.Def.SystemShopItems.Count == 0)
             {
+                LogDebug("SystemDifficulty fix entry " + timer.Elapsed.ToString());
                 List<string> TempList = new List<string>();
                 TempList.Add("itemCollection_minor_Locals");
                 Traverse.Create(SimSystem.Def).Property("SystemShopItems").SetValue(TempList);
@@ -1556,6 +1581,7 @@ public static class Core
                 }
             }
 
+            LogDebug("SystemDifficulty " + timer.Elapsed.ToString());
         }
     }
     //82 characters per line.
@@ -1569,16 +1595,16 @@ public static class Core
                                                             " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
                                                             " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their" +
                                                             " fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
-                                                            "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
+                                                            "\nâ€¢ Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
                                                             "spending to spread their influence and protect their own systems." +
-                                                            "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
-                                                            "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
-                                                            "\n• Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
-                                                            "\n• If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
-                                                            "\n• Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
-                                                            "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
-                                                            "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
-                                                            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
+                                                            "\nâ€¢ Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
+                                                            "\nâ€¢ Successfully completing missions will swing the influence towards the Faction granting the contract." +
+                                                            "\nâ€¢ Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
+                                                            "\nâ€¢ If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
+                                                            "\nâ€¢ Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
+                                                            "\nâ€¢ Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
+                                                            "\nâ€¢ Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
+                                                            "\nâ€¢ Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
                                                             "\n\n****Press Enter to Continue****");
 
 
