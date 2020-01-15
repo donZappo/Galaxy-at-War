@@ -321,15 +321,21 @@ public static class Core
         WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
+        var timer = new Stopwatch();
+        timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             DivideAttackResources(warFaction, UseFullSet);
             AllocateAttackResources(warFaction);
         }
+        LogDebug("AllocateAttackResources " + timer.Elapsed);
+
+        timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             AllocateDefensiveResources(warFaction, UseFullSet);
         }
+        LogDebug("AllocateDefensiveResources " + timer.Elapsed);
 
         UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
 
@@ -1569,16 +1575,16 @@ public static class Core
                                                             " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
                                                             " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their" +
                                                             " fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
-                                                            "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
+                                                            "\nï¿½ Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
                                                             "spending to spread their influence and protect their own systems." +
-                                                            "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
-                                                            "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
-                                                            "\n• Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
-                                                            "\n• If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
-                                                            "\n• Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
-                                                            "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
-                                                            "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
-                                                            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
+                                                            "\nï¿½ Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
+                                                            "\nï¿½ Successfully completing missions will swing the influence towards the Faction granting the contract." +
+                                                            "\nï¿½ Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
+                                                            "\nï¿½ If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
+                                                            "\nï¿½ Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
+                                                            "\nï¿½ Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
+                                                            "\nï¿½ Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
+                                                            "\nï¿½ Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
                                                             "\n\n****Press Enter to Continue****");
 
 
