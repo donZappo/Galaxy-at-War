@@ -566,7 +566,7 @@ public static class Core
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
 
-            while (defensiveResources > 0)
+            while (defensiveResources > 0.0)
             {
                 float highest = 0f;
                 string highestFaction = faction;
@@ -596,7 +596,7 @@ public static class Core
                 {
                     if (defensiveResources > 0)
                     {
-                        highest += 1;
+                        systemStatus.influenceTracker[faction] += 1;
                         defensiveResources -= 1;
                     }
                     else
@@ -1450,9 +1450,7 @@ public static class Core
         
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
-            timer.Restart();
             var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
-
 
             if (Settings.ChangeDifficulty)
             {
@@ -1461,58 +1459,26 @@ public static class Core
                 if (i <= DifficultyCutoff)
                 {
                     system.DifficultyRating = 1;
-                    List<int> difficultyList = new List<int> {1, 1};
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 1;
-
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(1);
-
                 }
                 if (i <= DifficultyCutoff * 2 && i > DifficultyCutoff)
                 {
                     system.DifficultyRating = 2;
-                    List<int> difficultyList = new List<int> { 2, 2 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 2; 
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(2);
                 }
                 if (i <= DifficultyCutoff * 3 && i > 2 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 3;
-                    List<int> difficultyList = new List<int> { 3, 3 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 3; 
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(3);
                 }
                 if (i <= DifficultyCutoff * 4 && i > 3 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 4;
-                    List<int> difficultyList = new List<int> { 4, 4 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 4; 
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(4);
                 }
                 if (i <= DifficultyCutoff * 5 && i > 4 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 5;
-                    List<int> difficultyList = new List<int> { 5, 5 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 5; 
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(5);
                 }
                 if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 6;
-                    List<int> difficultyList = new List<int> { 6, 6 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 6; 
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(6);
                     if (GetPirateFlex)
                     {
                         WarStatus.PirateFlex = system.TotalResources;
@@ -1522,41 +1488,25 @@ public static class Core
                 if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 7;
-                    List<int> difficultyList = new List<int> { 7, 7 };
-                    
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 7; 
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(7);
                 }
                 if (i <= DifficultyCutoff * 8 && i > 7 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 8;
-                    List<int> difficultyList = new List<int> { 8, 8 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 8; 
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(8);
                 }
                 if (i <= DifficultyCutoff * 9 && i > 8 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 9;
-                    List<int> difficultyList = new List<int> { 9, 9 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 9; 
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(9);
                 }
                 if (i > 9 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 10;
-                    List<int> difficultyList = new List<int> { 10, 10 };
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = 10; 
-                    //Traverse.Create(SimSystem.Def).Field("DifficultyList").SetValue(difficultyList);
-                    //Traverse.Create(SimSystem.Def).Field("DefaultDifficulty").SetValue(10);
                 }
                 i++;
+
+                var amount = system.DifficultyRating;
+                var difficultyList = new List<int> {amount, amount};
+                AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(SimSystem.Def) = difficultyList;
+                AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(SimSystem.Def) = amount; 
             }
             else
             {
@@ -1580,8 +1530,6 @@ public static class Core
                         Shop.ShopType.System);
                 }
             }
-
-            LogDebug("SystemDifficulty " + timer.Elapsed.ToString());
         }
     }
     //82 characters per line.
