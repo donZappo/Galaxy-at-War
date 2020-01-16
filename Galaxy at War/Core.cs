@@ -16,6 +16,7 @@ using BattleTech.UI.TMProWrapper;
 using UnityEngine.UI;
 using BattleTech.Data;
 using Galaxy_at_War;
+using UnityEngine;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -28,6 +29,7 @@ public static class Core
     {
         var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
         harmony.PatchAll(Assembly.GetExecutingAssembly());
+        
         // read settings
         try
         {
@@ -82,7 +84,6 @@ public static class Core
                 BorkedSave = false;
             }
 
-            
             WarStatus.CurSystem = sim.CurSystem.Name;
             try
             {
@@ -295,21 +296,27 @@ public static class Core
         //Attack!
         //LogDebug("Attacking Fool");
         timer.Restart();
+        //var curtain = new GameObject("GaWCurtain").AddComponent<LoadingCurtain>();
+        //LoadingCurtain.activeInstance = curtain;
+        //LoadingCurtain.Show();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             DivideAttackResources(warFaction, UseFullSet);
-
             AllocateAttackResources(warFaction);
+            //LoadingCurtain.ExecuteWhenVisible(() => AllocateAttackResources(warFaction));
         }
-
+        
         LogDebug("AllocateAR " + timer.Elapsed);
-
         timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
+            //LoadingCurtain.ExecuteWhenVisible(() => AllocateDefensiveResources(warFaction, UseFullSet));
             AllocateDefensiveResources(warFaction, UseFullSet);
         }
-
+           
+        //LoadingCurtain.Hide();
+        //UnityEngine.Object.Destroy(curtain);
+        
         LogDebug("AllocateDR " + timer.Elapsed);
 
         timer.Restart();
