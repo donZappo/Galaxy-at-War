@@ -15,6 +15,8 @@ using BattleTech.Framework;
 using BattleTech.UI.TMProWrapper;
 using UnityEngine.UI;
 using BattleTech.Data;
+using BattleTech.Save.Core;
+using FluffyUnderware.DevTools;
 using Galaxy_at_War;
 using UnityEngine;
 
@@ -65,6 +67,7 @@ public static class Core
     public static bool IsFlashpointContract;
     public static int LoopCounter = 0;
     public static Contract LoopContract;
+    internal static bool Done = false;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -81,6 +84,7 @@ public static class Core
                 WarStatus = new WarStatus();
                 SystemDifficulty();
                 WarTick(true, true);
+                //WarTick(true, true);
                 BorkedSave = false;
             }
 
@@ -219,10 +223,10 @@ public static class Core
             }
         }
     }
-
-
+    
     internal static void WarTick(bool UseFullSet, bool CheckForSystemChange)
     {
+
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         WarStatus.PrioritySystems.Clear();
 
@@ -341,6 +345,7 @@ public static class Core
         Log("Changed owners " + timer.Elapsed.ToString());
 
         WarStatus.SystemChangedOwners.Clear();
+        Done = true;
     }
 
 
@@ -448,6 +453,7 @@ public static class Core
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         var factionDLT = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
+        var ARFactor = 0.01f;
         foreach (var targetFaction in warFAR.Keys)
         {
             if (!warFaction.attackTargets.Keys.Contains(targetFaction))
@@ -459,6 +465,9 @@ public static class Core
             {
                 if (targets.Count == 0)
                     break;
+                var min = UnityEngine.Random.Range(0, targetFAR * ARFactor);
+                min = min < 1 ? 1 : min; 
+                var spendAR = Mathf.Min(min, targetFAR);
                 var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
 
@@ -490,14 +499,11 @@ public static class Core
                     continue;
                 }
                 
-                var maxValueList = system.influenceTracker.Values
-                    .OrderByDescending(x => x).ToList();
-                float PmaxValue = 200.0f;
-                if (maxValueList.Count > 1)
-                    PmaxValue = maxValueList[1];
-                
-                // TODO watch for bugs here from reusing ITValue
-                
+                //var maxValueList = system.influenceTracker.Values
+                //    .OrderByDescending(x => x).ToList();
+                var maxValue = system.influenceTracker.Values.Max();
+                float PmaxValue = maxValue == 0 ? 200.0f : maxValue;
+
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
@@ -505,8 +511,7 @@ public static class Core
                 if (ITValue > PmaxValue)
                     bonusAR = (ITValue - PmaxValue) * 0.15f;
 
-                var adjustmentAmount = 10;
-                float TotalAR = (basicAR + bonusAR) + adjustmentAmount;
+                float TotalAR = (basicAR + bonusAR) + spendAR;
 
                 if (targetFAR > TotalAR)
                 {
@@ -526,10 +531,10 @@ public static class Core
 
     public static bool AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
     {
-        int adjustmentAmount = 10;
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
             return false;
 
+        var DRFactor = 0.01f;
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources;
         
@@ -539,8 +544,13 @@ public static class Core
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
         
-        while (defensiveResources > 0)
+        while (defensiveResources > float.Epsilon)
         {
+            // defensiveResources * DRFactor can be less than zero
+            var min = UnityEngine.Random.Range(0, defensiveResources * DRFactor);
+            min = min < 1 ? 1 : min;
+            var spendDR = Mathf.Min(min, defensiveResources);
+            //LogDebug(spendDR);
             float highest = 0f;
             string highestFaction = faction;
             var rand = Random.Next(0, warFaction.defenseTargets.Count);
@@ -593,8 +603,8 @@ public static class Core
             {
                 if (defensiveResources > 0)
                 {
-                    systemStatus.influenceTracker[faction] += adjustmentAmount;
-                    defensiveResources -= adjustmentAmount;
+                    systemStatus.influenceTracker[faction] += spendDR;
+                    defensiveResources -= spendDR;
                 }
                 else
                 {
@@ -606,8 +616,8 @@ public static class Core
             {
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
                 var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
-                var bonusDefense = adjustmentAmount + (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
-
+                var bonusDefense = spendDR + (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
+                //LogDebug(bonusDefense);
                 if (100 * diffRes > Settings.TakeoverThreshold)
                     if (defensiveResources >= bonusDefense)
                     {
