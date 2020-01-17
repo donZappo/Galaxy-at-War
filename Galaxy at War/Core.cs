@@ -29,7 +29,7 @@ public static class Core
     {
         var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
         harmony.PatchAll(Assembly.GetExecutingAssembly());
-        
+
         // read settings
         try
         {
@@ -44,7 +44,7 @@ public static class Core
         // blank the logfile
         Clear();
     }
-    
+
     #endregion
 
     internal static ModSettings Settings;
@@ -94,6 +94,7 @@ public static class Core
             {
                 UnityEngine.Object.Destroy(StarmapMod.eventPanel);
             }
+
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
                 WarStatus.EscalationDays--;
@@ -105,13 +106,14 @@ public static class Core
                     {
                         Galaxy_at_War.HotSpots.CompleteEscalation();
                     }
+
                     if (WarStatus.EscalationOrder != null)
                     {
                         WarStatus.EscalationOrder.PayCost(1);
                         TaskManagementElement taskManagementElement4 = null;
-                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
+                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget) AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
                         Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
-                            (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                            (Dictionary<WorkOrderEntry, TaskManagementElement>) AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
                         if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
                         {
                             taskManagementElement4.UpdateItem(0);
@@ -124,14 +126,15 @@ public static class Core
                     {
                         WarStatus.EscalationOrder.PayCost(1);
                         TaskManagementElement taskManagementElement4 = null;
-                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget)AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
+                        TaskTimelineWidget timelineWidget = (TaskTimelineWidget) AccessTools.Field(typeof(SGRoomManager), "timelineWidget").GetValue(__instance.RoomManager);
                         Dictionary<WorkOrderEntry, TaskManagementElement> ActiveItems =
-                            (Dictionary<WorkOrderEntry, TaskManagementElement>)AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
+                            (Dictionary<WorkOrderEntry, TaskManagementElement>) AccessTools.Field(typeof(TaskTimelineWidget), "ActiveItems").GetValue(timelineWidget);
                         if (ActiveItems.TryGetValue(WarStatus.EscalationOrder, out taskManagementElement4))
                         {
                             taskManagementElement4.UpdateItem(0);
                         }
                     }
+
                     if (WarStatus.EscalationDays <= 0)
                     {
                         sim.StopPlayMode();
@@ -141,21 +144,20 @@ public static class Core
                         Galaxy_at_War.HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
 
                         var MaxHolder = sim.CurSystem.CurMaxBreadcrumbs;
-                        var rand = Random.Next(1, (int)Settings.DeploymentContracts);
+                        var rand = Random.Next(1, (int) Settings.DeploymentContracts);
 
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(rand);
                         sim.GeneratePotentialContracts(true, null, sim.CurSystem, false);
                         Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(MaxHolder);
 
-                        SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools.Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
-                        Action primaryAction = delegate () {
-                            __instance.QueueCompleteBreadcrumbProcess(true);
-                        };
+                        SimGameInterruptManager interruptQueue = (SimGameInterruptManager) AccessTools.Field(typeof(SimGameState), "interruptQueue").GetValue(__instance);
+                        Action primaryAction = delegate() { __instance.QueueCompleteBreadcrumbProcess(true); };
                         interruptQueue.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation. Let's check out our contracts and get to it!", __instance.GetCrewPortrait(SimGameCrew.Crew_Darius),
                             string.Empty, null, "Proceed", null, null);
                     }
                 }
             }
+
             if (!Core.WarStatus.StartGameInitialized)
             {
                 NeedsProcessing = true;
@@ -166,7 +168,7 @@ public static class Core
             }
         }
 
-        public static void Postfix(SimGameState  __instance)
+        public static void Postfix(SimGameState __instance)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
@@ -202,6 +204,7 @@ public static class Core
                         if (contract.IsFlashpointContract)
                             HasFlashpoint = true;
                     }
+
                     if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
                     {
                         NeedsProcessing = true;
@@ -210,6 +213,7 @@ public static class Core
                         NeedsProcessing = false;
                     }
                 }
+
                 SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
@@ -224,31 +228,18 @@ public static class Core
 
         int SystemSubsetSize = WarStatus.systems.Count;
         if (Settings.UseSubsetOfSystems && !UseFullSet)
-            SystemSubsetSize = (int)(SystemSubsetSize * Settings.SubSetFraction);
+            SystemSubsetSize = (int) (SystemSubsetSize * Settings.SubSetFraction);
         var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
         //Distribute Pirate Influence throughout the StarSystems
-        Galaxy_at_War.PiratesAndLocals.CorrectResources();
-        Galaxy_at_War.PiratesAndLocals.PiratesStealResources();
-        Galaxy_at_War.PiratesAndLocals.CurrentPAResources = Core.WarStatus.PirateResources;
-        Galaxy_at_War.PiratesAndLocals.DistributePirateResources();
-        Galaxy_at_War.PiratesAndLocals.DefendAgainstPirates();
+        PiratesAndLocals.CorrectResources();
+        PiratesAndLocals.PiratesStealResources();
+        PiratesAndLocals.CurrentPAResources = Core.WarStatus.PirateResources;
+        PiratesAndLocals.DistributePirateResources();
+        PiratesAndLocals.DefendAgainstPirates();
 
         foreach (var systemStatus in SystemSubset)
         {
-            //if (systemStatus.PirateActivity >= 75 && systemStatus.owner != Faction.Locals)
-            //{
-            //    ChangeSystemOwnership(sim, systemStatus.starSystem, Faction.Locals, true);
-            //    foreach (var system in WarStatus.SystemChangedOwners)
-            //    {
-            //        var ChangesystemStatus = WarStatus.systems.Find(x => x.name == system);
-            //        ChangesystemStatus.CurrentlyAttackedBy.Clear();
-            //        CalculateAttackAndDefenseTargets(ChangesystemStatus.starSystem);
-            //        RefreshContracts(ChangesystemStatus.starSystem);
-            //    }
-            //    WarStatus.SystemChangedOwners.Clear();
-            //}
-
             if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
             {
                 systemStatus.influenceTracker["Locals"] *= 1.1f;
@@ -265,6 +256,7 @@ public static class Core
                 CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                 RefreshContracts(systemStatus.starSystem);
             }
+
             if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
                 continue;
 
@@ -280,6 +272,7 @@ public static class Core
                     }
                 }
             }
+
             if (systemStatus.PirateActivity >= Settings.PirateSystemFlagValue)
             {
                 if (!WarStatus.PirateHighlight.Contains(systemStatus.name))
@@ -296,28 +289,21 @@ public static class Core
         //Attack!
         //LogDebug("Attacking Fool");
         timer.Restart();
-        //var curtain = new GameObject("GaWCurtain").AddComponent<LoadingCurtain>();
-        //LoadingCurtain.activeInstance = curtain;
-        //LoadingCurtain.Show();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
             DivideAttackResources(warFaction, UseFullSet);
             AllocateAttackResources(warFaction);
-            //LoadingCurtain.ExecuteWhenVisible(() => AllocateAttackResources(warFaction));
         }
-        
-        LogDebug("AllocateAR " + timer.Elapsed);
+
+        LogDebug("AllocateAttackResources " + timer.Elapsed);
+
         timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
         {
-            //LoadingCurtain.ExecuteWhenVisible(() => AllocateDefensiveResources(warFaction, UseFullSet));
             AllocateDefensiveResources(warFaction, UseFullSet);
         }
-           
-        //LoadingCurtain.Hide();
-        //UnityEngine.Object.Destroy(curtain);
-        
-        LogDebug("AllocateDR " + timer.Elapsed);
+
+        LogDebug("AllocateDefensiveResources " + timer.Elapsed);
 
         timer.Restart();
         UpdateInfluenceFromAttacks(sim, CheckForSystemChange);
@@ -343,50 +329,22 @@ public static class Core
             }
         }
 
+        timer.Restart();
         foreach (var system in WarStatus.SystemChangedOwners)
         {
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
             systemStatus.CurrentlyAttackedBy.Clear();
-            timer.Restart();
             CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-            LogDebug($"Calc targets " + timer.Elapsed.ToString());
-            timer.Restart();
             RefreshContracts(systemStatus.starSystem);
-            Log("Refresh contracts " + timer.Elapsed.ToString());
         }
 
+        Log("Changed owners " + timer.Elapsed.ToString());
+
         WarStatus.SystemChangedOwners.Clear();
-
-
-//        Log("===================================================");
-//        Log("TESTING ZONE");
-//        Log("===================================================");
-//        ////TESTING ZONE
-//        foreach (WarFaction WF in WarStatus.warFactionTracker)
-//        {
-//            Log("----------------------------------------------");
-//            Log(WF.faction.ToString());
-//            try
-//            {
-//                var DLT = WarStatus.deathListTracker.Find(x => x.faction == WF.faction);
-////                Log("\tAttacked By :");
-////                foreach (Faction fac in DLT.AttackedBy)
-////                    Log("\t\t" + fac.ToString());
-////                Log("\tOwner :" + DLT.);
-////                Log("\tAttack Resources :" + WF.AttackResources.ToString());
-////                Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
-//                Log("\tDeath List:");
-//                foreach (var faction in DLT.deathList.Keys)
-//                {
-//                    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
-//                }
-//            }
-//            catch (Exception e)
-//            {
-//                Error(e);
-//            }
-        //       }
     }
+
+
+
 
     public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
     {
@@ -480,31 +438,32 @@ public static class Core
         }
     }
 
-    public static void AllocateAttackResources(WarFaction warFaction)
+    public static bool AllocateAttackResources(WarFaction warFaction)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var FactionRep = sim.GetRawReputation(FactionValues.Find(x => x.Name == warFaction.faction));
         int maxContracts = Galaxy_at_War.HotSpots.ProcessReputation(FactionRep);
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
-            return;
+            return false;
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
-        var factionDLT = Core.WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
+        var factionDLT = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
         foreach (var targetFaction in warFAR.Keys)
         {
             if (!warFaction.attackTargets.Keys.Contains(targetFaction))
                 break;
             var targetFAR = warFAR[targetFaction];
             var targets = warFaction.attackTargets[targetFaction];
+            var hatred = factionDLT.deathList[targetFaction];
             while (targetFAR > 0)
             {
                 if (targets.Count == 0)
                     break;
-                var rand = Random.Next(0, warFaction.attackTargets[targetFaction].Count);
+                var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
-                if (factionDLT.deathList[targetFaction] >= Core.Settings.PriorityHatred &&
+                if (hatred >= Settings.PriorityHatred &&
                     system.DifficultyRating <= maxContracts &&
                     system.DifficultyRating >= maxContracts - 4)
                 {
@@ -520,7 +479,7 @@ public static class Core
                 }
 
                 //Distribute attacking resources to systems.
-                if (system.Contended || Core.WarStatus.HotBox.Contains(system.name))
+                if (system.Contended || WarStatus.HotBox.Contains(system.name))
                 {
                     targets.Remove(system.starSystem.Name);
                     if (targets.Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
@@ -531,11 +490,14 @@ public static class Core
                     continue;
                 }
                 
-                var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
+                var maxValueList = system.influenceTracker.Values
+                    .OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
                 if (maxValueList.Count > 1)
                     PmaxValue = maxValueList[1];
+                
                 // TODO watch for bugs here from reusing ITValue
+                
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
@@ -543,7 +505,8 @@ public static class Core
                 if (ITValue > PmaxValue)
                     bonusAR = (ITValue - PmaxValue) * 0.15f;
 
-                float TotalAR = basicAR + bonusAR;
+                var adjustmentAmount = 10;
+                float TotalAR = (basicAR + bonusAR) + adjustmentAmount;
 
                 if (targetFAR > TotalAR)
                 {
@@ -557,14 +520,17 @@ public static class Core
                 }
             }
         }
+
+        return true;
     }
 
-    public static void AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
+    public static bool AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
     {
-        var faction = warFaction.faction;
+        int adjustmentAmount = 10;
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
-            return;
+            return false;
 
+        var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources;
         
         var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
@@ -572,70 +538,96 @@ public static class Core
 
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
-
-            while (defensiveResources > 0.0)
+        
+        while (defensiveResources > 0)
+        {
+            float highest = 0f;
+            string highestFaction = faction;
+            var rand = Random.Next(0, warFaction.defenseTargets.Count);
+            var system = warFaction.defenseTargets[rand];
+            var systemStatus = WarStatus.systems.Find(x => x.name == system);
+            //LogDebug("Found" + timer.Elapsed);
+            if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
             {
-                float highest = 0f;
-                string highestFaction = faction;
-                var rand = Random.Next(0, warFaction.defenseTargets.Count);
-                var system = warFaction.defenseTargets[rand];
-                var systemStatus = WarStatus.systems.Find(x => x.name == system);
-                if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
+                warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
+                if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
                 {
-                    warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
-                    if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
-                    {
-                        break;
-                    }
-                    else
-                        continue;
+                    break;
                 }
-                foreach (string tempfaction in systemStatus.influenceTracker.Keys)
-                {
-                    if (systemStatus.influenceTracker[tempfaction] > highest)
 
-                    {
-                        highest = systemStatus.influenceTracker[tempfaction];
-                        highestFaction = tempfaction;
-                    }
-                }
-                if (highestFaction == faction)
+                continue;
+            }
+
+            float Total = systemStatus.influenceTracker.Values.Sum();
+            var sequence = systemStatus.influenceTracker
+                .Where(x => x.Value != 0)
+                .Select(x => x.Key);
+            foreach (string factionStr in sequence)
+            {
+                if (systemStatus.influenceTracker[factionStr] > highest)
                 {
-                    if (defensiveResources > 0)
-                    {
-                        systemStatus.influenceTracker[faction] += 1;
-                        defensiveResources -= 1;
-                    }
-                    else
-                    {
-                        systemStatus.influenceTracker[faction] += defensiveResources;
-                        defensiveResources = 0;
-                    }
+                    highest = systemStatus.influenceTracker[factionStr];
+                    highestFaction = factionStr;
+                }
+
+                if (highest / Total >= 0.5)
+                    break;
+            }
+            
+            //LogDebug("1 " + timer.Elapsed);
+            //foreach (string tempfaction in systemStatus.influenceTracker.Keys)
+            //{
+            //    if (systemStatus.influenceTracker[tempfaction] > highest)
+            //    {
+            //        highest = systemStatus.influenceTracker[tempfaction];
+            //        highestFaction = tempfaction;
+            //    }
+            //}
+
+            //highest = systemStatus.influenceTracker.Values.Max();
+            //highestFaction = systemStatus.influenceTracker
+            //    .Where(x => x.Value == highest)
+            //    .Select(y => y.Key)
+            //    .First();
+            if (highestFaction == faction)
+            {
+                if (defensiveResources > 0)
+                {
+                    systemStatus.influenceTracker[faction] += adjustmentAmount;
+                    defensiveResources -= adjustmentAmount;
                 }
                 else
                 {
-                    var totalInfluence = systemStatus.influenceTracker.Values.Sum();
-                    var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
-                    var bonusDefense = 1 + (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
-
-                    if (100 * diffRes > Settings.TakeoverThreshold)
-                        if (defensiveResources >= bonusDefense)
-                        {
-                            systemStatus.influenceTracker[faction] += bonusDefense;
-                            defensiveResources -= bonusDefense;
-                        }
-                        else
-                        {
-                            systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 5);
-                            defensiveResources -= Math.Min(defensiveResources, 5);
-                        }
-                    else
-                    {
-                        systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 5);
-                        defensiveResources -= Math.Min(defensiveResources, 5);
-                    }
+                    systemStatus.influenceTracker[faction] += defensiveResources;
+                    defensiveResources = 0;
                 }
             }
+            else
+            {
+                var totalInfluence = systemStatus.influenceTracker.Values.Sum();
+                var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
+                var bonusDefense = adjustmentAmount + (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
+
+                if (100 * diffRes > Settings.TakeoverThreshold)
+                    if (defensiveResources >= bonusDefense)
+                    {
+                        systemStatus.influenceTracker[faction] += bonusDefense;
+                        defensiveResources -= bonusDefense;
+                    }
+                    else
+                    {
+                        systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 50);
+                        defensiveResources -= Math.Min(defensiveResources, 50);
+                    }
+                else
+                {
+                    systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 50);
+                    defensiveResources -= Math.Min(defensiveResources, 50);
+                }
+            }
+        }
+
+        return true;
     }
 
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, string faction, bool ForceFlip)
@@ -1254,8 +1246,6 @@ public static class Core
 
     public static float GetTotalAttackResources(StarSystem system)
     {
-        var GTARTimer = new Stopwatch();
-        GTARTimer.Restart();
         float result = 0;
         if (system.Tags.Contains("planet_industry_poor"))
             result += Settings.planet_industry_poor;
@@ -1269,14 +1259,12 @@ public static class Core
             result += Settings.planet_industry_research;
         if (system.Tags.Contains("planet_other_starleague"))
             result += Settings.planet_other_starleague;
-        Log("GetTotalAttackResources " + GTARTimer.Elapsed);
+
         return result;
     }
 
     public static float GetTotalDefensiveResources(StarSystem system)
     {
-        var GTARTimer = new Stopwatch();
-        GTARTimer.Restart();
         float result = 0;
         if (system.Tags.Contains("planet_industry_agriculture"))
             result += Settings.planet_industry_agriculture;
@@ -1298,7 +1286,6 @@ public static class Core
             result += Settings.planet_other_hub;
         if (system.Tags.Contains("planet_other_comstar"))
             result += Settings.planet_other_comstar;
-        Log("GetTotalDefensiveResources " + GTARTimer.Elapsed);
         return result;
     }
 
