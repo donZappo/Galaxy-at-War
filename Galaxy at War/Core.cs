@@ -521,9 +521,11 @@ public static class Core
                 //var maxValueList = system.influenceTracker.Values
                 //    .OrderByDescending(x => x).ToList();
                 
-                var maxValue = system.influenceTracker.Values.Max();
-                float PmaxValue = maxValue == 0 ? 200 : maxValue;
-
+                var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
+                float PmaxValue = 200.0f;
+                if (maxValueList.Count > 1)
+                    PmaxValue = maxValueList[1];
+                
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
