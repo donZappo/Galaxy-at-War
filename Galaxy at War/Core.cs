@@ -336,6 +336,36 @@ public static class Core
         {
             StarmapMod.UpdatePanelText();
         }
+        
+        //        Log("===================================================");
+        //        Log("TESTING ZONE");
+        //        Log("===================================================");
+        //        ////TESTING ZONE
+        //        foreach (WarFaction WF in WarStatus.warFactionTracker)
+        //        {
+        //            Log("----------------------------------------------");
+        //            Log(WF.faction.ToString());
+        //            try
+        //            {
+        //                var DLT = WarStatus.deathListTracker.Find(x => x.faction == WF.faction);
+        ////                Log("\tAttacked By :");
+        ////                foreach (Faction fac in DLT.AttackedBy)
+        ////                    Log("\t\t" + fac.ToString());
+        ////                Log("\tOwner :" + DLT.);
+        ////                Log("\tAttack Resources :" + WF.AttackResources.ToString());
+        ////                Log("\tDefensive Resources :" + WF.DefensiveResources.ToString());
+        //                Log("\tDeath List:");
+        //                foreach (var faction in DLT.deathList.Keys)
+        //                {
+        //                    Log("\t\t" + faction.ToString() + ": " + DLT.deathList[faction]);
+        //                }
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                Error(e);
+        //            }
+        //       }
+
     }
 
     public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
@@ -1164,7 +1194,7 @@ public static class Core
             deathList[NewEnemy] = 80;
         }
 
-        LogDebug("AdjustDeathList " + timer.Elapsed);
+        LogDebug("AdjustDeathList, " + timer.ElapsedTicks);
     }
 
     [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]
