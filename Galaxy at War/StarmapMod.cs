@@ -22,6 +22,7 @@ public class StarmapMod
 {
     internal static SGEventPanel eventPanel;
     internal static TMP_FontAsset font;
+    internal static SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
 
     //[HarmonyPatch(typeof(UnityGameInstance), "Awake")]
     //public static class UnityGameInstance_Awake_Patch
@@ -193,11 +194,19 @@ public class StarmapMod
             {
                 try
                 {
+                    if (eventPanel == null)
+                    {
+                        // panel is created and left inactive
+                        SetupRelationPanel();
+                    }
+                    
                     eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
                     if (eventPanel.gameObject.activeSelf)
                     {
                         UpdatePanelText();
                     }
+
+                    LogDebug("Event Panel " + eventPanel.gameObject.activeSelf);
                 }
                 catch(Exception ex)
                 {
@@ -290,29 +299,34 @@ public class StarmapMod
         {
         }
 
-        public static void Postfix(StarmapRenderer __instance, ref StarmapSystemRenderer __result)
+        public static void Postfix(StarmapRenderer __instance, StarmapSystemRenderer __result)
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
-                return;
-
-            Core.timer.Restart();
-            if (Core.WarStatus != null)
+            try
             {
-                var visitedStarSystems = AccessTools.FieldRefAccess<SimGameState, List<string>>("VisitedStarSystems")(sim);
-                //var visitedStarSystems = Traverse.Create(sim).Field("VisitedStarSystems").GetValue<List<string>>();
-                var wasVisited = visitedStarSystems.Contains(__result.name);
-                if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
-                    HighlightSystem(__result, wasVisited, Color.magenta, true);
-                else if (Core.WarStatus.LostSystems.Contains(__result.name))
-                    HighlightSystem(__result, wasVisited, Color.yellow, false);
-                else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
-                    HighlightSystem(__result, wasVisited, Color.red, false);
-                else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
-                    MakeSystemNormal(__result, wasVisited);
-            }
+                if (Core.WarStatus == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                    return;
 
-            LogDebug($"Renderer " + Core.timer.Elapsed);
+                //Core.timer.Restart();
+                if (Core.WarStatus != null)
+                {
+                    var wasVisited = sim.VisitedStarSystems.Contains(__result.name);
+
+                    if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
+                        HighlightSystem(__result, wasVisited, Color.magenta, true);
+                    else if (Core.WarStatus.LostSystems.Contains(__result.name))
+                        HighlightSystem(__result, wasVisited, Color.yellow, false);
+                    else if (Core.WarStatus.PirateHighlight.Contains(__result.name))
+                        HighlightSystem(__result, wasVisited, Color.red, false);
+                    else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
+                        MakeSystemNormal(__result, wasVisited);
+                }
+                
+                //LogDebug(Core.timer.ElapsedTicks);
+            }
+            catch (Exception ex)
+            {
+                LogDebug(ex.ToString());
+            }
         }
     }
 
@@ -355,7 +369,6 @@ public class StarmapMod
     {
         public static void Prefix(SGNavStarSystemCallout __instance, TextMeshProUGUI ___LabelField, TextMeshProUGUI ___NameField)
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
@@ -396,9 +409,14 @@ public class StarmapMod
         }
     }
 
+    private static readonly AccessTools.FieldRef<StarmapSystemRenderer, float> selectedScale =
+        AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("selectedScale");
+
+    private static readonly AccessTools.FieldRef<StarmapSystemRenderer, float> deselectedScale =
+        AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("deselectedScale");
+
     private static void HighlightSystem(StarmapSystemRenderer __result, bool wasVisited, Color color, bool resize)
     {
-        Core.timer.Restart();
         var blackMarketIsActive = __result.blackMarketObj.gameObject.activeInHierarchy;
         var fpAvailableIsActive = __result.flashpointAvailableObj.gameObject.activeInHierarchy;
         var fpActiveIsActive = __result.flashpointActiveObj.gameObject.activeInHierarchy;
@@ -411,28 +429,22 @@ public class StarmapMod
             __result.blackMarketObj.gameObject.SetActive(true);
         if (resize)
         {
-            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("selectedScale")(__result) = 10;
-            //Traverse.Create(__result).Field("selectedScale").SetValue(10f);
-            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("deselectedScale")(__result) = 8;
-            //Traverse.Create(__result).Field("deselectedScale").SetValue(8f);
+            selectedScale(__result) = 10;
+            deselectedScale(__result) = 8;
         }
         else
         {
-            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("selectedScale")(__result) = 4;
-            //Traverse.Create(__result).Field("selectedScale").SetValue(4f);
-            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("deselectedScale")(__result) = 4;
-            //Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
+            selectedScale(__result) = 4;
+            deselectedScale(__result) = 4;
         }
     }
 
     private static void MakeSystemNormal(StarmapSystemRenderer __result, bool wasVisited)
     {
-        Core.timer.Restart();
         __result.Init(__result.system, __result.systemColor, __result.CanTravel, wasVisited);
-        __result.transform.localScale = new Vector3(1, 1, 1);
-        Traverse.Create(__result).Field("selectedScale").SetValue(6f);
-        Traverse.Create(__result).Field("deselectedScale").SetValue(4f);
+        __result.transform.localScale = Vector3.one;
+        selectedScale(__result) = 6;
+        deselectedScale(__result) = 4;
         __result.starOuter.gameObject.SetActive(wasVisited);
-        LogDebug("MakeSystemNormal "+ Core.timer.Elapsed);
     }
 }

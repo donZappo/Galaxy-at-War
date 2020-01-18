@@ -73,13 +73,8 @@ public static class SaveHandling
             if (Core.WarStatus == null)
             {
                 Core.WarStatus = new WarStatus();
-                var timer = new Stopwatch();
-                timer.Restart();
                 Core.SystemDifficulty();
-                LogDebug("SystemDifficulties " + timer.Elapsed);
-                timer.Restart();
                 Core.WarTick(true, true);
-                LogDebug("WarTick " + timer.Elapsed);
                 SerializeWar();
             }
             else

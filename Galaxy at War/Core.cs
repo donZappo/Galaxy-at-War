@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using BattleTech;
@@ -25,8 +26,6 @@ using UnityEngine;
 
 public static class Core
 {
-    #region Init
-
     public static void Init(string modDir, string settings)
     {
         var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
@@ -47,8 +46,6 @@ public static class Core
         Clear();
     }
 
-    #endregion
-
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
     public static readonly Random Random = new Random();
@@ -67,7 +64,6 @@ public static class Core
     public static bool IsFlashpointContract;
     public static int LoopCounter = 0;
     public static Contract LoopContract;
-    internal static bool Done = false;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -89,20 +85,11 @@ public static class Core
             }
 
             WarStatus.CurSystem = sim.CurSystem.Name;
-            try
-            {
-                StarmapMod.eventPanel.gameObject.SetActive(false);
-                UnityEngine.Object.Destroy(StarmapMod.eventPanel);
-            }
-            catch
-            {
-                UnityEngine.Object.Destroy(StarmapMod.eventPanel);
-            }
-
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
                 WarStatus.EscalationDays--;
-                var system = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
+                // BUG not used
+                //var system = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
 
                 if (!WarStatus.Deployment)
                 {
@@ -184,14 +171,14 @@ public static class Core
                 WarStatus.GaW_Event_PopUp = true;
             }
 
-            //int i = 0;
-            //do
+            // TEST: run 100 WarTicks and stop
+            //for (var i = 0; i < 100; i++)
             //{
             //    WarTick(true, true);
-            //    i++;
-            //} while (i < 100);
+            //}
             //__instance.StopPlayMode();
             //return;
+            
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
@@ -242,6 +229,7 @@ public static class Core
         PiratesAndLocals.DistributePirateResources();
         PiratesAndLocals.DefendAgainstPirates();
 
+        timer.Restart();
         foreach (var systemStatus in SystemSubset)
         {
             if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
@@ -289,6 +277,8 @@ public static class Core
             }
         }
 
+        LogDebug("Foreach " + timer.Elapsed);
+
         WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
@@ -333,7 +323,6 @@ public static class Core
             }
         }
 
-        timer.Restart();
         foreach (var system in WarStatus.SystemChangedOwners)
         {
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
@@ -342,14 +331,12 @@ public static class Core
             RefreshContracts(systemStatus.starSystem);
         }
 
-        Log("Changed owners " + timer.Elapsed.ToString());
-
         WarStatus.SystemChangedOwners.Clear();
-        Done = true;
+        if (StarmapMod.eventPanel != null)
+        {
+            StarmapMod.UpdatePanelText();
+        }
     }
-
-
-
 
     public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
     {
@@ -453,7 +440,7 @@ public static class Core
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         var factionDLT = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
-        var ARFactor = 0.01f;
+        var ARFactor = UnityEngine.Random.Range(0.01f, 0.03f);
         foreach (var targetFaction in warFAR.Keys)
         {
             if (!warFaction.attackTargets.Keys.Contains(targetFaction))
@@ -461,13 +448,15 @@ public static class Core
             var targetFAR = warFAR[targetFaction];
             var targets = warFaction.attackTargets[targetFaction];
             var hatred = factionDLT.deathList[targetFaction];
+            var min = UnityEngine.Random.Range(0, targetFAR * ARFactor);
+            min = min < 1 ? 1 : min;
+            var spendAR = Mathf.Min(min, targetFAR);
             while (targetFAR > 0)
             {
                 if (targets.Count == 0)
                     break;
-                var min = UnityEngine.Random.Range(0, targetFAR * ARFactor);
-                min = min < 1 ? 1 : min; 
-                var spendAR = Mathf.Min(min, targetFAR);
+
+                
                 var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
 
@@ -501,8 +490,9 @@ public static class Core
                 
                 //var maxValueList = system.influenceTracker.Values
                 //    .OrderByDescending(x => x).ToList();
+                
                 var maxValue = system.influenceTracker.Values.Max();
-                float PmaxValue = maxValue == 0 ? 200.0f : maxValue;
+                float PmaxValue = maxValue == 0 ? 200 : maxValue;
 
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
@@ -534,7 +524,7 @@ public static class Core
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
             return false;
 
-        var DRFactor = 0.01f;
+        var DRFactor = UnityEngine.Random.Range(0.01f, 0.03f);
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources;
         
@@ -543,20 +533,19 @@ public static class Core
 
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
-        
+            // defensiveResources * DRFactor can be less than one
+        var min = UnityEngine.Random.Range(0, defensiveResources * DRFactor);
+        min = min < 1 ? 1 : min;
+        var spendDR = Mathf.Min(min, defensiveResources);
+        // spend and decrement defensiveResources
         while (defensiveResources > float.Epsilon)
         {
-            // defensiveResources * DRFactor can be less than zero
-            var min = UnityEngine.Random.Range(0, defensiveResources * DRFactor);
-            min = min < 1 ? 1 : min;
-            var spendDR = Mathf.Min(min, defensiveResources);
             //LogDebug(spendDR);
             float highest = 0f;
             string highestFaction = faction;
             var rand = Random.Next(0, warFaction.defenseTargets.Count);
             var system = warFaction.defenseTargets[rand];
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
-            //LogDebug("Found" + timer.Elapsed);
             if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
             {
                 warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
@@ -599,6 +588,7 @@ public static class Core
             //    .Where(x => x.Value == highest)
             //    .Select(y => y.Key)
             //    .First();
+            
             if (highestFaction == faction)
             {
                 if (defensiveResources > 0)
@@ -1001,37 +991,39 @@ public static class Core
 
     public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim, bool ReloadFromSave)
     {
+        timer.Restart();
         var deathList = deathListTracker.deathList;
-
+        var deathListFaction = deathListTracker.faction;
+        var factionDef = sim.GetFactionDef(deathListFaction);
+        var enemies = new List<string>(factionDef.Enemies);
+        var allies = new List<string>(factionDef.Allies);
+        
         //Check to see if it is an ally or enemy of itself and remove it if so.
         if (deathList.ContainsKey(deathListTracker.faction))
         {
             deathList.Remove(deathListTracker.faction);
-            if (sim.GetFactionDef(deathListTracker.faction).Allies.Contains(deathListTracker.faction))
+            if (allies.Contains(deathListTracker.faction))
             {
-                var allies = new List<string>(sim.GetFactionDef(deathListTracker.faction).Allies);
                 allies.Remove(deathListTracker.faction);
-                Traverse.Create(sim.GetFactionDef(deathListTracker.faction)).Property("Allies").SetValue(allies.ToArray());
+                Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
             }
-            if (sim.GetFactionDef(deathListTracker.faction).Enemies.Contains(deathListTracker.faction))
+            if (enemies.Contains(deathListTracker.faction))
             {
-                var enemies = new List<string>(sim.GetFactionDef(deathListTracker.faction).Enemies);
                 enemies.Remove(deathListTracker.faction);
-                Traverse.Create(sim.GetFactionDef(deathListTracker.faction)).Property("Enemies").SetValue(enemies.ToArray());
+                Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
             }
         }
 
         var KL_List = new List<string>(deathList.Keys);
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
         bool HasEnemy = false;
-
-        var deathListFaction = deathListTracker.faction;
-        foreach (string faction in KL_List)
+        //Defensive Only factions are always neutral
+        Settings.DefensiveFactions.Do(x => deathList[x] = 50);
+        foreach (string faction in KL_List.Except(Settings.DefensiveFactions))
         {
             if (!ReloadFromSave)
             {
                 //Factions adjust hatred based upon how much they are being attacked. But there is diminishing returns further from 50.
-                
                 int direction = -1;
                 if (warFaction.IncreaseAggression.Keys.Contains(faction) && warFaction.IncreaseAggression[faction])
                     direction = 1;
@@ -1050,10 +1042,7 @@ public static class Core
                     deathList[faction] = 1;
             }
 
-            //Defensive Only factions are always neutral
-            if (Settings.DefensiveFactions.Contains(faction))
-                deathList[faction] = 50;
-
+            // BUG is this right?
             if (faction == "AuriganPirates")
                 deathList[faction] = 80;
 
@@ -1064,77 +1053,71 @@ public static class Core
             {
                 if (faction != "AuriganPirates")
                     HasEnemy = true;
-                if (!sim.GetFactionDef(deathListFaction).Enemies.Contains((faction)))
+                if (!enemies.Contains(faction))
                 {
-                    var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                     enemies.Add(faction);
                     if (enemies.Contains(deathListFaction))
                         enemies.Remove(deathListFaction);
                     if (enemies.Contains("AuriganDirectorate"))
                         enemies.Remove("AuriganDirectorate");
-                    Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
+                    Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
-                if (sim.GetFactionDef(deathListFaction).Allies.Contains(faction))
+                if (allies.Contains(faction))
                 {
-                    var allies = new List<String>(sim.GetFactionDef(deathListFaction).Allies);
                     allies.Remove(faction);
                     if (allies.Contains(deathListFaction))
                         allies.Remove(deathListFaction);
                     if (allies.Contains("AuriganDirectorate"))
                         allies.Remove("AuriganDirectorate");
-                    Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
+                    Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
                 }
             }
 
             if (deathList[faction] <= 75 && deathList[faction] > 25)
             {
-                if (sim.GetFactionDef(deathListFaction).Enemies.Contains(faction))
+                if (enemies.Contains(faction))
                 {
-                    var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                     enemies.Remove(faction);
                     if (enemies.Contains(deathListFaction))
                         enemies.Remove(deathListFaction);
                     if (enemies.Contains("AuriganDirectorate"))
                         enemies.Remove("AuriganDirectorate");
-                    Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
+                    Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
                 }
 
 
-                if (sim.GetFactionDef(deathListFaction).Allies.Contains(faction))
+                if (allies.Contains(faction))
                 {
-                    var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
                     allies.Remove(faction);
                     if (allies.Contains(deathListFaction))
                         allies.Remove(deathListFaction);
                     if (allies.Contains("AuriganDirectorate"))
                         allies.Remove("AuriganDirectorate");
-                    Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
+                    Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
                 }
             }
 
             if (deathList[faction] <= 25)
             {
-                if (!sim.GetFactionDef(deathListFaction).Allies.Contains(faction))
+                if (!allies.Contains(faction))
                 {
-                    var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
                     allies.Add(faction);
                     if (allies.Contains(deathListFaction))
                         allies.Remove(deathListFaction);
                     if (allies.Contains("AuriganDirectorate"))
                         allies.Remove("AuriganDirectorate");
-                    Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
+                    Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
                 }
 
-                if (sim.GetFactionDef(deathListFaction).Enemies.Contains(faction))
+                if (enemies.Contains(faction))
                 {
-                    var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                     enemies.Remove(faction);
                     if (enemies.Contains(deathListFaction))
                         enemies.Remove(deathListFaction);
                     if (enemies.Contains("AuriganDirectorate"))
                         enemies.Remove("AuriganDirectorate");
-                    Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
+                    Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
                 }
             }
         }
@@ -1144,40 +1127,44 @@ public static class Core
             var rand = Random.Next(0, Settings.IncludedFactions.Count());
             var NewEnemy =  Settings.IncludedFactions[rand];
 
-            while (Settings.DefensiveFactions.Contains(NewEnemy) || Settings.ImmuneToWar.Contains(NewEnemy) || NewEnemy == deathListFaction)
+            var i = 0;
+            while (NewEnemy == deathListFaction || Settings.ImmuneToWar.Contains(NewEnemy) || Settings.DefensiveFactions.Contains(NewEnemy))
             {
-                rand = Random.Next(0, Settings.IncludedFactions.Count());
+                i++;
+                rand = Random.Next(0, Settings.IncludedFactions.Count);
                 NewEnemy = Settings.IncludedFactions[rand];
             }
 
-            if (warFaction.adjacentFactions.Count() != 0)
+            Log("i " + i);
+
+            if (warFaction.adjacentFactions.Count != 0)
             {
                 rand = Random.Next(0, warFaction.adjacentFactions.Count());
                 NewEnemy = warFaction.adjacentFactions[rand];
             }
-            if (sim.GetFactionDef(deathListFaction).Allies.Contains(NewEnemy))
+            if (allies.Contains(NewEnemy))
             {
-                var allies = new List<string>(sim.GetFactionDef(deathListFaction).Allies);
                 allies.Remove(NewEnemy);
                 if (allies.Contains(deathListFaction))
                     allies.Remove(deathListFaction);
                 if (allies.Contains("AuriganDirectorate"))
                     allies.Remove("AuriganDirectorate");
-                Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Allies").SetValue(allies.ToArray());
+                Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
             }
 
-            if (!sim.GetFactionDef(deathListFaction).Enemies.Contains(NewEnemy))
+            if (!enemies.Contains(NewEnemy))
             {
-                var enemies = new List<string>(sim.GetFactionDef(deathListFaction).Enemies);
                 enemies.Add(NewEnemy);
                 if (enemies.Contains(deathListFaction))
                     enemies.Remove(deathListFaction);
                 if (enemies.Contains("AuriganDirectorate"))
                     enemies.Remove("AuriganDirectorate");
-                Traverse.Create(sim.GetFactionDef(deathListFaction)).Property("Enemies").SetValue(enemies.ToArray());
+                Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
             }
             deathList[NewEnemy] = 80;
         }
+
+        LogDebug("AdjustDeathList " + timer.Elapsed);
     }
 
     [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]
@@ -1443,7 +1430,7 @@ public static class Core
         }
     }
 
-    internal static Stopwatch timer = new Stopwatch();
+    internal static System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public static void SystemDifficulty()
     {
         bool GetPirateFlex = true;
