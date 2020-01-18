@@ -331,6 +331,7 @@ public static class Core
             RefreshContracts(systemStatus.starSystem);
         }
 
+        LogDebug("Changed " + WarStatus.SystemChangedOwners.Count);
         WarStatus.SystemChangedOwners.Clear();
         if (StarmapMod.eventPanel != null)
         {
@@ -486,7 +487,6 @@ public static class Core
                 if (targets.Count == 0)
                     break;
 
-                
                 var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
 
@@ -517,15 +517,12 @@ public static class Core
 
                     continue;
                 }
-                
-                //var maxValueList = system.influenceTracker.Values
-                //    .OrderByDescending(x => x).ToList();
-                
+
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
                 if (maxValueList.Count > 1)
                     PmaxValue = maxValueList[1];
-                
+
                 var ITValue = system.influenceTracker[warFaction.faction];
                 float basicAR = (float)(11 - system.DifficultyRating) / 2;
 
@@ -1159,15 +1156,11 @@ public static class Core
             var rand = Random.Next(0, Settings.IncludedFactions.Count());
             var NewEnemy =  Settings.IncludedFactions[rand];
 
-            var i = 0;
             while (NewEnemy == deathListFaction || Settings.ImmuneToWar.Contains(NewEnemy) || Settings.DefensiveFactions.Contains(NewEnemy))
             {
-                i++;
                 rand = Random.Next(0, Settings.IncludedFactions.Count);
                 NewEnemy = Settings.IncludedFactions[rand];
             }
-
-            Log("i " + i);
 
             if (warFaction.adjacentFactions.Count != 0)
             {
