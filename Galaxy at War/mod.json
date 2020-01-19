@@ -5,7 +5,7 @@
     "Version": "3.4-ISM",
     "Author": "don Zappo and gnivler",
     
-    "DLL": "Galaxy at War.dll",
+    "DLL": "GalaxyatWar.dll",
 	"OptionallyDependsOn": [ "BT_Extended_Overrides" ],
 
     "Settings": 
