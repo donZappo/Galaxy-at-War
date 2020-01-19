@@ -375,13 +375,6 @@ public class StarmapMod
             void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
             {
                 Core.timer.Restart();
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, TMP_FontAsset>("m_fontAsset")(mesh) = font;
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, TMP_FontAsset>("m_baseFont")(mesh) = font;
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("m_havePropertiesChanged")(mesh) = true;
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("m_isCalculateSizeRequired")(mesh) = true;
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("m_isInputParsingRequired")(mesh) = true;
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("SetVerticesDirty")(mesh) = true;
-                //AccessTools.FieldRefAccess<TextMeshProUGUI, bool>("SetVerticesDirty")(mesh) = true;
                 Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
                 Traverse.Create(mesh).Field("m_baseFont").SetValue(font);
                 Traverse.Create(mesh).Method("LoadFontAsset").GetValue();

@@ -1020,7 +1020,6 @@ public static class Core
 
     public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim, bool ReloadFromSave)
     {
-        timer.Restart();
         var deathList = deathListTracker.deathList;
         var deathListFaction = deathListTracker.faction;
         var factionDef = sim.GetFactionDef(deathListFaction);
@@ -1188,8 +1187,6 @@ public static class Core
             }
             deathList[NewEnemy] = 80;
         }
-
-        LogDebug("AdjustDeathList, " + timer.ElapsedTicks);
     }
 
     [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]

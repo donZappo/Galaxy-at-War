@@ -1,19 +1,11 @@
-using System.IO;
 using System.Linq;
 using BattleTech;
-using BattleTech.Save.Test;
 using Harmony;
 using Newtonsoft.Json;
-using UnityEngine;
 using static Logger;
 using BattleTech.Save;
-using System.Diagnostics;
-using HBS;
-using BattleTech.UI;
 using System.Collections.Generic;
-using BattleTech.Save.Core;
 using BattleTech.Framework;
-using Stopwatch = HBS.Stopwatch;
 
 
 public static class SaveHandling
@@ -32,17 +24,12 @@ public static class SaveHandling
 
             try
             {
-                bool NewGaW = true;
                 Core.BorkedSave = false;
-                foreach (string tag in __instance.CompanyTags)
+                if (__instance.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave")))
                 {
-                    if (tag.StartsWith("GalaxyAtWarSave{"))
-                        NewGaW = false;
-                }
-                if (!NewGaW)
-                {
+                    LogDebug("Have a save.. it starts with " + __instance.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(0, 30)); 
                     DeserializeWar();
-                    RebuildState();
+                    RebuildState(); 
                 }
             }
             catch
@@ -57,8 +44,7 @@ public static class SaveHandling
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         Core.WarStatus = JsonConvert.DeserializeObject<WarStatus>(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
-        LogDebug(">>> Deserialization complete");
-        LogDebug($"Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
+        LogDebug($">>> Deserialization complete (Size after load: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb)");
     }
 
     [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
@@ -90,8 +76,7 @@ public static class SaveHandling
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
-        LogDebug($"Serializing object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb");
-        LogDebug(">>> Serialization complete");
+        LogDebug($">>> Serialization complete (object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb)");
     }
 
     public static void RebuildState()
