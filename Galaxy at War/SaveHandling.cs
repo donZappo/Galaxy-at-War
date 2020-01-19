@@ -1,11 +1,19 @@
+using System.IO;
 using System.Linq;
 using BattleTech;
+using BattleTech.Save.Test;
 using Harmony;
 using Newtonsoft.Json;
+using UnityEngine;
 using static Logger;
 using BattleTech.Save;
+using System.Diagnostics;
+using HBS;
+using BattleTech.UI;
 using System.Collections.Generic;
+using BattleTech.Save.Core;
 using BattleTech.Framework;
+using Stopwatch = HBS.Stopwatch;
 
 
 public static class SaveHandling
@@ -24,12 +32,17 @@ public static class SaveHandling
 
             try
             {
+                bool NewGaW = true;
                 Core.BorkedSave = false;
-                if (__instance.CompanyTags.Any(x => x.StartsWith("GalaxyAtWarSave")))
+                foreach (string tag in __instance.CompanyTags)
                 {
-                    LogDebug("Have a save.. it starts with " + __instance.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(0, 30)); 
+                    if (tag.StartsWith("GalaxyAtWarSave{"))
+                        NewGaW = false;
+                }
+                if (!NewGaW)
+                {
                     DeserializeWar();
-                    RebuildState(); 
+                    RebuildState();
                 }
             }
             catch

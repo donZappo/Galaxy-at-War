@@ -213,10 +213,8 @@ public static class Core
     
     internal static void WarTick(bool UseFullSet, bool CheckForSystemChange)
     {
-
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         WarStatus.PrioritySystems.Clear();
-
         int SystemSubsetSize = WarStatus.systems.Count;
         if (Settings.UseSubsetOfSystems && !UseFullSet)
             SystemSubsetSize = (int) (SystemSubsetSize * Settings.SubSetFraction);
@@ -229,7 +227,6 @@ public static class Core
         PiratesAndLocals.DistributePirateResources();
         PiratesAndLocals.DefendAgainstPirates();
 
-        timer.Restart();
         foreach (var systemStatus in SystemSubset)
         {
             if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
@@ -276,9 +273,7 @@ public static class Core
                     WarStatus.PirateHighlight.Remove(systemStatus.name);
             }
         }
-
-        LogDebug("Foreach " + timer.Elapsed);
-
+        
         WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
@@ -1697,16 +1692,7 @@ public static class Core
         if (!PiratesInvolved)
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
-        double InfluenceChange = 1;
-
-        try
-        {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
-        }
-        catch
-        {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceFactor;
-        }
+        var InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);
