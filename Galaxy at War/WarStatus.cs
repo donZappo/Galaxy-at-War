@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
@@ -113,7 +114,7 @@ public class WarStatus
     }
 }
 
-public class SystemStatus
+public class SystemStatus : IComparable
 {
     public string name;
     public string owner;
@@ -256,6 +257,29 @@ public class SystemStatus
             if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
+    }
+
+    public int CompareTo(object obj)
+    {
+        if (!(obj is StarSystem other))
+            return 1;
+        
+        if (starSystem.Name.ToLower()[0] == other.Name.ToLower()[0])
+        {
+            return 0;
+        }
+
+        if (starSystem.Name.ToLower()[0] > other.Name.ToLower()[0])
+        {
+            return 1;
+        }
+
+        if (starSystem.Name.ToLower()[0] < other.Name.ToLower()[0])
+        {
+            return -1;
+        }
+
+        return 1;
     }
 }
 

@@ -13,6 +13,7 @@ using BattleTech.UI;
 using System.Collections.Generic;
 using BattleTech.Save.Core;
 using BattleTech.Framework;
+using Stopwatch = HBS.Stopwatch;
 
 
 public static class SaveHandling
