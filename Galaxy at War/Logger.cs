@@ -11,6 +11,7 @@ public static class Logger
     {
         using (var writer = new StreamWriter(LogFilePath, true))
         {
+            writer.WriteLine($"{ex}");
             writer.WriteLine($"Message: {ex.Message}");
             writer.WriteLine($"StackTrace: {ex.StackTrace}");
             writer.WriteLine($"Source: {ex.Source}");
@@ -18,12 +19,12 @@ public static class Logger
         }
     }
 
-    public static void LogDebug(string line)
+    public static void LogDebug(object line)
     {
         if (!Core.Settings.Debug) return;
         using (var writer = new StreamWriter(LogFilePath, true))
         {
-            writer.WriteLine(line);
+            writer.WriteLine(line.ToString());
         }
     }
     public static void Log(string line)
