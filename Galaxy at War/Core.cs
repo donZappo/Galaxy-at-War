@@ -457,14 +457,14 @@ public static class Core
             warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
         }
     }
-
-    public static bool AllocateAttackResources(WarFaction warFaction)
+    
+    public static void AllocateAttackResources(WarFaction warFaction)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var FactionRep = sim.GetRawReputation(FactionValues.Find(x => x.Name == warFaction.faction));
         int maxContracts = HotSpots.ProcessReputation(FactionRep);
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
-            return false;
+            return;
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         var factionDLT = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
@@ -544,7 +544,6 @@ public static class Core
                 }
             }
         }
-        return true;
     }
 
     public static void CalculateDefensiveSystems()
@@ -561,12 +560,20 @@ public static class Core
                 warfaction.defenseTargets.Add(system.name);
             }
         }
+
+        //foreach (var warFaction in WarStatus.warFactionTracker)
+        //{
+        //    Log("=============");
+        //    Log(warFaction.faction);
+        //    foreach (var system in warFaction.defenseTargets)
+        //        Log("   " + system);
+        //}
     }
 
-    public static bool AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
+    public static void AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
     {
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
-            return false;
+            return;
 
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources;
@@ -680,7 +687,7 @@ public static class Core
             //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
         }
 
-        return true;
+        return;
     }
 
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, string faction, bool ForceFlip)

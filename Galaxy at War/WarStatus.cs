@@ -297,6 +297,15 @@ public class WarFaction
     public float PirateARLoss;
     public float PirateDRLoss;
 
+    public int NumberOfSystems
+    {
+        get
+        {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            return sim.StarSystems.Count(system => system.OwnerDef == sim.factions[faction]);
+        }
+    }
+
     public Dictionary<string, float> warFactionAttackResources = new Dictionary<string, float>();
     public Dictionary<string, List<string>> attackTargets = new Dictionary<string, List<string>>();
     public List<string> defenseTargets = new List<string>();
