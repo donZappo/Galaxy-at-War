@@ -82,9 +82,9 @@ public class ModSettings
     public double DeploymentRerollBound = 0.33;
     public double InfluenceFactor = 1.0;
     public string DeploymentReward = "";
-    public float MinimumResourceFactor = 0.01f;
-    public float MaximumResourceFactor = 0.03f;
-    public double SystemDefenseCutoff = 5;
+    public float MinimumResourceFactor = 0.001f;
+    public float MaximumResourceFactor = 0.003f;
+    public double SystemDefenseCutoff = 0.05;
 
     public List<string> DefensiveFactions = new List<string>();
 
