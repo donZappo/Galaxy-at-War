@@ -171,14 +171,14 @@ public static class Core
                 WarStatus.GaW_Event_PopUp = true;
             }
 
-            // TEST: run 100 WarTicks and stop
-            //for (var i = 0; i < 100; i++)
-            //{
-            //    WarTick(true, true);
-            //}
-            //__instance.StopPlayMode();
-            //return;
-            
+            //TEST: run 100 WarTicks and stop
+            for (var i = 0; i < 100; i++)
+            {
+                WarTick(true, true);
+            }
+            __instance.StopPlayMode();
+            return;
+
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
@@ -454,7 +454,7 @@ public static class Core
         float attackResources = warFaction.AttackResources;
         
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
-        attackResources = attackResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
+        attackResources += attackResources * (float)(Random.Next(-1, 1) * Settings.ResourceSpread);
         foreach (string Rfact in tempTargets.Keys)
         {
             warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
@@ -465,7 +465,7 @@ public static class Core
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var FactionRep = sim.GetRawReputation(FactionValues.Find(x => x.Name == warFaction.faction));
-        int maxContracts = Galaxy_at_War.HotSpots.ProcessReputation(FactionRep);
+        int maxContracts = HotSpots.ProcessReputation(FactionRep);
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
             return false;
         var warFAR = warFaction.warFactionAttackResources;
@@ -534,17 +534,16 @@ public static class Core
 
                 if (targetFAR > TotalAR)
                 {
-                    ITValue += TotalAR;
+                    system.influenceTracker[warFaction.faction] += TotalAR;
                     targetFAR -= TotalAR;
                 }
                 else
                 {
-                    ITValue += targetFAR;
+                    system.influenceTracker[warFaction.faction] += targetFAR;
                     targetFAR = 0;
                 }
             }
         }
-
         return true;
     }
 
@@ -561,7 +560,7 @@ public static class Core
                 Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
 
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
-        defensiveResources = defensiveResources * (float)(Random.NextDouble() * (2 * Settings.ResourceSpread) + (1 - Settings.ResourceSpread));
+        defensiveResources += defensiveResources * (float)(Random.Next(-1,1) * (Settings.ResourceSpread));
             // defensiveResources * DRFactor can be less than one
         var min = UnityEngine.Random.Range(0, defensiveResources * DRFactor);
         min = min < 1 ? 1 : min;
@@ -601,7 +600,11 @@ public static class Core
                 if (highest / Total >= 0.5)
                     break;
             }
-            
+            //Log("===========");
+            //Log(system);
+            //Log("Before Defense");
+            //foreach (var foo in systemStatus.influenceTracker.Keys)
+            //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
             //LogDebug("1 " + timer.Elapsed);
             //foreach (string tempfaction in systemStatus.influenceTracker.Keys)
             //{
@@ -654,6 +657,9 @@ public static class Core
                     defensiveResources -= Math.Min(defensiveResources, 50);
                 }
             }
+            //Log("After Defense");
+            //foreach (var foo in systemStatus.influenceTracker.Keys)
+            //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
         }
 
         return true;

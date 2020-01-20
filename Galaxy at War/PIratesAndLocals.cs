@@ -146,8 +146,8 @@ namespace Galaxy_at_War
                 {
                     if (TotalPA <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += TotalPA;
-                        CurrentPAResources -= TotalPA;
+                        systemStatus.PirateActivity += Math.Min(TotalPA, 100 - systemStatus.PirateActivity);
+                        CurrentPAResources -= Math.Min(TotalPA, 100 - systemStatus.PirateActivity);
                         i = 0;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {
@@ -157,7 +157,7 @@ namespace Galaxy_at_War
                     }
                     else
                     {
-                        systemStatus.PirateActivity += CurrentPAResources;
+                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
                         CurrentPAResources = 0;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {
@@ -181,7 +181,7 @@ namespace Galaxy_at_War
                     }
                     else
                     {
-                        systemStatus.PirateActivity += CurrentPAResources;
+                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
                         CurrentPAResources = 0;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {
