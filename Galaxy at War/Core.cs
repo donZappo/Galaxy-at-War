@@ -566,14 +566,6 @@ public static class Core
                 warfaction.defenseTargets.Add(system.name);
             }
         }
-
-        foreach (var warFaction in WarStatus.warFactionTracker)
-        {
-            Log("=============");
-            Log(warFaction.faction);
-            foreach (var system in warFaction.defenseTargets)
-                Log("   " + system);
-        }
     }
 
     public static bool AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
