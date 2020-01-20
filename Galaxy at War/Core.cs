@@ -466,17 +466,15 @@ public static class Core
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         var factionDLT = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
-        var ARFactor = UnityEngine.Random.Range(0.01f, 0.03f);
         foreach (var targetFaction in warFAR.Keys)
         {
             if (!warFaction.attackTargets.Keys.Contains(targetFaction))
                 break;
             var targetFAR = warFAR[targetFaction];
+            var startingtargetFAR = targetFAR;
             var targets = warFaction.attackTargets[targetFaction];
             var hatred = factionDLT.deathList[targetFaction];
-            var min = UnityEngine.Random.Range(0, targetFAR * ARFactor);
-            min = min < 1 ? 1 : min;
-            var spendAR = Mathf.Min(min, targetFAR);
+            
             while (targetFAR > 0)
             {
                 if (targets.Count == 0)
@@ -513,6 +511,9 @@ public static class Core
                     continue;
                 }
 
+                var ARFactor = UnityEngine.Random.Range(0.01f, 0.03f);
+                var spendAR = Mathf.Min(startingtargetFAR * ARFactor, targetFAR);
+
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
                 if (maxValueList.Count > 1)
@@ -547,7 +548,6 @@ public static class Core
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
             return false;
 
-        var DRFactor = UnityEngine.Random.Range(0.01f, 0.03f);
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources;
         
@@ -556,10 +556,8 @@ public static class Core
 
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources += defensiveResources * (float)(Random.Next(-1,1) * (Settings.ResourceSpread));
-            // defensiveResources * DRFactor can be less than one
-        var min = UnityEngine.Random.Range(0, defensiveResources * DRFactor);
-        min = min < 1 ? 1 : min;
-        var spendDR = Mathf.Min(min, defensiveResources);
+        var startingdefensiveResources = defensiveResources;
+
         // spend and decrement defensiveResources
         while (defensiveResources > float.Epsilon)
         {
@@ -615,7 +613,11 @@ public static class Core
             //    .Where(x => x.Value == highest)
             //    .Select(y => y.Key)
             //    .First();
-            
+
+            var DRFactor = UnityEngine.Random.Range(0.01f, 0.03f);
+            var spendDR = Mathf.Min(startingdefensiveResources * DRFactor, defensiveResources);
+
+
             if (highestFaction == faction)
             {
                 if (defensiveResources > 0)
