@@ -84,6 +84,7 @@ public class ModSettings
     public string DeploymentReward = "";
     public float MinimumResourceFactor = 0.01f;
     public float MaximumResourceFactor = 0.03f;
+    public double SystemDefenseCutoff = 5;
 
     public List<string> DefensiveFactions = new List<string>();
 

@@ -232,9 +232,9 @@ public static class Core
             if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
             {
                 systemStatus.influenceTracker["Locals"] *= 1.1f;
-                var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
-                if (!warFaction.defenseTargets.Contains(systemStatus.name))
-                    warFaction.defenseTargets.Add(systemStatus.name);
+                //var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
+                //if (!warFaction.defenseTargets.Contains(systemStatus.name))
+                //    warFaction.defenseTargets.Add(systemStatus.name);
             }
 
             systemStatus.PriorityAttack = false;
@@ -285,6 +285,8 @@ public static class Core
         }
 
         LogDebug("AllocateAttackResources " + timer.Elapsed);
+
+        CalculateDefensiveSystems();
 
         timer.Restart();
         foreach (var warFaction in WarStatus.warFactionTracker)
@@ -392,10 +394,10 @@ public static class Core
                 {
                     warFac.attackTargets[neighborSystem.OwnerValue.Name].Add(neighborSystem.Name);
                 }
-                if (!warFac.defenseTargets.Contains(starSystem.Name))
-                {
-                    warFac.defenseTargets.Add(starSystem.Name);
-                }
+                //if (!warFac.defenseTargets.Contains(starSystem.Name))
+                //{
+                //    warFac.defenseTargets.Add(starSystem.Name);
+                //}
                 if (!warFac.adjacentFactions.Contains(starSystem.OwnerValue.Name) && !Settings.DefensiveFactions.Contains(starSystem.OwnerValue.Name))
                     warFac.adjacentFactions.Add(starSystem.OwnerValue.Name);
             }
@@ -533,6 +535,7 @@ public static class Core
                 {
                     system.influenceTracker[warFaction.faction] += TotalAR;
                     targetFAR -= TotalAR;
+                    WarStatus.warFactionTracker.Find(x => x.faction == targetFaction).defenseTargets.Add(system.name);
                 }
                 else
                 {
@@ -542,6 +545,23 @@ public static class Core
             }
         }
         return true;
+    }
+
+    public static void CalculateDefensiveSystems()
+    {
+        foreach (var warFaction in WarStatus.warFactionTracker)
+            warFaction.defenseTargets.Clear();
+
+        foreach (var system in WarStatus.systems)
+        {
+            var totalInfluence = system.influenceTracker.Values.Sum();
+            if (totalInfluence / 100 > Settings.SystemDefenseCutoff)
+            {
+                var warfaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
+                warfaction.defenseTargets.Add(system.name);
+
+            }
+        }
     }
 
     public static bool AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
@@ -823,7 +843,7 @@ public static class Core
 
     private static void RemoveAndFlagSystems(WarFaction OldOwner, StarSystem system)
     {
-        OldOwner.defenseTargets.Remove(system.Name);
+        //OldOwner.defenseTargets.Remove(system.Name);
         if (!WarStatus.SystemChangedOwners.Contains(system.Name))
             WarStatus.SystemChangedOwners.Add(system.Name);
         foreach (var neighborsystem in UnityGameInstance.BattleTechGame.Simulation.Starmap.GetAvailableNeighborSystem(system))
