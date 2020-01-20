@@ -511,8 +511,9 @@ public static class Core
                     continue;
                 }
 
-                var ARFactor = UnityEngine.Random.Range(0.01f, 0.03f);
+                var ARFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
                 var spendAR = Mathf.Min(startingtargetFAR * ARFactor, targetFAR);
+                spendAR = spendAR < 1 ? 1 : spendAR;
 
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
@@ -614,8 +615,9 @@ public static class Core
             //    .Select(y => y.Key)
             //    .First();
 
-            var DRFactor = UnityEngine.Random.Range(0.01f, 0.03f);
+            var DRFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
             var spendDR = Mathf.Min(startingdefensiveResources * DRFactor, defensiveResources);
+            spendDR = spendDR < 1 ? 1 : spendDR;
 
 
             if (highestFaction == faction)
