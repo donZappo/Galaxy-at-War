@@ -560,12 +560,19 @@ public static class Core
         foreach (var system in WarStatus.systems)
         {
             var totalInfluence = system.influenceTracker.Values.Sum();
-            if (totalInfluence / 100 > Settings.SystemDefenseCutoff)
+            if ((totalInfluence - 100) / 100 > Settings.SystemDefenseCutoff)
             {
                 var warfaction = WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
                 warfaction.defenseTargets.Add(system.name);
-
             }
+        }
+
+        foreach (var warFaction in WarStatus.warFactionTracker)
+        {
+            Log("=============");
+            Log(warFaction.faction);
+            foreach (var system in warFaction.defenseTargets)
+                Log("   " + system);
         }
     }
 
