@@ -172,12 +172,15 @@ public static class Core
             }
 
             //TEST: run 100 WarTicks and stop
-            for (var i = 0; i < 100; i++)
-            {
-                WarTick(true, true);
-            }
-            __instance.StopPlayMode();
-            return;
+            //for (var i = 0; i < 100; i++)
+            //{
+            //    WarTick(true, false);
+            //    WarTick(true, false);
+            //    WarTick(true, false);
+            //    WarTick(true, true);
+            //}
+            //__instance.StopPlayMode();
+            //return;
 
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
@@ -582,6 +585,9 @@ public static class Core
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources += defensiveResources * (float)(Random.Next(-1,1) * (Settings.ResourceSpread));
         var startingdefensiveResources = defensiveResources;
+        List<string> duplicateDefenseTargets = new List<string>(warFaction.defenseTargets);
+        int rand = 0;
+        string system = "";
 
         // spend and decrement defensiveResources
         while (defensiveResources > float.Epsilon)
@@ -589,17 +595,29 @@ public static class Core
             //LogDebug(spendDR);
             float highest = 0f;
             string highestFaction = faction;
-            var rand = Random.Next(0, warFaction.defenseTargets.Count);
-            var system = warFaction.defenseTargets[rand];
+            float spendDR = 1.0f;
+            if (duplicateDefenseTargets.Count != 0)
+            {
+                rand = Random.Next(0, duplicateDefenseTargets.Count);
+                system = duplicateDefenseTargets[rand];
+                duplicateDefenseTargets.Remove(system);
+            }
+            else
+            {
+                rand = Random.Next(0, warFaction.defenseTargets.Count);
+                system = warFaction.defenseTargets[rand];
+                var DRFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
+                spendDR = Mathf.Min(startingdefensiveResources * DRFactor, defensiveResources);
+                spendDR = spendDR < 1 ? 1 : spendDR;
+            }
             var systemStatus = WarStatus.systems.Find(x => x.name == system);
-            if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
+            if (systemStatus.Contended || WarStatus.HotBox.Contains(systemStatus.name))
             {
                 warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
                 if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
                 {
                     break;
                 }
-
                 continue;
             }
 
@@ -639,11 +657,7 @@ public static class Core
             //    .Select(y => y.Key)
             //    .First();
 
-            var DRFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
-            var spendDR = Mathf.Min(startingdefensiveResources * DRFactor, defensiveResources);
-            spendDR = spendDR < 1 ? 1 : spendDR;
-
-
+            
             if (highestFaction == faction)
             {
                 if (defensiveResources > 0)
