@@ -1742,7 +1742,18 @@ public static class Core
         if (!PiratesInvolved)
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
-        var InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
+        double InfluenceChange = 1;
+
+        //If contracts are not properly designed, this provides a failsafe.
+        try
+        {
+            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
+        }
+        catch
+        {
+            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceFactor;
+        }
+
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);

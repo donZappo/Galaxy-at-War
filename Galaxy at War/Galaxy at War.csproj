@@ -99,7 +99,8 @@
     <Compile Include="WarStatus.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="mod.json" />
+    <None Include="mod - ISM.json" />
+    <None Include="mod - Vanilla.json" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
