@@ -216,10 +216,8 @@ public static class Core
     
     internal static void WarTick(bool UseFullSet, bool CheckForSystemChange)
     {
-
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         WarStatus.PrioritySystems.Clear();
-
         int SystemSubsetSize = WarStatus.systems.Count;
         if (Settings.UseSubsetOfSystems && !UseFullSet)
             SystemSubsetSize = (int) (SystemSubsetSize * Settings.SubSetFraction);
@@ -232,7 +230,6 @@ public static class Core
         PiratesAndLocals.DistributePirateResources();
         PiratesAndLocals.DefendAgainstPirates();
 
-        timer.Restart();
         foreach (var systemStatus in SystemSubset)
         {
             if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
@@ -279,9 +276,7 @@ public static class Core
                     WarStatus.PirateHighlight.Remove(systemStatus.name);
             }
         }
-
-        LogDebug("Foreach " + timer.Elapsed);
-
+        
         WarStatus.InitializeAtStart = false;
         //Attack!
         //LogDebug("Attacking Fool");
@@ -465,14 +460,14 @@ public static class Core
             warFAR.Add(Rfact, tempTargets[Rfact] * attackResources / total);
         }
     }
-
-    public static bool AllocateAttackResources(WarFaction warFaction)
+    
+    public static void AllocateAttackResources(WarFaction warFaction)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var FactionRep = sim.GetRawReputation(FactionValues.Find(x => x.Name == warFaction.faction));
         int maxContracts = HotSpots.ProcessReputation(FactionRep);
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
-            return false;
+            return;
         var warFAR = warFaction.warFactionAttackResources;
         //Go through the different resources allocated from attacking faction to spend against each targetFaction
         var factionDLT = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
@@ -552,7 +547,6 @@ public static class Core
                 }
             }
         }
-        return true;
     }
 
     public static void CalculateDefensiveSystems()
@@ -569,12 +563,20 @@ public static class Core
                 warfaction.defenseTargets.Add(system.name);
             }
         }
+
+        //foreach (var warFaction in WarStatus.warFactionTracker)
+        //{
+        //    Log("=============");
+        //    Log(warFaction.faction);
+        //    foreach (var system in warFaction.defenseTargets)
+        //        Log("   " + system);
+        //}
     }
 
-    public static bool AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
+    public static void AllocateDefensiveResources(WarFaction warFaction, bool UseFullSet)
     {
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
-            return false;
+            return;
 
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources;
@@ -699,7 +701,7 @@ public static class Core
             //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
         }
 
-        return true;
+        return;
     }
 
     public static void ChangeSystemOwnership(SimGameState sim, StarSystem system, string faction, bool ForceFlip)
@@ -1063,7 +1065,6 @@ public static class Core
 
     public static void AdjustDeathList(DeathListTracker deathListTracker, SimGameState sim, bool ReloadFromSave)
     {
-        timer.Restart();
         var deathList = deathListTracker.deathList;
         var deathListFaction = deathListTracker.faction;
         var factionDef = sim.GetFactionDef(deathListFaction);
@@ -1231,8 +1232,6 @@ public static class Core
             }
             deathList[NewEnemy] = 80;
         }
-
-        LogDebug("AdjustDeathList, " + timer.ElapsedTicks);
     }
 
     [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]
@@ -1743,16 +1742,7 @@ public static class Core
         if (!PiratesInvolved)
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
-        double InfluenceChange = 1;
-
-        try
-        {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
-        }
-        catch
-        {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceFactor;
-        }
+        var InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);

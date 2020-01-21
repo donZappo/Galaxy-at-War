@@ -98,6 +98,9 @@
     <Compile Include="StarmapMod.cs" />
     <Compile Include="WarStatus.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="mod.json" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
   </PropertyGroup>
