@@ -81,7 +81,12 @@ public class ModSettings
     public double DeploymentInfluenceFactor = 1.1;
     public double DeploymentRerollBound = 0.33;
     public double InfluenceFactor = 1.0;
-    public string DeploymentReward = "";
+    public string DeploymentReward_01 = "";
+    public string DeploymentReward_02 = "";
+    public string DeploymentReward_03 = "";
+    public string DeploymentReward_04 = "";
+    public string DeploymentReward_05 = "";
+
     public float MinimumResourceFactor = 0.001f;
     public float MaximumResourceFactor = 0.003f;
     public double SystemDefenseCutoff = 0.05;

@@ -64,6 +64,7 @@ public static class Core
     public static bool IsFlashpointContract;
     public static int LoopCounter = 0;
     public static Contract LoopContract;
+    public static bool HoldContracts = false;
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
@@ -1445,7 +1446,21 @@ public static class Core
                         if (WarStatus.HotBox.Contains(sim.CurSystem.Name))
                         {
                             if (WarStatus.Deployment)
-                                sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward);
+                            {
+                                double difficultyScale = sim.CurSystem.Def.DefaultDifficulty * WarStatus.DeploymentInfluenceIncrease;
+                                if (difficultyScale > 35)
+                                    sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_05);
+                                else if (difficultyScale > 22.5)
+                                    sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_04);
+                                else if (difficultyScale > 15)
+                                    sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_03);
+                                else if (difficultyScale > 7.5)
+                                    sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_02);
+                                else
+                                    sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_01);
+                            }
+
+
                             WarStatus.HotBox.Remove(sim.CurSystem.Name);
                             WarStatus.EscalationDays = 0;
                             warsystem.BonusCBills = false;

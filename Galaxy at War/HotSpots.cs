@@ -584,6 +584,18 @@ namespace Galaxy_at_War
             }
         }
 
+        [HarmonyPatch(typeof(SGTravelManager), "WarmingEngines_CanEnter")]
+        public static class Completed_Jump_Patch
+        {
+            static void Postfix()
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                Core.HoldContracts = false;
+            }
+        }
 
         [HarmonyPatch(typeof(SGTravelManager), "DisplayEnteredOrbitPopup")]
         public static class Entered_Orbit_Patch
@@ -614,13 +626,14 @@ namespace Galaxy_at_War
                     if (contract.IsFlashpointContract)
                         HasFlashpoint = true;
                 }
-                if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
+                if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint && !Core.HoldContracts)
                 {
                     Core.NeedsProcessing = true;
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     Core.NeedsProcessing = false;
                 }
+                Core.HoldContracts = false;
             }
         }
 
@@ -1013,6 +1026,8 @@ namespace Galaxy_at_War
                     // StarmapMod.SetupRelationPanel();
                     Core.WarStatus.StartGameInitialized = true;
                 }
+
+                Core.HoldContracts = true;
             }
         }
 
