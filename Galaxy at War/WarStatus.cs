@@ -37,6 +37,7 @@ public class WarStatus
     public List<string> DeploymentContracts = new List<string>();
     public string DeploymentEmployer = "Marik";
     public double DeploymentInfluenceIncrease = 1.0;
+    public bool PirateDeployment = false;
     
     public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
     public List<string> HomeContendedSystems = new List<string>();

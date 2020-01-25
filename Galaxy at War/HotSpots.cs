@@ -313,6 +313,8 @@ namespace Galaxy_at_War
             
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
+                if (Core.WarStatus.PirateDeployment)
+                    break;
                 if (influence.Value > 1 && influence.Key != faction)
                 {
                     starSystem.Def.ContractTargetIDList.Add(influence.Key);
@@ -333,7 +335,9 @@ namespace Galaxy_at_War
                 if (starSystem.Def.ContractTargetIDList.Count() == 2)
                     break;
             }
-            
+
+            if (starSystem.Def.ContractTargetIDList.Count() == 0)
+                starSystem.Def.ContractTargetIDList.Add("AuriganPirates");
         }
 
         //Deployments area.
@@ -362,6 +366,7 @@ namespace Galaxy_at_War
                     {
                         Core.WarStatus.Deployment = false;
                         Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
+                        Core.WarStatus.PirateDeployment = false;
                     }
 
                     TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue.Name);
@@ -400,6 +405,7 @@ namespace Galaxy_at_War
                         PauseNotification.Show("Navigation Change", message, simState.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
                             cleanup();
                             Core.WarStatus.Deployment = false;
+                            Core.WarStatus.PirateDeployment = false;
                             if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
                             {
                                 float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
@@ -423,6 +429,7 @@ namespace Galaxy_at_War
                             }
 
                             Core.WarStatus.Deployment = false;
+                            Core.WarStatus.PirateDeployment = false;
                             Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
                             Core.WarStatus.Escalation = false;
                             Core.WarStatus.EscalationDays = 0;
@@ -504,6 +511,7 @@ namespace Galaxy_at_War
                         PauseNotification.Show("Navigation Change", message, simState.GetCrewPortrait(SimGameCrew.Crew_Sumire), string.Empty, true, delegate {
                             cleanup();
                             Core.WarStatus.Deployment = false;
+                            Core.WarStatus.PirateDeployment = false;
                             if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
                             {
                                 float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
@@ -527,6 +535,7 @@ namespace Galaxy_at_War
                             }
 
                             Core.WarStatus.Deployment = false;
+                            Core.WarStatus.PirateDeployment = false;
                             Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
                             Core.WarStatus.Escalation = false;
                             Core.WarStatus.EscalationDays = 0;
@@ -795,6 +804,7 @@ namespace Galaxy_at_War
                 }
 
                 Core.WarStatus.Deployment = false;
+                Core.WarStatus.PirateDeployment = false;
                 Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
                 Core.WarStatus.Escalation = false;
                 Core.WarStatus.EscalationDays = 0;
@@ -956,6 +966,7 @@ namespace Galaxy_at_War
             system.BonusSalvage = false;
             system.BonusXP = false;
             Core.WarStatus.Deployment = false;
+            Core.WarStatus.PirateDeployment = false;
             Core.WarStatus.DeploymentInfluenceIncrease = 1.0;
             Core.WarStatus.HotBox.Remove(system.name);
             Core.RefreshContracts(system.starSystem);

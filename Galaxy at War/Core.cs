@@ -133,7 +133,7 @@ public static class Core
 
                         sim.CurSystem.SystemContracts.Clear();
                         sim.CurSystem.SystemBreadcrumbs.Clear();
-                        Galaxy_at_War.HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
+                        HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
 
                         var MaxHolder = sim.CurSystem.CurMaxBreadcrumbs;
                         var rand = Random.Next(1, (int) Settings.DeploymentContracts);
@@ -1401,6 +1401,8 @@ public static class Core
                     {
                         deltaInfluence = Core.DeltaInfluence(__instance.CurSystem.Name, difficulty, contractType, enemyfaction, true);
                         warsystem.PirateActivity -= (float)deltaInfluence;
+                        if (WarStatus.Deployment)
+                            WarStatus.PirateDeployment = true;
                     }
                     else
                     {
@@ -1434,14 +1436,25 @@ public static class Core
                     //}
 
                     var OldOwner = sim.CurSystem.OwnerValue.Name;
-                    if (Core.WillSystemFlip(__instance.CurSystem.Name, teamfaction, enemyfaction, deltaInfluence, false))
+                    if (Core.WillSystemFlip(__instance.CurSystem.Name, teamfaction, enemyfaction, deltaInfluence, false) ||
+                        (WarStatus.Deployment && enemyfaction == "AuriganPirates" && warsystem.PirateActivity < 1))
                     {
-                        ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
-                        GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                        SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                            .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                        interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken! "
-                            + Settings.FactionNames[teamfaction] + " conquered from " + Settings.FactionNames[OldOwner], true, null);
+                        if (WarStatus.Deployment && enemyfaction == "AuriganPirates" && warsystem.PirateActivity < 1)
+                        {
+                            GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                            SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                                .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                            interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " defended from Pirates! ", true, null);
+                        }
+                        else
+                        {
+                            ChangeSystemOwnership(__instance, warsystem.starSystem, teamfaction, false);
+                            GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                            SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                                .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                            interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken! "
+                                + Settings.FactionNames[teamfaction] + " conquered from " + Settings.FactionNames[OldOwner], true, null);
+                        }
 
                         if (WarStatus.HotBox.Contains(sim.CurSystem.Name))
                         {
@@ -1468,6 +1481,7 @@ public static class Core
                             warsystem.BonusXP = false;
                             WarStatus.Deployment = false;
                             WarStatus.DeploymentInfluenceIncrease = 1.0;
+                            WarStatus.PirateDeployment = false;
                             if (WarStatus.EscalationOrder != null)
                             {
                                 WarStatus.EscalationOrder.SetCost(0);
