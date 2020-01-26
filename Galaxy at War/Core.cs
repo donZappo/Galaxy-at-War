@@ -488,6 +488,11 @@ public static class Core
 
                 var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
+                if (system.owner == warFaction.faction)
+                {
+                    targets.RemoveAt(rand);
+                    continue;
+                }
 
                 //Find most valuable target for attacking for later. Used in HotSpots.
                 if (hatred >= Settings.PriorityHatred &&
@@ -870,7 +875,7 @@ public static class Core
         foreach (var neighborsystem in UnityGameInstance.BattleTechGame.Simulation.Starmap.GetAvailableNeighborSystem(system))
         {
             var WFAT = WarStatus.warFactionTracker.Find(x => x.faction == neighborsystem.OwnerValue.Name).attackTargets;
-            if (WFAT.Keys.Contains(OldOwner.faction) && !WFAT[OldOwner.faction].Contains(system.Name))
+            if (WFAT.Keys.Contains(OldOwner.faction) && WFAT[OldOwner.faction].Contains(system.Name))
                 WFAT[OldOwner.faction].Remove(system.Name);
         }
     }

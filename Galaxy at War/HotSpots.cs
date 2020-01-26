@@ -156,7 +156,7 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
 
                 Core.WarStatus.DeploymentContracts.Clear();
-               
+
                 if (HomeContendedSystems.Count != 0  && !Core.Settings.DefensiveFactions.Contains(sim.CurSystem.OwnerValue.Name) && !Core.WarStatus.Deployment)
                 {
                     int i = 0;
@@ -251,7 +251,9 @@ namespace Galaxy_at_War
                 }
                 isBreadcrumb = false;
                 Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(__state);
+
             }
+
         }
 
        
