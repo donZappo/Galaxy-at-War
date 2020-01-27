@@ -1772,8 +1772,13 @@ public static class Core
     internal static double DeltaInfluence(string system, int contractDifficulty, string contractTypeID, string DefenseFaction, bool PiratesInvolved)
     {
         var TargetSystem = WarStatus.systems.Find(x => x.name == system);
-        var MaximumInfluence = TargetSystem.PirateActivity;
-        if (!PiratesInvolved)
+        float MaximumInfluence = 100;
+
+        if (PiratesInvolved && DefenseFaction == "AuriganPirates")
+            MaximumInfluence = TargetSystem.PirateActivity;
+        else if (PiratesInvolved)
+            MaximumInfluence = 100 - TargetSystem.PirateActivity;
+        else
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
         double InfluenceChange = 1;
@@ -1792,8 +1797,6 @@ public static class Core
             InfluenceChange *= 2;
         InfluenceChange = Math.Max(InfluenceChange, 0.5);
         InfluenceChange = Math.Min(InfluenceChange, MaximumInfluence);
-        if (PiratesInvolved && DefenseFaction != "AuriganPirates")
-            InfluenceChange = Math.Min(InfluenceChange, 100 - MaximumInfluence);
         InfluenceChange = Math.Round(InfluenceChange, 1);
         return InfluenceChange;
     }
@@ -1828,6 +1831,7 @@ public static class Core
         static bool Prefix(StarSystem system, SimGameState.ContractDifficultyRange diffRange, Dictionary<int, List<ContractOverride>> potentialContracts,
             Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets, MapAndEncounters level)
         {
+            new WaitForSeconds(0.2f);
             if (LoopCounter >= 100)
             {
                 LoopCounter = 0;
@@ -1847,6 +1851,7 @@ public static class Core
             //        Log("    " + participant.Target.Name);
             //}
             //LoopCounter++;
+            //return true;
         }
     }
 
