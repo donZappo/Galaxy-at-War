@@ -51,7 +51,7 @@ public static class Core
     public static readonly Random Random = new Random();
     public static string teamfaction;
     public static string enemyfaction;
-    public static int difficulty;
+    public static double difficulty;
     public static MissionResult missionResult;
     public static bool isGoodFaithEffort;
     public static List<string> FactionEnemyHolder = new List<string>();
@@ -1370,7 +1370,7 @@ public static class Core
 
             teamfaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
             enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-            difficulty = __instance.Difficulty;
+            difficulty = (double)__instance.Difficulty;
             missionResult = result;
             contractType = __instance.Override.contractTypeID;
             if (__instance.IsFlashpointContract || __instance.IsFlashpointCampaignContract)
@@ -1465,14 +1465,14 @@ public static class Core
                         {
                             if (WarStatus.Deployment)
                             {
-                                double difficultyScale = sim.CurSystem.Def.DefaultDifficulty * WarStatus.DeploymentInfluenceIncrease;
-                                if (difficultyScale > 35)
+                                int difficultyScale = warsystem.DeploymentTier;
+                                if (difficultyScale == 5)
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_05);
-                                else if (difficultyScale > 22.5)
+                                else if (difficultyScale == 4)
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_04);
-                                else if (difficultyScale > 15)
+                                else if (difficultyScale == 3)
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_03);
-                                else if (difficultyScale > 7.5)
+                                else if (difficultyScale == 2)
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_02);
                                 else
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_01);
@@ -1756,6 +1756,24 @@ public static class Core
                 if (system.BonusXP)
                     StringHolder = StringHolder + "+XP";
             }
+            if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+            {
+                int estimatedMissions = CalculateFlipMissions(EmployerFaction.Name, SystemName.Name);
+                var totalDifficulty = estimatedMissions * SystemName.Def.DefaultDifficulty;
+                if (totalDifficulty >= 100)
+                    system.DeploymentTier = 5;
+                else if (totalDifficulty >= 75)
+                    system.DeploymentTier = 4;
+                else if (totalDifficulty >= 50)
+                    system.DeploymentTier = 3;
+                else if (totalDifficulty >= 25)
+                    system.DeploymentTier = 2;
+                else
+                    system.DeploymentTier = 1;
+
+                StringHolder = StringHolder + "\n<b>Estimated Missions to Wrest Control of System:</b> " + estimatedMissions;
+                StringHolder = StringHolder + "\n   Deployment Reward: Tier " + system.DeploymentTier;
+            }
             StringHolder = StringHolder + "\n\n" + __state;
             contract.Override.shortDescription = StringHolder;
         }
@@ -1769,7 +1787,7 @@ public static class Core
         }
     }
 
-    internal static double DeltaInfluence(string system, int contractDifficulty, string contractTypeID, string DefenseFaction, bool PiratesInvolved)
+    internal static double DeltaInfluence(string system, double contractDifficulty, string contractTypeID, string DefenseFaction, bool PiratesInvolved)
     {
         var TargetSystem = WarStatus.systems.Find(x => x.name == system);
         float MaximumInfluence = 100;
@@ -1824,6 +1842,41 @@ public static class Core
             return false;
     }
 
+    internal static int CalculateFlipMissions(string attacker, string system)
+    {
+        var Sim = UnityGameInstance.BattleTechGame.Simulation;
+        var warsystem = WarStatus.systems.Find(x => x.name == system);
+        var tempIT = new Dictionary<string, float>(warsystem.influenceTracker);
+        int MissionCounter = 0;
+        var influenceDifference = 0.0f;
+        double contractDifficulty = WarStatus.systems.Find(x => x.name == system).DifficultyRating;
+
+        while (influenceDifference <= Settings.TakeoverThreshold)
+        {
+            float defenseInfluence = 0;
+            string defenseFaction = "";
+            foreach (var faction in tempIT.OrderByDescending(x => x.Value))
+            {
+                if (faction.Key != attacker)
+                {
+                    defenseFaction = faction.Key;
+                    defenseInfluence = faction.Value;
+                    break;
+                }
+                else
+                    continue;
+            }
+
+            var influenceChange = DeltaInfluence(system, contractDifficulty, "CaptureBase", defenseFaction, false);
+            tempIT[attacker] += (float)influenceChange;
+            tempIT[defenseFaction] -= (float)influenceChange;
+            influenceDifference = tempIT[attacker] - tempIT[defenseFaction];
+            contractDifficulty *= Settings.DeploymentInfluenceFactor;
+            MissionCounter++;
+        }
+        return MissionCounter;
+    }
+
     //Logging a part of contract generation to see if I can track down an infinite load problem.
     [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
     public static class MainMenu_Init_Patch
@@ -1831,6 +1884,10 @@ public static class Core
         static bool Prefix(StarSystem system, SimGameState.ContractDifficultyRange diffRange, Dictionary<int, List<ContractOverride>> potentialContracts,
             Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets, MapAndEncounters level)
         {
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
+            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return true;
+
             new WaitForSeconds(0.2f);
             if (LoopCounter >= 100)
             {
@@ -1855,31 +1912,41 @@ public static class Core
         }
     }
 
-    //internal static void WarSummary(string eventString)
-    //{
-    //    var simGame = UnityGameInstance.BattleTechGame.Simulation;
-    //    var eventDef = new SimGameEventDef(
-    //            SimGameEventDef.EventPublishState.PUBLISHED,
-    //            SimGameEventDef.SimEventType.UNSELECTABLE,
-    //            EventScope.Company,
-    //            new DescriptionDef(
-    //                "SalvageOperationsEventID",
-    //                "Salvage Operations",
-    //                eventString,
-    //                "uixTxrSpot_YangWorking.png",
-    //                0, 0, false, "", "", ""),
-    //            new RequirementDef { Scope = EventScope.Company },
-    //            new RequirementDef[0],
-    //            new SimGameEventObject[0],
-    //            null, 1, false);
+    [HarmonyPatch(typeof(DesignResult), "Trigger")]
+    public static class Temporary_Bug_Fix
+    {
+        static bool Prefix()
+        {
+            return false;
+        }
+    }
 
 
-    //    var eventTracker = new SimGameEventTracker();
-    //    eventTracker.Init(new[] { EventScope.Company }, 0, 0, SimGameEventDef.SimEventType.NORMAL, simGame);
-    //    simGame.InterruptQueue.QueueEventPopup(eventDef, EventScope.Company, eventTracker);
+            //internal static void WarSummary(string eventString)
+            //{
+            //    var simGame = UnityGameInstance.BattleTechGame.Simulation;
+            //    var eventDef = new SimGameEventDef(
+            //            SimGameEventDef.EventPublishState.PUBLISHED,
+            //            SimGameEventDef.SimEventType.UNSELECTABLE,
+            //            EventScope.Company,
+            //            new DescriptionDef(
+            //                "SalvageOperationsEventID",
+            //                "Salvage Operations",
+            //                eventString,
+            //                "uixTxrSpot_YangWorking.png",
+            //                0, 0, false, "", "", ""),
+            //            new RequirementDef { Scope = EventScope.Company },
+            //            new RequirementDef[0],
+            //            new SimGameEventObject[0],
+            //            null, 1, false);
 
 
-    //}
+            //    var eventTracker = new SimGameEventTracker();
+            //    eventTracker.Init(new[] { EventScope.Company }, 0, 0, SimGameEventDef.SimEventType.NORMAL, simGame);
+            //    simGame.InterruptQueue.QueueEventPopup(eventDef, EventScope.Company, eventTracker);
 
 
-}
+            //}
+
+
+        }

@@ -169,7 +169,7 @@ namespace Galaxy_at_War
                         if (twiddle == 0)
                             twiddle = -1;
                         else if (twiddle == 1)
-                            RandomSystem = rand.Next(0 , HomeContendedSystems.Count / 2);
+                            RandomSystem = rand.Next(0 , 3 * HomeContendedSystems.Count / 4);
                         else if (twiddle == -1)
                             RandomSystem = rand.Next(HomeContendedSystems.Count / 4, 3 * HomeContendedSystems.Count / 4);
                        
