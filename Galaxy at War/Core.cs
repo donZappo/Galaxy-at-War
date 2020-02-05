@@ -266,7 +266,12 @@ public static class Core
                 }
             }
 
-            if (systemStatus.PirateActivity >= Settings.PirateSystemFlagValue)
+            float PirateSystemFlagValue = Settings.PirateSystemFlagValue;
+
+            if (Settings.ISMCompatibility)
+                PirateSystemFlagValue = Settings.PirateSystemFlagValue_ISM;
+
+            if (systemStatus.PirateActivity >= PirateSystemFlagValue)
             {
                 if (!WarStatus.PirateHighlight.Contains(systemStatus.name))
                     WarStatus.PirateHighlight.Add(systemStatus.name);

@@ -84,17 +84,34 @@ public class WarStatus
             var warFaction = warFactionTracker.Find(x => x.faction == faction);
             if (Core.Settings.DefensiveFactions.Contains(faction) && Core.Settings.DefendersUseARforDR)
             {
+                if (!Core.Settings.ISMCompatibility)
                 warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources[faction] +
                     Core.Settings.BonusDefensiveResources[faction];
+                else
+                    warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources_ISM[faction] +
+                    Core.Settings.BonusDefensiveResources_ISM[faction];
+
                 warFaction.AttackResources = 0;
             }
             else
             {
-                warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources[faction];
-                warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
+                if (!Core.Settings.ISMCompatibility)
+                {
+                    warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources[faction];
+                    warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
+                }
+                else
+                {
+                    warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources_ISM[faction];
+                    warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources_ISM[faction];
+                }
             }
         }
-        PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
+        if (!Core.Settings.ISMCompatibility)
+            PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
+        else
+            PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources_ISM;
+
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
         foreach (var system in sim.StarSystems)
@@ -161,7 +178,10 @@ public class SystemStatus : IComparable
         BonusSalvage = false;
         BonusXP = false;
         if (starSystem.Tags.Contains("planet_other_pirate"))
-            PirateActivity = Core.Settings.StartingPirateActivity;
+            if (!Core.Settings.ISMCompatibility)
+                PirateActivity = Core.Settings.StartingPirateActivity;
+            else
+                PirateActivity = Core.Settings.StartingPirateActivity_ISM;
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();

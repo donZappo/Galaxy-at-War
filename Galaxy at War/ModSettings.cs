@@ -31,6 +31,10 @@ public class ModSettings
 
     public Dictionary<string, int> BonusDefensiveResources = new Dictionary<string, int>();
 
+    public Dictionary<string, int> BonusAttackResources_ISM = new Dictionary<string, int>();
+
+    public Dictionary<string, int> BonusDefensiveResources_ISM = new Dictionary<string, int>();
+
     public Dictionary<string, string> FactionTags = new Dictionary<string, string>();
 
     public Dictionary<string, string> FactionShops = new Dictionary<string, string>();
@@ -71,6 +75,13 @@ public class ModSettings
     public float BonusPirateResources = 0.0f;
     public float FractionPirateResources = 1.0f;
     public float PirateSystemFlagValue = 25.0f;
+
+    public float StartingPirateActivity_ISM = 5.0f;
+    public float BonusPirateResources_ISM = 0.0f;
+    public float FractionPirateResources_ISM = 1.0f;
+    public float PirateSystemFlagValue_ISM = 25.0f;
+
+
     public double ResourceSpread = 0.25;
     public float AdvanceToTaskTime = 0.25f;
     public bool ChangeDifficulty = true;
