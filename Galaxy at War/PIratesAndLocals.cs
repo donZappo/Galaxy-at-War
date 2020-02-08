@@ -70,28 +70,25 @@ namespace Galaxy_at_War
                 float PAChange = 0.0f;
                 var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
                 if (FactionEscalateDefense[warFaction])
-                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity - system.PirateActivity / 4) + system.PirateActivity / 4);
+                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
                 else
-                {
-                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity / 4));
-                    if (system.PirateActivity >= 1)
-                        PAChange = Math.Max(PAChange, 1);
-                }
-                
+                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity / 3));
 
-                if (warFaction.DefensiveResources >= PAChange * system.TotalResources / 100)
+                float DefenseCost = Mathf.Min(PAChange * system.TotalResources / 100, warFaction.AttackResources * 0.01f);
+
+                if (warFaction.AttackResources >= DefenseCost)
                 {
                     PAChange = Math.Min(PAChange, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    warFaction.DefensiveResources -= PAChange * system.TotalResources / 100;
-                    warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
+                    warFaction.AttackResources -= DefenseCost;
+                    //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
                 else
                 {
-                    PAChange = Math.Min(warFaction.DefensiveResources, system.PirateActivity);
+                    PAChange = Math.Min(warFaction.AttackResources, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    warFaction.DefensiveResources -= PAChange * system.TotalResources / 100;
-                    warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
+                    warFaction.AttackResources -= DefenseCost;
+                    //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
 
                 if (system.PirateActivity == 0)
@@ -131,15 +128,15 @@ namespace Galaxy_at_War
             int i = 0;
             while (CurrentPAResources != 0 && i != 1000)
             {
-                var RandSystem = rand.Next(0, Core.WarStatus.systems.Count);
+                var RandSystem = rand.Next(0, Core.WarStatus.systems.Count - 1);
                 var systemStatus = Core.WarStatus.systems[RandSystem];
                 if (systemStatus.owner == "NoFaction" || Core.Settings.ImmuneToWar.Contains(systemStatus.owner)
                     || Core.WarStatus.HotBox.Contains(systemStatus.name))
                     continue;
                 float CurrentPA = systemStatus.PirateActivity;
-                float basicPA = Core.WarStatus.PirateFlex / systemStatus.TotalResources;
+                float basicPA = 11 - systemStatus.DifficultyRating;
 
-                float bonusPA = CurrentPA * 0.15f;
+                float bonusPA = CurrentPA / 50;
                 float TotalPA = basicPA + bonusPA;
                 //Log(systemStatus.name);
                 if (CurrentPA + TotalPA <= 100)

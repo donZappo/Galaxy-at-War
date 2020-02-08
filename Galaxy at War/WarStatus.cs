@@ -44,7 +44,6 @@ public class WarStatus
     public Dictionary<string, List<string>> ExternalPriorityTargets = new Dictionary<string, List<string>>();
     public List<string> FullPirateSystems = new List<string>();
     public List<string> PirateHighlight = new List<string>();
-    public float PirateFlex = 0.0f;
     public float PirateResources;
     public float TempPRGain;
     public float MinimumPirateResources;
@@ -155,6 +154,7 @@ public class SystemStatus : IComparable
     public float PirateActivity = 0.0f;
     public string CoreSystemID;
     public int DeploymentTier = 0;
+    public string OriginalOwner = null;
 
     internal StarSystem starSystem => sim.StarSystems.Find(s => s.Name == name);
 

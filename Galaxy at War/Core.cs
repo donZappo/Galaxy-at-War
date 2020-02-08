@@ -233,14 +233,6 @@ public static class Core
 
         foreach (var systemStatus in SystemSubset)
         {
-            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
-            {
-                systemStatus.influenceTracker["Locals"] *= 1.1f;
-                //var warFaction = (WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner));
-                //if (!warFaction.defenseTargets.Contains(systemStatus.name))
-                //    warFaction.defenseTargets.Add(systemStatus.name);
-            }
-
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
             if (WarStatus.InitializeAtStart)
@@ -252,6 +244,11 @@ public static class Core
 
             if (systemStatus.Contended || Core.WarStatus.HotBox.Contains(systemStatus.name))
                 continue;
+
+            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
+            {
+                systemStatus.influenceTracker["Locals"] *= 1.1f;
+            }
 
             //Add resources from neighboring systems.
             if (systemStatus.neighborSystems.Count != 0)
@@ -265,6 +262,10 @@ public static class Core
                     }
                 }
             }
+
+            //Revolt on previously taken systems.
+            if (systemStatus.owner != systemStatus.OriginalOwner)
+                systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
 
             float PirateSystemFlagValue = Settings.PirateSystemFlagValue;
 
@@ -1539,7 +1540,6 @@ public static class Core
     internal static System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public static void SystemDifficulty()
     {
-        bool GetPirateFlex = true;
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var TotalSystems = WarStatus.systems.Count;
         var DifficultyCutoff = TotalSystems / 10;
@@ -1548,6 +1548,10 @@ public static class Core
         foreach (var system in WarStatus.systems.OrderBy(x => x.TotalResources))
         {
             var SimSystem = sim.StarSystems.Find(x => x.Name == system.name);
+
+            //Define the original owner of the system for revolt purposes.
+            if (system.OriginalOwner == null)
+                system.OriginalOwner = system.owner;
 
             if (Settings.ChangeDifficulty)
             {
@@ -1576,11 +1580,6 @@ public static class Core
                 if (i <= DifficultyCutoff * 6 && i > 5 * DifficultyCutoff)
                 {
                     system.DifficultyRating = 6;
-                    if (GetPirateFlex)
-                    {
-                        WarStatus.PirateFlex = system.TotalResources;
-                        GetPirateFlex = false;
-                    }
                 }
                 if (i <= DifficultyCutoff * 7 && i > 6 * DifficultyCutoff)
                 {
@@ -1608,11 +1607,6 @@ public static class Core
             else
             {
                 system.DifficultyRating = SimSystem.Def.DefaultDifficulty;
-                if (GetPirateFlex)
-                {
-                    WarStatus.PirateFlex = 50;
-                    GetPirateFlex = false;
-                }
             }
             if (SimSystem.Def.OwnerValue.Name != "NoFaction" && SimSystem.Def.SystemShopItems.Count == 0)
             {
@@ -1632,29 +1626,29 @@ public static class Core
     //82 characters per line.
     public static void GaW_Notification()
     {
-        SimGameResultAction simGameResultAction = new SimGameResultAction();
-        simGameResultAction.Type = SimGameResultAction.ActionType.System_ShowSummaryOverlay;
-        simGameResultAction.value = Strings.T("Galaxy at War");
-        simGameResultAction.additionalValues = new string[1];
-        simGameResultAction.additionalValues[0] = Strings.T("In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for a wedding invitation" +
-                                                            " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
-                                                            " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their" +
-                                                            " fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
-                                                            "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
-                                                            "spending to spread their influence and protect their own systems." +
-                                                            "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
-                                                            "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
-                                                            "\n• Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
-                                                            "\n• If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
-                                                            "\n• Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
-                                                            "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
-                                                            "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
-                                                            "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
-                                                            "\n\n****Press Enter to Continue****");
+        //SimGameResultAction simGameResultAction = new SimGameResultAction();
+        //simGameResultAction.Type = SimGameResultAction.ActionType.System_ShowSummaryOverlay;
+        //simGameResultAction.value = Strings.T("Galaxy at War");
+        //simGameResultAction.additionalValues = new string[1];
+        //simGameResultAction.additionalValues[0] = Strings.T("In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for a wedding invitation" +
+        //                                                    " to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions" +
+        //                                                    " is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their" +
+        //                                                    " fortune changing the tides of battle and helping a faction dominate the Inner Sphere.\n\n <b>New features in Galaxy at War:</b>" +
+        //                                                    "\n• Each planet generates Attack Resources and Defensive Resources that they will be constantly " +
+        //                                                    "spending to spread their influence and protect their own systems." +
+        //                                                    "\n• Planetary Resources and Faction Influence can be seen on the Star Map by hovering over any system." +
+        //                                                    "\n• Successfully completing missions will swing the influence towards the Faction granting the contract." +
+        //                                                    "\n• Target Acquisition Missions & Attack and Defend Missions will give a permanent bonus to the winning faction's Attack Resources and a permanent deduction to the losing faction's Defensive Resources." +
+        //                                                    "\n• If you accept a travel contract the Faction will blockade the system for 30 days. A bonus will be granted for every mission you complete within that system during that time." +
+        //                                                    "\n• Pirates are active and will reduce Resources in a system. High Pirate activity will be highlighted in red." +
+        //                                                    "\n• Sumire will flag the systems in purple on the Star Map that are the most valuable local targets." +
+        //                                                    "\n• Sumire will also highlight systems in yellow that have changed ownership during the previous month." +
+        //                                                    "\n• Hitting Control-R will bring up a summary of the Faction's relationships and their overall war status." +
+        //                                                    "\n\n****Press Enter to Continue****");
 
 
-        SimGameState.ApplyEventAction(simGameResultAction, null);
-        UnityGameInstance.BattleTechGame.Simulation.StopPlayMode();
+        //SimGameState.ApplyEventAction(simGameResultAction, null);
+        //UnityGameInstance.BattleTechGame.Simulation.StopPlayMode();
     }
 
     [HarmonyPatch(typeof(SGContractsWidget), "GetContractComparePriority")]
