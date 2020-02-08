@@ -173,15 +173,18 @@ public static class Core
             }
 
             //TEST: run 100 WarTicks and stop
-            //for (var i = 0; i < 100; i++)
-            //{
-            //    WarTick(true, false);
-            //    WarTick(true, false);
-            //    WarTick(true, false);
-            //    WarTick(true, true);
-            //}
-            //__instance.StopPlayMode();
-            //return;
+            if (Settings.LongWarTesting)
+            {
+                for (var i = 0; i < 100; i++)
+                {
+                    WarTick(true, false);
+                    WarTick(true, false);
+                    WarTick(true, false);
+                    WarTick(true, true);
+                }
+                __instance.StopPlayMode();
+                return;
+            }
 
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
@@ -458,7 +461,8 @@ public static class Core
         }
 
         var total = tempTargets.Values.Sum();
-        float attackResources = warFaction.AttackResources;
+        float attackResources = warFaction.AttackResources - warFaction.AR_Against_Pirates;
+        warFaction.AR_Against_Pirates = 0;
         
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
         attackResources += attackResources * (float)(Random.Next(-1, 1) * Settings.ResourceSpread);
@@ -932,6 +936,15 @@ public static class Core
                     systemStatus.Contended = false;
                     WarStatus.LostSystems.Add(starSystem.Name);
                 }
+            }
+            //Excessive Pirate Activity or Local Government can take a system.
+            if (systemStatus.owner != "Locals" && systemStatus.OriginalOwner == "Locals" &&
+                ((highestfaction == "Locals" && systemStatus.influenceTracker[highestfaction] >= 75) 
+                || systemStatus.PirateActivity >= 95))
+            {
+                ChangeSystemOwnership(sim, starSystem, "Locals", true);
+                systemStatus.Contended = false;
+                WarStatus.LostSystems.Add(starSystem.Name);
             }
         }
         CalculateHatred();

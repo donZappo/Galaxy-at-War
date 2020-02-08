@@ -86,6 +86,7 @@ public class ModSettings
     public float AdvanceToTaskTime = 0.25f;
     public bool ChangeDifficulty = true;
     public bool ResetMap = false;
+    public bool LongWarTesting = false;
     public int DeploymentMinDays = 2;
     public int DeploymentMaxDays = 6;
     public float DeploymentContracts = 2.0f;
@@ -105,6 +106,7 @@ public class ModSettings
     public List<string> DefensiveFactions = new List<string>();
 
     public List<string> IncludedFactions = new List<string>();
+    public List<string> IncludedFactions_ISM = new List<string>();
 
     public Dictionary<string, string> FactionNames = new Dictionary<string, string>();
 

@@ -162,6 +162,7 @@ namespace Galaxy_at_War
                     int i = 0;
                     int twiddle = 0;
                     var RandomSystem = 0;
+                    Core.WarStatus.HomeContendedStrings.Clear();
                     while (HomeContendedSystems.Count != 0)
                     {
                         Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
@@ -178,6 +179,7 @@ namespace Galaxy_at_War
                         if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue.Name == "Locals" && MainBCTarget.OwnerValue.Name != "Locals"))
                         {
                             HomeContendedSystems.Remove(MainBCTarget);
+                            Core.WarStatus.HomeContendedStrings.Remove(MainBCTarget.Name);
                             continue;
                         }
                         TemporaryFlip(MainBCTarget, sim.CurSystem.OwnerValue.Name);
@@ -208,6 +210,7 @@ namespace Galaxy_at_War
                         Core.RefreshContracts(MainBCTarget);
 
                         HomeContendedSystems.Remove(MainBCTarget);
+                        Core.WarStatus.HomeContendedStrings.Add(MainBCTarget.Name);
                         if (sim.CurSystem.SystemBreadcrumbs.Count == Core.Settings.InternalHotSpots)
                             break;
 
@@ -215,7 +218,7 @@ namespace Galaxy_at_War
                         twiddle *= -1;
                     }
                 }
-                
+
                 if (ExternalPriorityTargets.Count != 0)
                 {
                     int startBC = sim.CurSystem.SystemBreadcrumbs.Count;

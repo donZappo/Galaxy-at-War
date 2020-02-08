@@ -318,6 +318,7 @@ public class WarFaction
     public int TotalSystemsChanged;
     public float PirateARLoss;
     public float PirateDRLoss;
+    public float AR_Against_Pirates = 0;
 
     public int NumberOfSystems
     {

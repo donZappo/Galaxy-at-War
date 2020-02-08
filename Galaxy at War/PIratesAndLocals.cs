@@ -63,7 +63,7 @@ namespace Galaxy_at_War
                 else
                     FactionEscalateDefense.Add(warFaction, false);
             }
-
+            
             List<SystemStatus> TempFullPirateListSystems = new List<SystemStatus>(FullPirateListSystems);
             foreach (var system in TempFullPirateListSystems)
             {
@@ -80,14 +80,14 @@ namespace Galaxy_at_War
                 {
                     PAChange = Math.Min(PAChange, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    warFaction.AttackResources -= DefenseCost;
+                    warFaction.AR_Against_Pirates += DefenseCost;
                     //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
                 else
                 {
                     PAChange = Math.Min(warFaction.AttackResources, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    warFaction.AttackResources -= DefenseCost;
+                    warFaction.AR_Against_Pirates += DefenseCost;
                     //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
 

@@ -30,6 +30,9 @@ public static class SaveHandling
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
+            if (Core.Settings.ISMCompatibility)
+                Core.Settings.IncludedFactions = new List<string>(Core.Settings.IncludedFactions_ISM);
+
             try
             {
                 bool NewGaW = true;
@@ -68,6 +71,9 @@ public static class SaveHandling
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
+
+            if (Core.Settings.ISMCompatibility)
+                Core.Settings.IncludedFactions = new List<string>(Core.Settings.IncludedFactions_ISM);
 
             if (Core.WarStatus == null)
             {
