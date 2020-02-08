@@ -76,7 +76,7 @@ public static class Core
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
-            if (WarStatus == null || BorkedSave || Settings.ResetMap)
+            if (WarStatus == null || BorkedSave)
             {
                 WarStatus = new WarStatus();
                 SystemDifficulty();

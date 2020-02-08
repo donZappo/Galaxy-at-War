@@ -104,6 +104,15 @@ public static class SaveHandling
 
         try
         {
+            if (Core.Settings.ResetMap)
+            { 
+                sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
+                Core.WarStatus = new WarStatus();
+                Core.SystemDifficulty();
+                Core.WarTick(true, true);
+                SerializeWar();
+                return;
+            }
             foreach (var system in Core.WarStatus.systems)
             {
                 var systemDef = ssDict[system.CoreSystemID].Def;
