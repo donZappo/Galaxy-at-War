@@ -78,7 +78,7 @@ public class ModSettings
 
     public float StartingPirateActivity_ISM = 5.0f;
     public float BonusPirateResources_ISM = 0.0f;
-    public float FractionPirateResources_ISM = 1.0f;
+    public float FractionPirateResources_ISM = 0.1f;
     public float PirateSystemFlagValue_ISM = 25.0f;
 
 

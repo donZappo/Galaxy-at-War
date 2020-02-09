@@ -52,6 +52,9 @@ public class WarStatus
 
     public WarStatus()
     {
+        if (Core.Settings.ISMCompatibility)
+            Core.Settings.IncludedFactions = new List<string>(Core.Settings.IncludedFactions_ISM);
+
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         Core.FactionValues = FactionEnumeration.FactionList;
         CurSystem = sim.CurSystem.Name;
@@ -109,7 +112,7 @@ public class WarStatus
         if (!Core.Settings.ISMCompatibility)
             PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
         else
-            PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources_ISM;
+            PirateResources = MaxAR * Core.Settings.FractionPirateResources_ISM + Core.Settings.BonusPirateResources_ISM;
 
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
