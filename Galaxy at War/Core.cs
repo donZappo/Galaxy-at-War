@@ -76,14 +76,20 @@ public static class Core
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
-            if (WarStatus == null || BorkedSave)
+            if (WarStatus == null || BorkedSave || Settings.ResetMap)
             {
                 WarStatus = new WarStatus();
                 SystemDifficulty();
                 WarTick(true, true);
-                //WarTick(true, true);
                 BorkedSave = false;
+
+                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                interruptQueue.QueueGenericPopup_NonImmediate("Borked Save", "Commander, the entire Galaxy is borked! Save the game, exit to desktop, turn ResetMap to false  in the mod.json (if necessary), and load 'er back up!", true, null);
+                sim.StopPlayMode();
             }
+
 
             WarStatus.CurSystem = sim.CurSystem.Name;
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)

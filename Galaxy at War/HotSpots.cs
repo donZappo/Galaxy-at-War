@@ -1093,7 +1093,7 @@ namespace Galaxy_at_War
                     if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                         return true;
 
-                    if (Core.WarStatus.Deployment && !Core.WarStatus.HotBoxTravelling && Core.WarStatus.EscalationDays <= 0)
+                    if (!Core.Settings.ResetMap && Core.WarStatus.Deployment && !Core.WarStatus.HotBoxTravelling && Core.WarStatus.EscalationDays <= 0)
                     {
                         return false;
                     }

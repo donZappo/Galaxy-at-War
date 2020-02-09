@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using BattleTech.Save.Core;
 using BattleTech.Framework;
 using Stopwatch = HBS.Stopwatch;
+using System.Diagnostics;
 
 
 public static class SaveHandling
@@ -111,12 +112,8 @@ public static class SaveHandling
         try
         {
             if (Core.Settings.ResetMap)
-            { 
-                sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
-                Core.WarStatus = new WarStatus();
-                Core.SystemDifficulty();
-                Core.WarTick(true, true);
-                SerializeWar();
+            {
+                sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar"))?.Do(x => sim.CompanyTags.Remove(x));
                 return;
             }
             foreach (var system in Core.WarStatus.systems)
@@ -200,7 +197,7 @@ public static class SaveHandling
         }
         catch
         {
-            sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
+            sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar"))?.Do(x => sim.CompanyTags.Remove(x));
             Core.BorkedSave = true;
         }
     }
