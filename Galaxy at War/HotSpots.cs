@@ -1157,7 +1157,7 @@ namespace Galaxy_at_War
                     else
                     {
                         __instance.Sim.Constants.Story.ContractSuccessReduction = 100;
-                        Core.WarStatus.DeploymentInfluenceIncrease *= Core.Settings.DeploymentInfluenceFactor;
+                        Core.WarStatus.DeploymentInfluenceIncrease *= Core.Settings.DeploymentEscalationFactor;
                         if (!HasFlashpoint)
                         {
                             sim.CurSystem.SystemBreadcrumbs.Clear();

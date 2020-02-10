@@ -74,20 +74,31 @@ namespace Galaxy_at_War
                 else
                     PAChange = (float)(rand.NextDouble() * (system.PirateActivity / 3));
 
+                var AttackResources = warFaction.AttackResources;
+
+                if (Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(warFaction.faction))
+                    AttackResources = warFaction.DefensiveResources;
+
                 float DefenseCost = Mathf.Min(PAChange * system.TotalResources / 100, warFaction.AttackResources * 0.01f);
 
-                if (warFaction.AttackResources >= DefenseCost)
+                if (AttackResources >= DefenseCost)
                 {
                     PAChange = Math.Min(PAChange, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    warFaction.AR_Against_Pirates += DefenseCost;
+                    if (Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(warFaction.faction))
+                        warFaction.DR_Against_Pirates += DefenseCost;
+                    else
+                        warFaction.AR_Against_Pirates += DefenseCost;
                     //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
                 else
                 {
-                    PAChange = Math.Min(warFaction.AttackResources, system.PirateActivity);
+                    PAChange = Math.Min(AttackResources, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    warFaction.AR_Against_Pirates += DefenseCost;
+                    if (Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(warFaction.faction))
+                        warFaction.DR_Against_Pirates += DefenseCost;
+                    else
+                        warFaction.AR_Against_Pirates += DefenseCost;
                     //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
 
@@ -114,8 +125,15 @@ namespace Galaxy_at_War
 
                 var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == system.owner);
                 var warFARChange = system.AttackResources * system.PirateActivity / 100;
-                warFaction.PirateARLoss += warFARChange;
-                warFaction.AttackResources -= warFARChange;
+                if (Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(warFaction.faction))
+                    warFaction.PirateDRLoss += warFARChange;
+                else
+                    warFaction.PirateARLoss += warFARChange;
+
+                if (Core.Settings.DefendersUseARforDR && Core.Settings.DefensiveFactions.Contains(warFaction.faction))
+                    warFaction.DefensiveResources -= warFARChange;
+                else
+                    warFaction.AttackResources -= warFARChange;
 
                 var warFDRChange = system.DefenseResources * system.PirateActivity / 100;
                 warFaction.PirateDRLoss += warFDRChange;

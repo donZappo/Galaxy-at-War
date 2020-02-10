@@ -281,7 +281,9 @@ public static class Core
             if (Settings.ISMCompatibility)
                 PirateSystemFlagValue = Settings.PirateSystemFlagValue_ISM;
 
-            if (systemStatus.PirateActivity >= PirateSystemFlagValue)
+            var TotalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+
+            if (TotalPirates >= PirateSystemFlagValue)
             {
                 if (!WarStatus.PirateHighlight.Contains(systemStatus.name))
                     WarStatus.PirateHighlight.Add(systemStatus.name);
@@ -601,7 +603,8 @@ public static class Core
             return;
 
         var faction = warFaction.faction;
-        float defensiveResources = warFaction.DefensiveResources;
+        float defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
+        warFaction.DR_Against_Pirates = 0;
         
         var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
                 Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
@@ -943,10 +946,9 @@ public static class Core
                     WarStatus.LostSystems.Add(starSystem.Name);
                 }
             }
-            //Excessive Pirate Activity or Local Government can take a system.
+            //Local Government can take a system.
             if (systemStatus.owner != "Locals" && systemStatus.OriginalOwner == "Locals" &&
-                ((highestfaction == "Locals" && systemStatus.influenceTracker[highestfaction] >= 75) 
-                || systemStatus.PirateActivity >= 95))
+                (highestfaction == "Locals" && systemStatus.influenceTracker[highestfaction] >= 75)) 
             {
                 ChangeSystemOwnership(sim, starSystem, "Locals", true);
                 systemStatus.Contended = false;
@@ -1778,7 +1780,10 @@ public static class Core
             {
                 int estimatedMissions = CalculateFlipMissions(EmployerFaction.Name, SystemName.Name);
                 var totalDifficulty = estimatedMissions * SystemName.Def.DefaultDifficulty;
-                if (totalDifficulty >= 100)
+
+                if (totalDifficulty >= 150)
+                    system.DeploymentTier = 6;
+                else if (totalDifficulty >= 100)
                     system.DeploymentTier = 5;
                 else if (totalDifficulty >= 75)
                     system.DeploymentTier = 4;
@@ -1822,11 +1827,11 @@ public static class Core
         //If contracts are not properly designed, this provides a failsafe.
         try
         {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceFactor;
+            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceDivisor;
         }
         catch
         {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceFactor;
+            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceDivisor;
         }
 
         if (PiratesInvolved)
@@ -1868,6 +1873,8 @@ public static class Core
         int MissionCounter = 0;
         var influenceDifference = 0.0f;
         double contractDifficulty = WarStatus.systems.Find(x => x.name == system).DifficultyRating;
+        var DeploymentIFHolder = WarStatus.DeploymentInfluenceIncrease;
+        WarStatus.DeploymentInfluenceIncrease = 1;
 
         while (influenceDifference <= Settings.TakeoverThreshold)
         {
@@ -1889,9 +1896,10 @@ public static class Core
             tempIT[attacker] += (float)influenceChange;
             tempIT[defenseFaction] -= (float)influenceChange;
             influenceDifference = tempIT[attacker] - tempIT[defenseFaction];
-            contractDifficulty *= Settings.DeploymentInfluenceFactor;
+            WarStatus.DeploymentInfluenceIncrease *= Settings.DeploymentEscalationFactor;
             MissionCounter++;
         }
+        WarStatus.DeploymentInfluenceIncrease = DeploymentIFHolder;
         return MissionCounter;
     }
 
