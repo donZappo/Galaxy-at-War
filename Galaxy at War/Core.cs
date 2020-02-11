@@ -1823,22 +1823,34 @@ public static class Core
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
 
         double InfluenceChange = 1;
+        contractDifficulty = Mathf.Max((int)contractDifficulty, TargetSystem.DifficultyRating);
 
         //If contracts are not properly designed, this provides a failsafe.
         try
         {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceDivisor;
+            InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) * Settings.ContractImpact[contractTypeID] / Settings.InfluenceDivisor;
         }
         catch
         {
-            InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceDivisor;
+            InfluenceChange = (11 + contractDifficulty - 2 * TargetSystem.DifficultyRating) / Settings.InfluenceDivisor;
         }
+
+        //Log("System Delta Influence");
+        //Log(TargetSystem.name);
+        //Log(WarStatus.DeploymentInfluenceIncrease.ToString());
+        //Log(contractDifficulty.ToString());
+        //Log(TargetSystem.DifficultyRating.ToString());
+        //Log(Settings.InfluenceDivisor.ToString());
+        //Log(InfluenceChange.ToString());
+
 
         if (PiratesInvolved)
             InfluenceChange *= 2;
-        InfluenceChange = Math.Max(InfluenceChange, 0.5);
+        InfluenceChange = Core.WarStatus.DeploymentInfluenceIncrease * Math.Max(InfluenceChange, 0.5);
         InfluenceChange = Math.Min(InfluenceChange, MaximumInfluence);
         InfluenceChange = Math.Round(InfluenceChange, 1);
+        //Log(InfluenceChange.ToString());
+        //Log("--------------------------");
         return InfluenceChange;
     }
 
