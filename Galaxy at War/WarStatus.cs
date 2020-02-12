@@ -62,14 +62,12 @@ public class WarStatus
         HotBoxTravelling = false;
         HotBox = new List<string>();
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
-        LogDebug(1);
         foreach (var faction in Settings.IncludedFactions)
         {
             warFactionTracker.Add(new WarFaction(faction));
             deathListTracker.Add(new DeathListTracker(faction));
         }
 
-        LogDebug(2);
         foreach (var system in sim.StarSystems)
         {
             if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
@@ -81,7 +79,7 @@ public class WarStatus
                 warFaction.AttackResources += GetTotalAttackResources(system);
             warFaction.DefensiveResources += GetTotalDefensiveResources(system);
         }
-        LogDebug(3);
+
         var MaxAR = warFactionTracker.Select(x => x.AttackResources).Max();
         var MaxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
 
@@ -128,7 +126,7 @@ public class WarStatus
 
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
-        LogDebug(4);
+
         foreach (var system in sim.StarSystems)
         {
             var systemStatus = new SystemStatus(sim, system.Name, system.OwnerValue.Name);

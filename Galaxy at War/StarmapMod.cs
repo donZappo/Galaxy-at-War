@@ -106,7 +106,7 @@ public class StarmapMod
             go.FindFirstChildNamed("B_brackets_results").SetActive(false);
             go.FindFirstChildNamed("label_Text").SetActive(false);
 
-            eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true).Do(LogDebug);
+            //eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true).Do(LogDebug);
             var textMeshes = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true);
             textMeshes.First(x => x.name =="title_week-day").text =
                 UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();

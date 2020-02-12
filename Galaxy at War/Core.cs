@@ -53,8 +53,6 @@ public static class Core
             IncludedFactions = new List<string>(Settings.IncludedFactions_ISM);
         else
             IncludedFactions = new List<string>(Settings.IncludedFactions);
-        
-       
     }
     
     
@@ -70,9 +68,8 @@ public static class Core
                 return;
 
             LogDebug(WarStatus == null ? "WarStatus null" : "WarStatus not null");
-            LogDebug(WarStatus);
-            LogDebug(BorkedSave);
-            LogDebug(Settings.ResetMap);
+            LogDebug("BorkedSave?" + BorkedSave);
+            LogDebug("Settings.ResetMap? " + Settings.ResetMap);
             if (WarStatus == null || BorkedSave || Settings.ResetMap)
             {
                 LogDebug("Resetting");
@@ -89,14 +86,10 @@ public static class Core
             }
 
 
-            LogDebug(1);
             WarStatus.CurSystem = sim.CurSystem.Name;
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
-                LogDebug(2);
                 WarStatus.EscalationDays--;
-                // BUG not used
-                //var system = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
 
                 if (!WarStatus.Deployment)
                 {
@@ -156,7 +149,6 @@ public static class Core
                 }
             }
 
-            LogDebug(3);
             if (!Core.WarStatus.StartGameInitialized)
             {
                 NeedsProcessing = true;
@@ -1018,15 +1010,12 @@ public static class Core
         if (ContractEmployers.Count == 1 && Settings.DefensiveFactions.Contains(ContractEmployers[0]))
         {
             // TODO rewrite this 
-            LogDebug(2.1);
             FactionValue faction = Core.FactionValues.Find(x => x.Name == "AuriganRestoration");
             List<string> TempFaction = new List<string>(Settings.IncludedFactions);
             do
             {
                 var randFaction = Random.Next(0, TempFaction.Count());
-                LogDebug(2.2);
                 faction = FactionValues.Find(x => x.Name == IncludedFactions[randFaction]);
-                LogDebug(2.3);
                 if (Settings.DefensiveFactions.Contains(faction.Name))
                 {
                     TempFaction.RemoveAt(randFaction);
@@ -1036,7 +1025,6 @@ public static class Core
                     break;
             } while (TempFaction.Count != 0);
 
-            LogDebug(2.4);
             ContractEmployers.Add(faction.Name);
             if (!ContractTargets.Contains(faction.Name))
                 ContractTargets.Add(faction.Name);

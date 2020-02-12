@@ -51,9 +51,6 @@ public static class SaveHandling
             catch (Exception ex)
             {
                 LogDebug(ex);
-                LogDebug("The solution is not spaghetti");
-                sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
-                Core.BorkedSave = true;
             }
         }
     }
@@ -108,14 +105,15 @@ public static class SaveHandling
         Galaxy_at_War.HotSpots.FullHomeContendedSystems.Clear();
         Galaxy_at_War.HotSpots.HomeContendedSystems.Clear();
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        //var ssDict = sim.StarSystemDictionary;
-        Dictionary<string, StarSystem> starSystemDictionary = new Dictionary<string, StarSystem>();
-        foreach (var system in sim.StarSystems)
-        {
-            LogDebug($"{system.Name} {system.ID}");
-            //var simpleName = Regex.Match(system.ID, "_(.+)$").Groups[1].Value;
-            starSystemDictionary.Add(system.ID, system);
-        }
+        var ssDict = sim.StarSystemDictionary;
+        //Dictionary<string, StarSystem> starSystemDictionary = new Dictionary<string, StarSystem>();
+        //var list1 = sim.StarSystems.Select(x => x.Def.CoreSystemID);
+        //foreach (var system in sim.StarSystems)
+        //{
+        //    
+        //    starSystemDictionary.Add(system.Def.CoreSystemID, system);
+        //}
+
         Core.SystemDifficulty();
 
         try
@@ -128,18 +126,16 @@ public static class SaveHandling
             
             foreach (var system in Core.WarStatus.systems)
             {
-                LogDebug(0);
                 StarSystemDef systemDef;
-                if (starSystemDictionary.ContainsKey(system.CoreSystemID))
+                if (ssDict.ContainsKey(system.CoreSystemID))
                 {
-                    systemDef = starSystemDictionary[system.CoreSystemID].Def; 
+                    systemDef = ssDict[system.CoreSystemID].Def; 
                 }
                 else
                 {
-                    LogDebug($"{system.name} not in StarSystemDictionary");
+                    LogDebug($"BOMB {system.name} not in StarSystemDictionary");
                     continue;
                 }
-                LogDebug(0.1);
                 
                 string systemOwner = systemDef.OwnerValue.Name;
                 Traverse.Create(systemDef).Property("OwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
@@ -150,7 +146,6 @@ public static class SaveHandling
                 {
                     system.influenceTracker.Add("NoFaction", system.influenceTracker["AuriganPirates"]);
                     system.influenceTracker.Remove("AuriganPirates");
-                    LogDebug(0.2);
                 }
                 //if (!system.influenceTracker.Keys.Contains("NoFaction"))
                 //    system.influenceTracker.Add("NoFaction", 0);
@@ -158,21 +153,15 @@ public static class SaveHandling
                 if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
                 {
                     LogDebug("Changed");
-                    LogDebug(1.1);
                     if (systemDef.SystemShopItems.Count != 0)
                     {
-                        LogDebug(1.2);
                         List<string> TempList = systemDef.SystemShopItems;
-                        LogDebug(2);
                         TempList.Add(Core.Settings.FactionShops[system.owner]);
-                        LogDebug(3);
                         Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
                     }
 
-                    LogDebug(4);
                     if (systemDef.FactionShopItems != null)
                     {
-                        LogDebug(5);
                         Traverse.Create(systemDef).Property("FactionShopOwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
                         Traverse.Create(systemDef).Property("FactionShopOwnerID").SetValue(system.owner);
                         List<string> factionShopItems = systemDef.FactionShopItems;
@@ -180,7 +169,6 @@ public static class SaveHandling
                             factionShopItems.Remove(Core.Settings.FactionShopItems[systemOwner]);
                         factionShopItems.Add(Core.Settings.FactionShopItems[system.owner]);
                         Traverse.Create(systemDef).Property("FactionShopItems").SetValue(factionShopItems);
-                        LogDebug(6);
                     }
                 }
                 else
@@ -189,36 +177,29 @@ public static class SaveHandling
                 }
             }
 
-            LogDebug(10);
-            LogDebug(Core.WarStatus.ExternalPriorityTargets.Keys.Count);
             foreach (var faction in Core.WarStatus.ExternalPriorityTargets.Keys)
             {
                 Galaxy_at_War.HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 foreach (var system in Core.WarStatus.ExternalPriorityTargets[faction])
-                    Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(starSystemDictionary[system]);
+                    Galaxy_at_War.HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
             }
 
-            LogDebug(Core.WarStatus.FullHomeContendedSystems.Count);
             foreach (var system in Core.WarStatus.FullHomeContendedSystems)
             {
-                Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(starSystemDictionary[system.Key], system.Value));
+                Galaxy_at_War.HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(ssDict[system.Key], system.Value));
             }
-            LogDebug(Core.WarStatus.HomeContendedSystems.Count);
             foreach (var system in Core.WarStatus.HomeContendedSystems)
             {
-                Galaxy_at_War.HotSpots.HomeContendedSystems.Add(starSystemDictionary[system]);
+                Galaxy_at_War.HotSpots.HomeContendedSystems.Add(ssDict[system]);
             }
-            LogDebug(Core.WarStatus.FullPirateSystems.Count);
             foreach (var starSystem in Core.WarStatus.FullPirateSystems)
             {
                 Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(Core.WarStatus.systems.Find(x => x.name == starSystem));
             }
-            LogDebug(Core.WarStatus.deathListTracker.Count);
             foreach (var deathListTracker in Core.WarStatus.deathListTracker)
             {
                 Core.AdjustDeathList(deathListTracker, sim, true);
             }
-            LogDebug(Core.Settings.DefensiveFactions.Count);
             foreach (var defensivefaction in Core.Settings.DefensiveFactions)
             {
                 if (Core.WarStatus.warFactionTracker.Find(x => x.faction == defensivefaction) == null)
@@ -232,7 +213,7 @@ public static class SaveHandling
                     targetfaction.AttackResources = 0;
                 }
             }
-            LogDebug(sim.CurSystem.activeSystemBreadcrumbs);
+
             foreach (var contract in sim.CurSystem.activeSystemBreadcrumbs)
             {
                 if (Core.WarStatus.DeploymentContracts.Contains(contract.Override.contractName))
@@ -242,9 +223,6 @@ public static class SaveHandling
         catch (Exception ex)
         {
             LogDebug(ex);
-            LogDebug("This is why you don't put code in catch blocks");
-            sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar"))?.Do(x => sim.CompanyTags.Remove(x));
-            Core.BorkedSave = true;
         }
     }
 

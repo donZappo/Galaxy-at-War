@@ -4,6 +4,8 @@ using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
 
+// ReSharper disable InconsistentNaming
+
 namespace GalaxyatWar
 {
     [HarmonyPatch(typeof(SimGameState), "Update")]
@@ -16,20 +18,18 @@ namespace GalaxyatWar
             var hotkeyT = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)
             {
-                FileLog.Log(JsonConvert.SerializeObject(
+                Logger.LogDebug(JsonConvert.SerializeObject(
                     Core.WarStatus, new JsonSerializerSettings {ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented}));
             }
 
-            var hotkeyR = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) && Input.GetKeyDown(KeyCode.C);
-            if (hotkeyR)
+            var hotkeyC = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) && Input.GetKeyDown(KeyCode.C);
+            if (hotkeyC)
             {
                 Sim.CompanyTags
                     .Where(tag => tag.StartsWith("GalaxyAtWar"))
                     .Do(tag => Sim.CompanyTags.Remove(tag));
 
                 Core.WarStatus = null;
-
-                FileLog.Log(Sim.CompanyTags.ToString());
             }
         }
     }
