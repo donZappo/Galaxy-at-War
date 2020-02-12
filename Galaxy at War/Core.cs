@@ -26,26 +26,6 @@ using UnityEngine;
 
 public static class Core
 {
-    public static void Init(string modDir, string settings)
-    {
-        var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
-        harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-        // read settings
-        try
-        {
-            Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
-            Settings.modDirectory = modDir;
-        }
-        catch (Exception)
-        {
-            Settings = new ModSettings();
-        }
-
-        // blank the logfile
-        Clear();
-    }
-
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
     public static readonly Random Random = new Random();
@@ -59,25 +39,43 @@ public static class Core
     public static List<StarSystem> defenseTargets = new List<StarSystem>();
     public static string contractType;
     public static bool NeedsProcessing = false;
-    public static List<FactionValue> FactionValues = new List<FactionValue>();
     public static bool BorkedSave;
     public static bool IsFlashpointContract;
     public static int LoopCounter = 0;
     public static Contract LoopContract;
     public static bool HoldContracts = false;
+    internal static List<FactionValue> FactionValues = FactionEnumeration.FactionList;
+    internal static List<string> IncludedFactions;
 
+    internal static void CopySettingsToState()
+    {
+        if (Settings.ISMCompatibility)
+            IncludedFactions = new List<string>(Settings.IncludedFactions_ISM);
+        else
+            IncludedFactions = new List<string>(Settings.IncludedFactions);
+        
+       
+    }
+    
+    
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
     public static class SimGameState_OnDayPassed_Patch
     {
         static void Prefix(SimGameState __instance, int timeLapse)
         {
+            LogDebug("OnDayPassed");
             LoopCounter = 0;
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                 return;
 
+            LogDebug(WarStatus == null ? "WarStatus null" : "WarStatus not null");
+            LogDebug(WarStatus);
+            LogDebug(BorkedSave);
+            LogDebug(Settings.ResetMap);
             if (WarStatus == null || BorkedSave || Settings.ResetMap)
             {
+                LogDebug("Resetting");
                 WarStatus = new WarStatus();
                 SystemDifficulty();
                 WarTick(true, true);
@@ -91,9 +89,11 @@ public static class Core
             }
 
 
+            LogDebug(1);
             WarStatus.CurSystem = sim.CurSystem.Name;
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
+                LogDebug(2);
                 WarStatus.EscalationDays--;
                 // BUG not used
                 //var system = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
@@ -156,6 +156,7 @@ public static class Core
                 }
             }
 
+            LogDebug(3);
             if (!Core.WarStatus.StartGameInitialized)
             {
                 NeedsProcessing = true;
@@ -201,15 +202,10 @@ public static class Core
                 }
                 else
                 {
-                    bool HasFlashpoint = false;
                     WarTick(true, true);
-                    foreach (var contract in sim.CurSystem.SystemContracts)
-                    {
-                        if (contract.IsFlashpointContract)
-                            HasFlashpoint = true;
-                    }
 
-                    if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint)
+                    var hasFlashPoint = sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract);
+                    if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !hasFlashPoint)
                     {
                         NeedsProcessing = true;
                         var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
@@ -353,7 +349,7 @@ public static class Core
         WarStatus.SystemChangedOwners.Clear();
         if (StarmapMod.eventPanel != null)
         {
-            StarmapMod.UpdatePanelText();
+            StarmapMod.UpdateRelationString();
         }
         
         //        Log("===================================================");
@@ -986,6 +982,7 @@ public static class Core
 
     public static void RefreshContracts(StarSystem starSystem)
     {
+        LogDebug("RefreshContracts for " +starSystem.Name);
         if (WarStatus.HotBox.Contains(starSystem.Name))
             return;
         var ContractEmployers = starSystem.Def.ContractEmployerIDList;
@@ -1017,14 +1014,19 @@ public static class Core
             if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
+
         if (ContractEmployers.Count == 1 && Settings.DefensiveFactions.Contains(ContractEmployers[0]))
         {
+            // TODO rewrite this 
+            LogDebug(2.1);
             FactionValue faction = Core.FactionValues.Find(x => x.Name == "AuriganRestoration");
             List<string> TempFaction = new List<string>(Settings.IncludedFactions);
             do
             {
                 var randFaction = Random.Next(0, TempFaction.Count());
-                faction = Core.FactionValues.Find(x => x.Name == Settings.IncludedFactions[randFaction]);
+                LogDebug(2.2);
+                faction = FactionValues.Find(x => x.Name == IncludedFactions[randFaction]);
+                LogDebug(2.3);
                 if (Settings.DefensiveFactions.Contains(faction.Name))
                 {
                     TempFaction.RemoveAt(randFaction);
@@ -1034,6 +1036,7 @@ public static class Core
                     break;
             } while (TempFaction.Count != 0);
 
+            LogDebug(2.4);
             ContractEmployers.Add(faction.Name);
             if (!ContractTargets.Contains(faction.Name))
                 ContractTargets.Add(faction.Name);

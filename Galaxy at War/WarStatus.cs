@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
-using BattleTech.Rendering;
+using Galaxy_at_War;
 using Newtonsoft.Json;
 using static Logger;
-using Harmony;
+using static Core;
 
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -52,70 +52,83 @@ public class WarStatus
 
     public WarStatus()
     {
-        if (Core.Settings.ISMCompatibility)
-            Core.Settings.IncludedFactions = new List<string>(Core.Settings.IncludedFactions_ISM);
+        LogDebug("WarStatus Ctor");
+        if (Settings.ISMCompatibility)
+            Settings.IncludedFactions = new List<string>(Settings.IncludedFactions_ISM);
 
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        Core.FactionValues = FactionEnumeration.FactionList;
         CurSystem = sim.CurSystem.Name;
         TempPRGain = 0;
         HotBoxTravelling = false;
         HotBox = new List<string>();
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
-        foreach (var faction in Core.Settings.IncludedFactions)
+        LogDebug(1);
+        foreach (var faction in Settings.IncludedFactions)
         {
             warFactionTracker.Add(new WarFaction(faction));
             deathListTracker.Add(new DeathListTracker(faction));
         }
 
+        LogDebug(2);
         foreach (var system in sim.StarSystems)
         {
             if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                 AbandonedSystems.Add(system.Name);
             var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
-            if (Core.Settings.DefensiveFactions.Contains(warFaction.faction) && Core.Settings.DefendersUseARforDR)
-                warFaction.DefensiveResources += Core.GetTotalAttackResources(system);
+            if (Settings.DefensiveFactions.Contains(warFaction.faction) && Settings.DefendersUseARforDR)
+                warFaction.DefensiveResources += GetTotalAttackResources(system);
             else
-                warFaction.AttackResources += Core.GetTotalAttackResources(system);
-            warFaction.DefensiveResources += Core.GetTotalDefensiveResources(system);
+                warFaction.AttackResources += GetTotalAttackResources(system);
+            warFaction.DefensiveResources += GetTotalDefensiveResources(system);
         }
+        LogDebug(3);
         var MaxAR = warFactionTracker.Select(x => x.AttackResources).Max();
         var MaxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
-        foreach (var faction in Core.Settings.IncludedFactions)
-        {
-            var warFaction = warFactionTracker.Find(x => x.faction == faction);
-            if (Core.Settings.DefensiveFactions.Contains(faction) && Core.Settings.DefendersUseARforDR)
-            {
-                if (!Core.Settings.ISMCompatibility)
-                warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources[faction] +
-                    Core.Settings.BonusDefensiveResources[faction];
-                else
-                    warFaction.DefensiveResources = MaxAR + MaxDR + Core.Settings.BonusAttackResources_ISM[faction] +
-                    Core.Settings.BonusDefensiveResources_ISM[faction];
 
-                warFaction.AttackResources = 0;
-            }
-            else
+        try
+        {
+            foreach (var faction in Settings.IncludedFactions)
             {
-                if (!Core.Settings.ISMCompatibility)
+                var warFaction = warFactionTracker.Find(x => x.faction == faction);
+                if (Settings.DefensiveFactions.Contains(faction) && Settings.DefendersUseARforDR)
                 {
-                    warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources[faction];
-                    warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources[faction];
+                    if (!Settings.ISMCompatibility)
+                        warFaction.DefensiveResources = MaxAR + MaxDR + Settings.BonusAttackResources[faction] +
+                                                        Settings.BonusDefensiveResources[faction];
+                    else
+                        warFaction.DefensiveResources = MaxAR + MaxDR + Settings.BonusAttackResources_ISM[faction] +
+                                                        Settings.BonusDefensiveResources_ISM[faction];
+
+                    warFaction.AttackResources = 0;
                 }
                 else
                 {
-                    warFaction.AttackResources = MaxAR + Core.Settings.BonusAttackResources_ISM[faction];
-                    warFaction.DefensiveResources = MaxDR + Core.Settings.BonusDefensiveResources_ISM[faction];
+                    if (!Settings.ISMCompatibility)
+                    {
+                        warFaction.AttackResources = MaxAR + Settings.BonusAttackResources[faction];
+                        warFaction.DefensiveResources = MaxDR + Settings.BonusDefensiveResources[faction];
+                    }
+                    else
+                    {
+                        warFaction.AttackResources = MaxAR + Settings.BonusAttackResources_ISM[faction];
+                        warFaction.DefensiveResources = MaxDR + Settings.BonusDefensiveResources_ISM[faction];
+                    }
                 }
             }
+
+            if (!Settings.ISMCompatibility)
+                PirateResources = MaxAR * Settings.FractionPirateResources + Settings.BonusPirateResources;
+            else
+                PirateResources = MaxAR * Settings.FractionPirateResources_ISM + Settings.BonusPirateResources_ISM;
         }
-        if (!Core.Settings.ISMCompatibility)
-            PirateResources = MaxAR * Core.Settings.FractionPirateResources + Core.Settings.BonusPirateResources;
-        else
-            PirateResources = MaxAR * Core.Settings.FractionPirateResources_ISM + Core.Settings.BonusPirateResources_ISM;
+        catch (Exception ex)
+        {
+            LogDebug(ex);
+        }
 
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
+        LogDebug(4);
         foreach (var system in sim.StarSystems)
         {
             var systemStatus = new SystemStatus(sim, system.Name, system.OwnerValue.Name);
@@ -123,7 +136,7 @@ public class WarStatus
             if (system.Tags.Contains("planet_other_pirate"))
             {
                 FullPirateSystems.Add(system.Name);
-                Galaxy_at_War.PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
+                PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
         }
     }
@@ -149,12 +162,12 @@ public class SystemStatus : IComparable
     public List<string> CurrentlyAttackedBy = new List<string>();
     public bool Contended = false;
     public int DifficultyRating;
-    public bool BonusSalvage = false;
-    public bool BonusXP = false;
-    public bool BonusCBills = false;
+    public bool BonusSalvage;
+    public bool BonusXP;
+    public bool BonusCBills;
     public float AttackResources;
     public float DefenseResources;
-    public float PirateActivity = 0.0f;
+    public float PirateActivity;
     public string CoreSystemID;
     public int DeploymentTier = 0;
     public string OriginalOwner = null;
@@ -173,18 +186,18 @@ public class SystemStatus : IComparable
         name = systemName;
         owner = faction;
         // warFaction = Core.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
-        AttackResources = Core.GetTotalAttackResources(starSystem);
-        DefenseResources = Core.GetTotalDefensiveResources(starSystem);
+        AttackResources = GetTotalAttackResources(starSystem);
+        DefenseResources = GetTotalDefensiveResources(starSystem);
         TotalResources = AttackResources + DefenseResources;
         CoreSystemID = starSystem.Def.CoreSystemID;
         BonusCBills = false;
         BonusSalvage = false;
         BonusXP = false;
         if (starSystem.Tags.Contains("planet_other_pirate"))
-            if (!Core.Settings.ISMCompatibility)
-                PirateActivity = Core.Settings.StartingPirateActivity;
+            if (!Settings.ISMCompatibility)
+                PirateActivity = Settings.StartingPirateActivity;
             else
-                PirateActivity = Core.Settings.StartingPirateActivity_ISM;
+                PirateActivity = Settings.StartingPirateActivity_ISM;
         FindNeighbors();
         CalculateSystemInfluence();
         InitializeContracts();
@@ -214,8 +227,8 @@ public class SystemStatus : IComparable
 
         if (owner != "NoFaction" && owner != "Locals")
         {
-            influenceTracker.Add(owner, Core.Settings.DominantInfluence);
-            int remainingInfluence = Core.Settings.MinorInfluencePool;
+            influenceTracker.Add(owner, Settings.DominantInfluence);
+            int remainingInfluence = Settings.MinorInfluencePool;
 
             if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
             {
@@ -227,7 +240,7 @@ public class SystemStatus : IComparable
                         {
                             var influenceDelta = neighborSystems[faction];
                             remainingInfluence -= influenceDelta;
-                            if (Core.Settings.DefensiveFactions.Contains(faction))
+                            if (Settings.DefensiveFactions.Contains(faction))
                                 continue;
                             if (influenceTracker.ContainsKey(faction))
                                 influenceTracker[faction] += influenceDelta;
@@ -238,7 +251,7 @@ public class SystemStatus : IComparable
                 }
             }
         }
-        foreach (var faction in Core.Settings.IncludedFactions)
+        foreach (var faction in Settings.IncludedFactions)
         {
             if (!influenceTracker.Keys.Contains(faction))
                 influenceTracker.Add(faction, 0);
@@ -263,9 +276,9 @@ public class SystemStatus : IComparable
         ContractTargets.Clear();
         ContractEmployers.Add(owner);
 
-        foreach (string EF in Core.Settings.DefensiveFactions)
+        foreach (string EF in Settings.DefensiveFactions)
         {
-            if (Core.Settings.ImmuneToWar.Contains(EF))
+            if (Settings.ImmuneToWar.Contains(EF))
                 continue;
             ContractTargets.Add(EF);
         }
@@ -274,12 +287,12 @@ public class SystemStatus : IComparable
 
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
-            if (Core.Settings.ImmuneToWar.Contains(systemNeighbor))
+            if (Settings.ImmuneToWar.Contains(systemNeighbor))
                 continue;
-            if (!ContractEmployers.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+            if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractEmployers.Add(systemNeighbor);
 
-            if (!ContractTargets.Contains(systemNeighbor) && !Core.Settings.DefensiveFactions.Contains(systemNeighbor))
+            if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
     }
@@ -359,7 +372,7 @@ public class WarFaction
         TotalSystemsChanged = 0;
         PirateARLoss = 0;
         PirateDRLoss = 0;
-        foreach (var startfaction in Core.Settings.IncludedFactions)
+        foreach (var startfaction in Settings.IncludedFactions)
             IncreaseAggression.Add(startfaction, false);
     }
 }
@@ -390,17 +403,17 @@ public class DeathListTracker
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction);
 
-        foreach (var factionNames in Core.Settings.IncludedFactions)
+        foreach (var factionNames in Settings.IncludedFactions)
         {
             var def = sim.GetFactionDef(factionNames);
-            if (!Core.Settings.IncludedFactions.Contains(def.FactionValue.Name))
+            if (!Settings.IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.FactionValue.Name))
-                deathList.Add(def.FactionValue.Name, Core.Settings.KLValuesEnemies);
+                deathList.Add(def.FactionValue.Name, Settings.KLValuesEnemies);
             else if (factionDef != def && factionDef.Allies.Contains(def.FactionValue.Name))
-                deathList.Add(def.FactionValue.Name, Core.Settings.KLValueAllies);
+                deathList.Add(def.FactionValue.Name, Settings.KLValueAllies);
             else if (factionDef != def)
-                deathList.Add(def.FactionValue.Name, Core.Settings.KLValuesNeutral);
+                deathList.Add(def.FactionValue.Name, Settings.KLValuesNeutral);
         }
     }
 }

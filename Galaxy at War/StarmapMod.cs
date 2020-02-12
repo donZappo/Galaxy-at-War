@@ -89,9 +89,9 @@ public class StarmapMod
     {
         try
         {
+            LogDebug("SetupRelationPanel");
             eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>();
             eventPanel.gameObject.SetActive(true);
-            UpdatePanelText();
 
             var go = eventPanel.gameObject.FindFirstChildNamed("Representation");
             go.FindFirstChildNamed("event_ResponseOptions").SetActive(false);
@@ -104,7 +104,17 @@ public class StarmapMod
             go.FindFirstChildNamed("choiceCrumb").SetActive(false);
             go.FindFirstChildNamed("resultTagsContent").SetActive(false);
             go.FindFirstChildNamed("B_brackets_results").SetActive(false);
+            go.FindFirstChildNamed("label_Text").SetActive(false);
 
+            eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true).Do(LogDebug);
+            var textMeshes = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true);
+            textMeshes.First(x => x.name =="title_week-day").text =
+                UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
+            textMeshes.First(x => x.name == "descriptionText").alignment = TextAlignmentOptions.Center;
+            var title = textMeshes.First(x => x.name == "event_titleText");
+            title.text = "Relationship Summary";
+            title.alignment = TextAlignmentOptions.Center;
+            
             var event_OverallLayoutVlg = go.FindFirstChildNamed("event_OverallLayout").GetComponent<VerticalLayoutGroup>();
             event_OverallLayoutVlg.childControlHeight = true;
             event_OverallLayoutVlg.childForceExpandHeight = true;
@@ -127,58 +137,44 @@ public class StarmapMod
         }
     }
 
-    private static string BuildRelationString()
+    internal static string RelationString 
     {
-        var sb = new StringBuilder();
-        foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
+        get
         {
-            var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
-            sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
-            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
-                          " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
-                          + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
-            sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") + "\n\n");
-            if (tracker.Enemies.Count > 0)
-                sb.AppendLine($"<u>Enemies</u>");
-            foreach (var enemy in tracker.Enemies)
-                sb.AppendLine($"{Core.Settings.FactionNames[enemy],-20}");
-            sb.AppendLine();
+            var sb = new StringBuilder();
+            foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
+            {
+                var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
+                sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
+                sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
+                              " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
+                              + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+                sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") + "\n\n");
+                if (tracker.Enemies.Count > 0)
+                    sb.AppendLine($"<u>Enemies</u>");
+                foreach (var enemy in tracker.Enemies)
+                    sb.AppendLine($"{Core.Settings.FactionNames[enemy],-20}");
+                sb.AppendLine();
 
-            if (tracker.Allies.Count > 0)
-                sb.AppendLine($"<u>Allies</u>");
-            foreach (var ally in tracker.Allies)
-                sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
+                if (tracker.Allies.Count > 0)
+                    sb.AppendLine($"<u>Allies</u>");
+                foreach (var ally in tracker.Allies)
+                    sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
+                sb.AppendLine();
+                sb.AppendLine();
+            }
+
             sb.AppendLine();
-            sb.AppendLine();
+            return sb.ToString();
         }
-
-        sb.AppendLine();
-        return sb.ToString();
     }
 
-    internal static void UpdatePanelText()
+    internal static void UpdateRelationString()
     {
-        var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
-        foreach (var tm in tmps)
-        {
-            switch (tm.name)
-            {
-                case "title_week-day":
-                    tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
-                    break;
-                case "event_titleText":
-                    tm.text = "Relationship Summary";
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "descriptionText":
-                    tm.text = BuildRelationString();
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "label_Text":
-                    tm.gameObject.SetActive(false);
-                    break;
-            }
-        }
+        LogDebug("UpdateRelationString");
+        eventPanel.gameObject.GetComponents<TextMeshProUGUI>()
+            .First(x => x.name == "descriptionText")
+            .text = "Some text";
     }
 
     [HarmonyPatch(typeof(SimGameState), "Update")]
@@ -203,7 +199,7 @@ public class StarmapMod
                     eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
                     if (eventPanel.gameObject.activeSelf)
                     {
-                        UpdatePanelText();
+                        UpdateRelationString();
                     }
 
                     LogDebug("Event Panel " + eventPanel.gameObject.activeSelf);
