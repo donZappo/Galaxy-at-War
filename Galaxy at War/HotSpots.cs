@@ -49,7 +49,8 @@ namespace Galaxy_at_War
             Core.WarStatus.HomeContendedStrings.Clear();
             Core.WarStatus.ContendedStrings.Clear();
             var FactRepDict = new Dictionary<string, int>();
-            foreach (var faction in Core.Settings.IncludedFactions)
+            Core.FactionValues = FactionEnumeration.FactionList;
+            foreach (var faction in Core.IncludedFactions)
             {
                 ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                 var MaxContracts = ProcessReputation(sim.GetRawReputation(Core.FactionValues.Find(x => x.Name == faction)));
@@ -122,7 +123,7 @@ namespace Galaxy_at_War
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
                 __state = sim.CurSystem.CurMaxContracts;
 
-                foreach (var theFaction in Core.Settings.IncludedFactions)
+                foreach (var theFaction in Core.IncludedFactions)
                 {
                     if (Core.WarStatus.deathListTracker.Find(x => x.faction == theFaction) == null)
                         continue;

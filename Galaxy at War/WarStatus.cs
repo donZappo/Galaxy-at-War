@@ -249,7 +249,7 @@ public class SystemStatus : IComparable
                 }
             }
         }
-        foreach (var faction in Settings.IncludedFactions)
+        foreach (var faction in IncludedFactions)
         {
             if (!influenceTracker.Keys.Contains(faction))
                 influenceTracker.Add(faction, 0);
@@ -401,10 +401,10 @@ public class DeathListTracker
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction);
 
-        foreach (var factionNames in Settings.IncludedFactions)
+        foreach (var factionNames in IncludedFactions)
         {
             var def = sim.GetFactionDef(factionNames);
-            if (!Settings.IncludedFactions.Contains(def.FactionValue.Name))
+            if (!IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.FactionValue.Name))
                 deathList.Add(def.FactionValue.Name, Settings.KLValuesEnemies);

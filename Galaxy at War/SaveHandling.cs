@@ -35,14 +35,9 @@ public static class SaveHandling
 
             try
             {
-                bool NewGaW = true;
-                Core.BorkedSave = false;
-                foreach (string tag in __instance.CompanyTags)
-                {
-                    if (tag.StartsWith("GalaxyAtWarSave{"))
-                        NewGaW = false;
-                }
-                if (!NewGaW)
+                // TODO move this to UX attach
+                StarmapMod.SetupRelationPanel();
+                if (__instance.CompanyTags.Any(tag => tag.StartsWith("GalaxyAtWarSave")))
                 {
                     DeserializeWar();
                     RebuildState();
@@ -100,20 +95,11 @@ public static class SaveHandling
     public static void RebuildState()
     {
         LogDebug("RebuildState");
-        Core.FactionValues = FactionEnumeration.FactionList;
         Galaxy_at_War.HotSpots.ExternalPriorityTargets.Clear();
         Galaxy_at_War.HotSpots.FullHomeContendedSystems.Clear();
         Galaxy_at_War.HotSpots.HomeContendedSystems.Clear();
         var sim = UnityGameInstance.BattleTechGame.Simulation;
         var ssDict = sim.StarSystemDictionary;
-        //Dictionary<string, StarSystem> starSystemDictionary = new Dictionary<string, StarSystem>();
-        //var list1 = sim.StarSystems.Select(x => x.Def.CoreSystemID);
-        //foreach (var system in sim.StarSystems)
-        //{
-        //    
-        //    starSystemDictionary.Add(system.Def.CoreSystemID, system);
-        //}
-
         Core.SystemDifficulty();
 
         try
@@ -138,10 +124,12 @@ public static class SaveHandling
                 }
                 
                 string systemOwner = systemDef.OwnerValue.Name;
-                Traverse.Create(systemDef).Property("OwnerValue").SetValue(Core.FactionValues.Find(x => x.Name == system.owner));
+                // needs to be refreshed since original declaration in Core
+                Core.FactionValues = FactionEnumeration.FactionList;
+                var ownerValue = Core.FactionValues.Find(x => x.Name == system.owner);
+                Traverse.Create(systemDef).Property("OwnerValue").SetValue(ownerValue);
                 Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
                 Core.RefreshContracts(system.starSystem);
-                LogDebug("Done refreshing system contracts");
                 if (system.influenceTracker.Keys.Contains("AuriganPirates") && !system.influenceTracker.Keys.Contains("NoFaction"))
                 {
                     system.influenceTracker.Add("NoFaction", system.influenceTracker["AuriganPirates"]);
@@ -152,12 +140,11 @@ public static class SaveHandling
 
                 if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
                 {
-                    LogDebug("Changed");
                     if (systemDef.SystemShopItems.Count != 0)
                     {
                         List<string> TempList = systemDef.SystemShopItems;
                         TempList.Add(Core.Settings.FactionShops[system.owner]);
-                        Traverse.Create(systemDef).Property("SystemShopItems").SetValue(TempList);
+                        Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
                     }
 
                     if (systemDef.FactionShopItems != null)
@@ -170,10 +157,6 @@ public static class SaveHandling
                         factionShopItems.Add(Core.Settings.FactionShopItems[system.owner]);
                         Traverse.Create(systemDef).Property("FactionShopItems").SetValue(factionShopItems);
                     }
-                }
-                else
-                {
-                    LogDebug("Unchanged");
                 }
             }
 

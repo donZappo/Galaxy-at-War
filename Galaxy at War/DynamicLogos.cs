@@ -14,6 +14,7 @@ namespace Galaxy_at_War
         {
             var boundingRects = new Dictionary<FactionValue, BoundingRect>();
             var logos = new Dictionary<FactionValue, GameObject>();
+            Core.FactionValues = FactionEnumeration.FactionList;
             foreach (string faction in logoNames.Keys)
             {
                 logos.Add(Core.FactionValues.Find(x => x.Name == faction), GameObject.Find(logoNames[faction]));
