@@ -987,12 +987,17 @@ public static class Core
         var owner = starSystem.OwnerValue;
         ContractEmployers.Clear();
         ContractTargets.Clear();
-        if (owner == FactionValues.FirstOrDefault(f => f.Name == "NoFaction"))
+
+        ContractEmployers.Add("Locals");
+        ContractTargets.Add("Locals");
+
+        if (starSystem.Tags.Contains("planet_other_pirate") || WarStatus.AbandonedSystems.Contains(starSystem.Name))
         {
             ContractEmployers.Add("AuriganPirates");
             ContractTargets.Add("AuriganPirates");
         }
-        else
+
+        if (owner != FactionValues.FirstOrDefault(f => f.Name == "NoFaction") && owner != FactionValues.FirstOrDefault(f => f.Name == "Locals"))
         {
             ContractEmployers.Add(owner.Name);
             ContractTargets.Add(owner.Name);
@@ -1002,35 +1007,28 @@ public static class Core
         var neighborSystems = WarSystem.neighborSystems;
         foreach (var systemNeighbor in neighborSystems.Keys)
         {
-            if (Settings.ImmuneToWar.Contains(systemNeighbor) || systemNeighbor == "NoFaction")
+            if (Settings.ImmuneToWar.Contains(systemNeighbor) || Settings.DefensiveFactions.Contains(systemNeighbor))
                 continue;
-            if (!ContractEmployers.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+
+            if (!ContractEmployers.Contains(systemNeighbor))
                 ContractEmployers.Add(systemNeighbor);
 
-            if (!ContractTargets.Contains(systemNeighbor) && !Settings.DefensiveFactions.Contains(systemNeighbor))
+            if (!ContractTargets.Contains(systemNeighbor))
                 ContractTargets.Add(systemNeighbor);
         }
 
-        if (ContractEmployers.Count == 1 && Settings.DefensiveFactions.Contains(ContractEmployers[0]))
-        {
-            var faction = OffensiveFactions[Random.Next(IncludedFactions.Count)];
-            ContractEmployers.Add(faction.Name);
-            if (!ContractTargets.Contains(faction.Name))
-                ContractTargets.Add(faction.Name);
-        }
-
-        if ((ContractEmployers.Count == 1 || WarSystem.PirateActivity > 0) && !ContractEmployers.Contains("AuriganPirates"))
+        if ((WarSystem.PirateActivity > 0) && !ContractEmployers.Contains("AuriganPirates"))
         {
             ContractEmployers.Add("AuriganPirates");
             ContractTargets.Add("AuriganPirates");
         }
 
-        if (!WarStatus.AbandonedSystems.Contains(starSystem.Name))
+        if (ContractEmployers.Count == 1)
         {
-            if (!ContractEmployers.Contains("Locals"))
-                ContractEmployers.Add("Locals");
-            if (!ContractTargets.Contains("Locals"))
-                ContractTargets.Add("Locals");
+            var faction = OffensiveFactions[Random.Next(IncludedFactions.Count)];
+            ContractEmployers.Add(faction.Name);
+            if (!ContractTargets.Contains(faction.Name))
+                ContractTargets.Add(faction.Name);
         }
     }
 
@@ -1128,7 +1126,8 @@ public static class Core
                     deathList[faction] = 1;
             }
 
-            // BUG is this right?
+            // BUG is this right? dZ - Yes. If the faction target is Pirates, the faction always hates them. Alternatively, if the faction we are checking
+            // the Deathlist for is Pirates themselves, we must set everybody else to be an enemy.
             if (faction == "AuriganPirates")
                 deathList[faction] = 80;
 
