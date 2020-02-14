@@ -89,7 +89,15 @@ public class StarmapMod
         try
         {
             LogDebug("SetupRelationPanel");
-            eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>();
+            //eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>();
+            var dm = UIManager.Instance.dataManager;
+            var prefabName = UIManager.Instance.GetPrefabName<SGEventPanel>("");
+            var uiModule = (UIModule) dm.PooledInstantiate(
+                prefabName, BattleTechResourceType.UIModulePrefabs, null, null)
+                .GetComponent(typeof(SGEventPanel));
+            uiModule.SetPrefabName("GaW RelationPanel");
+            UIManager.Instance.AddModule(uiModule, UIManager.Instance.popupNode, -1, false);
+            eventPanel = UIManager.Instance.GetFirstModule<SGEventPanel>(UIManager.Instance.popupNode, "Gaw RelationPanel");
             eventPanel.gameObject.SetActive(true);
 
             var go = eventPanel.gameObject.FindFirstChildNamed("Representation");
@@ -198,22 +206,22 @@ public class StarmapMod
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
-
+    
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
             {
                 try
                 {
-                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
+                  eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
                     if (eventPanel.gameObject.activeSelf)
                     {
                         UpdatePanelText();
                     }
-
+    
                     LogDebug("Event Panel " + eventPanel.gameObject.activeSelf);
                 }
                 catch (Exception ex)
                 {
-                    LogDebug(ex.ToString());
+                    LogDebug(ex);
                 }
             }
         }
