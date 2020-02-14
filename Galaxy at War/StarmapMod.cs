@@ -89,7 +89,6 @@ public class StarmapMod
         try
         {
             LogDebug("SetupRelationPanel");
-            //eventPanel = LazySingletonBehavior<UIManager>.Instance.CreatePopupModule<SGEventPanel>();
             var dm = UIManager.Instance.dataManager;
             var prefabName = UIManager.Instance.GetPrefabName<SGEventPanel>("");
             var uiModule = (UIModule) dm.PooledInstantiate(
@@ -112,15 +111,6 @@ public class StarmapMod
             go.FindFirstChildNamed("resultTagsContent").SetActive(false);
             go.FindFirstChildNamed("B_brackets_results").SetActive(false);
             go.FindFirstChildNamed("label_Text").SetActive(false);
-
-            //eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true).Do(LogDebug);
-            var textMeshes = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>(true);
-            textMeshes.First(x => x.name == "title_week-day").text =
-                UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
-            textMeshes.First(x => x.name == "descriptionText").alignment = TextAlignmentOptions.Center;
-            var title = textMeshes.First(x => x.name == "event_titleText");
-            title.SetText("Relationship Summary");
-            title.alignment = TextAlignmentOptions.Center;
 
             var event_OverallLayoutVlg = go.FindFirstChildNamed("event_OverallLayout").GetComponent<VerticalLayoutGroup>();
             event_OverallLayoutVlg.childControlHeight = true;
