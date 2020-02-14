@@ -97,7 +97,7 @@ public class StarmapMod
                 .GetComponent(typeof(SGEventPanel));
             uiModule.SetPrefabName("GaW RelationPanel");
             UIManager.Instance.AddModule(uiModule, UIManager.Instance.popupNode, -1, false);
-            eventPanel = UIManager.Instance.GetFirstModule<SGEventPanel>(UIManager.Instance.popupNode, "Gaw RelationPanel");
+            eventPanel = (SGEventPanel) uiModule;
             eventPanel.gameObject.SetActive(true);
 
             var go = eventPanel.gameObject.FindFirstChildNamed("Representation");
