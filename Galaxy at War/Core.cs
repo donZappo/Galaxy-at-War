@@ -12,6 +12,8 @@ using UnityEngine;
 using static Logger;
 using Random = System.Random;
 using Stopwatch = System.Diagnostics.Stopwatch;
+using Newtonsoft.Json;
+using System.Reflection;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -39,6 +41,28 @@ public static class Core
     internal static List<FactionValue> FactionValues = FactionEnumeration.FactionList;
     internal static List<string> IncludedFactions;
     internal static List<FactionValue> OffensiveFactions;
+
+    public static void Init(string modDir, string settings)
+    {
+        var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
+        harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+        // read settings
+        try
+        {
+            Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
+            Settings.modDirectory = modDir;
+        }
+        catch (Exception)
+        {
+            Settings = new ModSettings();
+        }
+        CopySettingsToState();
+
+        // blank the logfile
+        Clear();
+    }
+
 
     internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
     {
