@@ -1,15 +1,10 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text;
 using BattleTech;
 using BattleTech.UI;
 using BattleTech.UI.Tooltips;
 using Harmony;
-using HBS;
 using TMPro;
 using UnityEngine;
 using static Logger;
@@ -17,6 +12,7 @@ using BattleTech.UI.TMProWrapper;
 using HBS.Extensions;
 using UnityEngine.UI;
 
+// ReSharper disable UnusedType.Global
 // ReSharper disable InconsistentNaming
 
 public class StarmapMod
@@ -235,10 +231,7 @@ public class StarmapMod
                     eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
                     if (eventPanel.gameObject.activeSelf)
                     {
-                        if (!AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap")))
-                        {
-                            UpdatePanelText();
-                        }
+                        UpdatePanelText();
                     }
     
                     LogDebug("Event Panel " + eventPanel.gameObject.activeSelf);
