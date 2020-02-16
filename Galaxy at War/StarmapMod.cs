@@ -20,9 +20,10 @@ using UnityEngine.UI;
 public class StarmapMod
 {
     internal static SGEventPanel eventPanel;
+    internal static TMP_Text descriptionText; 
     internal static TMP_FontAsset font;
     internal static SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
+    
     //[HarmonyPatch(typeof(UnityGameInstance), "Awake")]
     //public static class UnityGameInstance_Awake_Patch
     //{
@@ -125,6 +126,25 @@ public class StarmapMod
             // jebus there is a space after "Viewport"
             var viewport = go.GetComponentsInChildren<RectTransform>().First(x => x.name == "Viewport ");
             viewport.sizeDelta = new Vector2(0, 900);
+            
+            foreach (var tmpText in eventPanel.gameObject.GetComponentsInChildren<TMP_Text>(true))
+            {
+                switch (tmpText.name)
+                {
+                    case "title_week-day": tmpText.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
+                        break;
+                    case "event_titleText": tmpText.text = "Relationship Summary";
+                        tmpText.alignment = TextAlignmentOptions.Center;
+                        break;
+                    case "descriptionText":
+                        descriptionText = tmpText;
+                        var RT = AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap"));
+                        tmpText.text = RT ? "Currently inoperable for RogueTech" : BuildRelationString().ToString();
+                        tmpText.alignment = TextAlignmentOptions.Center;
+                        break;
+                }
+            }
+            
             eventPanel.gameObject.SetActive(false);
             LogDebug("RelationPanel created");
         }
@@ -134,7 +154,7 @@ public class StarmapMod
         }
     }
 
-    private static string BuildRelationString()
+    private static StringBuilder BuildRelationString()
     {
         var sb = new StringBuilder();
         foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
@@ -160,51 +180,35 @@ public class StarmapMod
         }
 
         sb.AppendLine();
-        return sb.ToString();
+        LogDebug("RelationString");
+        return sb;
     }
-
-    internal static void UpdatePanelText()
-    {
-        var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
-        foreach (var tm in tmps)
-        {
-            switch (tm.name)
-            {
-                case "title_week-day":
-                    tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
-                    break;
-                case "event_titleText":
-                    tm.text = "Relationship Summary";
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "descriptionText":
-                    tm.text = BuildRelationString();
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "label_Text":
-                    tm.gameObject.SetActive(false);
-                    break;
-            }
-        }
-    }
+       
+    internal static void UpdatePanelText() => descriptionText.text = BuildRelationString().ToString();
 
     [HarmonyPatch(typeof(SimGameState), "Update")]
     public static class FactionPopup_Patch
     {
         public static void Postfix(SimGameState __instance)
         {
+            
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+            if (Core.WarStatus == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+            {
                 return;
-    
+            }
+
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
             {
                 try
                 {
-                  eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
+                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
                     if (eventPanel.gameObject.activeSelf)
                     {
-                        UpdatePanelText();
+                        if (!AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap")))
+                        {
+                            UpdatePanelText();
+                        }
                     }
     
                     LogDebug("Event Panel " + eventPanel.gameObject.activeSelf);
@@ -213,6 +217,12 @@ public class StarmapMod
                 {
                     LogDebug(ex);
                 }
+            }
+
+            if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T))
+            {
+                LogDebug(10);
+                // force the string assignment...it bombs
             }
         }
     }
@@ -272,25 +282,25 @@ public class StarmapMod
         return factionString.ToString();
     }
 
-    [HarmonyPatch(typeof(StarmapScreen), "RenderStarmap")]
-    public static class StarmapScreen_RenderStarmap_Patch
-    {
-        public static void Prefix()
-        {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
-                return;
-
-            //if (!Core.WarStatus.StartGameInitialized)
-            //{
-            //    var sim = UnityGameInstance.BattleTechGame.Simulation;
-            //    Galaxy_at_War.HotSpots.ProcessHotSpots();
-            //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            //    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-            //    Core.WarStatus.StartGameInitialized = true;
-            //}
-        }
-    }
+    //[HarmonyPatch(typeof(StarmapScreen), "RenderStarmap")]
+    //public static class StarmapScreen_RenderStarmap_Patch
+    //{
+    //    public static void Prefix()
+    //    {
+    //        var sim = UnityGameInstance.BattleTechGame.Simulation;
+    //        if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+    //            return;
+    //
+    //        //if (!Core.WarStatus.StartGameInitialized)
+    //        //{
+    //        //    var sim = UnityGameInstance.BattleTechGame.Simulation;
+    //        //    Galaxy_at_War.HotSpots.ProcessHotSpots();
+    //        //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+    //        //    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+    //        //    Core.WarStatus.StartGameInitialized = true;
+    //        //}
+    //    }
+    //}
 
     [HarmonyPatch(typeof(StarmapRenderer), "GetSystemRenderer")]
     [HarmonyPatch(new[] {typeof(StarSystemNode)})]

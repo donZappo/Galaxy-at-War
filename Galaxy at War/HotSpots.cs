@@ -49,7 +49,6 @@ namespace Galaxy_at_War
             Core.WarStatus.HomeContendedStrings.Clear();
             Core.WarStatus.ContendedStrings.Clear();
             var FactRepDict = new Dictionary<string, int>();
-            Core.FactionValues = FactionEnumeration.FactionList;
             foreach (var faction in Core.IncludedFactions)
             {
                 ExternalPriorityTargets.Add(faction, new List<StarSystem>());

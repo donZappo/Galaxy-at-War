@@ -36,9 +36,9 @@ public static class Core
     public static int LoopCounter;
     public static Contract LoopContract;
     public static bool HoldContracts = false;
-    internal static List<FactionValue> FactionValues = FactionEnumeration.FactionList;
     internal static List<string> IncludedFactions;
     internal static List<FactionValue> OffensiveFactions;
+    internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
 
     internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
     {
@@ -67,7 +67,7 @@ public static class Core
                 return;
 
             LogDebug(WarStatus == null ? "WarStatus null" : "WarStatus not null");
-            LogDebug("BorkedSave?" + BorkedSave);
+            LogDebug("BorkedSave? " + BorkedSave);
             LogDebug("Settings.ResetMap? " + Settings.ResetMap);
             if (WarStatus == null || BorkedSave || Settings.ResetMap)
             {
@@ -75,13 +75,13 @@ public static class Core
                 WarStatus = new WarStatus();
                 SystemDifficulty();
                 WarTick(true, true);
-                BorkedSave = false;
-
-                GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                interruptQueue.QueueGenericPopup_NonImmediate("Borked Save", "Commander, the entire Galaxy is borked! Save the game, exit to desktop, turn ResetMap to false  in the mod.json (if necessary), and load 'er back up!", true, null);
-                sim.StopPlayMode();
+                //BorkedSave = false;
+                //
+                //GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
+                //SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
+                //    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
+                //interruptQueue.QueueGenericPopup_NonImmediate("Borked Save", "Commander, the entire Galaxy is borked! Save the game, exit to desktop, turn ResetMap to false  in the mod.json (if necessary), and load 'er back up!", true, null);
+                //sim.StopPlayMode();
             }
 
 
@@ -470,7 +470,6 @@ public static class Core
     public static void AllocateAttackResources(WarFaction warFaction)
     {
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        FactionValues = FactionEnumeration.FactionList;
         var FactionRep = sim.GetRawReputation(FactionValues.Find(x => x.Name == warFaction.faction));
         int maxContracts = HotSpots.ProcessReputation(FactionRep);
         if (warFaction.warFactionAttackResources.Keys.Count == 0)
@@ -719,7 +718,6 @@ public static class Core
     {
         if (faction != system.OwnerValue.Name || ForceFlip)
         {
-            FactionValues = FactionEnumeration.FactionList;
             FactionValue OldFaction = system.OwnerValue;
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction.Name]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction.Name]);
@@ -973,7 +971,7 @@ public static class Core
 
     public static void RefreshContracts(StarSystem starSystem)
     {
-        LogDebug("RefreshContracts for " + starSystem.Name);
+        //LogDebug("RefreshContracts for " + starSystem.Name);
         if (WarStatus.HotBox.Contains(starSystem.Name))
         {
             LogDebug("Skipping HotBox");
@@ -983,7 +981,6 @@ public static class Core
         var ContractEmployers = starSystem.Def.ContractEmployerIDList;
         var ContractTargets = starSystem.Def.ContractTargetIDList;
         SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-        FactionValues = FactionEnumeration.FactionList;
         var owner = starSystem.OwnerValue;
         ContractEmployers.Clear();
         ContractTargets.Clear();

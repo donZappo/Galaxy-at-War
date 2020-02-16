@@ -360,7 +360,7 @@ public class WarFaction
 
     public WarFaction(string faction)
     {
-        LogDebug("WarFaction ctor");
+        LogDebug("WarFaction ctor: " + faction);
         this.faction = faction;
         GainedSystem = false;
         LostSystem = false;
@@ -370,7 +370,7 @@ public class WarFaction
         TotalSystemsChanged = 0;
         PirateARLoss = 0;
         PirateDRLoss = 0;
-        foreach (var startfaction in Settings.IncludedFactions)
+        foreach (var startfaction in IncludedFactions)
             IncreaseAggression.Add(startfaction, false);
     }
 }
@@ -396,11 +396,12 @@ public class DeathListTracker
 
     public DeathListTracker(string faction)
     {
-        LogDebug("DeathListTracker ctor");
+        LogDebug("DeathListTracker ctor: " + faction);
 
         this.faction = faction;
         factionDef = sim.GetFactionDef(faction);
 
+        // TODO comment this
         foreach (var factionNames in IncludedFactions)
         {
             var def = sim.GetFactionDef(factionNames);
