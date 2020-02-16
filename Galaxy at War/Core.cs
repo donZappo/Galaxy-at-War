@@ -41,29 +41,7 @@ public static class Core
     internal static List<string> IncludedFactions;
     internal static List<FactionValue> OffensiveFactions;
     internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
-
-    public static void Init(string modDir, string settings)
-    {
-        var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
-        harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-        // read settings
-        try
-        {
-            Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
-            Settings.modDirectory = modDir;
-        }
-        catch (Exception)
-        {
-            Settings = new ModSettings();
-        }
-        CopySettingsToState();
-
-        // blank the logfile
-        Clear();
-    }
-
-
+    
     internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
     {
         return FactionValues.Where(x => factionStrings.Contains(x.Name));

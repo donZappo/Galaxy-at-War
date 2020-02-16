@@ -52,7 +52,6 @@ public static class SaveHandling
                     Core.WarTick(true, true);
                 }
                 
-                StarmapMod.SetupRelationPanel();
             }
             catch (Exception ex)
             {
