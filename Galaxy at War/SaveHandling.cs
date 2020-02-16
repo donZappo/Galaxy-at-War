@@ -30,18 +30,29 @@ public static class SaveHandling
         {
             LogDebug("Rehydrate");
             var sim = UnityGameInstance.BattleTechGame.Simulation;
+
             if (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+            {
+                LogDebug("Aborting GaW loading");
                 return;
+            }
 
             try
             {
-                // TODO move this to UX attach
-                StarmapMod.SetupRelationPanel();
                 if (__instance.CompanyTags.Any(tag => tag.StartsWith("GalaxyAtWarSave")))
                 {
                     DeserializeWar();
                     RebuildState();
                 }
+                else
+                {
+                    LogDebug("Spawning new instance");
+                    Core.WarStatus = new WarStatus();
+                    Core.SystemDifficulty();
+                    Core.WarTick(true, true);
+                }
+                
+                StarmapMod.SetupRelationPanel();
             }
             catch (Exception ex)
             {
@@ -110,22 +121,23 @@ public static class SaveHandling
                 return;
             }
             
-            foreach (var system in Core.WarStatus.systems)
+            for (var i = 0; i < Core.WarStatus.systems.Count;i++)
             {
                 StarSystemDef systemDef;
+                var system = Core.WarStatus.systems[i];
                 if (ssDict.ContainsKey(system.CoreSystemID))
                 {
                     systemDef = ssDict[system.CoreSystemID].Def; 
                 }
                 else
                 {
-                    LogDebug($"BOMB {system.name} not in StarSystemDictionary");
+                    LogDebug($"BOMB {system.name} not in StarSystemDictionary, removing it from WarStatus.systems");
+                    Core.WarStatus.systems.Remove(system);
                     continue;
                 }
                 
                 string systemOwner = systemDef.OwnerValue.Name;
                 // needs to be refreshed since original declaration in Core
-                Core.FactionValues = FactionEnumeration.FactionList;
                 var ownerValue = Core.FactionValues.Find(x => x.Name == system.owner);
                 Traverse.Create(systemDef).Property("OwnerValue").SetValue(ownerValue);
                 Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);

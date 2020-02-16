@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BattleTech;
 using BattleTech.UI;
 using BattleTech.UI.Tooltips;
 using Harmony;
-using HBS;
 using TMPro;
 using UnityEngine;
 using static Logger;
@@ -15,14 +12,16 @@ using BattleTech.UI.TMProWrapper;
 using HBS.Extensions;
 using UnityEngine.UI;
 
+// ReSharper disable UnusedType.Global
 // ReSharper disable InconsistentNaming
 
 public class StarmapMod
 {
     internal static SGEventPanel eventPanel;
+    internal static TMP_Text descriptionText; 
     internal static TMP_FontAsset font;
     internal static SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
-
+    
     //[HarmonyPatch(typeof(UnityGameInstance), "Awake")]
     //public static class UnityGameInstance_Awake_Patch
     //{
@@ -65,7 +64,7 @@ public class StarmapMod
 
             __state = starSystem.Def.Description.Details;
             var factionString = BuildInfluenceString(starSystem);
-            Traverse.Create(starSystem.Def.Description).Property("Details").SetValue(factionString.ToString());
+            Traverse.Create(starSystem.Def.Description).Property("Details").SetValue(factionString);
         }
 
         public static void Postfix(TooltipPrefab_Planet __instance, object data, string __state)
@@ -116,15 +115,33 @@ public class StarmapMod
             event_OverallLayoutVlg.childControlHeight = true;
             event_OverallLayoutVlg.childForceExpandHeight = true;
 
-            var event_OverallLayout = go.FindFirstChildNamed("event_OverallLayout").GetComponent<RectTransform>();
+            var event_OverallLayout = (RectTransform) go.FindFirstChildNamed("event_OverallLayout").transform;
             event_OverallLayout.sizeDelta = new Vector2(750, 580);
 
-            var results_TextllLayout = go.FindFirstChildNamed("results_TextllLayout").GetComponent<RectTransform>();
+            var results_TextllLayout =(RectTransform) go.FindFirstChildNamed("results_TextllLayout").transform;
             results_TextllLayout.sizeDelta = new Vector2(750, 900);
 
             // jebus there is a space after "Viewport"
             var viewport = go.GetComponentsInChildren<RectTransform>().First(x => x.name == "Viewport ");
             viewport.sizeDelta = new Vector2(0, 900);
+            
+            foreach (var tmpText in eventPanel.gameObject.GetComponentsInChildren<TMP_Text>(true))
+            {
+                switch (tmpText.name)
+                {
+                    case "title_week-day": tmpText.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
+                        break;
+                    case "event_titleText": tmpText.text = "Relationship Summary";
+                        tmpText.alignment = TextAlignmentOptions.Center;
+                        break;
+                    case "descriptionText":
+                        descriptionText = tmpText;
+                        tmpText.text = BuildRelationString();
+                        tmpText.alignment = TextAlignmentOptions.Center;
+                        break;
+                }
+            }
+            
             eventPanel.gameObject.SetActive(false);
             LogDebug("RelationPanel created");
         }
@@ -137,8 +154,14 @@ public class StarmapMod
     private static string BuildRelationString()
     {
         var sb = new StringBuilder();
+        sb.AppendLine("<line-height=125%>");
         foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
         {
+            if (!Core.Settings.FactionNames.ContainsKey(tracker.faction))
+            {
+                LogDebug($"faction {tracker.faction} doesn't exist in Core.Settings.FactionNames, skipping...");
+                continue;
+            }
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
             sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
@@ -148,60 +171,64 @@ public class StarmapMod
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
+            {
+                if (!Core.Settings.FactionNames.ContainsKey(enemy))
+                {
+                    LogDebug("Core.Settings.FactionNames doesn't have " + enemy + " skipping...");
+                    continue;
+                }
                 sb.AppendLine($"{Core.Settings.FactionNames[enemy],-20}");
+            }
+
             sb.AppendLine();
 
             if (tracker.Allies.Count > 0)
-                sb.AppendLine($"<u>Allies</u>");
+                sb.AppendLine($"Allies");
             foreach (var ally in tracker.Allies)
+            {
+                if (!Core.Settings.FactionNames.ContainsKey(ally))
+                {
+                    LogDebug("Core.Settings.FactionNames doesn't have " + ally + " skipping...");
+                    continue;
+                }
                 sb.AppendLine($"{Core.Settings.FactionNames[ally],-20}");
+            }
             sb.AppendLine();
             sb.AppendLine();
         }
 
+        sb.AppendLine("</line-height>");
         sb.AppendLine();
+        LogDebug("RelationString");
+        
+        // bug? in TMPro shits the bed on a long string with underlines
+        if (AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap")))
+        {
+            sb.Replace("<u>", "");
+            sb.Replace("</u>", "");
+        }
         return sb.ToString();
     }
-
-    internal static void UpdatePanelText()
-    {
-        var tmps = eventPanel.gameObject.GetComponentsInChildren<TextMeshProUGUI>();
-        foreach (var tm in tmps)
-        {
-            switch (tm.name)
-            {
-                case "title_week-day":
-                    tm.text = UnityGameInstance.BattleTechGame.Simulation.CurrentDate.ToLongDateString();
-                    break;
-                case "event_titleText":
-                    tm.text = "Relationship Summary";
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "descriptionText":
-                    tm.text = BuildRelationString();
-                    tm.alignment = TextAlignmentOptions.Center;
-                    break;
-                case "label_Text":
-                    tm.gameObject.SetActive(false);
-                    break;
-            }
-        }
-    }
+       
+    internal static void UpdatePanelText() => descriptionText.text = BuildRelationString();
 
     [HarmonyPatch(typeof(SimGameState), "Update")]
     public static class FactionPopup_Patch
     {
         public static void Postfix(SimGameState __instance)
         {
+            
             var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+            if (Core.WarStatus == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+            {
                 return;
-    
+            }
+
             if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
             {
                 try
                 {
-                  eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
+                    eventPanel.gameObject.SetActive(!eventPanel.gameObject.activeSelf);
                     if (eventPanel.gameObject.activeSelf)
                     {
                         UpdatePanelText();
@@ -272,25 +299,25 @@ public class StarmapMod
         return factionString.ToString();
     }
 
-    [HarmonyPatch(typeof(StarmapScreen), "RenderStarmap")]
-    public static class StarmapScreen_RenderStarmap_Patch
-    {
-        public static void Prefix()
-        {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
-                return;
-
-            //if (!Core.WarStatus.StartGameInitialized)
-            //{
-            //    var sim = UnityGameInstance.BattleTechGame.Simulation;
-            //    Galaxy_at_War.HotSpots.ProcessHotSpots();
-            //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-            //    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-            //    Core.WarStatus.StartGameInitialized = true;
-            //}
-        }
-    }
+    //[HarmonyPatch(typeof(StarmapScreen), "RenderStarmap")]
+    //public static class StarmapScreen_RenderStarmap_Patch
+    //{
+    //    public static void Prefix()
+    //    {
+    //        var sim = UnityGameInstance.BattleTechGame.Simulation;
+    //        if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+    //            return;
+    //
+    //        //if (!Core.WarStatus.StartGameInitialized)
+    //        //{
+    //        //    var sim = UnityGameInstance.BattleTechGame.Simulation;
+    //        //    Galaxy_at_War.HotSpots.ProcessHotSpots();
+    //        //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+    //        //    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+    //        //    Core.WarStatus.StartGameInitialized = true;
+    //        //}
+    //    }
+    //}
 
     [HarmonyPatch(typeof(StarmapRenderer), "GetSystemRenderer")]
     [HarmonyPatch(new[] {typeof(StarSystemNode)})]

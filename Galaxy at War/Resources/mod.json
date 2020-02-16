@@ -2,7 +2,7 @@
     "Name": "Galaxy at War",
     "Enabled": true,
 
-    "Version": "4.1",
+    "Version": "4.2.3",
     "Author": "don Zappo and gnivler",
     
     "DLL": "GalaxyatWar.dll",
@@ -94,7 +94,7 @@
 			"MagistracyOfCanopus" : "The Magistracy of Canopus",
 			"AuriganRestoration" : "The Arano Restoration",
 			"Kurita" : "The Draconis Combine",
-			"Steiner" : "The Lyran Commonwealth",
+			"Steiner" : "The Lyran Commonwealth",                          
 			"ComStar" : "ComStar",
 			"Locals" : "Local Government",
 			"AuriganPirates" : "Pirates",
