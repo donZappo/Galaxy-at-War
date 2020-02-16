@@ -39,11 +39,6 @@ public static class SaveHandling
 
             try
             {
-                // TODO move this to UX attach
-                if (!AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap")))
-                {
-                    StarmapMod.SetupRelationPanel();
-                }
                 if (__instance.CompanyTags.Any(tag => tag.StartsWith("GalaxyAtWarSave")))
                 {
                     DeserializeWar();
@@ -56,6 +51,8 @@ public static class SaveHandling
                     Core.SystemDifficulty();
                     Core.WarTick(true, true);
                 }
+                
+                StarmapMod.SetupRelationPanel();
             }
             catch (Exception ex)
             {
@@ -134,7 +131,7 @@ public static class SaveHandling
                 }
                 else
                 {
-                    LogDebug($"BOMB {system.name} not in StarSystemDictionary, removing it");
+                    LogDebug($"BOMB {system.name} not in StarSystemDictionary, removing it from WarStatus.systems");
                     Core.WarStatus.systems.Remove(system);
                     continue;
                 }
