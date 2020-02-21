@@ -391,7 +391,7 @@ public class StarmapMod
             if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
-            if (!Core.Settings.ISMCompatibility)
+            if (!Core.Settings.ExpandedMap)
                 Galaxy_at_War.DynamicLogos.PlaceAndScaleLogos(Core.Settings.LogoNames, __instance);
         }
     }

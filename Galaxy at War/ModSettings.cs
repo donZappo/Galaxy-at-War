@@ -68,6 +68,7 @@ public class ModSettings
     public float BonusXPFactor = 0.2f;
     public float BonusCbillsFactor = 0.2f;
     public bool ISMCompatibility = true;
+    public bool ExpandedMap = true;
     public float ResourceScale = 0.5f;
     public bool UseSubsetOfSystems = true;
     public float SubSetFraction = 1.0f;
