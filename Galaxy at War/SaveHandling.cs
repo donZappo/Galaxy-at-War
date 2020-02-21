@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using UnityEngine;
 using static Logger;
 using BattleTech.Save;
-using System.Diagnostics;
 using HBS;
 using BattleTech.UI;
 using System.Collections.Generic;
