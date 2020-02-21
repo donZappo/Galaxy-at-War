@@ -11,6 +11,7 @@ using static Logger;
 using BattleTech.UI.TMProWrapper;
 using HBS.Extensions;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 // ReSharper disable UnusedType.Global
 // ReSharper disable InconsistentNaming
@@ -341,7 +342,8 @@ public class StarmapMod
                 //Core.timer.Restart();
                 if (Core.WarStatus != null)
                 {
-                    var wasVisited = sim.VisitedStarSystems.Contains(__result.name);
+                    List<string> VisitedStarSystems = (List<string>)Traverse.Create(sim).Field("VisitedStarSystems").GetValue();
+                    var wasVisited = VisitedStarSystems.Contains(__result.name);
 
                     if (Core.WarStatus.HomeContendedStrings.Contains(__result.name))
                         HighlightSystem(__result, wasVisited, Color.magenta, true);

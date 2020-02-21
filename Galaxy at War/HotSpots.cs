@@ -414,7 +414,7 @@ namespace Galaxy_at_War
                             if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
                             {
                                 float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
-                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.DefaultDifficulty * employerRepBadFaithMod);
+                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
                                 if (num != 0)
                                 {
                                     simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);
@@ -520,7 +520,7 @@ namespace Galaxy_at_War
                             if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
                             {
                                 float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
-                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.DefaultDifficulty * employerRepBadFaithMod);
+                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
                                 if (num != 0)
                                 {
                                     simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);

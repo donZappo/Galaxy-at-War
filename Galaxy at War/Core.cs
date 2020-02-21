@@ -1377,7 +1377,7 @@ public static class Core
             enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
             difficulty = __instance.Difficulty;
             missionResult = result;
-            contractType = __instance.Override.contractTypeID;
+            contractType = __instance.Override.ContractTypeValue.Name;
             if (__instance.IsFlashpointContract || __instance.IsFlashpointCampaignContract)
                 IsFlashpointContract = true;
             else
@@ -1605,7 +1605,7 @@ public static class Core
             }
             else
             {
-                system.DifficultyRating = SimSystem.Def.DefaultDifficulty;
+                system.DifficultyRating = SimSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
             }
             if (SimSystem.Def.OwnerValue.Name != "NoFaction" && SimSystem.Def.SystemShopItems.Count == 0)
             {
@@ -1721,7 +1721,7 @@ public static class Core
             if (EmployerFaction.Name == "AuriganPirates" || DefenseFaction.Name == "AuriganPirates")
                 pirates = true;
 
-            double DeltaInfluence = Core.DeltaInfluence(SystemName.Name, contract.Difficulty, contract.Override.contractTypeID, DefenseFaction.Name, pirates);
+            double DeltaInfluence = Core.DeltaInfluence(SystemName.Name, contract.Difficulty, contract.Override.ContractTypeValue.Name, DefenseFaction.Name, pirates);
 
             bool SystemFlip = false;
             if (EmployerFaction.Name != "AuriganPirates" && DefenseFaction.Name != "AuriganPirates")
@@ -1757,7 +1757,7 @@ public static class Core
             if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
             {
                 int estimatedMissions = CalculateFlipMissions(EmployerFaction.Name, SystemName.Name);
-                var totalDifficulty = estimatedMissions * SystemName.Def.DefaultDifficulty;
+                var totalDifficulty = estimatedMissions * SystemName.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
 
                 if (totalDifficulty >= 150)
                     system.DeploymentTier = 6;
