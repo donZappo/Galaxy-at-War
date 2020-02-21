@@ -1894,8 +1894,7 @@ public static class Core
     [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
     public static class MainMenu_Init_Patch
     {
-        static bool Prefix(StarSystem system, SimGameState.ContractDifficultyRange diffRange, Dictionary<int, List<ContractOverride>> potentialContracts,
-            Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets, MapAndEncounters level)
+        static bool Prefix()
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
