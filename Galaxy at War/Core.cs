@@ -1552,7 +1552,7 @@ public static class Core
             if (system.OriginalOwner == null)
                 system.OriginalOwner = system.owner;
 
-            if (Settings.ChangeDifficulty)
+            if (Settings.ChangeDifficulty && !SimSystem.Tags.Contains("planet_start_world"))
             {
                 sim.Constants.Story.ContractDifficultyMod = 0;
                 sim.CompanyStats.Set<float>("Difficulty", 0);
@@ -1606,6 +1606,7 @@ public static class Core
             else
             {
                 system.DifficultyRating = SimSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                i++;
             }
             if (SimSystem.Def.OwnerValue.Name != "NoFaction" && SimSystem.Def.SystemShopItems.Count == 0)
             {
