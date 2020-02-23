@@ -44,7 +44,7 @@ public static class Core
     
     internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
     {
-        return FactionValues.Where(x => factionStrings.Contains(x.Name));
+        return FactionValues.Where(x => IncludedFactions.Contains(x.Name));
     }
 
     internal static void CopySettingsToState()
@@ -1024,7 +1024,7 @@ public static class Core
 
         if (ContractEmployers.Count == 1)
         {
-            var faction = OffensiveFactions[Random.Next(IncludedFactions.Count)];
+            var faction = OffensiveFactions[Random.Next(OffensiveFactions.Count)];
             ContractEmployers.Add(faction.Name);
             if (!ContractTargets.Contains(faction.Name))
                 ContractTargets.Add(faction.Name);
