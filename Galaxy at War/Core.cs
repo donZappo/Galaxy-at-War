@@ -1671,7 +1671,7 @@ public static class Core
                     result = 1;
                 else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
                     result = difficulty + 11;
-                else if (contract.TargetSystem.Equals(Sim.CurSystem.Def.Description.Id))
+                else if (contract.TargetSystem == Sim.CurSystem.ID)
                     result = difficulty + 1;
                 else
                     result = difficulty + 21;
