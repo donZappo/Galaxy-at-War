@@ -1471,7 +1471,9 @@ public static class Core
                             if (WarStatus.Deployment)
                             {
                                 int difficultyScale = warsystem.DeploymentTier;
-                                if (difficultyScale == 5)
+                                if (difficultyScale == 6)
+                                    sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_06);
+                                else if (difficultyScale == 5)
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_05);
                                 else if (difficultyScale == 4)
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_04);
