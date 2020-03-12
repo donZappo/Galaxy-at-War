@@ -1025,6 +1025,11 @@ namespace Galaxy_at_War
             else
                 MaxContracts = (int)simCareer.HonoredMaxContractDifficulty;
 
+            if (MaxContracts > 10)
+                MaxContracts = 10;
+            if (MaxContracts < 1)
+                MaxContracts = 1;
+
             return MaxContracts;
         }
         [HarmonyPatch(typeof(SGRoomController_CmdCenter), "StartContractScreen")]
