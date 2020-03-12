@@ -1010,21 +1010,21 @@ namespace Galaxy_at_War
             var simCareer = UnityGameInstance.BattleTechGame.Simulation.Constants.CareerMode;
             int MaxContracts = 1;
 
-
-            if (FactionRep <= 100)
-                MaxContracts = (int)simCareer.HonoredMaxContractDifficulty;
-            if (FactionRep <= simStory.HonoredReputation)
-                MaxContracts = (int)simCareer.FriendlyMaxContractDifficulty;
-            if (FactionRep <= simStory.FriendlyReputation)
-                MaxContracts = (int)simCareer.LikedMaxContractDifficulty;
-            if (FactionRep <= simStory.LikedReputation)
-                MaxContracts = (int)simCareer.IndifferentMaxContractDifficulty;
-            if (FactionRep <= simStory.DislikedReputation)
-                MaxContracts = (int)simCareer.DislikedMaxContractDifficulty;
-            if (FactionRep <= simStory.HatedReputation)
-                MaxContracts = (int)simCareer.HatedMaxContractDifficulty;
             if (FactionRep <= simStory.LoathedReputation)
                 MaxContracts = (int)simCareer.LoathedMaxContractDifficulty;
+            else if (FactionRep <= simStory.HatedReputation)
+                MaxContracts = (int)simCareer.HatedMaxContractDifficulty;
+            else if (FactionRep <= simStory.DislikedReputation)
+                MaxContracts = (int)simCareer.DislikedMaxContractDifficulty;
+            else if (FactionRep <= simStory.LikedReputation)
+                MaxContracts = (int)simCareer.IndifferentMaxContractDifficulty;
+            else if (FactionRep <= simStory.FriendlyReputation)
+                MaxContracts = (int)simCareer.LikedMaxContractDifficulty;
+            else if (FactionRep <= simStory.HonoredReputation)
+                MaxContracts = (int)simCareer.FriendlyMaxContractDifficulty;
+            else
+                MaxContracts = (int)simCareer.HonoredMaxContractDifficulty;
+
             return MaxContracts;
         }
         [HarmonyPatch(typeof(SGRoomController_CmdCenter), "StartContractScreen")]
