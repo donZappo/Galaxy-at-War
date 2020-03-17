@@ -1607,7 +1607,7 @@ public static class Core
             }
             else
             {
-                system.DifficultyRating = SimSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                system.DifficultyRating = SimSystem.Def.DefaultDifficulty;
                 i++;
             }
             if (SimSystem.Def.OwnerValue.Name != "NoFaction" && SimSystem.Def.SystemShopItems.Count == 0)
@@ -1760,7 +1760,12 @@ public static class Core
             if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
             {
                 int estimatedMissions = CalculateFlipMissions(EmployerFaction.Name, SystemName.Name);
-                var totalDifficulty = estimatedMissions * SystemName.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                int totalDifficulty = 1;
+
+                if (Settings.ChangeDifficulty)
+                    totalDifficulty = estimatedMissions * SystemName.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                else
+                    totalDifficulty = estimatedMissions * (int)(SystemName.Def.DefaultDifficulty + sim.GlobalDifficulty);
 
                 if (totalDifficulty >= 150)
                     system.DeploymentTier = 6;

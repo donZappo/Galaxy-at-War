@@ -414,7 +414,13 @@ namespace Galaxy_at_War
                             if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
                             {
                                 float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
-                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+                                int num = 1;
+
+                                if (Core.Settings.ChangeDifficulty)
+                                    num = Mathf.RoundToInt((float)simState.CurSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+                                else
+                                    num = Mathf.RoundToInt((float)(simState.CurSystem.Def.DefaultDifficulty + simState.GlobalDifficulty) * employerRepBadFaithMod);
+
                                 if (num != 0)
                                 {
                                     simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);
@@ -520,7 +526,12 @@ namespace Galaxy_at_War
                             if (simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue.DoesGainReputation)
                             {
                                 float employerRepBadFaithMod = simState.Constants.Story.EmployerRepBadFaithMod;
-                                int num = Mathf.RoundToInt((float)simState.CurSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+                                int num = 1;
+                                if (Core.Settings.ChangeDifficulty)
+                                    num = Mathf.RoundToInt((float)simState.CurSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) * employerRepBadFaithMod);
+                                else
+                                    num = Mathf.RoundToInt((float)(simState.CurSystem.Def.DefaultDifficulty + simState.GlobalDifficulty) * employerRepBadFaithMod);
+
                                 if (num != 0)
                                 {
                                     simState.SetReputation(simState.GetFactionDef(Core.WarStatus.DeploymentEmployer).FactionValue, num, StatCollection.StatOperation.Int_Add, null);
@@ -924,6 +935,11 @@ namespace Galaxy_at_War
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var system = Core.WarStatus.systems.Find(x => x.starSystem == starSystem);
             System.Random rand = new System.Random();
+            int systemDifficulty = 1;
+            if (Core.Settings.ChangeDifficulty)
+                systemDifficulty = system.DifficultyRating;
+            else
+                systemDifficulty = system.DifficultyRating + (int)sim.GlobalDifficulty;
 
             if (!Core.WarStatus.HotBox.Contains(starSystem.Name))
             {
@@ -931,7 +947,7 @@ namespace Galaxy_at_War
                 system.BonusSalvage = false;
                 system.BonusXP = false;
 
-                if (system.DifficultyRating <= 4)
+                if (systemDifficulty <= 4)
                 {
                     var bonus = rand.Next(0, 3);
                     if (bonus == 0)
@@ -941,7 +957,7 @@ namespace Galaxy_at_War
                     if (bonus == 2)
                         system.BonusSalvage = true;
                 }
-                if (system.DifficultyRating <= 8 && system.DifficultyRating > 4)
+                if (systemDifficulty <= 8 && systemDifficulty > 4)
                 {
                     system.BonusCBills = true;
                     system.BonusSalvage = true;
@@ -954,7 +970,7 @@ namespace Galaxy_at_War
                     if (bonus == 2)
                         system.BonusSalvage = false;
                 }
-                if (system.DifficultyRating <= 10 && system.DifficultyRating > 8)
+                if (systemDifficulty > 8)
                 {
                     system.BonusCBills = true;
                     system.BonusSalvage = true;
