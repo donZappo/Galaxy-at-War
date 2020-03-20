@@ -309,10 +309,10 @@ namespace Galaxy_at_War
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction);
-            starSystem.Def.ContractEmployerIDList.Clear();
-            starSystem.Def.ContractTargetIDList.Clear();
+            starSystem.Def.contractEmployerIDs.Clear();
+            starSystem.Def.contractTargetIDs.Clear();
 
-            starSystem.Def.ContractEmployerIDList.Add(faction);
+            starSystem.Def.contractEmployerIDs.Add(faction);
 
             var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             
@@ -322,7 +322,8 @@ namespace Galaxy_at_War
                     break;
                 if (influence.Value > 1 && influence.Key != faction)
                 {
-                    starSystem.Def.ContractTargetIDList.Add(influence.Key);
+                    if (!starSystem.Def.contractTargetIDs.Contains(influence.Key))
+                        starSystem.Def.contractTargetIDs.Add(influence.Key);
                     if (!FactionDef.Enemies.Contains(influence.Key))  
                     {
                         var enemies = new List<string>(FactionDef.Enemies);
@@ -337,12 +338,12 @@ namespace Galaxy_at_War
                     }
 
                 }
-                if (starSystem.Def.ContractTargetIDList.Count() == 2)
+                if (starSystem.Def.contractTargetIDs.Count() == 2)
                     break;
             }
 
-            if (starSystem.Def.ContractTargetIDList.Count() == 0)
-                starSystem.Def.ContractTargetIDList.Add("AuriganPirates");
+            if (starSystem.Def.contractTargetIDs.Count() == 0)
+                starSystem.Def.contractTargetIDs.Add("AuriganPirates");
         }
 
         //Deployments area.

@@ -980,8 +980,8 @@ public static class Core
             return;
         }
 
-        var ContractEmployers = starSystem.Def.ContractEmployerIDList;
-        var ContractTargets = starSystem.Def.ContractTargetIDList;
+        var ContractEmployers = starSystem.Def.contractEmployerIDs;
+        var ContractTargets = starSystem.Def.contractTargetIDs;
         SimGameState sim = UnityGameInstance.BattleTechGame.Simulation;
         var owner = starSystem.OwnerValue;
         ContractEmployers.Clear();
@@ -1041,7 +1041,7 @@ public static class Core
                 return;
 
             FactionEnemyHolder.Clear();
-            var NewEnemies = system.ContractTargetIDList;
+            var NewEnemies = system.contractTargetIDs;
             FactionEnemyHolder = employer.Enemies.ToList();
             var NewFactionEnemies = FactionEnemyHolder;
             foreach (var Enemy in NewEnemies)
