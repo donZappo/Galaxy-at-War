@@ -150,11 +150,10 @@ namespace Galaxy_at_War
                     ProcessHotSpots();
                 
                 isBreadcrumb = true;
-                sim.CurSystem.SystemBreadcrumbs.Clear();
+                sim.CurSystem.activeSystemBreadcrumbs.Clear();
                 Traverse.Create(sim.CurSystem).Property("MissionsCompleted").SetValue(20);
                 Traverse.Create(sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
                 Traverse.Create(sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
-
                 Core.WarStatus.DeploymentContracts.Clear();
 
                 if (HomeContendedSystems.Count != 0  && !Core.Settings.DefensiveFactions.Contains(sim.CurSystem.OwnerValue.Name) && !Core.WarStatus.Deployment)
@@ -1182,8 +1181,8 @@ namespace Galaxy_at_War
                         Core.WarStatus.DeploymentInfluenceIncrease *= Core.Settings.DeploymentEscalationFactor;
                         if (!HasFlashpoint)
                         {
-                            sim.CurSystem.SystemBreadcrumbs.Clear();
-                            sim.CurSystem.SystemContracts.Clear();
+                            sim.CurSystem.activeSystemContracts.Clear();
+                            sim.CurSystem.activeSystemBreadcrumbs.Clear();
                         }
 
                         if (Core.WarStatus.EscalationOrder != null)

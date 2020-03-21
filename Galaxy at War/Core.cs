@@ -85,8 +85,6 @@ public static class Core
                 //interruptQueue.QueueGenericPopup_NonImmediate("Borked Save", "Commander, the entire Galaxy is borked! Save the game, exit to desktop, turn ResetMap to false  in the mod.json (if necessary), and load 'er back up!", true, null);
                 //sim.StopPlayMode();
             }
-
-
             WarStatus.CurSystem = sim.CurSystem.Name;
             if (WarStatus.HotBox.Contains(sim.CurSystem.Name) && !WarStatus.HotBoxTravelling)
             {
@@ -131,8 +129,8 @@ public static class Core
                     {
                         sim.StopPlayMode();
 
-                        sim.CurSystem.SystemContracts.Clear();
-                        sim.CurSystem.SystemBreadcrumbs.Clear();
+                        sim.CurSystem.activeSystemContracts.Clear();
+                        sim.CurSystem.activeSystemBreadcrumbs.Clear();
                         HotSpots.TemporaryFlip(sim.CurSystem, WarStatus.DeploymentEmployer);
 
                         var MaxHolder = sim.CurSystem.CurMaxBreadcrumbs;
