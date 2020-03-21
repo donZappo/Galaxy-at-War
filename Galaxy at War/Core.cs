@@ -1031,6 +1031,16 @@ public static class Core
         }
     }
 
+    //Remove duplicates in the ContracteEmployerIDList
+    [HarmonyPatch(typeof(SimGameState), "GetValidParticipants")]
+    public static class SimGameState_GetValidParticipants_Patch
+    {
+        public static void Prefix(ref StarSystem system)
+        {
+            system.Def.contractEmployerIDs = system.Def.contractEmployerIDs.Distinct().ToList();
+        }
+    }
+
     [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
     public static class SimGameState_GenerateContractParticipants_Patch
     {
@@ -1062,13 +1072,15 @@ public static class Core
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
         }
 
-        public static void Postfix(FactionDef employer)
+        public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
 
             Traverse.Create(employer).Property("Enemies").SetValue(FactionEnemyHolder.ToArray());
+            var type = __result.Type;
+            __result = __result.Distinct().ToWeightedList(type);
         }
     }
 
