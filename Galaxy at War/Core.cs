@@ -195,7 +195,7 @@ public static class Core
                 {
                     WarTick(true, true);
 
-                    var hasFlashPoint = sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract);
+                    var hasFlashPoint = sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
                     if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !hasFlashPoint)
                     {
                         NeedsProcessing = true;
@@ -1530,7 +1530,7 @@ public static class Core
                         bool HasFlashpoint = false;
                         foreach (var contract in __instance.CurSystem.SystemContracts)
                         {
-                            if (contract.IsFlashpointContract)
+                            if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                                 HasFlashpoint = true;
                         }
                         if (!HasFlashpoint)
@@ -1677,7 +1677,7 @@ public static class Core
             var Sim = UnityGameInstance.BattleTechGame.Simulation;
             if (Sim.ContractUserMeetsReputation(contract))
             {
-                if (contract.IsFlashpointContract)
+                if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                     result = 0;
                 else if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignRestoration)
                     result = 1;

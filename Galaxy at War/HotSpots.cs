@@ -648,7 +648,7 @@ namespace Galaxy_at_War
 
                 foreach (var contract in sim.CurSystem.SystemContracts)
                 {
-                    if (contract.IsFlashpointContract)
+                    if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                         HasFlashpoint = true;
                 }
                 if (!Core.WarStatus.HotBoxTravelling && !Core.WarStatus.HotBox.Contains(sim.CurSystem.Name) && !HasFlashpoint && !Core.HoldContracts)
@@ -994,7 +994,7 @@ namespace Galaxy_at_War
             bool HasFlashpoint = false;
             foreach (var contract in sim.CurSystem.SystemContracts)
             {
-                if (contract.IsFlashpointContract)
+                if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                     HasFlashpoint = true;
             }
             if (!HasFlashpoint)
@@ -1166,7 +1166,7 @@ namespace Galaxy_at_War
                 bool HasFlashpoint = false;
                 foreach (var contract in sim.CurSystem.SystemContracts)
                 {
-                    if (contract.IsFlashpointContract)
+                    if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                         HasFlashpoint = true;
                 }
                 if (Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
