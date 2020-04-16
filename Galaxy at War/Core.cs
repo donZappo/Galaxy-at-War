@@ -719,6 +719,9 @@ public static class Core
         if (faction != system.OwnerValue.Name || ForceFlip)
         {
             FactionValue OldFaction = system.OwnerValue;
+            if (OldFaction.Name == "NoFaction" && system.Def.Tags.Contains("planet_region_hyadesrim") && !ForceFlip)
+                WarStatus.HyadesRimsSystemsTaken++;
+
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction.Name]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction.Name]);
             system.Def.Tags.Add(Settings.FactionTags[faction]);

@@ -50,6 +50,7 @@ public class WarStatus
     public float StartingPirateResources;
     public float LastPRGain;
     public List<string> HyadesRimGeneralPirateSystems = new List<string>();
+    public int HyadesRimsSystemsTaken = 0;
 
     public WarStatus()
     {
