@@ -138,7 +138,7 @@ public class WarStatus
                 FullPirateSystems.Add(system.Name);
                 PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
-            if (system.Tags.Contains("planet_region_hyadesrim") && system.OwnerValue.Name == "NoFaction")
+            if (system.Tags.Contains("planet_region_hyadesrim") && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
                 HyadesRimGeneralPirateSystems.Add(system.Name);
 
         }
@@ -275,7 +275,9 @@ public class SystemStatus : IComparable
         {
             if (owner == "NoFaction" && !starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
                 influenceTracker.Add("NoFaction", 100);
-            if (owner == "NoFaction" && starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
+            if (owner == "Locals" && !starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
+                influenceTracker.Add(owner, 100);
+            if ((owner == "NoFaction" || owner == "Locals") && starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
             {
                 foreach (var piratefaction in starSystem.Def.ContractEmployerIDList)
                 {
@@ -289,8 +291,6 @@ public class SystemStatus : IComparable
                 }
             }
 
-            if (owner == "Locals")
-            influenceTracker.Add(owner, 100);
 
             if (owner != "NoFaction" && owner != "Locals")
             {
@@ -337,7 +337,7 @@ public class SystemStatus : IComparable
 
     public void InitializeContracts()
     {
-        if (Settings.HyadesRimCompatible && starSystem.Def.Tags.Contains("planet_region_hyadesrim") && owner == "NoFaction")
+        if (Settings.HyadesRimCompatible && starSystem.Def.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals"))
             return;
 
         var ContractEmployers = starSystem.Def.ContractEmployerIDList;
