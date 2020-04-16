@@ -118,4 +118,5 @@ public class ModSettings
 
     public bool HyadesRimCompatible = false;
     public List<string> HyadesPirates = new List<string>();
+    public List<string> HyadesFlashpointSystems = new List<string>();
 }

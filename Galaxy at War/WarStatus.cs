@@ -49,6 +49,7 @@ public class WarStatus
     public float MinimumPirateResources;
     public float StartingPirateResources;
     public float LastPRGain;
+    public List<string> HyadesRimGeneralPirateSystems = new List<string>();
 
     public WarStatus()
     {
@@ -136,6 +137,9 @@ public class WarStatus
                 FullPirateSystems.Add(system.Name);
                 PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
+            if (system.Tags.Contains("planet_region_hyadesrim") && system.OwnerValue.Name == "NoFaction")
+                HyadesRimGeneralPirateSystems.Add(system.Name);
+
         }
     }
 
