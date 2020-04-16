@@ -332,6 +332,9 @@ public class SystemStatus : IComparable
 
     public void InitializeContracts()
     {
+        if (Settings.HyadesRimCompatible && starSystem.Def.Tags.Contains("planet_region_hyadesrim") && owner == "NoFaction")
+            return;
+
         var ContractEmployers = starSystem.Def.ContractEmployerIDList;
         var ContractTargets = starSystem.Def.ContractTargetIDList;
 
