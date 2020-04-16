@@ -218,51 +218,116 @@ public class SystemStatus : IComparable
     public void CalculateSystemInfluence()
     {
         influenceTracker.Clear();
-        if (owner == "NoFaction")
-            influenceTracker.Add("NoFaction", 100);
-        if (owner == "Locals")
-            influenceTracker.Add(owner, 100);
-
-        if (owner != "NoFaction" && owner != "Locals")
+        if (!Settings.HyadesRimCompatible)
         {
-            influenceTracker.Add(owner, Settings.DominantInfluence);
-            int remainingInfluence = Settings.MinorInfluencePool;
+            if (owner == "NoFaction")
+                influenceTracker.Add("NoFaction", 100);
+            if (owner == "Locals")
+                influenceTracker.Add(owner, 100);
 
-            if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
+            if (owner != "NoFaction" && owner != "Locals")
             {
-                while (remainingInfluence > 0)
+                influenceTracker.Add(owner, Settings.DominantInfluence);
+                int remainingInfluence = Settings.MinorInfluencePool;
+
+                if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
                 {
-                    foreach (var faction in neighborSystems.Keys)
+                    while (remainingInfluence > 0)
                     {
-                        if (faction != owner)
+                        foreach (var faction in neighborSystems.Keys)
                         {
-                            var influenceDelta = neighborSystems[faction];
-                            remainingInfluence -= influenceDelta;
-                            if (Settings.DefensiveFactions.Contains(faction))
-                                continue;
-                            if (influenceTracker.ContainsKey(faction))
-                                influenceTracker[faction] += influenceDelta;
-                            else
-                                influenceTracker.Add(faction, influenceDelta);
+                            if (faction != owner)
+                            {
+                                var influenceDelta = neighborSystems[faction];
+                                remainingInfluence -= influenceDelta;
+                                if (Settings.DefensiveFactions.Contains(faction))
+                                    continue;
+                                if (influenceTracker.ContainsKey(faction))
+                                    influenceTracker[faction] += influenceDelta;
+                                else
+                                    influenceTracker.Add(faction, influenceDelta);
+                            }
                         }
                     }
                 }
             }
-        }
-        foreach (var faction in IncludedFactions)
-        {
-            if (!influenceTracker.Keys.Contains(faction))
-                influenceTracker.Add(faction, 0);
-        }
+            foreach (var faction in IncludedFactions)
+            {
+                if (!influenceTracker.Keys.Contains(faction))
+                    influenceTracker.Add(faction, 0);
+            }
 
-        // need percentages from InfluenceTracker data 
-        var totalInfluence = influenceTracker.Values.Sum();
-        var tempDict = new Dictionary<string, float>();
-        foreach (var kvp in influenceTracker)
-        {
-            tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
+            // need percentages from InfluenceTracker data 
+            var totalInfluence = influenceTracker.Values.Sum();
+            var tempDict = new Dictionary<string, float>();
+            foreach (var kvp in influenceTracker)
+            {
+                tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
+            }
+            influenceTracker = tempDict;
         }
-        influenceTracker = tempDict;
+        else
+        {
+            if (owner == "NoFaction" && !starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
+                influenceTracker.Add("NoFaction", 100);
+            if (owner == "NoFaction" && starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
+            {
+                foreach (var piratefaction in starSystem.Def.ContractEmployerIDList)
+                {
+                    if (!influenceTracker.Keys.Contains(piratefaction))
+                        influenceTracker.Add(piratefaction, Settings.MinorInfluencePool);
+                }
+                foreach (var piratefaction in starSystem.Def.ContractTargetIDList)
+                {
+                    if (!influenceTracker.Keys.Contains(piratefaction))
+                        influenceTracker.Add(piratefaction, Settings.MinorInfluencePool);
+                }
+            }
+
+            if (owner == "Locals")
+            influenceTracker.Add(owner, 100);
+
+            if (owner != "NoFaction" && owner != "Locals")
+            {
+                influenceTracker.Add(owner, Settings.DominantInfluence);
+                int remainingInfluence = Settings.MinorInfluencePool;
+
+                if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
+                {
+                    while (remainingInfluence > 0)
+                    {
+                        foreach (var faction in neighborSystems.Keys)
+                        {
+                            if (faction != owner)
+                            {
+                                var influenceDelta = neighborSystems[faction];
+                                remainingInfluence -= influenceDelta;
+                                if (Settings.DefensiveFactions.Contains(faction))
+                                    continue;
+                                if (influenceTracker.ContainsKey(faction))
+                                    influenceTracker[faction] += influenceDelta;
+                                else
+                                    influenceTracker.Add(faction, influenceDelta);
+                            }
+                        }
+                    }
+                }
+            }
+            foreach (var faction in IncludedFactions)
+            {
+                if (!influenceTracker.Keys.Contains(faction))
+                    influenceTracker.Add(faction, 0);
+            }
+
+            // need percentages from InfluenceTracker data 
+            var totalInfluence = influenceTracker.Values.Sum();
+            var tempDict = new Dictionary<string, float>();
+            foreach (var kvp in influenceTracker)
+            {
+                tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
+            }
+            influenceTracker = tempDict;
+        }
     }
 
     public void InitializeContracts()

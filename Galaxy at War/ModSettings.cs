@@ -115,4 +115,7 @@ public class ModSettings
     public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
 
     public Dictionary<string, double> ContractImpact = new Dictionary<string, double>();
+
+    public bool HyadesRimCompatible = false;
+    public List<string> HyadesPirates = new List<string>();
 }
