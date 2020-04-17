@@ -1100,6 +1100,9 @@ public static class Core
         var factionDef = sim.GetFactionDef(deathListFaction);
         var enemies = new List<string>(factionDef.Enemies);
         var allies = new List<string>(factionDef.Allies);
+
+        if (WarStatus.InactiveTHRFactions.Contains(deathListFaction))
+            return;
         
         //Check to see if it is an ally or enemy of itself and remove it if so.
         if (deathList.ContainsKey(deathListTracker.faction))
@@ -1124,6 +1127,9 @@ public static class Core
         Settings.DefensiveFactions.Do(x => deathList[x] = 50);
         foreach (string faction in KL_List.Except(Settings.DefensiveFactions))
         {
+            if (WarStatus.InactiveTHRFactions.Contains(faction))
+                continue;
+
             if (!ReloadFromSave)
             {
                 //Factions adjust hatred based upon how much they are being attacked. But there is diminishing returns further from 50.

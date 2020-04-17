@@ -51,6 +51,7 @@ public class WarStatus
     public float LastPRGain;
     public List<string> HyadesRimGeneralPirateSystems = new List<string>();
     public int HyadesRimsSystemsTaken = 0;
+    public List<string> InactiveTHRFactions = new List<string>();
 
     public WarStatus()
     {
@@ -63,6 +64,7 @@ public class WarStatus
         TempPRGain = 0;
         HotBoxTravelling = false;
         HotBox = new List<string>();
+        InactiveTHRFactions = Settings.HyadesPirates;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Settings.IncludedFactions)
         {
