@@ -720,7 +720,11 @@ public static class Core
         {
             FactionValue OldFaction = system.OwnerValue;
             if ((OldFaction.Name == "NoFaction" || OldFaction.Name == "Locals") && system.Def.Tags.Contains("planet_region_hyadesrim") && !ForceFlip)
+            {
+                if (WarStatus.HyadesRimGeneralPirateSystems.Contains(system.Name))
+                    WarStatus.HyadesRimGeneralPirateSystems.Remove(system.Name);
                 WarStatus.HyadesRimsSystemsTaken++;
+            }
 
             if (system.Def.Tags.Contains(Settings.FactionTags[OldFaction.Name]))
                 system.Def.Tags.Remove(Settings.FactionTags[OldFaction.Name]);
@@ -1049,6 +1053,9 @@ public static class Core
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                return;
+
+            if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
                 return;
 
             FactionEnemyHolder.Clear();
