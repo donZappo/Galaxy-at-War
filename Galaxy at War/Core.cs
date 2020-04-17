@@ -195,6 +195,23 @@ public static class Core
                 {
                     WarTick(true, true);
 
+                    if (Settings.HyadesRimCompatible && WarStatus.InactiveTHRFactions.Count() != 0 
+                        && WarStatus.HyadesRimGeneralPirateSystems.Count() != 0)
+                    {
+                        int rand = Random.Next(0, 100);
+                        if (rand < WarStatus.HyadesRimsSystemsTaken)
+                        {
+                            WarStatus.InactiveTHRFactions.Shuffle();
+                            WarStatus.HyadesRimGeneralPirateSystems.Shuffle();
+                            var flipSystem = WarStatus.systems.Find(x => x.name == WarStatus.HyadesRimGeneralPirateSystems[0]).starSystem;
+
+                            ChangeSystemOwnership(sim, flipSystem, WarStatus.InactiveTHRFactions[0], true);
+                            WarStatus.InactiveTHRFactions.RemoveAt(0);
+                            WarStatus.HyadesRimGeneralPirateSystems.RemoveAt(0);
+                        }
+
+                    }
+
                     var hasFlashPoint = sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
                     if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !hasFlashPoint)
                     {
@@ -1490,6 +1507,9 @@ public static class Core
                                 .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
                             interruptQueue.QueueGenericPopup_NonImmediate("ComStar Bulletin: Galaxy at War", __instance.CurSystem.Name + " taken! "
                                 + Settings.FactionNames[teamfaction] + " conquered from " + Settings.FactionNames[OldOwner], true, null);
+
+                            if (Settings.HyadesRimCompatible && WarStatus.InactiveTHRFactions.Contains(teamfaction))
+                                WarStatus.InactiveTHRFactions.Remove(teamfaction);
                         }
 
                         if (WarStatus.HotBox.Contains(sim.CurSystem.Name))
