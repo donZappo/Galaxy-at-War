@@ -194,24 +194,6 @@ public static class Core
                 else
                 {
                     WarTick(true, true);
-
-                    if (Settings.HyadesRimCompatible && WarStatus.InactiveTHRFactions.Count() != 0 
-                        && WarStatus.HyadesRimGeneralPirateSystems.Count() != 0)
-                    {
-                        int rand = Random.Next(0, 100);
-                        if (rand < WarStatus.HyadesRimsSystemsTaken)
-                        {
-                            WarStatus.InactiveTHRFactions.Shuffle();
-                            WarStatus.HyadesRimGeneralPirateSystems.Shuffle();
-                            var flipSystem = WarStatus.systems.Find(x => x.name == WarStatus.HyadesRimGeneralPirateSystems[0]).starSystem;
-
-                            ChangeSystemOwnership(sim, flipSystem, WarStatus.InactiveTHRFactions[0], true);
-                            WarStatus.InactiveTHRFactions.RemoveAt(0);
-                            WarStatus.HyadesRimGeneralPirateSystems.RemoveAt(0);
-                        }
-
-                    }
-
                     var hasFlashPoint = sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
                     if (!WarStatus.HotBoxTravelling && !WarStatus.HotBox.Contains(sim.CurSystem.Name) && !hasFlashPoint)
                     {
@@ -244,6 +226,24 @@ public static class Core
         PiratesAndLocals.DistributePirateResources();
         PiratesAndLocals.DefendAgainstPirates();
 
+        if (CheckForSystemChange && Settings.HyadesRimCompatible && WarStatus.InactiveTHRFactions.Count() != 0
+                        && WarStatus.HyadesRimGeneralPirateSystems.Count() != 0)
+        {
+            int rand = Random.Next(0, 100);
+            if (rand < WarStatus.HyadesRimsSystemsTaken)
+            {
+                WarStatus.InactiveTHRFactions.Shuffle();
+                WarStatus.HyadesRimGeneralPirateSystems.Shuffle();
+                var flipSystem = WarStatus.systems.Find(x => x.name == WarStatus.HyadesRimGeneralPirateSystems[0]).starSystem;
+
+                ChangeSystemOwnership(sim, flipSystem, WarStatus.InactiveTHRFactions[0], true);
+                WarStatus.InactiveTHRFactions.RemoveAt(0);
+                WarStatus.HyadesRimGeneralPirateSystems.RemoveAt(0);
+            }
+
+        }
+
+
         foreach (var systemStatus in SystemSubset)
         {
             systemStatus.PriorityAttack = false;
@@ -268,7 +268,8 @@ public static class Core
             {
                 foreach (var neighbor in systemStatus.neighborSystems.Keys)
                 {
-                    if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor))
+                    if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor) &&
+                        !Settings.HyadesFlashpointSystems.Contains(systemStatus.name))
                     {
                         var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
                         systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
@@ -403,7 +404,8 @@ public static class Core
 
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!neighborSystem.OwnerValue.Name.Equals(starSystem.OwnerValue.Name) && !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
+            if (!neighborSystem.OwnerValue.Name.Equals(starSystem.OwnerValue.Name) && !Settings.HyadesFlashpointSystems.Contains(starSystem.OwnerValue.Name) && 
+                !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
             {
                 var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
                 if (warFac == null)
@@ -433,6 +435,9 @@ public static class Core
 
     public static void RefreshNeighbors(Dictionary<string, int> starSystem, StarSystem neighborSystem)
     {
+        if (Settings.HyadesFlashpointSystems.Contains(neighborSystem.Name))
+            return;
+
         var neighborSystemOwner = neighborSystem.OwnerValue.Name;
 
         if (starSystem.ContainsKey(neighborSystemOwner))
@@ -510,7 +515,7 @@ public static class Core
 
                 var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
-                if (system.owner == warFaction.faction)
+                if (system.owner == warFaction.faction || Settings.HyadesFlashpointSystems.Contains(system.name))
                 {
                     targets.RemoveAt(rand);
                     continue;
@@ -584,6 +589,9 @@ public static class Core
 
         foreach (var system in WarStatus.systems)
         {
+            if (Settings.HyadesFlashpointSystems.Contains(system.name))
+                continue;
+
             var totalInfluence = system.influenceTracker.Values.Sum();
             if ((totalInfluence - 100) / 100 > Settings.SystemDefenseCutoff)
             {
@@ -940,8 +948,10 @@ public static class Core
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
             var starSystem = systemStatus.starSystem;
             
-            if (highestfaction != systemStatus.owner && (diffStatus > Settings.TakeoverThreshold && !WarStatus.HotBox.Contains(systemStatus.name)
-                && (!Settings.DefensiveFactions.Contains(highestfaction) || highestfaction == "Locals") && !Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name)))
+            if (highestfaction != systemStatus.owner && !Settings.HyadesFlashpointSystems.Contains(systemStatus.name) && 
+                (diffStatus > Settings.TakeoverThreshold && !WarStatus.HotBox.Contains(systemStatus.name)
+                && (!Settings.DefensiveFactions.Contains(highestfaction) || highestfaction == "Locals") && 
+                !Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name)))
             {
                 if (!systemStatus.Contended)
                 {
@@ -1146,6 +1156,13 @@ public static class Core
         {
             if (WarStatus.InactiveTHRFactions.Contains(faction))
                 continue;
+
+            //Check to see if factions are always allied with each other.
+            if (Settings.FactionsAlwaysAllies[warFaction.faction].Contains(faction))
+            {
+                deathList[faction] = 99;
+                continue;
+            }
 
             if (!ReloadFromSave)
             {
@@ -1442,6 +1459,9 @@ public static class Core
 
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
 
+                if (Settings.HyadesFlashpointSystems.Contains(warsystem.name))
+                    return;
+                
                 if (missionResult == MissionResult.Victory)
                 {
                     double deltaInfluence = 0;
@@ -1903,7 +1923,8 @@ public static class Core
         var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
 
         if (highKey != warsystem.owner && highKey == Winner && highValue - secondValue > Settings.TakeoverThreshold
-            && (!Settings.DefensiveFactions.Contains(Winner) && !Settings.ImmuneToWar.Contains(Loser)))
+            && !Settings.HyadesFlashpointSystems.Contains(system) && 
+            (!Settings.DefensiveFactions.Contains(Winner) && !Settings.ImmuneToWar.Contains(Loser)))
             return true;
         return false;
     }

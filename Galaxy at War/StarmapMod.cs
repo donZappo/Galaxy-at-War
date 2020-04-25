@@ -252,7 +252,12 @@ public class StarmapMod
     private static string BuildInfluenceString(StarSystem starSystem)
     {
         var factionString = new StringBuilder();
-        if (Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
+        if (Core.Settings.HyadesFlashpointSystems.Contains(starSystem.Name) || Core.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
+        {
+            factionString.AppendLine("<b>" + starSystem.Name + "     ***System Immune to War***</b>");
+            return factionString.ToString();
+        }
+        else if (Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
             factionString.AppendLine("<b>" + starSystem.Name + "     ***Abandoned***</b>");
         else
             factionString.AppendLine("<b>" + starSystem.Name + "</b>");

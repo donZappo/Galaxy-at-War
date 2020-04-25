@@ -64,7 +64,7 @@ public class WarStatus
         TempPRGain = 0;
         HotBoxTravelling = false;
         HotBox = new List<string>();
-        InactiveTHRFactions = Settings.HyadesPirates;
+        InactiveTHRFactions = Settings.HyadesAppearingPirates;
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Settings.IncludedFactions)
         {
@@ -140,9 +140,9 @@ public class WarStatus
                 FullPirateSystems.Add(system.Name);
                 PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
-            if (system.Tags.Contains("planet_region_hyadesrim") && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
+            if (system.Tags.Contains("planet_region_hyadesrim") && !Settings.HyadesFlashpointSystems.Contains(system.Def.Description.Name)
+                && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
                 HyadesRimGeneralPirateSystems.Add(system.Name);
-
         }
     }
 
@@ -339,7 +339,7 @@ public class SystemStatus : IComparable
 
     public void InitializeContracts()
     {
-        if (Settings.HyadesRimCompatible && starSystem.Def.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals"))
+        if (Settings.HyadesRimCompatible && starSystem.Def.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals" || Settings.HyadesFlashpointSystems.Contains(starSystem.Name)))
             return;
 
         var ContractEmployers = starSystem.Def.ContractEmployerIDList;

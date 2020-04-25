@@ -119,4 +119,6 @@ public class ModSettings
     public bool HyadesRimCompatible = false;
     public List<string> HyadesPirates = new List<string>();
     public List<string> HyadesFlashpointSystems = new List<string>();
+    public List<string> HyadesAppearingPirates = new List<string>();
+    public Dictionary<string, List<string>> FactionsAlwaysAllies = new Dictionary<string, List<string>>();
 }

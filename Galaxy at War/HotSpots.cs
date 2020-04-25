@@ -665,14 +665,21 @@ namespace Galaxy_at_War
         [HarmonyPatch(typeof(AAR_SalvageScreen), "OnCompleted")]
         public static class AAR_SalvageScreen_OnCompleted_Patch
         {
-            static void Postfix(AAR_SalvageScreen __instance)
+            static void Prefix(AAR_SalvageScreen __instance)
             {
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
-                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
-                    return;
+                try
+                {
+                    var sim = UnityGameInstance.BattleTechGame.Simulation;
+                    if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                        return;
 
-                Core.WarStatus.JustArrived = false;
-                Core.WarStatus.HotBoxTravelling = false;
+                    Core.WarStatus.JustArrived = false;
+                    Core.WarStatus.HotBoxTravelling = false;
+                }
+                catch (Exception e)
+                {
+                    Error(e);
+                }
             }
         }
 
