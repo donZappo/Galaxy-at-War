@@ -1009,9 +1009,10 @@ public static class Core
     public static void RefreshContracts(StarSystem starSystem)
     {
         //LogDebug("RefreshContracts for " + starSystem.Name);
-        if (WarStatus.HotBox.Contains(starSystem.Name))
+        if (WarStatus.HotBox.Contains(starSystem.Name) || (starSystem.Tags.Contains("planet_region_hyadesrim") &&
+            (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction")))
         {
-            LogDebug("Skipping HotBox");
+            LogDebug("Skipping HotBox or THR Neutrals");
             return;
         }
 
@@ -1063,6 +1064,19 @@ public static class Core
             ContractEmployers.Add(faction.Name);
             if (!ContractTargets.Contains(faction.Name))
                 ContractTargets.Add(faction.Name);
+        }
+        if (starSystem.Tags.Contains("planet_region_hyadesrim") && Settings.HyadesRimCompatible)
+        {
+            foreach (var alliedFaction in owner.FactionDef.Allies)
+            {
+                if (!ContractEmployers.Contains(alliedFaction) && !Settings.HyadesTargetsOnly.Contains(alliedFaction))
+                    ContractEmployers.Add(alliedFaction);
+            }
+            foreach (var enemyFaction in owner.FactionDef.Enemies)
+            {
+                if (!ContractTargets.Contains(enemyFaction) && !Settings.HyadesEmployersOnly.Contains(enemyFaction))
+                    ContractTargets.Add(enemyFaction);
+            }
         }
     }
 
@@ -1131,7 +1145,7 @@ public static class Core
         var enemies = new List<string>(factionDef.Enemies);
         var allies = new List<string>(factionDef.Allies);
 
-        if (WarStatus.InactiveTHRFactions.Contains(deathListFaction))
+        if (WarStatus.InactiveTHRFactions.Contains(deathListFaction) || WarStatus.NeverControl.Contains(deathListFaction))
             return;
         
         //Check to see if it is an ally or enemy of itself and remove it if so.
@@ -1157,7 +1171,7 @@ public static class Core
         Settings.DefensiveFactions.Do(x => deathList[x] = 50);
         foreach (string faction in KL_List.Except(Settings.DefensiveFactions))
         {
-            if (WarStatus.InactiveTHRFactions.Contains(faction))
+            if (WarStatus.InactiveTHRFactions.Contains(faction) || WarStatus.NeverControl.Contains(faction))
                 continue;
 
             //Check to see if factions are always allied with each other.

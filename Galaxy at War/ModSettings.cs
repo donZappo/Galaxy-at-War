@@ -121,4 +121,7 @@ public class ModSettings
     public List<string> HyadesFlashpointSystems = new List<string>();
     public List<string> HyadesAppearingPirates = new List<string>();
     public Dictionary<string, List<string>> FactionsAlwaysAllies = new Dictionary<string, List<string>>();
+    public List<string> HyadesEmployersOnly = new List<string>();
+    public List<string> HyadesTargetsOnly = new List<string>();
+    public List<string> HyadesNeverControl = new List<string>();
 }

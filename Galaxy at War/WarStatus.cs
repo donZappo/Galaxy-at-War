@@ -53,6 +53,7 @@ public class WarStatus
     public int HyadesRimsSystemsTaken = 0;
     public List<string> InactiveTHRFactions = new List<string>();
     public List<string> FlashpointSystems = new List<string>();
+    public List<string> NeverControl = new List<string>();
 
     public WarStatus()
     {
@@ -65,8 +66,12 @@ public class WarStatus
         TempPRGain = 0;
         HotBoxTravelling = false;
         HotBox = new List<string>();
-        InactiveTHRFactions = Settings.HyadesAppearingPirates;
-        FlashpointSystems = Settings.HyadesFlashpointSystems;
+        if (Settings.HyadesRimCompatible)
+        {
+            InactiveTHRFactions = Settings.HyadesAppearingPirates;
+            FlashpointSystems = Settings.HyadesFlashpointSystems;
+            NeverControl = Settings.HyadesNeverControl;
+        }
         
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Settings.IncludedFactions)
@@ -483,7 +488,7 @@ public class DeathListTracker
         foreach (var factionNames in IncludedFactions)
         {
             var def = sim.GetFactionDef(factionNames);
-            if (!IncludedFactions.Contains(def.FactionValue.Name))
+            if (!IncludedFactions.Contains(def.FactionValue.Name) || Core.WarStatus.NeverControl.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.FactionValue.Name))
                 deathList.Add(def.FactionValue.Name, Settings.KLValuesEnemies);
