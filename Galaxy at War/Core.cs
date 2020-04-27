@@ -258,7 +258,8 @@ public static class Core
             if (systemStatus.Contended || WarStatus.HotBox.Contains(systemStatus.name))
                 continue;
 
-            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals"))
+            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") && !
+                WarStatus.FlashpointSystems.Contains(systemStatus.name))
             {
                 systemStatus.influenceTracker["Locals"] *= 1.1f;
             }
@@ -269,7 +270,7 @@ public static class Core
                 foreach (var neighbor in systemStatus.neighborSystems.Keys)
                 {
                     if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor) &&
-                        !Settings.HyadesFlashpointSystems.Contains(systemStatus.name))
+                        !WarStatus.FlashpointSystems.Contains(systemStatus.name))
                     {
                         var PushFactor = Settings.APRPush * Random.Next(1, Settings.APRPushRandomizer + 1);
                         systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * PushFactor;
@@ -404,7 +405,7 @@ public static class Core
 
         foreach (var neighborSystem in sim.Starmap.GetAvailableNeighborSystem(starSystem))
         {
-            if (!neighborSystem.OwnerValue.Name.Equals(starSystem.OwnerValue.Name) && !Settings.HyadesFlashpointSystems.Contains(starSystem.OwnerValue.Name) && 
+            if (!neighborSystem.OwnerValue.Name.Equals(starSystem.OwnerValue.Name) && !WarStatus.FlashpointSystems.Contains(starSystem.Name) && 
                 !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
             {
                 var warFac = WarStatus.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
@@ -435,7 +436,7 @@ public static class Core
 
     public static void RefreshNeighbors(Dictionary<string, int> starSystem, StarSystem neighborSystem)
     {
-        if (Settings.HyadesFlashpointSystems.Contains(neighborSystem.Name))
+        if (WarStatus.FlashpointSystems.Contains(neighborSystem.Name))
             return;
 
         var neighborSystemOwner = neighborSystem.OwnerValue.Name;
@@ -515,7 +516,7 @@ public static class Core
 
                 var rand = Random.Next(0, targets.Count);
                 var system = WarStatus.systems.Find(f => f.name == targets[rand]);
-                if (system.owner == warFaction.faction || Settings.HyadesFlashpointSystems.Contains(system.name))
+                if (system.owner == warFaction.faction || WarStatus.FlashpointSystems.Contains(system.name))
                 {
                     targets.RemoveAt(rand);
                     continue;
@@ -589,7 +590,7 @@ public static class Core
 
         foreach (var system in WarStatus.systems)
         {
-            if (Settings.HyadesFlashpointSystems.Contains(system.name))
+            if (WarStatus.FlashpointSystems.Contains(system.name))
                 continue;
 
             var totalInfluence = system.influenceTracker.Values.Sum();
@@ -948,7 +949,7 @@ public static class Core
             var diffStatus = systemStatus.influenceTracker[highestfaction] - systemStatus.influenceTracker[systemStatus.owner];
             var starSystem = systemStatus.starSystem;
             
-            if (highestfaction != systemStatus.owner && !Settings.HyadesFlashpointSystems.Contains(systemStatus.name) && 
+            if (highestfaction != systemStatus.owner && !WarStatus.FlashpointSystems.Contains(systemStatus.name) && 
                 (diffStatus > Settings.TakeoverThreshold && !WarStatus.HotBox.Contains(systemStatus.name)
                 && (!Settings.DefensiveFactions.Contains(highestfaction) || highestfaction == "Locals") && 
                 !Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name)))
@@ -1459,7 +1460,7 @@ public static class Core
 
                 var warsystem = WarStatus.systems.Find(x => x.name == __instance.CurSystem.Name);
 
-                if (Settings.HyadesFlashpointSystems.Contains(warsystem.name))
+                if (WarStatus.FlashpointSystems.Contains(warsystem.name))
                     return;
                 
                 if (missionResult == MissionResult.Victory)
@@ -1769,7 +1770,7 @@ public static class Core
     [HarmonyPatch(typeof(SGContractsWidget), "PopulateContract")]
     public static class SGContractsWidget_PopulateContract_Patch
     {
-        static void Prefix(ref Contract contract, ref string __state)
+        public static void Prefix(ref Contract contract, ref string __state)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
@@ -1852,7 +1853,7 @@ public static class Core
             StringHolder = StringHolder + "\n\n" + __state;
             contract.Override.shortDescription = StringHolder;
         }
-        static void Postfix(ref Contract contract, ref string __state)
+        public static void Postfix(ref Contract contract, ref string __state)
         {
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
@@ -1923,7 +1924,7 @@ public static class Core
         var secondValue = tempIT.OrderByDescending(x => x.Value).Select(x => x.Value).First();
 
         if (highKey != warsystem.owner && highKey == Winner && highValue - secondValue > Settings.TakeoverThreshold
-            && !Settings.HyadesFlashpointSystems.Contains(system) && 
+            && !WarStatus.FlashpointSystems.Contains(system) && 
             (!Settings.DefensiveFactions.Contains(Winner) && !Settings.ImmuneToWar.Contains(Loser)))
             return true;
         return false;
