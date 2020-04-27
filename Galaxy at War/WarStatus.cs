@@ -67,6 +67,7 @@ public class WarStatus
         HotBox = new List<string>();
         InactiveTHRFactions = Settings.HyadesAppearingPirates;
         FlashpointSystems = Settings.HyadesFlashpointSystems;
+        
         //initialize all WarFactions, DeathListTrackers, and SystemStatuses
         foreach (var faction in Settings.IncludedFactions)
         {
@@ -200,7 +201,7 @@ public class SystemStatus : IComparable
         BonusCBills = false;
         BonusSalvage = false;
         BonusXP = false;
-        if (starSystem.Tags.Contains("planet_other_pirate"))
+        if (starSystem.Tags.Contains("planet_other_pirate") && !Core.WarStatus.FlashpointSystems.Contains(starSystem.Name))
             if (!Settings.ISMCompatibility)
                 PirateActivity = Settings.StartingPirateActivity;
             else

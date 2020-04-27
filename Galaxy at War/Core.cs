@@ -41,6 +41,8 @@ public static class Core
     internal static List<string> IncludedFactions;
     internal static List<FactionValue> OffensiveFactions;
     internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
+    public static double attackerInfluenceHolder = 0; 
+    public static bool influenceMaxed = false;
     
     internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
     {
@@ -258,8 +260,8 @@ public static class Core
             if (systemStatus.Contended || WarStatus.HotBox.Contains(systemStatus.name))
                 continue;
 
-            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") && !
-                WarStatus.FlashpointSystems.Contains(systemStatus.name))
+            if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") && 
+                !WarStatus.FlashpointSystems.Contains(systemStatus.name))
             {
                 systemStatus.influenceTracker["Locals"] *= 1.1f;
             }
@@ -1481,8 +1483,16 @@ public static class Core
                     else
                     {
                         deltaInfluence = DeltaInfluence(__instance.CurSystem.Name, difficulty, contractType, enemyfaction, false);
-                        warsystem.influenceTracker[teamfaction] += (float)deltaInfluence;
-                        warsystem.influenceTracker[enemyfaction] -= (float)deltaInfluence;
+                        if (!influenceMaxed)
+                        {
+                            warsystem.influenceTracker[teamfaction] += (float)deltaInfluence;
+                            warsystem.influenceTracker[enemyfaction] -= (float)deltaInfluence;
+                        }
+                        else
+                        {
+                            warsystem.influenceTracker[teamfaction] += (float)Math.Min(attackerInfluenceHolder, 100 - warsystem.influenceTracker[teamfaction]);
+                            warsystem.influenceTracker[enemyfaction] -= (float)deltaInfluence;
+                        }
                     }
 
                     //if (contractType == ContractType.AttackDefend || contractType == ContractType.FireMission)
@@ -1900,6 +1910,15 @@ public static class Core
         if (PiratesInvolved)
             InfluenceChange *= 2;
         InfluenceChange = WarStatus.DeploymentInfluenceIncrease * Math.Max(InfluenceChange, 0.5);
+        if (InfluenceChange > MaximumInfluence && !PiratesInvolved)
+        {
+            attackerInfluenceHolder = InfluenceChange;
+            attackerInfluenceHolder = Math.Round(attackerInfluenceHolder, 1);
+            influenceMaxed = true;
+        }
+        else
+            influenceMaxed = false;
+
         InfluenceChange = Math.Min(InfluenceChange, MaximumInfluence);
         InfluenceChange = Math.Round(InfluenceChange, 1);
         //Log(InfluenceChange.ToString());
@@ -1913,9 +1932,14 @@ public static class Core
         var warsystem = WarStatus.systems.Find(x => x.name == system);
         var tempIT = new Dictionary<string, float>(warsystem.influenceTracker);
 
-        if (PreBattle)
+        if (PreBattle && !influenceMaxed)
         {
             tempIT[Winner] += (float)deltainfluence;
+            tempIT[Loser] -= (float)deltainfluence;
+        }
+        else if (PreBattle && influenceMaxed)
+        {
+            tempIT[Winner] += (float)Math.Min(attackerInfluenceHolder, 100 - tempIT[Winner]);
             tempIT[Loser] -= (float)deltainfluence;
         }
         var highKey = tempIT.OrderByDescending(x => x.Value).Select(x => x.Key).First();
