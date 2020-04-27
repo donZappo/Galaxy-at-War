@@ -150,7 +150,7 @@ namespace Galaxy_at_War
                 var systemStatus = Core.WarStatus.systems[RandSystem];
                 if (systemStatus.owner == "NoFaction" || Core.Settings.ImmuneToWar.Contains(systemStatus.owner)
                     || Core.WarStatus.HotBox.Contains(systemStatus.name) || Core.WarStatus.FlashpointSystems.Contains(systemStatus.name)
-                    || !Core.WarStatus.HyadesRimGeneralPirateSystems.Contains(systemStatus.name))
+                    || Core.WarStatus.HyadesRimGeneralPirateSystems.Contains(systemStatus.name))
                     continue;
                 float CurrentPA = systemStatus.PirateActivity;
                 float basicPA = 11 - systemStatus.DifficultyRating;

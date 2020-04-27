@@ -1175,7 +1175,7 @@ public static class Core
                 continue;
 
             //Check to see if factions are always allied with each other.
-            if (Settings.FactionsAlwaysAllies[warFaction.faction].Contains(faction))
+            if (Settings.FactionsAlwaysAllies.Keys.Contains(warFaction.faction) && Settings.FactionsAlwaysAllies[warFaction.faction].Contains(faction))
             {
                 deathList[faction] = 99;
                 continue;

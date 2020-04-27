@@ -133,23 +133,22 @@ public class WarStatus
         }
         catch (Exception ex)
         {
-            LogDebug(ex);
+            Error(ex);
         }
 
         MinimumPirateResources = PirateResources;
         StartingPirateResources = PirateResources;
-
         foreach (var system in sim.StarSystems)
         {
             var systemStatus = new SystemStatus(sim, system.Name, system.OwnerValue.Name);
             systems.Add(systemStatus);
-            if (system.Tags.Contains("planet_other_pirate"))
+            if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim")) 
             {
                 FullPirateSystems.Add(system.Name);
                 PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
-            if (system.Tags.Contains("planet_region_hyadesrim") && !Core.WarStatus.FlashpointSystems.Contains(system.Def.Description.Name)
-                && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
+            if (system.Tags.Contains("planet_region_hyadesrim") && !FlashpointSystems.Contains(system.Name)
+                && (system.OwnerDef.Name == "NoFaction" || system.OwnerDef.Name == "Locals"))
                 HyadesRimGeneralPirateSystems.Add(system.Name);
         }
     }
@@ -206,7 +205,7 @@ public class SystemStatus : IComparable
         BonusCBills = false;
         BonusSalvage = false;
         BonusXP = false;
-        if (starSystem.Tags.Contains("planet_other_pirate") && !Core.WarStatus.FlashpointSystems.Contains(starSystem.Name))
+        if (starSystem.Tags.Contains("planet_other_pirate") && !Settings.HyadesFlashpointSystems.Contains(name))
             if (!Settings.ISMCompatibility)
                 PirateActivity = Settings.StartingPirateActivity;
             else
@@ -238,7 +237,7 @@ public class SystemStatus : IComparable
             if (owner == "NoFaction")
                 influenceTracker.Add("NoFaction", 100);
             if (owner == "Locals")
-                influenceTracker.Add(owner, 100);
+                influenceTracker.Add("Locals", 100);
 
             if (owner != "NoFaction" && owner != "Locals")
             {
@@ -283,11 +282,11 @@ public class SystemStatus : IComparable
         }
         else
         {
-            if (owner == "NoFaction" && !starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
+            if (owner == "NoFaction" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
                 influenceTracker.Add("NoFaction", 100);
-            if (owner == "Locals" && !starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
-                influenceTracker.Add(owner, 100);
-            if ((owner == "NoFaction" || owner == "Locals") && starSystem.Def.Tags.Contains("planet_region_hyadesrim"))
+            if (owner == "Locals" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
+                influenceTracker.Add("Locals", 100);
+            if ((owner == "NoFaction" || owner == "Locals") && starSystem.Tags.Contains("planet_region_hyadesrim"))
             {
                 foreach (var piratefaction in starSystem.Def.ContractEmployerIDList)
                 {
@@ -347,7 +346,7 @@ public class SystemStatus : IComparable
 
     public void InitializeContracts()
     {
-        if (Settings.HyadesRimCompatible && starSystem.Def.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals" || Core.WarStatus.FlashpointSystems.Contains(starSystem.Name)))
+        if (Settings.HyadesRimCompatible && starSystem.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals" || Settings.HyadesFlashpointSystems.Contains(name)))
             return;
 
         var ContractEmployers = starSystem.Def.ContractEmployerIDList;
@@ -488,7 +487,7 @@ public class DeathListTracker
         foreach (var factionNames in IncludedFactions)
         {
             var def = sim.GetFactionDef(factionNames);
-            if (!IncludedFactions.Contains(def.FactionValue.Name) || Core.WarStatus.NeverControl.Contains(def.FactionValue.Name))
+            if (!IncludedFactions.Contains(def.FactionValue.Name))
                 continue;
             if (factionDef != def && factionDef.Enemies.Contains(def.FactionValue.Name))
                 deathList.Add(def.FactionValue.Name, Settings.KLValuesEnemies);
