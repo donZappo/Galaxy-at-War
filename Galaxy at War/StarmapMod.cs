@@ -281,12 +281,12 @@ public class StarmapMod
         foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
         {
             string number;
-            if (influence.Value <= float.Epsilon)
+            if (influence.Value < 1)
                 continue;
             if (Math.Abs(influence.Value - 100) < 0.999)
                 number = "100%";
-            else if (influence.Value < 1)
-                number = "< 1%";
+            //else if (influence.Value < 1)
+            //    number = "< 1%";
             else if (influence.Value > 99)
                 number = "> 99%";
             else
