@@ -124,4 +124,5 @@ public class ModSettings
     public List<string> HyadesEmployersOnly = new List<string>();
     public List<string> HyadesTargetsOnly = new List<string>();
     public List<string> HyadesNeverControl = new List<string>();
+    public Dictionary<string, string> FlashpointReleaseSystems = new Dictionary<string, string>();
 }

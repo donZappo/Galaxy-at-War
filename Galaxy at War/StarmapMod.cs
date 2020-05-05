@@ -158,7 +158,8 @@ public class StarmapMod
         sb.AppendLine("<line-height=125%>");
         foreach (var tracker in Core.WarStatus.deathListTracker.Where(x => !Core.Settings.DefensiveFactions.Contains(x.faction)))
         {
-            if (!Core.Settings.FactionNames.ContainsKey(tracker.faction))
+            if (!Core.Settings.FactionNames.ContainsKey(tracker.faction) || Core.Settings.HyadesNeverControl.Contains(tracker.faction) 
+                || Core.WarStatus.InactiveTHRFactions.Contains(tracker.faction))
             {
                 LogDebug($"faction {tracker.faction} doesn't exist in Core.Settings.FactionNames, skipping...");
                 continue;
@@ -173,7 +174,8 @@ public class StarmapMod
                 sb.AppendLine($"<u>Enemies</u>");
             foreach (var enemy in tracker.Enemies)
             {
-                if (!Core.Settings.FactionNames.ContainsKey(enemy))
+                if (!Core.Settings.FactionNames.ContainsKey(enemy) || Core.Settings.HyadesNeverControl.Contains(enemy)
+                    || Core.WarStatus.InactiveTHRFactions.Contains(enemy))
                 {
                     LogDebug("Core.Settings.FactionNames doesn't have " + enemy + " skipping...");
                     continue;
@@ -187,7 +189,8 @@ public class StarmapMod
                 sb.AppendLine($"<u>Allies</u>");
             foreach (var ally in tracker.Allies)
             {
-                if (!Core.Settings.FactionNames.ContainsKey(ally))
+                if (!Core.Settings.FactionNames.ContainsKey(ally) || Core.Settings.HyadesNeverControl.Contains(ally)
+                    || Core.WarStatus.InactiveTHRFactions.Contains(ally))
                 {
                     LogDebug("Core.Settings.FactionNames doesn't have " + ally + " skipping...");
                     continue;

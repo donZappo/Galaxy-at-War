@@ -817,12 +817,12 @@ namespace Galaxy_at_War
                 string targetsystem = "";
                 if (Core.WarStatus.HotBox.Count() == 2)
                 {
-                    targetsystem = Core.WarStatus.HotBox[0];
+                    //targetsystem = Core.WarStatus.HotBox[0];
                     Core.WarStatus.HotBox.RemoveAt(0);
                 }
                 else
                 {
-                    targetsystem = Core.WarStatus.HotBox[0];
+                    //targetsystem = Core.WarStatus.HotBox[0];
                     Core.WarStatus.HotBox.Clear();
                 }
 

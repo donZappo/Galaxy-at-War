@@ -147,8 +147,9 @@ public class WarStatus
                 FullPirateSystems.Add(system.Name);
                 PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
             }
+
             if (system.Tags.Contains("planet_region_hyadesrim") && !FlashpointSystems.Contains(system.Name)
-                && (system.OwnerDef.Name == "NoFaction" || system.OwnerDef.Name == "Locals"))
+                && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
                 HyadesRimGeneralPirateSystems.Add(system.Name);
         }
     }
@@ -290,11 +291,17 @@ public class SystemStatus : IComparable
             {
                 foreach (var piratefaction in starSystem.Def.ContractEmployerIDList)
                 {
+                    if (Settings.HyadesNeverControl.Contains(piratefaction))
+                        continue;
+
                     if (!influenceTracker.Keys.Contains(piratefaction))
                         influenceTracker.Add(piratefaction, Settings.MinorInfluencePool);
                 }
                 foreach (var piratefaction in starSystem.Def.ContractTargetIDList)
                 {
+                    if (Settings.HyadesNeverControl.Contains(piratefaction))
+                        continue;
+
                     if (!influenceTracker.Keys.Contains(piratefaction))
                         influenceTracker.Add(piratefaction, Settings.MinorInfluencePool);
                 }

@@ -186,6 +186,16 @@ public static class Core
                 return;
             }
 
+            //Remove systems from the protected pool.
+            foreach (var tag in sim.CompanyTags)
+            {
+                if (Settings.FlashpointReleaseSystems.Keys.Contains(tag))
+                {
+                    if (WarStatus.FlashpointSystems.Contains(Settings.FlashpointReleaseSystems[tag]))
+                        WarStatus.FlashpointSystems.Remove(Settings.FlashpointReleaseSystems[tag]);
+                }
+            }
+
             if (__instance.DayRemainingInQuarter % Settings.WarFrequency == 0)
             {
                 //LogDebug(">>> PROC");
