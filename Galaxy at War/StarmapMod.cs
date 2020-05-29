@@ -166,6 +166,8 @@ public class StarmapMod
             }
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
+            if (tracker.faction == Core.WarStatus.ComstarAlly)
+                sb.AppendLine("***ComStar Supported Faction***");
             sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
                           " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
                           + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
@@ -260,6 +262,8 @@ public class StarmapMod
             factionString.AppendLine("<b>" + starSystem.Name + "     ***System Immune to War***</b>");
             return factionString.ToString();
         }
+        else if (starSystem.OwnerValue.Name == Core.WarStatus.ComstarAlly)
+            factionString.AppendLine("<b>" + starSystem.Name + "     ***ComStar Supported System***</b>");
         else if (Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
             factionString.AppendLine("<b>" + starSystem.Name + "     ***Abandoned***</b>");
         else

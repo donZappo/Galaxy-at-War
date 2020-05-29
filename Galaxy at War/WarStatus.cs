@@ -54,6 +54,8 @@ public class WarStatus
     public List<string> InactiveTHRFactions = new List<string>();
     public List<string> FlashpointSystems = new List<string>();
     public List<string> NeverControl = new List<string>();
+    public int ComstarCycle = 3;
+    public string ComstarAlly = "";
 
     public WarStatus()
     {
@@ -423,6 +425,9 @@ public class WarFaction
     public float PirateDRLoss;
     public float AR_Against_Pirates = 0;
     public float DR_Against_Pirates = 0;
+    public bool ComstarSupported = false;
+    public float AR_PerPlanet = 0;
+    public float DR_PerPlanet = 0;
 
     public int NumberOfSystems
     {

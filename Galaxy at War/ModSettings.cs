@@ -100,6 +100,10 @@ public class ModSettings
     public string DeploymentReward_04 = "";
     public string DeploymentReward_05 = "";
     public string DeploymentReward_06 = "";
+    public bool ComstarSupport = false;
+    public int ComstarARBonus = 200;
+    public int ComstarDRBonus = 200;
+    public int ComstarSupportTime = 3;
 
     public float MinimumResourceFactor = 0.001f;
     public float MaximumResourceFactor = 0.003f;
@@ -115,6 +119,7 @@ public class ModSettings
     public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
 
     public Dictionary<string, double> ContractImpact = new Dictionary<string, double>();
+    public List<string> NoOffensiveContracts = new List<string>();
 
     public bool HyadesRimCompatible = false;
     public List<string> HyadesPirates = new List<string>();

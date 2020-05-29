@@ -310,10 +310,48 @@ namespace Galaxy_at_War
             var FactionDef = UnityGameInstance.BattleTechGame.Simulation.GetFactionDef(faction);
             starSystem.Def.contractEmployerIDs.Clear();
             starSystem.Def.contractTargetIDs.Clear();
+            var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
+
+            if (Core.Settings.NoOffensiveContracts.Contains(faction))
+            {
+                if (!Core.Settings.NoOffensiveContracts.Contains(tracker.OriginalOwner))
+                {
+                    starSystem.Def.contractEmployerIDs.Add(tracker.OriginalOwner);
+                    starSystem.Def.contractTargetIDs.Add(faction);
+                }
+                else
+                {
+                    List<string> factionList = new List<string>();
+                    if (Core.Settings.ISMCompatibility)
+                        factionList = new List<string>(Core.Settings.IncludedFactions_ISM);
+                    else
+                        factionList = new List<string>(Core.Settings.IncludedFactions);
+
+                    factionList.Shuffle();
+                    string factionEmployer = "Davion";
+                    foreach (var foo in factionList)
+                    {
+                        if (Core.Settings.NoOffensiveContracts.Contains(foo) || Core.Settings.DefensiveFactions.Contains(foo) ||
+                             Core.Settings.ImmuneToWar.Contains(foo))
+                            continue;
+                        else
+                        {
+                            factionEmployer = foo;
+                            break;
+                        }
+                    }
+
+                    starSystem.Def.contractEmployerIDs.Add(factionEmployer);
+                    starSystem.Def.contractTargetIDs.Add(faction);
+                }
+                return;
+            }
+
 
             starSystem.Def.contractEmployerIDs.Add(faction);
+            if (faction == Core.WarStatus.ComstarAlly)
+                starSystem.Def.contractEmployerIDs.Add("ComStar");
 
-            var tracker = Core.WarStatus.systems.Find(x => x.name == starSystem.Name);
             
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
@@ -340,6 +378,8 @@ namespace Galaxy_at_War
                 if (starSystem.Def.contractTargetIDs.Count() == 2)
                     break;
             }
+            if (starSystem.Def.contractTargetIDs.Contains(Core.WarStatus.ComstarAlly))
+                starSystem.Def.contractTargetIDs.Add(Core.WarStatus.ComstarAlly);
 
             if (starSystem.Def.contractTargetIDs.Count() == 0)
                 starSystem.Def.contractTargetIDs.Add("AuriganPirates");

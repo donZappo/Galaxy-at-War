@@ -221,6 +221,31 @@ public static class Core
             }
         }
     }
+
+    internal static void CalculateComstarSupport()
+    {
+        if (WarStatus.ComstarCycle != Settings.ComstarSupportTime)
+        {
+            WarStatus.ComstarCycle++;
+            return;
+        }
+        WarStatus.ComstarCycle = 1;
+        List<WarFaction> warFactionList = new List<WarFaction>();
+        foreach (var warFarTemp in WarStatus.warFactionTracker)
+        {
+            warFarTemp.ComstarSupported = false;
+            if (Settings.DefensiveFactions.Contains(warFarTemp.faction) || Settings.HyadesPirates.Contains(warFarTemp.faction) ||
+                warFarTemp.faction == "AuriganPirates")
+                continue;
+            warFactionList.Add(warFarTemp);
+        }
+        warFactionList.OrderBy(x => x.TotalSystemsChanged);
+        var warFactionListTrimmed = warFactionList.FindAll(x => x.TotalSystemsChanged == warFactionList.ElementAt(0).TotalSystemsChanged);
+        warFactionListTrimmed.Shuffle();
+        var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == warFactionListTrimmed.ElementAt(0).faction);
+        warFaction.ComstarSupported = true;
+        WarStatus.ComstarAlly = warFaction.faction;
+    }
     
     internal static void WarTick(bool UseFullSet, bool CheckForSystemChange)
     {
@@ -231,6 +256,36 @@ public static class Core
             SystemSubsetSize = (int) (SystemSubsetSize * Settings.SubSetFraction);
         var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
+        if (CheckForSystemChange)
+            CalculateComstarSupport();
+
+        if (WarStatus.InitializeAtStart)
+        {
+            foreach (var faction in IncludedFactions)
+            {
+                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+                var systemCount = WarStatus.systems.FindAll(x => x.owner == faction).Count();
+                if (!Settings.ISMCompatibility && systemCount != 0)
+                {
+                    warFaction.AR_PerPlanet = Settings.BonusAttackResources[faction] / systemCount;
+                    warFaction.DR_PerPlanet = Settings.BonusDefensiveResources[faction] / systemCount;
+                }
+                else if (systemCount != 0)
+                {
+                    warFaction.AR_PerPlanet = Settings.BonusAttackResources_ISM[faction] / systemCount;
+                    warFaction.DR_PerPlanet = Settings.BonusDefensiveResources_ISM[faction] / systemCount;
+                }
+            }
+            foreach (var systemStatus in SystemSubset)
+            {
+                //Spread out bonus resources and make them fair game for the taking.
+                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
+                systemStatus.AttackResources += warFaction.AR_PerPlanet;
+                systemStatus.TotalResources += warFaction.AR_PerPlanet;
+                systemStatus.DefenseResources += warFaction.DR_PerPlanet;
+                systemStatus.TotalResources += warFaction.DR_PerPlanet;
+            }
+        }
         //Distribute Pirate Influence throughout the StarSystems
         PiratesAndLocals.CorrectResources();
         PiratesAndLocals.PiratesStealResources();
@@ -254,7 +309,6 @@ public static class Core
             }
 
         }
-
 
         foreach (var systemStatus in SystemSubset)
         {
@@ -492,6 +546,8 @@ public static class Core
 
         var total = tempTargets.Values.Sum();
         float attackResources = warFaction.AttackResources - warFaction.AR_Against_Pirates;
+        if (warFaction.ComstarSupported)
+            attackResources += Settings.ComstarARBonus;
         warFaction.AR_Against_Pirates = 0;
         
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
@@ -629,6 +685,8 @@ public static class Core
 
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
+        if (warFaction.ComstarSupported)
+            defensiveResources += Settings.ComstarDRBonus;
         warFaction.DR_Against_Pirates = 0;
         
         var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
@@ -1047,6 +1105,11 @@ public static class Core
             ContractEmployers.Add(owner.Name);
             ContractTargets.Add(owner.Name);
         }
+        if (WarStatus.ComstarAlly == owner.Name)
+        {
+            ContractEmployers.Add("ComStar");
+            ContractTargets.Add("ComStar");
+        }
 
         var WarSystem = WarStatus.systems.Find(x => x.name == starSystem.Name);
         var neighborSystems = WarSystem.neighborSystems;
@@ -1088,6 +1151,12 @@ public static class Core
                     ContractTargets.Add(enemyFaction);
             }
         }
+        var TempContractEmployers = new List<string>(ContractEmployers);
+        foreach (var tempEmployer in TempContractEmployers)
+        {
+            if (Settings.NoOffensiveContracts.Contains(tempEmployer))
+                ContractEmployers.Remove(tempEmployer);
+        }
     }
 
     //Remove duplicates in the ContracteEmployerIDList
@@ -1118,7 +1187,8 @@ public static class Core
             var NewFactionEnemies = FactionEnemyHolder;
             foreach (var Enemy in NewEnemies)
             {
-                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.FactionValue.Name)
+                if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.FactionValue.Name &&
+                    !Settings.ImmuneToWar.Contains(Enemy))
                 {
                     NewFactionEnemies.Add(Enemy);
                 }
@@ -1127,9 +1197,14 @@ public static class Core
             {
                 if (!NewFactionEnemies.Contains(faction) && faction != employer.FactionValue.Name)
                 {
-                    NewFactionEnemies.Add(faction);
+                    if (!Settings.ImmuneToWar.Contains(faction))
+                        NewFactionEnemies.Add(faction);
                 }
             }
+            if (system.OwnerValue.Name == WarStatus.ComstarAlly && employer.Name != WarStatus.ComstarAlly)
+                NewFactionEnemies.Add("ComStar");
+            if (employer.Name == "ComStar" && NewFactionEnemies.Contains(WarStatus.ComstarAlly))
+                NewFactionEnemies.Remove(WarStatus.ComstarAlly);
 
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
         }
@@ -1461,7 +1536,11 @@ public static class Core
                 return;
 
             teamfaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
+            if (teamfaction == "ComStar")
+                teamfaction = WarStatus.ComstarAlly;
             enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
+            if (enemyfaction == "ComStar")
+                enemyfaction = WarStatus.ComstarAlly;
             difficulty = __instance.Difficulty;
             missionResult = result;
             contractType = __instance.Override.ContractTypeValue.Name;
@@ -1815,35 +1894,38 @@ public static class Core
 
             __state = contract.Override.shortDescription;
             var StringHolder = contract.Override.shortDescription;
-            var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230");
-            var DefenseFaction = contract.GetTeamFaction(("be77cadd-e245-4240-a93e-b99cc98902a5"));
+            var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
+            if (EmployerFaction == "ComStar")
+                EmployerFaction = WarStatus.ComstarAlly;
+            var DefenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
+                DefenseFaction = WarStatus.ComstarAlly;
 
             var TargetSystem = contract.TargetSystem;
             var SystemName = sim.StarSystems.Find(x => x.ID == TargetSystem);
 
             bool pirates = false;
-            if (EmployerFaction.Name == "AuriganPirates" || DefenseFaction.Name == "AuriganPirates")
+            if (EmployerFaction == "AuriganPirates" || DefenseFaction == "AuriganPirates")
                 pirates = true;
 
-            double DeltaInfluence = Core.DeltaInfluence(SystemName.Name, contract.Difficulty, contract.Override.ContractTypeValue.Name, DefenseFaction.Name, pirates);
+            double DeltaInfluence = Core.DeltaInfluence(SystemName.Name, contract.Difficulty, contract.Override.ContractTypeValue.Name, DefenseFaction, pirates);
 
             bool SystemFlip = false;
-            if (EmployerFaction.Name != "AuriganPirates" && DefenseFaction.Name != "AuriganPirates")
-                SystemFlip = WillSystemFlip(SystemName.Name, EmployerFaction.Name, DefenseFaction.Name, DeltaInfluence, true);
+            if (EmployerFaction != "AuriganPirates" && DefenseFaction != "AuriganPirates")
+                SystemFlip = WillSystemFlip(SystemName.Name, EmployerFaction, DefenseFaction, DeltaInfluence, true);
 
-            string AttackerString = Settings.FactionNames[EmployerFaction.Name] + ": +" + DeltaInfluence;
-            string DefenderString = Settings.FactionNames[DefenseFaction.Name] + ": -" + DeltaInfluence;
+            string AttackerString = Settings.FactionNames[EmployerFaction] + ": +" + DeltaInfluence;
+            string DefenderString = Settings.FactionNames[DefenseFaction] + ": -" + DeltaInfluence;
 
-            if (EmployerFaction.Name != "AuriganPirates" && DefenseFaction.Name != "AuriganPirates")
+            if (EmployerFaction != "AuriganPirates" && DefenseFaction != "AuriganPirates")
             {
                 if (!SystemFlip)
                     StringHolder = "<b>Impact on System Conflict:</b>\n   " + AttackerString + "; " + DefenderString;
                 else
                     StringHolder = "<b>***SYSTEM WILL CHANGE OWNERS*** Impact on System Conflict:</b>\n   " + AttackerString + "; " + DefenderString;
             }
-            else if (EmployerFaction.Name == "AuriganPirates")
+            else if (EmployerFaction == "AuriganPirates")
                 StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + AttackerString;
-            else if (DefenseFaction.Name == "AuriganPirates")
+            else if (DefenseFaction == "AuriganPirates")
                 StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + DefenderString;
 
             var system = WarStatus.systems.Find(x => x.name == SystemName.Name);
@@ -1860,7 +1942,7 @@ public static class Core
             }
             if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
             {
-                int estimatedMissions = CalculateFlipMissions(EmployerFaction.Name, SystemName.Name);
+                int estimatedMissions = CalculateFlipMissions(EmployerFaction, SystemName.Name);
                 int totalDifficulty = 1;
 
                 if (Settings.ChangeDifficulty)
