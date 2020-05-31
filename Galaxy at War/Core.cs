@@ -1898,6 +1898,7 @@ public static class Core
             if (EmployerFaction == "ComStar")
                 EmployerFaction = WarStatus.ComstarAlly;
             var DefenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
+            if (DefenseFaction == "ComStar")
                 DefenseFaction = WarStatus.ComstarAlly;
 
             var TargetSystem = contract.TargetSystem;
@@ -1978,6 +1979,7 @@ public static class Core
             contract.Override.shortDescription = __state;
         }
     }
+
 
     internal static double DeltaInfluence(string system, double contractDifficulty, string contractTypeID, string DefenseFaction, bool PiratesInvolved)
     {

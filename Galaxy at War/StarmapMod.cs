@@ -167,10 +167,18 @@ public class StarmapMod
             var warFaction = Core.WarStatus.warFactionTracker.Find(x => x.faction == tracker.faction);
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
             if (tracker.faction == Core.WarStatus.ComstarAlly)
-                sb.AppendLine("***ComStar Supported Faction***");
-            sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
-                          " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
-                          + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+            {
+                sb.AppendLine("<b>***ComStar Supported Faction***</b>");
+                sb.AppendLine("Attack Resources: " + (warFaction.AttackResources + Core.Settings.ComstarARBonus).ToString("0") +
+                              " || Defense Resources: " + (warFaction.DefensiveResources + Core.Settings.ComstarDRBonus).ToString("0")
+                              + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+            }
+            else
+            {
+                sb.AppendLine("Attack Resources: " + warFaction.AttackResources.ToString("0") +
+                              " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
+                              + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
+            }
             sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") + "\n\n");
             if (tracker.Enemies.Count > 0)
                 sb.AppendLine($"<u>Enemies</u>");
