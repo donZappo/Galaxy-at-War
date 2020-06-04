@@ -175,7 +175,8 @@ namespace Galaxy_at_War
                        
                         var MainBCTarget = HomeContendedSystems[RandomSystem];
                         
-                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue.Name == "Locals" && MainBCTarget.OwnerValue.Name != "Locals"))
+                        if (MainBCTarget == sim.CurSystem || (sim.CurSystem.OwnerValue.Name == "Locals" && MainBCTarget.OwnerValue.Name != "Locals") ||
+                            !Core.IncludedFactions.Contains(MainBCTarget.OwnerValue.Name))
                         {
                             HomeContendedSystems.Remove(MainBCTarget);
                             Core.WarStatus.HomeContendedStrings.Remove(MainBCTarget.Name);
@@ -224,7 +225,8 @@ namespace Galaxy_at_War
                     int j = startBC;
                     foreach (var ExtTarget in ExternalPriorityTargets.Keys)
                     {
-                        if (ExternalPriorityTargets[ExtTarget].Count == 0 || Core.Settings.DefensiveFactions.Contains(ExtTarget)) continue;
+                        if (ExternalPriorityTargets[ExtTarget].Count == 0 || Core.Settings.DefensiveFactions.Contains(ExtTarget) || 
+                            !Core.IncludedFactions.Contains(ExtTarget)) continue;
                         do
                         {
                             var RandTarget = rand.Next(0, ExternalPriorityTargets[ExtTarget].Count);
@@ -350,7 +352,7 @@ namespace Galaxy_at_War
 
             starSystem.Def.contractEmployerIDs.Add(faction);
             if (faction == Core.WarStatus.ComstarAlly)
-                starSystem.Def.contractEmployerIDs.Add("ComStar");
+                starSystem.Def.contractEmployerIDs.Add(Core.Settings.GaW_Police);
 
             
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))

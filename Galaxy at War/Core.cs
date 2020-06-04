@@ -224,7 +224,7 @@ public static class Core
 
     internal static void CalculateComstarSupport()
     {
-        if (WarStatus.ComstarCycle != Settings.ComstarSupportTime)
+        if (WarStatus.ComstarCycle != Settings.GaW_Police_SupportTime)
         {
             WarStatus.ComstarCycle++;
             return;
@@ -256,7 +256,7 @@ public static class Core
             SystemSubsetSize = (int) (SystemSubsetSize * Settings.SubSetFraction);
         var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
 
-        if (CheckForSystemChange)
+        if (CheckForSystemChange && Settings.GaW_PoliceSupport)
             CalculateComstarSupport();
 
         if (WarStatus.InitializeAtStart)
@@ -547,7 +547,7 @@ public static class Core
         var total = tempTargets.Values.Sum();
         float attackResources = warFaction.AttackResources - warFaction.AR_Against_Pirates;
         if (warFaction.ComstarSupported)
-            attackResources += Settings.ComstarARBonus;
+            attackResources += Settings.GaW_Police_ARBonus;
         warFaction.AR_Against_Pirates = 0;
         
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
@@ -686,7 +686,7 @@ public static class Core
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
         if (warFaction.ComstarSupported)
-            defensiveResources += Settings.ComstarDRBonus;
+            defensiveResources += Settings.GaW_Police_DRBonus;
         warFaction.DR_Against_Pirates = 0;
         
         var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
@@ -1107,8 +1107,8 @@ public static class Core
         }
         if (WarStatus.ComstarAlly == owner.Name)
         {
-            ContractEmployers.Add("ComStar");
-            ContractTargets.Add("ComStar");
+            ContractEmployers.Add(Settings.GaW_Police);
+            ContractTargets.Add(Settings.GaW_Police);
         }
 
         var WarSystem = WarStatus.systems.Find(x => x.name == starSystem.Name);
@@ -1202,8 +1202,8 @@ public static class Core
                 }
             }
             if (system.OwnerValue.Name == WarStatus.ComstarAlly && employer.Name != WarStatus.ComstarAlly)
-                NewFactionEnemies.Add("ComStar");
-            if (employer.Name == "ComStar" && NewFactionEnemies.Contains(WarStatus.ComstarAlly))
+                NewFactionEnemies.Add(Settings.GaW_Police);
+            if (employer.Name == Settings.GaW_Police && NewFactionEnemies.Contains(WarStatus.ComstarAlly))
                 NewFactionEnemies.Remove(WarStatus.ComstarAlly);
 
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
@@ -1536,10 +1536,10 @@ public static class Core
                 return;
 
             teamfaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-            if (teamfaction == "ComStar")
+            if (teamfaction == Settings.GaW_Police)
                 teamfaction = WarStatus.ComstarAlly;
             enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-            if (enemyfaction == "ComStar")
+            if (enemyfaction == Settings.GaW_Police)
                 enemyfaction = WarStatus.ComstarAlly;
             difficulty = __instance.Difficulty;
             missionResult = result;
@@ -1895,10 +1895,10 @@ public static class Core
             __state = contract.Override.shortDescription;
             var StringHolder = contract.Override.shortDescription;
             var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-            if (EmployerFaction == "ComStar")
+            if (EmployerFaction == Settings.GaW_Police)
                 EmployerFaction = WarStatus.ComstarAlly;
             var DefenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-            if (DefenseFaction == "ComStar")
+            if (DefenseFaction == Settings.GaW_Police)
                 DefenseFaction = WarStatus.ComstarAlly;
 
             var TargetSystem = contract.TargetSystem;

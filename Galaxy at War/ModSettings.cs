@@ -100,10 +100,11 @@ public class ModSettings
     public string DeploymentReward_04 = "";
     public string DeploymentReward_05 = "";
     public string DeploymentReward_06 = "";
-    public bool ComstarSupport = false;
-    public int ComstarARBonus = 200;
-    public int ComstarDRBonus = 200;
-    public int ComstarSupportTime = 3;
+    public string GaW_Police = "ComStar";
+    public bool GaW_PoliceSupport = false;
+    public int GaW_Police_ARBonus = 200;
+    public int GaW_Police_DRBonus = 200;
+    public int GaW_Police_SupportTime = 3;
 
     public float MinimumResourceFactor = 0.001f;
     public float MaximumResourceFactor = 0.003f;

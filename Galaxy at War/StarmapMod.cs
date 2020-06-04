@@ -168,9 +168,9 @@ public class StarmapMod
             sb.AppendLine($"<b><u>{Core.Settings.FactionNames[tracker.faction]}</b></u>\n");
             if (tracker.faction == Core.WarStatus.ComstarAlly)
             {
-                sb.AppendLine("<b>***ComStar Supported Faction***</b>");
-                sb.AppendLine("Attack Resources: " + (warFaction.AttackResources + Core.Settings.ComstarARBonus).ToString("0") +
-                              " || Defense Resources: " + (warFaction.DefensiveResources + Core.Settings.ComstarDRBonus).ToString("0")
+                sb.AppendLine("<b>***" + Core.Settings.GaW_Police + " Supported Faction***</b>");
+                sb.AppendLine("Attack Resources: " + (warFaction.AttackResources + Core.Settings.GaW_Police_ARBonus).ToString("0") +
+                              " || Defense Resources: " + (warFaction.DefensiveResources + Core.Settings.GaW_Police_DRBonus).ToString("0")
                               + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
             }
             else
@@ -271,7 +271,7 @@ public class StarmapMod
             return factionString.ToString();
         }
         else if (starSystem.OwnerValue.Name == Core.WarStatus.ComstarAlly)
-            factionString.AppendLine("<b>" + starSystem.Name + "     ***ComStar Supported System***</b>");
+            factionString.AppendLine("<b>" + starSystem.Name + "     ***" + Core.Settings.GaW_Police + " Supported System***</b>");
         else if (Core.WarStatus.AbandonedSystems.Contains(starSystem.Name))
             factionString.AppendLine("<b>" + starSystem.Name + "     ***Abandoned***</b>");
         else
