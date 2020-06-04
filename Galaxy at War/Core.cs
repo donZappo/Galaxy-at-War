@@ -224,7 +224,7 @@ public static class Core
 
     internal static void CalculateComstarSupport()
     {
-        if (WarStatus.ComstarCycle != Settings.GaW_Police_SupportTime)
+        if (WarStatus.ComstarCycle < Settings.GaW_Police_SupportTime)
         {
             WarStatus.ComstarCycle++;
             return;
@@ -239,8 +239,8 @@ public static class Core
                 continue;
             warFactionList.Add(warFarTemp);
         }
-        warFactionList.OrderBy(x => x.TotalSystemsChanged);
-        var warFactionListTrimmed = warFactionList.FindAll(x => x.TotalSystemsChanged == warFactionList.ElementAt(0).TotalSystemsChanged);
+        var warFactionHolder = warFactionList.OrderBy(x => x.TotalSystemsChanged).ElementAt(0);
+        var warFactionListTrimmed = warFactionList.FindAll(x => x.TotalSystemsChanged == warFactionHolder.TotalSystemsChanged);
         warFactionListTrimmed.Shuffle();
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == warFactionListTrimmed.ElementAt(0).faction);
         warFaction.ComstarSupported = true;
@@ -259,10 +259,13 @@ public static class Core
         if (CheckForSystemChange && Settings.GaW_PoliceSupport)
             CalculateComstarSupport();
 
+        float lowestAR = 5000f;
+        float lowestDR = 5000f;
         if (WarStatus.InitializeAtStart)
         {
             foreach (var faction in IncludedFactions)
             {
+                
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
                 var systemCount = WarStatus.systems.FindAll(x => x.owner == faction).Count();
                 if (!Settings.ISMCompatibility && systemCount != 0)
@@ -275,8 +278,18 @@ public static class Core
                     warFaction.AR_PerPlanet = Settings.BonusAttackResources_ISM[faction] / systemCount;
                     warFaction.DR_PerPlanet = Settings.BonusDefensiveResources_ISM[faction] / systemCount;
                 }
+                if (warFaction.AR_PerPlanet < lowestAR)
+                    lowestAR = warFaction.AR_PerPlanet;
+                if (warFaction.DR_PerPlanet < lowestAR)
+                    lowestDR = warFaction.DR_PerPlanet;
             }
-            foreach (var systemStatus in SystemSubset)
+            foreach (var faction in IncludedFactions)
+            {
+                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
+                warFaction.AR_PerPlanet = lowestAR;
+                warFaction.DR_PerPlanet = lowestDR;
+            }
+                foreach (var systemStatus in SystemSubset)
             {
                 //Spread out bonus resources and make them fair game for the taking.
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);

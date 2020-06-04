@@ -54,7 +54,7 @@ public class WarStatus
     public List<string> InactiveTHRFactions = new List<string>();
     public List<string> FlashpointSystems = new List<string>();
     public List<string> NeverControl = new List<string>();
-    public int ComstarCycle = 3;
+    public int ComstarCycle = 0;
     public string ComstarAlly = "";
 
     public WarStatus()
