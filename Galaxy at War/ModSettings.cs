@@ -24,6 +24,8 @@ public class ModSettings
     public float planet_pop_small = 2;
     public float planet_other_hub = 6;
     public float planet_other_comstar = 0;
+    public int MaxContracts = 4;
+    public bool SetMaxContracts = true;
 
     public List<string> ImmuneToWar = new List<string>();
 

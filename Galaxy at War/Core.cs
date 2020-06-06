@@ -235,7 +235,7 @@ public static class Core
         {
             warFarTemp.ComstarSupported = false;
             if (Settings.DefensiveFactions.Contains(warFarTemp.faction) || Settings.HyadesPirates.Contains(warFarTemp.faction) ||
-                warFarTemp.faction == "AuriganPirates")
+                warFarTemp.faction == "AuriganPirates" || Settings.NoOffensiveContracts.Contains(warFarTemp.faction))
                 continue;
             warFactionList.Add(warFarTemp);
         }
