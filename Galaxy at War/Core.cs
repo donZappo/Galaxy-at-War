@@ -552,6 +552,7 @@ public static class Core
 
     public static void DivideAttackResources(WarFaction warFaction, bool UseFullSet)
     {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
         //Log("Attacking");
         var deathList = WarStatus.deathListTracker.Find(x => x.faction == warFaction.faction);
         var warFAR = warFaction.warFactionAttackResources;
@@ -567,6 +568,8 @@ public static class Core
         if (warFaction.ComstarSupported)
             attackResources += Settings.GaW_Police_ARBonus;
         warFaction.AR_Against_Pirates = 0;
+        if (Settings.AggressiveToggle && !Settings.DefensiveFactions.Contains(warFaction.faction))
+            attackResources += sim.Constants.Finances.LeopardBaseMaintenanceCost;
         
         attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
         attackResources += attackResources * (float)(Random.Next(-1, 1) * Settings.ResourceSpread);
@@ -701,12 +704,15 @@ public static class Core
         if (warFaction.defenseTargets.Count == 0 || !WarStatus.warFactionTracker.Contains(warFaction))
             return;
 
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
         var faction = warFaction.faction;
         float defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
         if (warFaction.ComstarSupported)
             defensiveResources += Settings.GaW_Police_DRBonus;
         warFaction.DR_Against_Pirates = 0;
-        
+        if (Settings.AggressiveToggle && Settings.DefensiveFactions.Contains(warFaction.faction))
+            defensiveResources += sim.Constants.Finances.LeopardBaseMaintenanceCost;
+
         var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
                 Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
 

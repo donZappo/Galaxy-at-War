@@ -45,6 +45,7 @@ public class ModSettings
 
     public int WarFrequency = 10;
     public bool Debug = false;
+    public bool AggressiveToggle = false;
 
     public string modDirectory;
     public int DominantInfluence = 75;
