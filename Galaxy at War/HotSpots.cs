@@ -183,7 +183,7 @@ namespace Galaxy_at_War
                             continue;
                         }
                         TemporaryFlip(MainBCTarget, sim.CurSystem.OwnerValue.Name);
-                        if (sim.CurSystem.SystemBreadcrumbs.Count == 0)
+                        if (sim.CurSystem.SystemBreadcrumbs.Count == 0 && MainBCTarget.OwnerValue.Name != sim.CurSystem.OwnerValue.Name)
                         {
                             sim.GeneratePotentialContracts(true, null, MainBCTarget, false);
                             SystemBonuses(MainBCTarget);
@@ -192,7 +192,7 @@ namespace Galaxy_at_War
                             Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
                             Core.WarStatus.DeploymentContracts.Add(PrioritySystem.Override.contractName);
                         }
-                        else if (twiddle == -1)
+                        else if (twiddle == -1 || MainBCTarget.OwnerValue.Name == sim.CurSystem.OwnerValue.Name)
                         {
                             sim.GeneratePotentialContracts(false, null, MainBCTarget, false);
                             SystemBonuses(MainBCTarget);

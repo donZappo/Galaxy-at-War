@@ -1689,8 +1689,10 @@ public static class Core
                                     sim.InterruptQueue.QueueRewardsPopup(Settings.DeploymentReward_01);
                             }
 
-
-                            WarStatus.HotBox.Remove(sim.CurSystem.Name);
+                            WarStatus.JustArrived = false;
+                            WarStatus.HotBoxTravelling = false;
+                            WarStatus.Escalation = false;
+                            WarStatus.HotBox.Clear();
                             WarStatus.EscalationDays = 0;
                             warsystem.BonusCBills = false;
                             warsystem.BonusSalvage = false;
