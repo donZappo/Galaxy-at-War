@@ -119,6 +119,7 @@ public class ModSettings
     public List<string> IncludedFactions_ISM = new List<string>();
 
     public Dictionary<string, string> FactionNames = new Dictionary<string, string>();
+    public Dictionary<string, int> LimitSystemContracts = new Dictionary<string, int>();
 
     public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
 

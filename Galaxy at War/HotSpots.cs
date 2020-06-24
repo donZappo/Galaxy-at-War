@@ -131,6 +131,8 @@ namespace Galaxy_at_War
                     Core.AdjustDeathList(deathListTracker, sim, true);
                 }
 
+                if(Core.Settings.LimitSystemContracts.ContainsKey(sim.CurSystem.Name))
+                    Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(Core.Settings.LimitSystemContracts[sim.CurSystem.Name]);
 
                 if (Core.WarStatus.Deployment)
                 {
