@@ -359,8 +359,12 @@ public class StarmapMod
                 if (Core.WarStatus == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                     return;
 
+                //Make sure that Flashpoint systms have priority display.
+                var flashpoints = __instance.simState.AvailableFlashpoints;
+                var isFlashpoint = flashpoints.Any(x => x.CurSystem.Name == __result.name);
+
                 //Core.timer.Restart();
-                if (Core.WarStatus != null)
+                if (Core.WarStatus != null && !isFlashpoint)
                 {
                     List<string> VisitedStarSystems = (List<string>)Traverse.Create(sim).Field("VisitedStarSystems").GetValue();
                     var wasVisited = VisitedStarSystems.Contains(__result.name);
