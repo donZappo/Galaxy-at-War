@@ -90,6 +90,14 @@ public static class SaveHandling
                 SerializeWar();
             }
         }
+
+        public static void Postfix(SimGameState __instance)
+        {
+            if (Core.Settings.CleanUpCompanyTag)
+            {
+                __instance.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => __instance.CompanyTags.Remove(x));
+            }
+        }
     }
 
     internal static void SerializeWar()

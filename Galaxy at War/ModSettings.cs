@@ -112,6 +112,7 @@ public class ModSettings
     public float MinimumResourceFactor = 0.001f;
     public float MaximumResourceFactor = 0.003f;
     public double SystemDefenseCutoff = 0.05;
+    public bool CleanUpCompanyTag = false;
 
     public List<string> DefensiveFactions = new List<string>();
 
