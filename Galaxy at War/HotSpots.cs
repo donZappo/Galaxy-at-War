@@ -131,8 +131,10 @@ namespace Galaxy_at_War
                     Core.AdjustDeathList(deathListTracker, sim, true);
                 }
 
-                if(Core.Settings.LimitSystemContracts.ContainsKey(sim.CurSystem.Name))
+                if (Core.Settings.LimitSystemContracts.ContainsKey(sim.CurSystem.Name))
+                {
                     Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(Core.Settings.LimitSystemContracts[sim.CurSystem.Name]);
+                }
 
                 if (Core.WarStatus.Deployment)
                 {
@@ -257,7 +259,7 @@ namespace Galaxy_at_War
                 }
                 isBreadcrumb = false;
                 Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(__state);
-
+                Core.WarStatus.StartGameInitialized = true;
             }
 
         }
@@ -274,7 +276,8 @@ namespace Galaxy_at_War
                 if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                __result = true;
+                if (Core.WarStatus.StartGameInitialized)
+                    __result = true;
             }
         }
 
@@ -1112,7 +1115,6 @@ namespace Galaxy_at_War
                 {
                     ProcessHotSpots();
                     // StarmapMod.SetupRelationPanel();
-                    Core.WarStatus.StartGameInitialized = true;
                 }
 
                 Core.HoldContracts = true;
