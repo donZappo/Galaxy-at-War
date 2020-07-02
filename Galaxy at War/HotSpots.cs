@@ -259,7 +259,6 @@ namespace Galaxy_at_War
                 }
                 isBreadcrumb = false;
                 Traverse.Create(sim.CurSystem).Property("CurMaxContracts").SetValue(__state);
-                Core.WarStatus.StartGameInitialized = true;
             }
 
         }
@@ -1097,6 +1096,7 @@ namespace Galaxy_at_War
                 {
                     ProcessHotSpots();
                     // StarmapMod.SetupRelationPanel();
+                    Core.WarStatus.StartGameInitialized = true;
                 }
 
                 Core.HoldContracts = true;
