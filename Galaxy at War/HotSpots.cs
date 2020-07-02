@@ -797,7 +797,7 @@ namespace Galaxy_at_War
                         Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
                         __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
                         __instance.RoomManager.SortTimeline();
-                        __instance.RoomManager.RefreshTimeline(false);
+                        __instance.RoomManager.RefreshTimeline();
                     }
                     else
                     {
@@ -812,7 +812,7 @@ namespace Galaxy_at_War
                         Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
                         __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
                         __instance.RoomManager.SortTimeline();
-                        __instance.RoomManager.RefreshTimeline(false);
+                        __instance.RoomManager.RefreshTimeline();
                     }
                 }
             }
@@ -945,25 +945,7 @@ namespace Galaxy_at_War
                 }
             }
         }
-
-        [HarmonyPatch(typeof(Contract), "CompleteContract")]
-        public static class Contract_CompleteContract_Patch
-        {
-            static void Postfix(Contract __instance)
-            {
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
-                if (Core.WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
-                    return;
-
-                var system = Core.WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
-                if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
-                {
-                    BonusMoney = (int)(__instance.MoneyResults * Core.Settings.BonusCbillsFactor);
-                    int newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + BonusMoney);
-                    Traverse.Create(__instance).Property("MoneyResults").SetValue(newMoneyResults);
-                }
-            }
-        }
+        
         [HarmonyPatch(typeof(AAR_UnitStatusWidget), "FillInPilotData")]
         public static class AAR_UnitStatusWidget_Patch
         {
@@ -1261,7 +1243,7 @@ namespace Galaxy_at_War
                         Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
                         sim.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
                         sim.RoomManager.SortTimeline();
-                        sim.RoomManager.RefreshTimeline(false);
+                        sim.RoomManager.RefreshTimeline();
                     }
                 }
                  

@@ -1555,24 +1555,39 @@ public static class Core
     {
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
-            var sim = UnityGameInstance.BattleTechGame.Simulation;
-            if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
-                return;
+            try
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (WarStatus == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
+                    return;
 
-            teamfaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-            if (teamfaction == Settings.GaW_Police)
-                teamfaction = WarStatus.ComstarAlly;
-            enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-            if (enemyfaction == Settings.GaW_Police)
-                enemyfaction = WarStatus.ComstarAlly;
-            difficulty = __instance.Difficulty;
-            missionResult = result;
-            contractType = __instance.Override.ContractTypeValue.Name;
-            if (__instance.IsFlashpointContract || __instance.IsFlashpointCampaignContract)
-                IsFlashpointContract = true;
-            else
-                IsFlashpointContract = false;
-            
+                var system = WarStatus.systems.Find(x => x.name == sim.CurSystem.Name);
+                if (system.BonusCBills && Core.WarStatus.HotBox.Contains(sim.CurSystem.Name))
+                {
+                    HotSpots.BonusMoney = (int)(__instance.MoneyResults * Core.Settings.BonusCbillsFactor);
+                    int newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + HotSpots.BonusMoney);
+                    Traverse.Create(__instance).Property("MoneyResults").SetValue(newMoneyResults);
+                }
+                
+                teamfaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
+                if (teamfaction == Settings.GaW_Police)
+                    teamfaction = WarStatus.ComstarAlly;
+                enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
+                if (enemyfaction == Settings.GaW_Police)
+                    enemyfaction = WarStatus.ComstarAlly;
+                difficulty = __instance.Difficulty;
+                missionResult = result;
+                contractType = __instance.Override.ContractTypeValue.Name;
+                if (__instance.IsFlashpointContract || __instance.IsFlashpointCampaignContract)
+                    IsFlashpointContract = true;
+                else
+                    IsFlashpointContract = false;
+                
+            }
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
+            }
         }
 
         [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
@@ -1911,6 +1926,7 @@ public static class Core
     {
         public static void Prefix(ref Contract contract, ref string __state)
         {
+            
             var sim = UnityGameInstance.BattleTechGame.Simulation;
             if (WarStatus == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
                 return;
