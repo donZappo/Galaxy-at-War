@@ -14,6 +14,7 @@ using Random = System.Random;
 using Stopwatch = System.Diagnostics.Stopwatch;
 using Newtonsoft.Json;
 using System.Reflection;
+using FluffyUnderware.DevTools.Extensions;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -224,6 +225,7 @@ public static class Core
 
     internal static void CalculateComstarSupport()
     {
+        var sim = UnityGameInstance.BattleTechGame.Simulation;
         if (WarStatus.ComstarCycle < Settings.GaW_Police_SupportTime)
         {
             WarStatus.ComstarCycle++;
@@ -245,6 +247,19 @@ public static class Core
         var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == warFactionListTrimmed.ElementAt(0).faction);
         warFaction.ComstarSupported = true;
         WarStatus.ComstarAlly = warFaction.faction;
+        var factionDef = sim.GetFactionDef(warFaction.faction);
+        if (!factionDef.Allies.Contains(Settings.GaW_Police))
+        {
+            var tempList = factionDef.Allies.ToList();
+            tempList.Add(Settings.GaW_Police);
+            Traverse.Create(factionDef).Property("Allies").SetValue(tempList.ToArray());
+        }
+        if (factionDef.Enemies.Contains(Settings.GaW_Police))
+        {
+            var tempList = factionDef.Enemies.ToList();
+            tempList.Remove(Settings.GaW_Police);
+            Traverse.Create(factionDef).Property("Enemies").SetValue(tempList.ToArray());
+        }
     }
     
     internal static void WarTick(bool UseFullSet, bool CheckForSystemChange)
@@ -1278,6 +1293,9 @@ public static class Core
         bool HasEnemy = false;
         //Defensive Only factions are always neutral
         Settings.DefensiveFactions.Do(x => deathList[x] = 50);
+        if (warFaction.ComstarSupported)
+            deathList[Settings.GaW_Police] = 99;
+
         foreach (string faction in KL_List.Except(Settings.DefensiveFactions))
         {
             if (WarStatus.InactiveTHRFactions.Contains(faction) || WarStatus.NeverControl.Contains(faction))
