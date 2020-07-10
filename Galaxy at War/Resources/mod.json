@@ -2,7 +2,7 @@
     "Name": "Galaxy at War",
     "Enabled": true,
 
-    "Version": "4.5.1",
+    "Version": "4.5.2",
     "Author": "don Zappo and gnivler",
     
     "DLL": "GalaxyatWar.dll",
@@ -239,5 +239,6 @@
 			
 		"LongWarTesting" : false,
 		"Debug" : false,
+		"CleanUpCompanyTag" : false
     }
 }

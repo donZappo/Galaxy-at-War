@@ -1571,6 +1571,7 @@ public static class Core
     [HarmonyPatch(typeof(Contract), "CompleteContract")]
     public static class CompleteContract_Patch
     {
+        [HarmonyBefore(new string[] { "com.DropCostPerMech", "de.morphyum.DropCostPerMech" })]
         public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
         {
             try
