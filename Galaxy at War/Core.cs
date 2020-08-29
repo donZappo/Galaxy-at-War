@@ -39,16 +39,16 @@ public static class Core
     public static int LoopCounter;
     public static Contract LoopContract;
     public static bool HoldContracts = false;
-    internal static List<string> IncludedFactions;
-    internal static List<FactionValue> OffensiveFactions;
-    internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
     public static double attackerInfluenceHolder = 0; 
     public static bool influenceMaxed = false;
-    
-    internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
-    {
-        return FactionValues.Where(x => IncludedFactions.Contains(x.Name));
-    }
+    internal static List<string> IncludedFactions;
+    internal static List<string> OffensiveFactions;
+    internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
+
+    //internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
+    //{
+    //    return FactionValues.Where(x => IncludedFactions.Contains(x.Name));
+    //}
 
     internal static void CopySettingsToState()
     {
@@ -56,8 +56,8 @@ public static class Core
             IncludedFactions = new List<string>(Settings.IncludedFactions_ISM);
         else
             IncludedFactions = new List<string>(Settings.IncludedFactions);
-        OffensiveFactions = 
-            FactionValues.Except(GetFactionValuesFromStrings(Settings.DefensiveFactions)).ToList();
+        
+        OffensiveFactions = IncludedFactions.Except(Settings.DefensiveFactions).ToList();
     }
 
     [HarmonyPatch(typeof(SimGameState), "OnDayPassed")]
@@ -1173,9 +1173,9 @@ public static class Core
         if (ContractEmployers.Count == 1)
         {
             var faction = OffensiveFactions[Random.Next(OffensiveFactions.Count)];
-            ContractEmployers.Add(faction.Name);
-            if (!ContractTargets.Contains(faction.Name))
-                ContractTargets.Add(faction.Name);
+            ContractEmployers.Add(faction);
+            if (!ContractTargets.Contains(faction))
+                ContractTargets.Add(faction);
         }
         if (starSystem.Tags.Contains("planet_region_hyadesrim") && Settings.HyadesRimCompatible)
         {
