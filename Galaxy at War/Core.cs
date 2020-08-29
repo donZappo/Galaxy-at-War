@@ -248,13 +248,13 @@ public static class Core
         warFaction.ComstarSupported = true;
         WarStatus.ComstarAlly = warFaction.faction;
         var factionDef = sim.GetFactionDef(warFaction.faction);
-        if (!factionDef.Allies.Contains(Settings.GaW_Police))
+        if (Settings.GaW_PoliceSupport && !factionDef.Allies.Contains(Settings.GaW_Police))
         {
             var tempList = factionDef.Allies.ToList();
             tempList.Add(Settings.GaW_Police);
             Traverse.Create(factionDef).Property("Allies").SetValue(tempList.ToArray());
         }
-        if (factionDef.Enemies.Contains(Settings.GaW_Police))
+        if (Settings.GaW_PoliceSupport && factionDef.Enemies.Contains(Settings.GaW_Police))
         {
             var tempList = factionDef.Enemies.ToList();
             tempList.Remove(Settings.GaW_Police);
@@ -1144,7 +1144,7 @@ public static class Core
             ContractEmployers.Add(owner.Name);
             ContractTargets.Add(owner.Name);
         }
-        if (WarStatus.ComstarAlly == owner.Name)
+        if (Settings.GaW_PoliceSupport && WarStatus.ComstarAlly == owner.Name)
         {
             ContractEmployers.Add(Settings.GaW_Police);
             ContractTargets.Add(Settings.GaW_Police);
@@ -1240,9 +1240,9 @@ public static class Core
                         NewFactionEnemies.Add(faction);
                 }
             }
-            if (system.OwnerValue.Name == WarStatus.ComstarAlly && employer.Name != WarStatus.ComstarAlly)
+            if (Settings.GaW_PoliceSupport && system.OwnerValue.Name == WarStatus.ComstarAlly && employer.Name != WarStatus.ComstarAlly)
                 NewFactionEnemies.Add(Settings.GaW_Police);
-            if (employer.Name == Settings.GaW_Police && NewFactionEnemies.Contains(WarStatus.ComstarAlly))
+            if (Settings.GaW_PoliceSupport && employer.Name == Settings.GaW_Police && NewFactionEnemies.Contains(WarStatus.ComstarAlly))
                 NewFactionEnemies.Remove(WarStatus.ComstarAlly);
 
             Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
@@ -1293,7 +1293,7 @@ public static class Core
         bool HasEnemy = false;
         //Defensive Only factions are always neutral
         Settings.DefensiveFactions.Do(x => deathList[x] = 50);
-        if (warFaction.ComstarSupported)
+        if (Settings.GaW_PoliceSupport && warFaction.ComstarSupported)
             deathList[Settings.GaW_Police] = 99;
 
         foreach (string faction in KL_List.Except(Settings.DefensiveFactions))
@@ -1589,10 +1589,10 @@ public static class Core
                 }
                 
                 teamfaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-                if (teamfaction == Settings.GaW_Police)
+                if (Settings.GaW_PoliceSupport && teamfaction == Settings.GaW_Police)
                     teamfaction = WarStatus.ComstarAlly;
                 enemyfaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-                if (enemyfaction == Settings.GaW_Police)
+                if (Settings.GaW_PoliceSupport && enemyfaction == Settings.GaW_Police)
                     enemyfaction = WarStatus.ComstarAlly;
                 difficulty = __instance.Difficulty;
                 missionResult = result;
@@ -1956,10 +1956,10 @@ public static class Core
             __state = contract.Override.shortDescription;
             var StringHolder = contract.Override.shortDescription;
             var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-            if (EmployerFaction == Settings.GaW_Police)
+            if (Settings.GaW_PoliceSupport && EmployerFaction == Settings.GaW_Police)
                 EmployerFaction = WarStatus.ComstarAlly;
             var DefenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-            if (DefenseFaction == Settings.GaW_Police)
+            if (Settings.GaW_PoliceSupport && DefenseFaction == Settings.GaW_Police)
                 DefenseFaction = WarStatus.ComstarAlly;
 
             var TargetSystem = contract.TargetSystem;
@@ -2051,9 +2051,9 @@ public static class Core
             MaximumInfluence = TargetSystem.PirateActivity;
         else if (PiratesInvolved)
             MaximumInfluence = 100 - TargetSystem.PirateActivity;
-        else
+        else 
             MaximumInfluence = TargetSystem.influenceTracker[DefenseFaction];
-
+        
         double InfluenceChange = 1;
         contractDifficulty = Mathf.Max((int)contractDifficulty, TargetSystem.DifficultyRating);
 
@@ -2190,6 +2190,49 @@ public static class Core
             //}
             //LoopCounter++;
             //return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(ListElementController_InventoryWeapon_NotListView), "RefreshQuantity")]
+    public static class Bug_Tracing_Fix
+    {
+        static bool Prefix(ListElementController_InventoryWeapon_NotListView __instance, InventoryItemElement_NotListView theWidget)
+        {
+            try
+            {
+                if (__instance.quantity == -2147483648)
+                {
+                    theWidget.qtyElement.SetActive(false);
+                    return false;
+                }
+                theWidget.qtyElement.SetActive(true);
+                theWidget.quantityValue.SetText("{0}", new object[]
+                {
+                __instance.quantity
+                });
+                theWidget.quantityValueColor.SetUIColor((__instance.quantity > 0 || __instance.quantity == int.MinValue) ? UIColor.White : UIColor.Red);
+                return false;
+            }
+            catch (Exception e)
+            {
+                Log("*****Exception thrown with ListElementController_InventoryWeapon_NotListView");
+                Log($"theWidget null: {theWidget == null}");
+                Log($"theWidget.qtyElement null: {theWidget.qtyElement == null}");
+                Log($"theWidget.quantityValue null: {theWidget.quantityValue == null}");
+                Log($"theWidget.quantityValueColor null: {theWidget.quantityValueColor == null}");
+                if (theWidget.itemName != null)
+                {
+                    Log("theWidget.itemName");
+                    Log(theWidget.itemName.ToString());
+                }
+                if (__instance.GetName() != null)
+                {
+                    Log("__instance.GetName");
+                    Log(__instance.GetName());
+                }
+                Error(e);
+                return false;
+            }
         }
     }
 

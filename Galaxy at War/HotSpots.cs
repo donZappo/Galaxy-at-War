@@ -355,7 +355,7 @@ namespace Galaxy_at_War
 
 
             starSystem.Def.contractEmployerIDs.Add(faction);
-            if (faction == Core.WarStatus.ComstarAlly)
+            if (Core.Settings.GaW_PoliceSupport && faction == Core.WarStatus.ComstarAlly)
                 starSystem.Def.contractEmployerIDs.Add(Core.Settings.GaW_Police);
 
             
