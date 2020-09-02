@@ -25,6 +25,7 @@ public static class SaveHandling
         static void Prefix()
         {
         }
+
         static void Postfix(SimGameState __instance, GameInstanceSave gameInstanceSave)
         {
             LogDebug("Rehydrate");
@@ -50,7 +51,9 @@ public static class SaveHandling
                     Core.SystemDifficulty();
                     Core.WarTick(true, true);
                 }
-                
+
+
+
             }
             catch (Exception ex)
             {
@@ -104,7 +107,7 @@ public static class SaveHandling
     {
         LogDebug("SerializeWar");
         var sim = UnityGameInstance.BattleTechGame.Simulation;
-        sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => sim.CompanyTags.Remove(x));
+        sim.CompanyTags.Remove(sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWar")));
         sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(Core.WarStatus));
         LogDebug($">>> Serialization complete (object size: {JsonConvert.SerializeObject(Core.WarStatus).Length / 1024}kb)");
     }

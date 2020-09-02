@@ -796,7 +796,7 @@ namespace Galaxy_at_War
                         Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
                         __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
                         __instance.RoomManager.SortTimeline();
-                        __instance.RoomManager.RefreshTimeline(false);
+                        __instance.RoomManager.RefreshTimeline();
                     }
                     else
                     {
@@ -811,7 +811,7 @@ namespace Galaxy_at_War
                         Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
                         __instance.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
                         __instance.RoomManager.SortTimeline();
-                        __instance.RoomManager.RefreshTimeline(false);
+                        __instance.RoomManager.RefreshTimeline();
                     }
                 }
             }
@@ -1243,7 +1243,7 @@ namespace Galaxy_at_War
                         Core.WarStatus.EscalationOrder.SetCost(Core.WarStatus.EscalationDays);
                         sim.RoomManager.AddWorkQueueEntry(Core.WarStatus.EscalationOrder);
                         sim.RoomManager.SortTimeline();
-                        sim.RoomManager.RefreshTimeline(false);
+                        sim.RoomManager.RefreshTimeline();
                     }
                 }
                  

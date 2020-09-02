@@ -23,7 +23,7 @@ public static class Core
 {
     internal static ModSettings Settings;
     public static WarStatus WarStatus;
-    public static readonly Random Random = new Random();
+    internal static readonly Random Random = new Random();
     public static string teamfaction;
     public static string enemyfaction;
     public static double difficulty;
@@ -217,7 +217,6 @@ public static class Core
                     }
                 }
 
-                SaveHandling.SerializeWar();
                 LogDebug(">>> DONE PROC");
             }
         }
@@ -269,8 +268,21 @@ public static class Core
         int SystemSubsetSize = WarStatus.systems.Count;
         if (Settings.UseSubsetOfSystems && !UseFullSet)
             SystemSubsetSize = (int) (SystemSubsetSize * Settings.SubSetFraction);
-        var SystemSubset = WarStatus.systems.OrderBy(x => Guid.NewGuid()).Take(SystemSubsetSize);
+        var subset = new List<SystemStatus>();
+        for (int i = 0; i < SystemSubsetSize; i++)
+        {
+            subset.Add(GetRandomSystemStatus());
+        }
 
+        SystemStatus GetRandomSystemStatus()
+        {
+            var systemStatus = WarStatus.systems[Random.Next(0, WarStatus.systems.Count)];
+            if (subset.Contains(systemStatus))
+                GetRandomSystemStatus();
+
+            return systemStatus;
+        }
+        
         if (CheckForSystemChange && Settings.GaW_PoliceSupport)
             CalculateComstarSupport();
 
@@ -278,38 +290,36 @@ public static class Core
         {
             float lowestAR = 5000f;
             float lowestDR = 5000f;
-            foreach (var faction in IncludedFactions)
+            foreach (var faction in WarStatus.warFactionTracker.Where(x => IncludedFactions.Contains(x.faction)))
             {
-
-                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-                var systemCount = WarStatus.systems.FindAll(x => x.owner == faction).Count();
+               var systemCount = WarStatus.systems.Count(x => x.owner == faction.faction);
                 if (!Settings.ISMCompatibility && systemCount != 0)
                 {
-                    warFaction.AR_PerPlanet = Settings.BonusAttackResources[faction] / systemCount;
-                    warFaction.DR_PerPlanet = Settings.BonusDefensiveResources[faction] / systemCount;
-                    if (warFaction.AR_PerPlanet < lowestAR)
-                        lowestAR = warFaction.AR_PerPlanet;
-                    if (warFaction.DR_PerPlanet < lowestDR)
-                        lowestDR = warFaction.DR_PerPlanet;
+                    faction.AR_PerPlanet = (float) Settings.BonusAttackResources[faction.faction] / systemCount;
+                    faction.DR_PerPlanet = (float) Settings.BonusDefensiveResources[faction.faction] / systemCount;
+                    if (faction.AR_PerPlanet < lowestAR)
+                        lowestAR = faction.AR_PerPlanet;
+                    if (faction.DR_PerPlanet < lowestDR)
+                        lowestDR = faction.DR_PerPlanet;
                 }
                 else if (systemCount != 0)
                 {
-                    warFaction.AR_PerPlanet = Settings.BonusAttackResources_ISM[faction] / systemCount;
-                    warFaction.DR_PerPlanet = Settings.BonusDefensiveResources_ISM[faction] / systemCount;
-                    if (warFaction.AR_PerPlanet < lowestAR)
-                        lowestAR = warFaction.AR_PerPlanet;
-                    if (warFaction.DR_PerPlanet < lowestDR)
-                        lowestDR = warFaction.DR_PerPlanet;
+                    faction.AR_PerPlanet = (float) Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
+                    faction.DR_PerPlanet = (float) Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
+                    if (faction.AR_PerPlanet < lowestAR)
+                        lowestAR = faction.AR_PerPlanet;
+                    if (faction.DR_PerPlanet < lowestDR)
+                        lowestDR = faction.DR_PerPlanet;
                 }
             }
 
-            foreach (var faction in IncludedFactions)
+            foreach (var faction in WarStatus.warFactionTracker.Where(x => IncludedFactions.Contains(x.faction)))
             {
-                var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == faction);
-                warFaction.AR_PerPlanet = Mathf.Min(warFaction.AR_PerPlanet, 2 * lowestAR);
-                warFaction.DR_PerPlanet = Mathf.Min(warFaction.DR_PerPlanet, 2 * lowestDR);
+                faction.AR_PerPlanet = Mathf.Min(faction.AR_PerPlanet, 2 * lowestAR);
+                faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDR);
             }
-            foreach (var systemStatus in SystemSubset)
+            
+            foreach (var systemStatus in subset)
             {
                 //Spread out bonus resources and make them fair game for the taking.
                 var warFaction = WarStatus.warFactionTracker.Find(x => x.faction == systemStatus.owner);
@@ -326,24 +336,25 @@ public static class Core
         PiratesAndLocals.DistributePirateResources();
         PiratesAndLocals.DefendAgainstPirates();
 
-        if (CheckForSystemChange && Settings.HyadesRimCompatible && WarStatus.InactiveTHRFactions.Count() != 0
-                        && WarStatus.HyadesRimGeneralPirateSystems.Count() != 0)
+        if (CheckForSystemChange && Settings.HyadesRimCompatible && WarStatus.InactiveTHRFactions.Count != 0
+                        && WarStatus.HyadesRimGeneralPirateSystems.Count != 0)
         {
             int rand = Random.Next(0, 100);
             if (rand < WarStatus.HyadesRimsSystemsTaken)
             {
                 WarStatus.InactiveTHRFactions.Shuffle();
-                WarStatus.HyadesRimGeneralPirateSystems.Shuffle();
-                var flipSystem = WarStatus.systems.Find(x => x.name == WarStatus.HyadesRimGeneralPirateSystems[0]).starSystem;
+                var hyadesSystem = WarStatus.HyadesRimGeneralPirateSystems[Random.Next(0, WarStatus.HyadesRimGeneralPirateSystems.Count)];
+                var flipSystem = WarStatus.systems.Find(x => x.name == hyadesSystem).starSystem;
 
-                ChangeSystemOwnership(sim, flipSystem, WarStatus.InactiveTHRFactions[0], true);
-                WarStatus.InactiveTHRFactions.RemoveAt(0);
-                WarStatus.HyadesRimGeneralPirateSystems.RemoveAt(0);
+                var inactiveFaction = WarStatus.InactiveTHRFactions[Random.Next(0, WarStatus.InactiveTHRFactions.Count)];
+                ChangeSystemOwnership(sim, flipSystem, inactiveFaction, true);
+                WarStatus.InactiveTHRFactions.Remove(inactiveFaction);
+                WarStatus.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
             }
 
         }
 
-        foreach (var systemStatus in SystemSubset)
+        foreach (var systemStatus in subset)
         {
             systemStatus.PriorityAttack = false;
             systemStatus.PriorityDefense = false;
@@ -446,12 +457,11 @@ public static class Core
             }
         }
 
-        foreach (var system in WarStatus.SystemChangedOwners)
+        foreach (var system in  WarStatus.systems.Where(x => WarStatus.SystemChangedOwners.Contains(x.name)))
         {
-            var systemStatus = WarStatus.systems.Find(x => x.name == system);
-            systemStatus.CurrentlyAttackedBy.Clear();
-            CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-            RefreshContracts(systemStatus.starSystem);
+            system.CurrentlyAttackedBy.Clear();
+            CalculateAttackAndDefenseTargets(system.starSystem);
+            RefreshContracts(system.starSystem);
         }
 
         LogDebug("Changed " + WarStatus.SystemChangedOwners.Count);
@@ -619,7 +629,22 @@ public static class Core
                     break;
 
                 var rand = Random.Next(0, targets.Count);
-                var system = WarStatus.systems.Find(f => f.name == targets[rand]);
+                SystemStatus system = default;
+                for (var i = 0; i < WarStatus.systems.Count; i++)
+                {
+                    if (WarStatus.systems[i].name == targets[rand])
+                    {
+                        system = WarStatus.systems[i];
+                        break;
+                    }
+                }
+
+                if (system == null)
+                {
+                    Log("ERROR - No system found at AllocateAttackResources, aborting processing.");
+                    return;
+                }
+                
                 if (system.owner == warFaction.faction || WarStatus.FlashpointSystems.Contains(system.name))
                 {
                     targets.RemoveAt(rand);
@@ -656,8 +681,7 @@ public static class Core
 
                 var ARFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
                 var spendAR = Mathf.Min(startingtargetFAR * ARFactor, targetFAR);
-                spendAR = spendAR < 1 ? 1 : spendAR;
-
+                spendAR = spendAR < 1 ? 1 : Math.Max(2, spendAR);
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
                 if (maxValueList.Count > 1)
@@ -733,7 +757,7 @@ public static class Core
 
         defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
         defensiveResources += defensiveResources * (float)(Random.Next(-1,1) * (Settings.ResourceSpread));
-        var startingdefensiveResources = defensiveResources;
+        var startingDefensiveResources = defensiveResources;
         List<string> duplicateDefenseTargets = new List<string>(warFaction.defenseTargets);
         int rand = 0;
         string system = "";
@@ -756,10 +780,21 @@ public static class Core
                 rand = Random.Next(0, warFaction.defenseTargets.Count);
                 system = warFaction.defenseTargets[rand];
                 var DRFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
-                spendDR = Mathf.Min(startingdefensiveResources * DRFactor, defensiveResources);
-                spendDR = spendDR < 1 ? 1 : spendDR;
+                spendDR = Mathf.Min(startingDefensiveResources * DRFactor, defensiveResources);
+                spendDR = spendDR < 1 ? 1 : Math.Max(2, spendDR);
             }
-            var systemStatus = WarStatus.systems.Find(x => x.name == system);
+
+            // fastest loop possible?
+            SystemStatus systemStatus = default;
+            for (var i = 0; i < WarStatus.systems.Count; i++)
+            {
+                if (WarStatus.systems[i].name == system)
+                {
+                    systemStatus = WarStatus.systems[i];
+                    break;
+                }
+            }
+            
             if (systemStatus.Contended || WarStatus.HotBox.Contains(systemStatus.name))
             {
                 warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
@@ -785,28 +820,7 @@ public static class Core
                 if (highest / Total >= 0.5)
                     break;
             }
-            //Log("===========");
-            //Log(system);
-            //Log("Before Defense");
-            //foreach (var foo in systemStatus.influenceTracker.Keys)
-            //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
-            //LogDebug("1 " + timer.Elapsed);
-            //foreach (string tempfaction in systemStatus.influenceTracker.Keys)
-            //{
-            //    if (systemStatus.influenceTracker[tempfaction] > highest)
-            //    {
-            //        highest = systemStatus.influenceTracker[tempfaction];
-            //        highestFaction = tempfaction;
-            //    }
-            //}
 
-            //highest = systemStatus.influenceTracker.Values.Max();
-            //highestFaction = systemStatus.influenceTracker
-            //    .Where(x => x.Value == highest)
-            //    .Select(y => y.Key)
-            //    .First();
-
-            
             if (highestFaction == faction)
             {
                 if (defensiveResources > 0)
@@ -822,9 +836,8 @@ public static class Core
             }
             else
             {
-                var totalInfluence = systemStatus.influenceTracker.Values.Sum();
-                var diffRes = systemStatus.influenceTracker[highestFaction] / totalInfluence - systemStatus.influenceTracker[faction] / totalInfluence;
-                var bonusDefense = spendDR + (diffRes * totalInfluence - (Settings.TakeoverThreshold / 100) * totalInfluence) / (Settings.TakeoverThreshold / 100 + 1);
+                var diffRes = systemStatus.influenceTracker[highestFaction] / Total - systemStatus.influenceTracker[faction] / Total;
+                var bonusDefense = spendDR + (diffRes * Total - (Settings.TakeoverThreshold / 100) * Total) / (Settings.TakeoverThreshold / 100 + 1);
                 //LogDebug(bonusDefense);
                 if (100 * diffRes > Settings.TakeoverThreshold)
                     if (defensiveResources >= bonusDefense)
