@@ -43,13 +43,16 @@ namespace Galaxy_at_War
                 if (Core.WarStatus.MinimumPirateResources < Core.WarStatus.StartingPirateResources)
                     Core.WarStatus.MinimumPirateResources = Core.WarStatus.StartingPirateResources;
             }
+
             foreach (var warFaction in Core.WarStatus.warFactionTracker)
             {
                 warFaction.AttackResources += warFaction.PirateARLoss;
                 warFaction.DefensiveResources += warFaction.PirateDRLoss;
             }
+
             Core.WarStatus.LastPRGain = Core.WarStatus.TempPRGain;
         }
+
         public static void DefendAgainstPirates()
         {
             Dictionary<WarFaction, bool> FactionEscalateDefense = new Dictionary<WarFaction, bool>();
@@ -118,8 +121,9 @@ namespace Galaxy_at_War
                 warFaction.PirateDRLoss = 0;
             }
 
-            foreach (var system in FullPirateListSystems)
+            for (var i = 0; i < FullPirateListSystems.Count; i++)
             {
+                var system = FullPirateListSystems[i];
                 Core.WarStatus.PirateResources += system.TotalResources * system.PirateActivity / 100;
                 Core.WarStatus.TempPRGain += system.TotalResources * system.PirateActivity / 100;
 
@@ -140,21 +144,24 @@ namespace Galaxy_at_War
                 warFaction.DefensiveResources -= warFDRChange;
             }
         }
+
         public static void DistributePirateResources()
         {
-            Random rand = new Random();
             int i = 0;
-            while (CurrentPAResources != 0 && i != 1000)
+            while (CurrentPAResources > 0 && i != 1000)
             {
-                var RandSystem = rand.Next(0, Core.WarStatus.systems.Count - 1);
-                var systemStatus = Core.WarStatus.systems[RandSystem];
-                if (systemStatus.owner == "NoFaction" || Core.Settings.ImmuneToWar.Contains(systemStatus.owner)
-                    || Core.WarStatus.HotBox.Contains(systemStatus.name) || Core.WarStatus.FlashpointSystems.Contains(systemStatus.name)
-                    || Core.WarStatus.HyadesRimGeneralPirateSystems.Contains(systemStatus.name) || Core.Settings.HyadesPirates.Contains(systemStatus.owner))
+                var systemStatus = Core.WarStatus.systems.GetRandomElement();
+                if (systemStatus.owner == "NoFaction" ||
+                    Core.Settings.ImmuneToWar.Contains(systemStatus.owner) ||
+                    Core.WarStatus.HotBox.Contains(systemStatus.name) ||
+                    Core.WarStatus.FlashpointSystems.Contains(systemStatus.name) ||
+                    Core.WarStatus.HyadesRimGeneralPirateSystems.Contains(systemStatus.name) ||
+                    Core.Settings.HyadesPirates.Contains(systemStatus.owner))
                 {
                     systemStatus.PirateActivity = 0;
                     continue;
                 }
+
                 float CurrentPA = systemStatus.PirateActivity;
                 float basicPA = 11 - systemStatus.DifficultyRating;
 
@@ -165,8 +172,8 @@ namespace Galaxy_at_War
                 {
                     if (TotalPA <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += Math.Min(TotalPA, 100 - systemStatus.PirateActivity);
-                        CurrentPAResources -= Math.Min(TotalPA, 100 - systemStatus.PirateActivity);
+                        systemStatus.PirateActivity += Math.Min(TotalPA, 100 - systemStatus.PirateActivity) * Core.SpendFactor;
+                        CurrentPAResources -= Math.Min(TotalPA, 100 - systemStatus.PirateActivity) * Core.SpendFactor;
                         i = 0;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {
@@ -176,7 +183,7 @@ namespace Galaxy_at_War
                     }
                     else
                     {
-                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
+                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity) * Core.SpendFactor;
                         CurrentPAResources = 0;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {
@@ -189,8 +196,8 @@ namespace Galaxy_at_War
                 {
                     if (100 - systemStatus.PirateActivity <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += 100 - systemStatus.PirateActivity;
-                        CurrentPAResources -= 100 - systemStatus.PirateActivity;
+                        systemStatus.PirateActivity += (100 - systemStatus.PirateActivity) * Core.SpendFactor;
+                        CurrentPAResources -= (100 - systemStatus.PirateActivity) * Core.SpendFactor;
                         i++;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {
@@ -200,7 +207,7 @@ namespace Galaxy_at_War
                     }
                     else
                     {
-                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
+                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity) * Core.SpendFactor;
                         CurrentPAResources = 0;
                         if (!Core.WarStatus.FullPirateSystems.Contains(systemStatus.name))
                         {

@@ -44,6 +44,7 @@ public static class Core
     internal static List<string> IncludedFactions;
     internal static List<string> OffensiveFactions;
     internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
+    internal const float SpendFactor = 5;
 
     //internal static IEnumerable<FactionValue> GetFactionValuesFromStrings(List<string> factionStrings)
     //{
@@ -271,16 +272,7 @@ public static class Core
         var subset = new List<SystemStatus>();
         for (int i = 0; i < SystemSubsetSize; i++)
         {
-            subset.Add(GetRandomSystemStatus());
-        }
-
-        SystemStatus GetRandomSystemStatus()
-        {
-            var systemStatus = WarStatus.systems[Random.Next(0, WarStatus.systems.Count)];
-            if (subset.Contains(systemStatus))
-                GetRandomSystemStatus();
-
-            return systemStatus;
+            subset.Add(WarStatus.systems.Except(subset).GetRandomElement());
         }
         
         if (CheckForSystemChange && Settings.GaW_PoliceSupport)
@@ -681,7 +673,7 @@ public static class Core
 
                 var ARFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
                 var spendAR = Mathf.Min(startingtargetFAR * ARFactor, targetFAR);
-                spendAR = spendAR < 1 ? 1 : Math.Max(2, spendAR);
+                spendAR = spendAR < 1 ? 1 : Math.Max(1, spendAR) * SpendFactor;
                 var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                 float PmaxValue = 200.0f;
                 if (maxValueList.Count > 1)
@@ -759,7 +751,6 @@ public static class Core
         defensiveResources += defensiveResources * (float)(Random.Next(-1,1) * (Settings.ResourceSpread));
         var startingDefensiveResources = defensiveResources;
         List<string> duplicateDefenseTargets = new List<string>(warFaction.defenseTargets);
-        int rand = 0;
         string system = "";
 
         // spend and decrement defensiveResources
@@ -771,17 +762,15 @@ public static class Core
             float spendDR = 1.0f;
             if (duplicateDefenseTargets.Count != 0)
             {
-                rand = Random.Next(0, duplicateDefenseTargets.Count);
-                system = duplicateDefenseTargets[rand];
+                system = duplicateDefenseTargets.GetRandomElement();
                 duplicateDefenseTargets.Remove(system);
             }
             else
             {
-                rand = Random.Next(0, warFaction.defenseTargets.Count);
-                system = warFaction.defenseTargets[rand];
+                system = warFaction.defenseTargets.GetRandomElement();
                 var DRFactor = UnityEngine.Random.Range(Settings.MinimumResourceFactor, Settings.MaximumResourceFactor);
                 spendDR = Mathf.Min(startingDefensiveResources * DRFactor, defensiveResources);
-                spendDR = spendDR < 1 ? 1 : Math.Max(2, spendDR);
+                spendDR = spendDR < 1 ? 1 : Math.Max(1, spendDR) * SpendFactor;
             }
 
             // fastest loop possible?
