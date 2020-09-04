@@ -14,7 +14,8 @@ namespace GalaxyatWar
         public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
-            var deathList = WarStatusTracker.DeathListTrackers.Find(x => x.faction == warFaction.faction);
+            var factionFaction = warFaction.faction;
+            var deathList = WarStatusTracker.DeathListTrackers.Find(x => x.faction == factionFaction);
             var warFar = warFaction.warFactionAttackResources;
             warFar.Clear();
             var tempTargets = new Dictionary<string, float>();

@@ -17,12 +17,18 @@ namespace GalaxyatWar
         {
             WarStatusTracker.PrioritySystems.Clear();
             var systemSubsetSize = WarStatusTracker.SystemStatuses.Count;
-            IEnumerable<SystemStatus> subset = default;
+            List<SystemStatus> systemStatuses;
+            
             if (Settings.UseSubsetOfSystems && !useFullSet)
             {
                 systemSubsetSize = (int) (systemSubsetSize * Settings.SubSetFraction);
-                subset = new List<SystemStatus>(WarStatusTracker.SystemStatuses)
-                    .OrderBy(x => Guid.NewGuid()).Take(systemSubsetSize);
+                systemStatuses = WarStatusTracker.SystemStatuses
+                    .OrderBy(x => Guid.NewGuid()).Take(systemSubsetSize)
+                    .ToList();
+            }
+            else
+            {
+                systemStatuses = WarStatusTracker.SystemStatuses;
             }
 
             if (checkForSystemChange && Settings.GaW_PoliceSupport)
@@ -61,8 +67,9 @@ namespace GalaxyatWar
                     faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDr);
                 }
 
-                foreach (var systemStatus in subset ?? WarStatusTracker.SystemStatuses)
+                for (var index = 0; index < systemStatuses.Count; index++)
                 {
+                    var systemStatus = systemStatuses[index];
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
                     systemStatus.AttackResources += warFaction.AR_PerPlanet;
@@ -94,63 +101,61 @@ namespace GalaxyatWar
                 }
             }
 
-            if (subset != null)
+            for (var i = 0; i < systemStatuses.Count; i++)
             {
-                foreach (var systemStatus in subset)
+                var systemStatus = systemStatuses[i];
+                systemStatus.PriorityAttack = false;
+                systemStatus.PriorityDefense = false;
+                if (WarStatusTracker.InitializeAtStart)
                 {
-                    systemStatus.PriorityAttack = false;
-                    systemStatus.PriorityDefense = false;
-                    if (WarStatusTracker.InitializeAtStart)
-                    {
-                        systemStatus.CurrentlyAttackedBy.Clear();
-                        CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-                        RefreshContracts(systemStatus.starSystem);
-                    }
+                    systemStatus.CurrentlyAttackedBy.Clear();
+                    CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+                    RefreshContracts(systemStatus.starSystem);
+                }
 
-                    if (systemStatus.Contended || WarStatusTracker.HotBox.Contains(systemStatus.name))
-                        continue;
+                if (systemStatus.Contended || WarStatusTracker.HotBox.Contains(systemStatus.name))
+                    continue;
 
-                    if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") &&
-                        !WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
-                    {
-                        systemStatus.influenceTracker["Locals"] *= 1.1f;
-                    }
+                if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") &&
+                    !WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                {
+                    systemStatus.influenceTracker["Locals"] *= 1.1f;
+                }
 
-                    //Add resources from neighboring systems.
-                    if (systemStatus.neighborSystems.Count != 0)
+                //Add resources from neighboring systems.
+                if (systemStatus.neighborSystems.Count != 0)
+                {
+                    foreach (var neighbor in systemStatus.neighborSystems.Keys)
                     {
-                        foreach (var neighbor in systemStatus.neighborSystems.Keys)
+                        if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor) &&
+                            !WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
-                            if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor) &&
-                                !WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
-                            {
-                                var pushFactor = Settings.APRPush * Rng.Next(1, Settings.APRPushRandomizer + 1);
-                                systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
-                            }
+                            var pushFactor = Settings.APRPush * Rng.Next(1, Settings.APRPushRandomizer + 1);
+                            systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
                         }
                     }
+                }
 
-                    //Revolt on previously taken systems.
-                    if (systemStatus.owner != systemStatus.OriginalOwner)
-                        systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
+                //Revolt on previously taken systems.
+                if (systemStatus.owner != systemStatus.OriginalOwner)
+                    systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
 
-                    var pirateSystemFlagValue = Settings.PirateSystemFlagValue;
+                var pirateSystemFlagValue = Settings.PirateSystemFlagValue;
 
-                    if (Settings.ISMCompatibility)
-                        pirateSystemFlagValue = Settings.PirateSystemFlagValue_ISM;
+                if (Settings.ISMCompatibility)
+                    pirateSystemFlagValue = Settings.PirateSystemFlagValue_ISM;
 
-                    var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
 
-                    if (totalPirates >= pirateSystemFlagValue)
-                    {
-                        if (!WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                            WarStatusTracker.PirateHighlight.Add(systemStatus.name);
-                    }
-                    else
-                    {
-                        if (WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                            WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
-                    }
+                if (totalPirates >= pirateSystemFlagValue)
+                {
+                    if (!WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
+                        WarStatusTracker.PirateHighlight.Add(systemStatus.name);
+                }
+                else
+                {
+                    if (WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
+                        WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
                 }
             }
 

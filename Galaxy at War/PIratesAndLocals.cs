@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = System.Random;
 using static GalaxyatWar.Globals;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable ClassNeverInstantiated.Global
 
@@ -39,53 +40,53 @@ namespace GalaxyatWar
 
         public static void DefendAgainstPirates()
         {
-            var FactionEscalateDefense = new Dictionary<WarFaction, bool>();
+            var factionEscalateDefense = new Dictionary<WarFaction, bool>();
             var rand = new Random();
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
-                var DefenseValue = 100 * (warFaction.PirateARLoss + warFaction.PirateDRLoss) /
-                    (warFaction.AttackResources + warFaction.DefensiveResources + warFaction.PirateARLoss + warFaction.PirateDRLoss);
-                if (DefenseValue > 5)
-                    FactionEscalateDefense.Add(warFaction, true);
+                var defenseValue = 100 * (warFaction.PirateARLoss + warFaction.PirateDRLoss) /
+                                   (warFaction.AttackResources + warFaction.DefensiveResources + warFaction.PirateARLoss + warFaction.PirateDRLoss);
+                if (defenseValue > 5)
+                    factionEscalateDefense.Add(warFaction, true);
                 else
-                    FactionEscalateDefense.Add(warFaction, false);
+                    factionEscalateDefense.Add(warFaction, false);
             }
-            
-            var TempFullPirateListSystems = new List<SystemStatus>(FullPirateListSystems);
-            foreach (var system in TempFullPirateListSystems)
+
+            var tempFullPirateListSystems = new List<SystemStatus>(FullPirateListSystems);
+            foreach (var system in tempFullPirateListSystems)
             {
                 var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
                 float PAChange;
-                if (FactionEscalateDefense[warFaction])
-                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
+                if (factionEscalateDefense[warFaction])
+                    PAChange = (float) (rand.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
                 else
-                    PAChange = (float)(rand.NextDouble() * (system.PirateActivity / 3));
+                    PAChange = (float) (rand.NextDouble() * (system.PirateActivity / 3));
 
-                var AttackResources = warFaction.AttackResources;
+                var attackResources = warFaction.AttackResources;
 
                 if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
-                    AttackResources = warFaction.DefensiveResources;
+                    attackResources = warFaction.DefensiveResources;
 
-                var DefenseCost = Mathf.Min(PAChange * system.TotalResources / 100, warFaction.AttackResources * 0.01f);
+                var defenseCost = Mathf.Min(PAChange * system.TotalResources / 100, warFaction.AttackResources * 0.01f);
 
-                if (AttackResources >= DefenseCost)
+                if (attackResources >= defenseCost)
                 {
                     PAChange = Math.Min(PAChange, system.PirateActivity);
                     system.PirateActivity -= PAChange;
                     if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
-                        warFaction.DR_Against_Pirates += DefenseCost;
+                        warFaction.DR_Against_Pirates += defenseCost;
                     else
-                        warFaction.AR_Against_Pirates += DefenseCost;
+                        warFaction.AR_Against_Pirates += defenseCost;
                     //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
                 else
                 {
-                    PAChange = Math.Min(AttackResources, system.PirateActivity);
+                    PAChange = Math.Min(attackResources, system.PirateActivity);
                     system.PirateActivity -= PAChange;
                     if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
-                        warFaction.DR_Against_Pirates += DefenseCost;
+                        warFaction.DR_Against_Pirates += defenseCost;
                     else
-                        warFaction.AR_Against_Pirates += DefenseCost;
+                        warFaction.AR_Against_Pirates += defenseCost;
                     //warFaction.PirateDRLoss += PAChange * system.TotalResources / 100;
                 }
 
@@ -96,6 +97,7 @@ namespace GalaxyatWar
                 }
             }
         }
+
         public static void PiratesStealResources()
         {
             WarStatusTracker.TempPRGain = 0;
@@ -146,20 +148,22 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var CurrentPA = systemStatus.PirateActivity;
+                var currentPA = systemStatus.PirateActivity;
                 float basicPA = 11 - systemStatus.DifficultyRating;
 
-                var bonusPA = CurrentPA / 50;
-                var TotalPA = basicPA + bonusPA;
+                var bonusPA = currentPA / 50;
+                var totalPA = basicPA + bonusPA;
+
+                var pirateSystemsContainsSystemStatus = WarStatusTracker.FullPirateSystems.Contains(systemStatus.name);
                 //Log(systemStatus.name);
-                if (CurrentPA + TotalPA <= 100)
+                if (currentPA + totalPA <= 100)
                 {
-                    if (TotalPA <= CurrentPAResources)
+                    if (totalPA <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += Math.Min(TotalPA, 100 - systemStatus.PirateActivity) * SpendFactor;
-                        CurrentPAResources -= Math.Min(TotalPA, 100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity);
+                        CurrentPAResources -= Math.Min(totalPA, 100 - systemStatus.PirateActivity);
                         i = 0;
-                        if (!WarStatusTracker.FullPirateSystems.Contains(systemStatus.name))
+                        if (!pirateSystemsContainsSystemStatus)
                         {
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
@@ -167,9 +171,9 @@ namespace GalaxyatWar
                     }
                     else
                     {
-                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
                         CurrentPAResources = 0;
-                        if (!WarStatusTracker.FullPirateSystems.Contains(systemStatus.name))
+                        if (!pirateSystemsContainsSystemStatus)
                         {
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
@@ -180,10 +184,10 @@ namespace GalaxyatWar
                 {
                     if (100 - systemStatus.PirateActivity <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += (100 - systemStatus.PirateActivity) * SpendFactor;
-                        CurrentPAResources -= (100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += (100 - systemStatus.PirateActivity);
+                        CurrentPAResources -= (100 - systemStatus.PirateActivity);
                         i++;
-                        if (!WarStatusTracker.FullPirateSystems.Contains(systemStatus.name))
+                        if (!pirateSystemsContainsSystemStatus)
                         {
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
@@ -191,9 +195,9 @@ namespace GalaxyatWar
                     }
                     else
                     {
-                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
                         CurrentPAResources = 0;
-                        if (!WarStatusTracker.FullPirateSystems.Contains(systemStatus.name))
+                        if (!pirateSystemsContainsSystemStatus)
                         {
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
