@@ -4,13 +4,14 @@ using System.Linq;
 using UnityEngine;
 using static GalaxyatWar.Globals;
 using static GalaxyatWar.Logger;
+
 // ReSharper disable ClassNeverInstantiated.Global
 
 namespace GalaxyatWar
 {
     public class Resource
     {
-                public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
+        public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
             var deathList = WarStatusTracker.DeathListTrackers.Find(x => x.faction == warFaction.faction);
@@ -29,15 +30,15 @@ namespace GalaxyatWar
             warFaction.AR_Against_Pirates = 0;
             if (Settings.AggressiveToggle && !Settings.DefensiveFactions.Contains(warFaction.faction))
                 attackResources += Sim.Constants.Finances.LeopardBaseMaintenanceCost;
-        
+
             attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Settings.AResourceAdjustmentPerCycle / 100);
-            attackResources += attackResources * (float)(Rng.Next(-1, 1) * Settings.ResourceSpread);
+            attackResources += attackResources * (float) (Rng.Next(-1, 1) * Settings.ResourceSpread);
             foreach (var rfact in tempTargets.Keys)
             {
                 warFar.Add(rfact, tempTargets[rfact] * attackResources / total);
             }
         }
-    
+
         public static void AllocateAttackResources(WarFaction warFaction)
         {
             var factionRep = Sim.GetRawReputation(FactionValues.Find(x => x.Name == warFaction.faction));
@@ -55,7 +56,7 @@ namespace GalaxyatWar
                 var startingTargetFar = targetFar;
                 var targets = warFaction.attackTargets[targetFaction];
                 var hatred = factionDlt.deathList[targetFaction];
-            
+
                 while (targetFar > 0)
                 {
                     if (targets.Count == 0)
@@ -77,7 +78,7 @@ namespace GalaxyatWar
                         Log("ERROR - No system found at AllocateAttackResources, aborting processing.");
                         return;
                     }
-                
+
                     if (system.owner == warFaction.faction || WarStatusTracker.FlashpointSystems.Contains(system.name))
                     {
                         targets.RemoveAt(rand);
@@ -94,6 +95,7 @@ namespace GalaxyatWar
                         {
                             system.CurrentlyAttackedBy.Add(warFaction.faction);
                         }
+
                         if (!WarStatusTracker.PrioritySystems.Contains(system.starSystem.Name))
                         {
                             WarStatusTracker.PrioritySystems.Add(system.starSystem.Name);
@@ -121,7 +123,7 @@ namespace GalaxyatWar
                         pMaxValue = maxValueList[1];
 
                     var itValue = system.influenceTracker[warFaction.faction];
-                    var basicAR = (float)(11 - system.DifficultyRating) / 2;
+                    var basicAR = (float) (11 - system.DifficultyRating) / 2;
 
                     var bonusAR = 0f;
                     if (itValue > pMaxValue)
@@ -144,7 +146,7 @@ namespace GalaxyatWar
             }
         }
 
-                public static void AllocateDefensiveResources(WarFaction warFaction, bool useFullSet)
+        public static void AllocateDefensiveResources(WarFaction warFaction, bool useFullSet)
         {
             if (warFaction.defenseTargets.Count == 0 || !WarStatusTracker.warFactionTracker.Contains(warFaction))
                 return;
@@ -160,8 +162,8 @@ namespace GalaxyatWar
             var defensiveCorrection = defensiveResources * (100 * Settings.GlobalDefenseFactor -
                                                             Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
 
-            defensiveResources = Math.Max(defensiveResources, defensiveCorrection); 
-            defensiveResources += defensiveResources * (float)(Rng.Next(-1,1) * (Settings.ResourceSpread));
+            defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
+            defensiveResources += defensiveResources * (float) (Rng.Next(-1, 1) * (Settings.ResourceSpread));
             var startingDefensiveResources = defensiveResources;
             var duplicateDefenseTargets = new List<string>(warFaction.defenseTargets);
 
@@ -210,6 +212,7 @@ namespace GalaxyatWar
                     {
                         break;
                     }
+
                     continue;
                 }
 
@@ -264,11 +267,11 @@ namespace GalaxyatWar
                         defensiveResources -= Math.Min(defensiveResources, 50);
                     }
                 }
+
                 //Log("After Defense");
                 //foreach (var foo in systemStatus.influenceTracker.Keys)
                 //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
             }
         }
-
     }
 }

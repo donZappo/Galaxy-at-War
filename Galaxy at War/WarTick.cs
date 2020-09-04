@@ -155,30 +155,19 @@ namespace GalaxyatWar
             }
 
             WarStatusTracker.InitializeAtStart = false;
-            //Attack!
-            //LogDebug("Attacking Fool");
-            T.Restart();
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);
                 AllocateAttackResources(warFaction);
             }
 
-            LogDebug("AllocateAttackResources " + T.Elapsed);
-
             CalculateDefensiveSystems();
-
-            T.Restart();
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
                 AllocateDefensiveResources(warFaction, useFullSet);
             }
 
-            LogDebug("AllocateDefensiveResources " + T.Elapsed);
-
-            T.Restart();
             UpdateInfluenceFromAttacks(checkForSystemChange);
-            LogDebug("UpdateInfluenceFromAttacks " + T.Elapsed);
 
             //Increase War Escalation or decay defenses.
             foreach (var warFaction in WarStatusTracker.warFactionTracker)

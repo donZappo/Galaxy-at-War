@@ -54,16 +54,18 @@ namespace GalaxyatWar
         private static void DeserializeWar()
         {
             LogDebug("DeserializeWar");
-            WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15));
-            LogDebug($">>> Deserialization complete (Size after load: {JsonConvert.SerializeObject(WarStatusTracker).Length / 1024}kb)");
+            var tag = Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15);
+            WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(tag);
+            LogDebug($">>> Deserialization complete (Size after load: {tag.Length / 1024}kb)");
         }
 
         [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
         public static class SimGameStateDehydratePatch
         {
-            public static void Prefix()
+            public static void Prefix(SimGameState __instance)
             {
                 LogDebug("Dehydrate");
+                Sim = __instance;
                 if (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return;
 
@@ -81,11 +83,11 @@ namespace GalaxyatWar
                 }
             }
 
-            public static void Postfix(SimGameState __instance)
+            public static void Postfix()
             {
                 if (Settings.CleanUpCompanyTag)
                 {
-                    __instance.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => __instance.CompanyTags.Remove(x));
+                    Sim.CompanyTags.Where(tag => tag.StartsWith("GalaxyAtWar")).Do(x => Sim.CompanyTags.Remove(x));
                 }
             }
         }
@@ -99,8 +101,9 @@ namespace GalaxyatWar
                 Sim.CompanyTags.Remove(Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWar")));
             }
 
-            Sim.CompanyTags.Add("GalaxyAtWarSave" + JsonConvert.SerializeObject(WarStatusTracker));
-            LogDebug($">>> Serialization complete (object size: {JsonConvert.SerializeObject(WarStatusTracker).Length / 1024}kb)");
+            var tag = "GalaxyAtWarSave" + JsonConvert.SerializeObject(WarStatusTracker);
+            Sim.CompanyTags.Add(tag);
+            LogDebug($">>> Serialization complete (object size: {tag.Length / 1024}kb)");
         }
 
         public static void RebuildState()
