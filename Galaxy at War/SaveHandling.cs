@@ -156,8 +156,8 @@ namespace GalaxyatWar
                     {
                         if (systemDef.SystemShopItems.Count != 0)
                         {
-                            var TempList = systemDef.SystemShopItems;
-                            TempList.Add(Settings.FactionShops[system.owner]);
+                            var tempList = systemDef.SystemShopItems;
+                            tempList.Add(Settings.FactionShops[system.owner]);
                             Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
                         }
 

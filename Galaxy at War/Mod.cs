@@ -43,33 +43,33 @@ namespace GalaxyatWar
                     return;
 
                 FactionEnemyHolder.Clear();
-                var NewEnemies = system.contractTargetIDs;
+                var newEnemies = system.contractTargetIDs;
                 FactionEnemyHolder = employer.Enemies.ToList();
-                var NewFactionEnemies = FactionEnemyHolder;
-                foreach (var Enemy in NewEnemies)
+                var newFactionEnemies = FactionEnemyHolder;
+                foreach (var Enemy in newEnemies)
                 {
-                    if (!NewFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.FactionValue.Name &&
+                    if (!newFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.FactionValue.Name &&
                         !Settings.ImmuneToWar.Contains(Enemy))
                     {
-                        NewFactionEnemies.Add(Enemy);
+                        newFactionEnemies.Add(Enemy);
                     }
                 }
 
                 foreach (var faction in Settings.DefensiveFactions)
                 {
-                    if (!NewFactionEnemies.Contains(faction) && faction != employer.FactionValue.Name)
+                    if (!newFactionEnemies.Contains(faction) && faction != employer.FactionValue.Name)
                     {
                         if (!Settings.ImmuneToWar.Contains(faction))
-                            NewFactionEnemies.Add(faction);
+                            newFactionEnemies.Add(faction);
                     }
                 }
 
                 if (Settings.GaW_PoliceSupport && system.OwnerValue.Name == WarStatusTracker.ComstarAlly && employer.Name != WarStatusTracker.ComstarAlly)
-                    NewFactionEnemies.Add(Settings.GaW_Police);
-                if (Settings.GaW_PoliceSupport && employer.Name == Settings.GaW_Police && NewFactionEnemies.Contains(WarStatusTracker.ComstarAlly))
-                    NewFactionEnemies.Remove(WarStatusTracker.ComstarAlly);
+                    newFactionEnemies.Add(Settings.GaW_Police);
+                if (Settings.GaW_PoliceSupport && employer.Name == Settings.GaW_Police && newFactionEnemies.Contains(WarStatusTracker.ComstarAlly))
+                    newFactionEnemies.Remove(WarStatusTracker.ComstarAlly);
 
-                Traverse.Create(employer).Property("Enemies").SetValue(NewFactionEnemies.ToArray());
+                Traverse.Create(employer).Property("Enemies").SetValue(newFactionEnemies.ToArray());
             }
 
             public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result)

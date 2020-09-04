@@ -94,8 +94,8 @@ namespace GalaxyatWar
                 warFaction.DefensiveResources += GetTotalDefensiveResources(system);
             }
 
-            var MaxAR = warFactionTracker.Select(x => x.AttackResources).Max();
-            var MaxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
+            var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
+            var maxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
 
             foreach (var faction in Settings.IncludedFactions)
             {
@@ -103,10 +103,10 @@ namespace GalaxyatWar
                 if (Settings.DefensiveFactions.Contains(faction) && Settings.DefendersUseARforDR)
                 {
                     if (!Settings.ISMCompatibility)
-                        warFaction.DefensiveResources = MaxAR + MaxDR + Settings.BonusAttackResources[faction] +
+                        warFaction.DefensiveResources = maxAR + maxDR + Settings.BonusAttackResources[faction] +
                                                         Settings.BonusDefensiveResources[faction];
                     else
-                        warFaction.DefensiveResources = MaxAR + MaxDR + Settings.BonusAttackResources_ISM[faction] +
+                        warFaction.DefensiveResources = maxAR + maxDR + Settings.BonusAttackResources_ISM[faction] +
                                                         Settings.BonusDefensiveResources_ISM[faction];
 
                     warFaction.AttackResources = 0;
@@ -115,21 +115,21 @@ namespace GalaxyatWar
                 {
                     if (!Settings.ISMCompatibility)
                     {
-                        warFaction.AttackResources = MaxAR + Settings.BonusAttackResources[faction];
-                        warFaction.DefensiveResources = MaxDR + Settings.BonusDefensiveResources[faction];
+                        warFaction.AttackResources = maxAR + Settings.BonusAttackResources[faction];
+                        warFaction.DefensiveResources = maxDR + Settings.BonusDefensiveResources[faction];
                     }
                     else
                     {
-                        warFaction.AttackResources = MaxAR + Settings.BonusAttackResources_ISM[faction];
-                        warFaction.DefensiveResources = MaxDR + Settings.BonusDefensiveResources_ISM[faction];
+                        warFaction.AttackResources = maxAR + Settings.BonusAttackResources_ISM[faction];
+                        warFaction.DefensiveResources = maxDR + Settings.BonusDefensiveResources_ISM[faction];
                     }
                 }
             }
 
             if (!Settings.ISMCompatibility)
-                PirateResources = MaxAR * Settings.FractionPirateResources + Settings.BonusPirateResources;
+                PirateResources = maxAR * Settings.FractionPirateResources + Settings.BonusPirateResources;
             else
-                PirateResources = MaxAR * Settings.FractionPirateResources_ISM + Settings.BonusPirateResources_ISM;
+                PirateResources = maxAR * Settings.FractionPirateResources_ISM + Settings.BonusPirateResources_ISM;
 
             MinimumPirateResources = PirateResources;
             StartingPirateResources = PirateResources;
