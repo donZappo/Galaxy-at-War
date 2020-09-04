@@ -1,8 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
-using BattleTech;
 using Harmony;
 using Newtonsoft.Json;
+using static GalaxyatWar.Globals;
+using static GalaxyatWar.Helpers;
+
+// ReSharper disable UnusedType.Global 
+// ReSharper disable UnusedMember.Global
 
 namespace GalaxyatWar
 {
@@ -13,22 +18,46 @@ namespace GalaxyatWar
             // read settings
             try
             {
-                Core.Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
-                Core.Settings.modDirectory = modDir;
+                Settings = JsonConvert.DeserializeObject<ModSettings>(settings);
+                Settings.modDirectory = modDir;
             }
             catch (Exception)
             {
-                Core.Settings = new ModSettings();
+                Settings = new ModSettings();
+            }
+
+            Logger.Clear();
+            Logger.LogDebug("GaW Starting up...");
+            
+            foreach (var value in Settings.GetType().GetFields())
+            {
+                var v = value.GetValue(Settings);
+                Logger.LogDebug($"{value.Name}: {v}");
+                if (v is List<string> list)
+                {
+                    foreach (var item in list)
+                    {
+                        Logger.LogDebug($"  {item}");
+                    }
+                }
+
+                if (v is Dictionary<object, object> dictionary)
+                {
+                    foreach (var kvp in dictionary)
+                    {
+                        Logger.LogDebug($"  {kvp.Key}\n  {kvp.Value}");
+                    }
+                }
             }
 
             var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
+            HarmonyInstance.DEBUG = true;
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-
+            HarmonyInstance.DEBUG = false;
 
             // blank the logfile
-            Logger.Clear();
-            
-            Core.CopySettingsToState();
+
+            CopySettingsToState();
         }
     }
 }
