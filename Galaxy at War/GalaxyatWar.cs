@@ -43,10 +43,8 @@ namespace GalaxyatWar
             }
 
             var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
-            HarmonyInstance.DEBUG = true;
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-            HarmonyInstance.DEBUG = false;
-
+           
             // blank the logfile
 
             CopySettingsToState();
