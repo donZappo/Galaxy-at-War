@@ -40,14 +40,6 @@ namespace GalaxyatWar
                         Logger.LogDebug($"  {item}");
                     }
                 }
-
-                if (v is Dictionary<object, object> dictionary)
-                {
-                    foreach (var kvp in dictionary)
-                    {
-                        Logger.LogDebug($"  {kvp.Key}\n  {kvp.Value}");
-                    }
-                }
             }
 
             var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
