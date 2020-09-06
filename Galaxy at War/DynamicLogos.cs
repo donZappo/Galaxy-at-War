@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using BattleTech;
-using Harmony;
 using UnityEngine;
-using Error = BestHTTP.SocketIO.Error;
+using static GalaxyatWar.Globals;
 
-namespace Galaxy_at_War
+namespace GalaxyatWar
 {
     public static class DynamicLogos
     {
@@ -14,9 +11,9 @@ namespace Galaxy_at_War
         {
             var boundingRects = new Dictionary<FactionValue, BoundingRect>();
             var logos = new Dictionary<FactionValue, GameObject>();
-            foreach (string faction in logoNames.Keys)
+            foreach (var faction in logoNames.Keys)
             {
-                logos.Add(Core.FactionValues.Find(x => x.Name == faction), GameObject.Find(logoNames[faction]));
+                logos.Add(FactionValues.Find(x => x.Name == faction), GameObject.Find(logoNames[faction]));
             }
             
             foreach (var starNode in renderer.starmap.VisisbleSystem)
@@ -72,7 +69,7 @@ namespace Galaxy_at_War
                 var width = topRight.x - bottomLeft.x;
                 var height = topRight.y - bottomLeft.y;
 
-                var scale = Mathf.Min(Mathf.Min(width, height) * Core.Settings.LogoScalar, Core.Settings.LogoMaxSize);
+                var scale = Mathf.Min(Mathf.Min(width, height) * Settings.LogoScalar, Settings.LogoMaxSize);
                 logo.transform.localScale = new Vector3(scale, scale);
             }
         }

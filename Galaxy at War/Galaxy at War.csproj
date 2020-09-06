@@ -24,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -90,18 +91,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdvanceToTask.cs" />
-    <Compile Include="Core.cs" />
+    <Compile Include="Globals.cs" />
+    <Compile Include="Helpers.cs" />
+    <Compile Include="Mod.cs" />
     <Compile Include="DynamicLogos.cs" />
     <Compile Include="GalaxyatWar.cs" />
     <Compile Include="Hotkeys.cs" />
     <Compile Include="HotSpots.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="ModSettings.cs" />
+    <Compile Include="OnDayPassed.cs" />
     <Compile Include="PiratesAndLocals.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resource.cs" />
     <Compile Include="SaveHandling.cs" />
     <Compile Include="StarmapMod.cs" />
     <Compile Include="WarStatus.cs" />
+    <Compile Include="WarTick.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\mod.json" />
