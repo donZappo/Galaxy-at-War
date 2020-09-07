@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static GalaxyatWar.Globals;
 using static GalaxyatWar.Helpers;
 using static GalaxyatWar.Resource;
 using static GalaxyatWar.Logger;
@@ -15,36 +14,36 @@ namespace GalaxyatWar
     {
         internal static void Tick(bool useFullSet, bool checkForSystemChange)
         {
-            WarStatusTracker.PrioritySystems.Clear();
-            var systemSubsetSize = WarStatusTracker.SystemStatuses.Count;
+            Globals.WarStatusTracker.PrioritySystems.Clear();
+            var systemSubsetSize = Globals.WarStatusTracker.SystemStatuses.Count;
             List<SystemStatus> systemStatuses;
-            
-            if (Settings.UseSubsetOfSystems && !useFullSet)
+
+            if (Globals.Settings.UseSubsetOfSystems && !useFullSet)
             {
-                systemSubsetSize = (int) (systemSubsetSize * Settings.SubSetFraction);
-                systemStatuses = WarStatusTracker.SystemStatuses
+                systemSubsetSize = (int) (systemSubsetSize * Globals.Settings.SubSetFraction);
+                systemStatuses = Globals.WarStatusTracker.SystemStatuses
                     .OrderBy(x => Guid.NewGuid()).Take(systemSubsetSize)
                     .ToList();
             }
             else
             {
-                systemStatuses = WarStatusTracker.SystemStatuses;
+                systemStatuses = Globals.WarStatusTracker.SystemStatuses;
             }
 
-            if (checkForSystemChange && Settings.GaW_PoliceSupport)
+            if (checkForSystemChange && Globals.Settings.GaW_PoliceSupport)
                 CalculateComstarSupport();
 
-            if (WarStatusTracker.InitializeAtStart)
+            if (Globals.WarStatusTracker.InitializeAtStart)
             {
                 var lowestAR = 5000f;
                 var lowestDr = 5000f;
-                foreach (var faction in WarStatusTracker.warFactionTracker.Where(x => IncludedFactions.Contains(x.faction)))
+                foreach (var faction in Globals.WarStatusTracker.warFactionTracker.Where(x => Globals.IncludedFactions.Contains(x.faction)))
                 {
-                    var systemCount = WarStatusTracker.SystemStatuses.Count(x => x.owner == faction.faction);
-                    if (!Settings.ISMCompatibility && systemCount != 0)
+                    var systemCount = Globals.WarStatusTracker.SystemStatuses.Count(x => x.owner == faction.faction);
+                    if (!Globals.Settings.ISMCompatibility && systemCount != 0)
                     {
-                        faction.AR_PerPlanet = (float) Settings.BonusAttackResources[faction.faction] / systemCount;
-                        faction.DR_PerPlanet = (float) Settings.BonusDefensiveResources[faction.faction] / systemCount;
+                        faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
+                        faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
                         if (faction.AR_PerPlanet < lowestAR)
                             lowestAR = faction.AR_PerPlanet;
                         if (faction.DR_PerPlanet < lowestDr)
@@ -52,8 +51,8 @@ namespace GalaxyatWar
                     }
                     else if (systemCount != 0)
                     {
-                        faction.AR_PerPlanet = (float) Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
-                        faction.DR_PerPlanet = (float) Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
+                        faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
+                        faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
                         if (faction.AR_PerPlanet < lowestAR)
                             lowestAR = faction.AR_PerPlanet;
                         if (faction.DR_PerPlanet < lowestDr)
@@ -61,7 +60,7 @@ namespace GalaxyatWar
                     }
                 }
 
-                foreach (var faction in WarStatusTracker.warFactionTracker.Where(x => IncludedFactions.Contains(x.faction)))
+                foreach (var faction in Globals.WarStatusTracker.warFactionTracker.Where(x => Globals.IncludedFactions.Contains(x.faction)))
                 {
                     faction.AR_PerPlanet = Mathf.Min(faction.AR_PerPlanet, 2 * lowestAR);
                     faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDr);
@@ -71,7 +70,7 @@ namespace GalaxyatWar
                 {
                     var systemStatus = systemStatuses[index];
                     //Spread out bonus resources and make them fair game for the taking.
-                    var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
+                    var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
                     systemStatus.AttackResources += warFaction.AR_PerPlanet;
                     systemStatus.TotalResources += warFaction.AR_PerPlanet;
                     systemStatus.DefenseResources += warFaction.DR_PerPlanet;
@@ -82,22 +81,22 @@ namespace GalaxyatWar
             //Distribute Pirate Influence throughout the StarSystems
             PiratesAndLocals.CorrectResources();
             PiratesAndLocals.PiratesStealResources();
-            PiratesAndLocals.CurrentPAResources = WarStatusTracker.PirateResources;
+            PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
             PiratesAndLocals.DistributePirateResources();
             PiratesAndLocals.DefendAgainstPirates();
 
-            if (checkForSystemChange && Settings.HyadesRimCompatible && WarStatusTracker.InactiveTHRFactions.Count != 0
-                && WarStatusTracker.HyadesRimGeneralPirateSystems.Count != 0)
+            if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
+                && Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Count != 0)
             {
-                var rand = Rng.Next(0, 100);
-                if (rand < WarStatusTracker.HyadesRimsSystemsTaken)
+                var rand = Globals.Rng.Next(0, 100);
+                if (rand < Globals.WarStatusTracker.HyadesRimsSystemsTaken)
                 {
-                    var hyadesSystem = WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                    var flipSystem = WarStatusTracker.SystemStatuses.Find(x => x.name == hyadesSystem).starSystem;
-                    var inactiveFaction = WarStatusTracker.InactiveTHRFactions.GetRandomElement();
+                    var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
+                    var flipSystem = Globals.WarStatusTracker.SystemStatuses.Find(x => x.name == hyadesSystem).starSystem;
+                    var inactiveFaction = Globals.WarStatusTracker.InactiveTHRFactions.GetRandomElement();
                     ChangeSystemOwnership(flipSystem, inactiveFaction, true);
-                    WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
-                    WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
+                    Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
+                    Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
                 }
             }
 
@@ -106,19 +105,19 @@ namespace GalaxyatWar
                 var systemStatus = systemStatuses[i];
                 systemStatus.PriorityAttack = false;
                 systemStatus.PriorityDefense = false;
-                if (WarStatusTracker.InitializeAtStart)
+                if (Globals.WarStatusTracker.InitializeAtStart)
                 {
-                    WarStatusTracker.InitializeAtStart = false;
+                    Globals.WarStatusTracker.InitializeAtStart = false;
                     systemStatus.CurrentlyAttackedBy.Clear();
                     CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                     RefreshContracts(systemStatus.starSystem);
                 }
 
-                if (systemStatus.Contended || WarStatusTracker.HotBox.Contains(systemStatus.name))
+                if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
                     continue;
 
                 if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") &&
-                    !WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                 {
                     systemStatus.influenceTracker["Locals"] *= 1.1f;
                 }
@@ -128,10 +127,10 @@ namespace GalaxyatWar
                 {
                     foreach (var neighbor in systemStatus.neighborSystems.Keys)
                     {
-                        if (!Settings.ImmuneToWar.Contains(neighbor) && !Settings.DefensiveFactions.Contains(neighbor) &&
-                            !WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                        if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
+                            !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
-                            var pushFactor = Settings.APRPush * Rng.Next(1, Settings.APRPushRandomizer + 1);
+                            var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
                             systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
                         }
                     }
@@ -141,33 +140,33 @@ namespace GalaxyatWar
                 if (systemStatus.owner != systemStatus.OriginalOwner)
                     systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
 
-                var pirateSystemFlagValue = Settings.PirateSystemFlagValue;
+                var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
 
-                if (Settings.ISMCompatibility)
-                    pirateSystemFlagValue = Settings.PirateSystemFlagValue_ISM;
+                if (Globals.Settings.ISMCompatibility)
+                    pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
                 var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
 
                 if (totalPirates >= pirateSystemFlagValue)
                 {
-                    if (!WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                        WarStatusTracker.PirateHighlight.Add(systemStatus.name);
+                    if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
+                        Globals.WarStatusTracker.PirateHighlight.Add(systemStatus.name);
                 }
                 else
                 {
-                    if (WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                        WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
+                    if (Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
+                        Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
                 }
             }
 
-            foreach (var warFaction in WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);
                 AllocateAttackResources(warFaction);
             }
 
             CalculateDefensiveSystems();
-            foreach (var warFaction in WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 AllocateDefensiveResources(warFaction, useFullSet);
             }
@@ -175,7 +174,7 @@ namespace GalaxyatWar
             UpdateInfluenceFromAttacks(checkForSystemChange);
 
             //Increase War Escalation or decay defenses.
-            foreach (var warFaction in WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 if (!warFaction.GainedSystem)
                     warFaction.DaysSinceSystemAttacked += 1;
@@ -194,15 +193,15 @@ namespace GalaxyatWar
                 }
             }
 
-            foreach (var system in WarStatusTracker.SystemStatuses.Where(x => WarStatusTracker.SystemChangedOwners.Contains(x.name)))
+            foreach (var system in Globals.WarStatusTracker.SystemStatuses.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.starSystem);
                 RefreshContracts(system.starSystem);
             }
 
-            LogDebug("Changed " + WarStatusTracker.SystemChangedOwners.Count);
-            WarStatusTracker.SystemChangedOwners.Clear();
+            LogDebug("Changed " + Globals.WarStatusTracker.SystemChangedOwners.Count);
+            Globals.WarStatusTracker.SystemChangedOwners.Clear();
             if (StarmapMod.eventPanel != null)
             {
                 StarmapMod.UpdatePanelText();
@@ -212,13 +211,13 @@ namespace GalaxyatWar
             //Log("TESTING ZONE");
             //Log("===================================================");
             //////TESTING ZONE
-            //foreach (WarFaction WF in WarStatusTracker.warFactionTracker)
+            //foreach (WarFaction WF in Globals.WarStatusTracker.warFactionTracker)
             //{
             //    Log("----------------------------------------------");
             //    Log(WF.faction.ToString());
             //    try
             //    {
-            //        var DLT = WarStatusTracker.DeathListTrackers.Find(x => x.faction == WF.faction);
+            //        var DLT = Globals.WarStatusTracker.DeathListTrackers.Find(x => x.faction == WF.faction);
             //        //                Log("\tAttacked By :");
             //        //                foreach (Faction fac in DLT.AttackedBy)
             //        //                    Log("\t\t" + fac.ToString());

@@ -7,7 +7,6 @@ using Harmony;
 using Newtonsoft.Json;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
-
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InconsistentNaming
@@ -20,41 +19,60 @@ namespace GalaxyatWar
         [HarmonyPatch(typeof(Starmap), "PopulateMap", typeof(SimGameState))]
         public class StarmapPopulateMapPatch
         {
-            private const int EmptySaveLength = 20_000;
-
             private static void Postfix(Starmap __instance)
             {
-                LogDebug("Rehydrate");
+                LogDebug("PopulateMap");
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
+
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                 {
-                    LogDebug("Aborting GaW loading");
+                    LogDebug("Aborting GaW loading.");
+                    return;
+                }
+
+                if (Globals.Settings.ResetMap)
+                {
+                    LogDebug("Resetting map due to settings.");
+                    Spawn();
                     return;
                 }
 
                 // is there a tag?  is it not just an empty broken shell?
                 var gawTag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"));
-                if (!string.IsNullOrEmpty(gawTag) &&
-                    gawTag.Length > EmptySaveLength)
+                if (!string.IsNullOrEmpty(gawTag))
                 {
                     DeserializeWar();
-                    RebuildState();
+                    if (Globals.WarStatusTracker.SystemStatuses.Count == 0)
+                    {
+                        LogDebug("Broken save being respawned.");
+                        Spawn();
+                    }
+                    else
+                    {
+                        RebuildState();
+                    }
                 }
                 else
                 {
-                    LogDebug("Spawning new instance");
-                    Globals.WarStatusTracker = new WarStatus();
-                    if (!Globals.WarStatusTracker.StartGameInitialized)
-                    {
-                        var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                        Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                        Globals.WarStatusTracker.StartGameInitialized = true;
-                    }
-
-                    SystemDifficulty();
-                    WarTick.Tick(true, true);
+                    Spawn();
                 }
+            }
+
+            private static void Spawn()
+            {
+                LogDebug("Spawning new instance");
+                Globals.WarStatusTracker = new WarStatus();
+                if (!Globals.WarStatusTracker.StartGameInitialized)
+                {
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    Globals.WarStatusTracker.StartGameInitialized = true;
+                }
+
+                SystemDifficulty();
+                Globals.WarStatusTracker.InitializeAtStart = true;
+                WarTick.Tick(true, true);
             }
         }
 
@@ -250,7 +268,7 @@ namespace GalaxyatWar
             foreach (var system in HotSpots.FullHomeContendedSystems)
                 Globals.WarStatusTracker.FullHomeContendedSystems.Add(system.Key.Def.CoreSystemID, system.Value);
             foreach (var system in HotSpots.HomeContendedSystems)
-                Globals. WarStatusTracker.HomeContendedSystems.Add(system.Def.CoreSystemID);
+                Globals.WarStatusTracker.HomeContendedSystems.Add(system.Def.CoreSystemID);
         }
     }
 }

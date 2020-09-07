@@ -22,24 +22,6 @@ namespace GalaxyatWar
                 if (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                LogDebug(WarStatusTracker == null ? "WarStatusTracker null" : "WarStatusTracker not null");
-                LogDebug("BorkedSave? " + BorkedSave);
-                LogDebug("Settings.ResetMap? " + Settings.ResetMap);
-                if (WarStatusTracker == null || BorkedSave || Settings.ResetMap)
-                {
-                    LogDebug("Resetting");
-                    WarStatusTracker = new WarStatus();
-                    SystemDifficulty();
-                    WarTick.Tick(true, true);
-                    //BorkedSave = false;
-                    //
-                    //GameInstance game = LazySingletonBehavior<UnityGameInstance>.Instance.Game;
-                    //SimGameInterruptManager interruptQueue = (SimGameInterruptManager)AccessTools
-                    //    .Field(typeof(SimGameState), "interruptQueue").GetValue(game.Simulation);
-                    //interruptQueue.QueueGenericPopup_NonImmediate("Borked Save", "Commander, the entire Galaxy is borked! Save the game, exit to desktop, turn ResetMap to false  in the mod.json (if necessary), and load 'er back up!", true, null);
-                    //Sim.StopPlayMode();
-                }
-
                 WarStatusTracker.CurSystem = Sim.CurSystem.Name;
                 if (WarStatusTracker.HotBox.Contains(Sim.CurSystem.Name) && !WarStatusTracker.HotBoxTravelling)
                 {
