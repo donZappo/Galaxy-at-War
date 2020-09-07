@@ -14,7 +14,6 @@ using UnityEngine.UI;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Globals;
 // ReSharper disable StringLiteralTypo
-
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ClassNeverInstantiated.Global    
 // ReSharper disable UnusedType.Global
@@ -341,25 +340,6 @@ namespace GalaxyatWar
                 catch (Exception ex)
                 {
                     LogDebug(ex.ToString());
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(StarmapScreen), "RefreshStarmap")]
-        public static class StarmapScreenRefreshStarmapPatch
-        {
-            public static void Prefix()
-            {
-                if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
-                    return;
-
-                if (WarStatusTracker != null && !WarStatusTracker.StartGameInitialized)
-                {
-                    NeedsProcessing = true;
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                    WarStatusTracker.StartGameInitialized = true;
-                    NeedsProcessing = false;
                 }
             }
         }

@@ -108,6 +108,7 @@ namespace GalaxyatWar
                 systemStatus.PriorityDefense = false;
                 if (WarStatusTracker.InitializeAtStart)
                 {
+                    WarStatusTracker.InitializeAtStart = false;
                     systemStatus.CurrentlyAttackedBy.Clear();
                     CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                     RefreshContracts(systemStatus.starSystem);
@@ -159,7 +160,6 @@ namespace GalaxyatWar
                 }
             }
 
-            WarStatusTracker.InitializeAtStart = false;
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);

@@ -38,7 +38,7 @@ namespace GalaxyatWar
         public string DeploymentEmployer = "Marik";
         public double DeploymentInfluenceIncrease = 1.0;
         public bool PirateDeployment = false;
-    
+
         public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
         public List<string> HomeContendedSystems = new List<string>();
         public Dictionary<string, List<string>> ExternalPriorityTargets = new Dictionary<string, List<string>>();
@@ -50,7 +50,7 @@ namespace GalaxyatWar
         public float StartingPirateResources;
         public float LastPRGain;
         public List<string> HyadesRimGeneralPirateSystems = new List<string>();
-        public int HyadesRimsSystemsTaken = 0;                                                                                                   
+        public int HyadesRimsSystemsTaken = 0;
         public List<string> InactiveTHRFactions = new List<string>();
         public List<string> FlashpointSystems = new List<string>();
         public List<string> NeverControl = new List<string>();
@@ -59,7 +59,7 @@ namespace GalaxyatWar
 
         public WarStatus()
         {
-            Logger.LogDebug("WarStatus Ctor");
+            Logger.LogDebug("WarStatus ctor");
             if (Settings.ISMCompatibility)
                 Settings.IncludedFactions = new List<string>(Settings.IncludedFactions_ISM);
 
@@ -73,7 +73,7 @@ namespace GalaxyatWar
                 FlashpointSystems = Settings.HyadesFlashpointSystems;
                 NeverControl = Settings.HyadesNeverControl;
             }
-        
+
             //initialize all WarFactions, DeathListTrackers, and SystemStatuses
             foreach (var faction in Settings.IncludedFactions)
             {
@@ -180,7 +180,14 @@ namespace GalaxyatWar
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
-        internal StarSystem starSystem => Sim.StarSystems.Find(s => s.Name == name);
+        private static StarSystem starSystemBackingField;
+
+        internal StarSystem starSystem
+        {
+            get => starSystemBackingField ?? Sim.StarSystems.Find(s => s.Name == name);
+            private set => starSystemBackingField = value;
+        }
+        //internal StarSystem starSystem => UnityGameInstance.BattleTechGame.Simulation.StarSystems.Find(s => s.Name == name);
 
         [JsonConstructor]
         public SystemStatus()
@@ -193,6 +200,7 @@ namespace GalaxyatWar
             //  LogDebug("SystemStatus ctor");
             name = system.Name;
             owner = faction;
+            starSystem = system;
             // warFaction = Mod.SystemStatus.warFactionTracker.Find(x => x.faction == owner);
             AttackResources = GetTotalAttackResources(starSystem);
             DefenseResources = GetTotalDefensiveResources(starSystem);
@@ -268,6 +276,7 @@ namespace GalaxyatWar
                         }
                     }
                 }
+
                 foreach (var faction in IncludedFactions)
                 {
                     if (!influenceTracker.Keys.Contains(faction))
@@ -281,6 +290,7 @@ namespace GalaxyatWar
                 {
                     tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
                 }
+
                 influenceTracker = tempDict;
             }
             else
@@ -299,6 +309,7 @@ namespace GalaxyatWar
                         if (!influenceTracker.Keys.Contains(pirateFaction))
                             influenceTracker.Add(pirateFaction, Settings.MinorInfluencePool);
                     }
+
                     foreach (var pirateFaction in starSystem.Def.ContractTargetIDList)
                     {
                         if (Settings.HyadesNeverControl.Contains(pirateFaction))
@@ -336,6 +347,7 @@ namespace GalaxyatWar
                         }
                     }
                 }
+
                 foreach (var faction in IncludedFactions)
                 {
                     if (!influenceTracker.Keys.Contains(faction))
@@ -349,6 +361,7 @@ namespace GalaxyatWar
                 {
                     tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
                 }
+
                 influenceTracker = tempDict;
             }
         }
@@ -371,6 +384,7 @@ namespace GalaxyatWar
                     continue;
                 ContractTargets.Add(EF);
             }
+
             if (!ContractTargets.Contains(owner))
                 ContractTargets.Add(owner);
 
@@ -390,7 +404,7 @@ namespace GalaxyatWar
         {
             if (!(obj is StarSystem other))
                 return 1;
-        
+
             if (starSystem.Name.ToLower()[0] == other.Name.ToLower()[0])
             {
                 return 0;
@@ -431,10 +445,7 @@ namespace GalaxyatWar
 
         public int NumberOfSystems
         {
-            get
-            {
-                return Sim.StarSystems.Count(system => system.OwnerDef == Sim.factions[faction]);
-            }
+            get { return Sim.StarSystems.Count(system => system.OwnerDef == Sim.factions[faction]); }
         }
 
         public Dictionary<string, float> warFactionAttackResources = new Dictionary<string, float>();
@@ -474,7 +485,7 @@ namespace GalaxyatWar
         public Dictionary<string, float> deathList = new Dictionary<string, float>();
         public List<string> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
         public List<string> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
-    
+
         [JsonConstructor]
         public DeathListTracker()
         {
