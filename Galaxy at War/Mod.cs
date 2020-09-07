@@ -343,10 +343,8 @@ namespace GalaxyatWar
 
                             if (!HasFlashpoint)
                             {
-                                NeedsProcessing = true;
                                 var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                                 __instance.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                                NeedsProcessing = false;
                             }
 
                             __instance.StopPlayMode();

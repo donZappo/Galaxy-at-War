@@ -47,11 +47,9 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker = new WarStatus();
                     if (!Globals.WarStatusTracker.StartGameInitialized)
                     {
-                        Globals.NeedsProcessing = true;
                         var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                         Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                         Globals.WarStatusTracker.StartGameInitialized = true;
-                        Globals.NeedsProcessing = false;
                     }
 
                     SystemDifficulty();

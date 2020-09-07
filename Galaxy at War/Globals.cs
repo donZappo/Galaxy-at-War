@@ -20,7 +20,6 @@ namespace GalaxyatWar
         public static MissionResult MissionResult;
         public static List<string> FactionEnemyHolder = new List<string>();
         public static string ContractType;
-        public static bool NeedsProcessing;
         public static bool BorkedSave;
         public static bool IsFlashpointContract;
         public static bool HoldContracts = false;

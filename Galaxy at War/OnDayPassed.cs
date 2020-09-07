@@ -98,11 +98,9 @@ namespace GalaxyatWar
 
                 if (!WarStatusTracker.StartGameInitialized)
                 {
-                    NeedsProcessing = true;
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     WarStatusTracker.StartGameInitialized = true;
-                    NeedsProcessing = false;
                 }
             }
 
@@ -156,10 +154,8 @@ namespace GalaxyatWar
                         var hasFlashPoint = Sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
                         if (!WarStatusTracker.HotBoxTravelling && !WarStatusTracker.HotBox.Contains(Sim.CurSystem.Name) && !hasFlashPoint)
                         {
-                            NeedsProcessing = true;
                             var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                             Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                            NeedsProcessing = false;
                         }
                     }
 
