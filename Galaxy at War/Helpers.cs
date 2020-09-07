@@ -14,6 +14,12 @@ namespace GalaxyatWar
 {
     public class Helpers
     {
+        private static readonly AccessTools.FieldRef<StarSystemDef, List<int>> DifficultyListRef =
+            AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList");
+
+        private static readonly AccessTools.FieldRef<StarSystemDef, int> DefaultDifficultyRef =
+            AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty");
+
         internal static void CopySettingsToState()
         {
             if (Settings.ISMCompatibility)
@@ -32,92 +38,99 @@ namespace GalaxyatWar
 
             foreach (var systemStatus in WarStatusTracker.SystemStatuses.OrderBy(x => x.TotalResources))
             {
-                var system = Sim.StarSystems.Find(x => x == systemStatus.starSystem);
-                //Define the original owner of the system for revolt purposes.
-                if (systemStatus.OriginalOwner == null)
-                    systemStatus.OriginalOwner = systemStatus.owner;
-
-                if (Settings.ChangeDifficulty && !system.Tags.Contains("planet_start_world"))
+                try
                 {
-                    Sim.Constants.Story.ContractDifficultyMod = 0;
-                    Sim.CompanyStats.Set<float>("Difficulty", 0);
-                    if (i <= difficultyCutoff)
+                    var system = Sim.StarSystems.Find(x => x == systemStatus.starSystem);
+                    //Define the original owner of the system for revolt purposes.
+                    if (systemStatus.OriginalOwner == null)
+                        systemStatus.OriginalOwner = systemStatus.owner;
+
+                    if (Settings.ChangeDifficulty && !system.Tags.Contains("planet_start_world"))
                     {
-                        systemStatus.DifficultyRating = 1;
+                        Sim.Constants.Story.ContractDifficultyMod = 0;
+                        Sim.CompanyStats.Set<float>("Difficulty", 0);
+                        if (i <= difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 1;
+                        }
+
+                        if (i <= difficultyCutoff * 2 && i > difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 2;
+                        }
+
+                        if (i <= difficultyCutoff * 3 && i > 2 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 3;
+                        }
+
+                        if (i <= difficultyCutoff * 4 && i > 3 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 4;
+                        }
+
+                        if (i <= difficultyCutoff * 5 && i > 4 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 5;
+                        }
+
+                        if (i <= difficultyCutoff * 6 && i > 5 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 6;
+                        }
+
+                        if (i <= difficultyCutoff * 7 && i > 6 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 7;
+                        }
+
+                        if (i <= difficultyCutoff * 8 && i > 7 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 8;
+                        }
+
+                        if (i <= difficultyCutoff * 9 && i > 8 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 9;
+                        }
+
+                        if (i > 9 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 10;
+                        }
+
+                        i++;
+
+                        var amount = systemStatus.DifficultyRating;
+                        var difficultyList = new List<int> {amount, amount};
+                        DifficultyListRef(system.Def) = difficultyList;
+                        DefaultDifficultyRef(system.Def) = amount;
+                    }
+                    else
+                    {
+                        systemStatus.DifficultyRating = system.Def.DefaultDifficulty;
+                        i++;
                     }
 
-                    if (i <= difficultyCutoff * 2 && i > difficultyCutoff)
+                    if (system.Def.OwnerValue.Name != "NoFaction" && system.Def.SystemShopItems.Count == 0)
                     {
-                        systemStatus.DifficultyRating = 2;
+                        LogDebug("SystemDifficulty fix entry " + T.Elapsed);
+                        var tempList = new List<string>
+                        {
+                            "itemCollection_minor_Locals"
+                        };
+                        Traverse.Create(system.Def).Property("SystemShopItems").SetValue(tempList);
+                        if (Sim.CurSystem.Name == system.Def.Description.Name)
+                        {
+                            var refreshShop = Shop.RefreshType.RefreshIfEmpty;
+                            system.SystemShop.Rehydrate(Sim, system, system.Def.SystemShopItems, refreshShop,
+                                Shop.ShopType.System);
+                        }
                     }
-
-                    if (i <= difficultyCutoff * 3 && i > 2 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 3;
-                    }
-
-                    if (i <= difficultyCutoff * 4 && i > 3 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 4;
-                    }
-
-                    if (i <= difficultyCutoff * 5 && i > 4 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 5;
-                    }
-
-                    if (i <= difficultyCutoff * 6 && i > 5 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 6;
-                    }
-
-                    if (i <= difficultyCutoff * 7 && i > 6 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 7;
-                    }
-
-                    if (i <= difficultyCutoff * 8 && i > 7 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 8;
-                    }
-
-                    if (i <= difficultyCutoff * 9 && i > 8 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 9;
-                    }
-
-                    if (i > 9 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 10;
-                    }
-
-                    i++;
-
-                    var amount = systemStatus.DifficultyRating;
-                    var difficultyList = new List<int> {amount, amount};
-                    AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList")(system.Def) = difficultyList;
-                    AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty")(system.Def) = amount;
                 }
-                else
+                catch (Exception ex)
                 {
-                    systemStatus.DifficultyRating = system.Def.DefaultDifficulty;
-                    i++;
-                }
-
-                if (system.Def.OwnerValue.Name != "NoFaction" && system.Def.SystemShopItems.Count == 0)
-                {
-                    LogDebug("SystemDifficulty fix entry " + T.Elapsed);
-                    var tempList = new List<string>
-                    {
-                        "itemCollection_minor_Locals"
-                    };
-                    Traverse.Create(system.Def).Property("SystemShopItems").SetValue(tempList);
-                    if (Sim.CurSystem.Name == system.Def.Description.Name)
-                    {
-                        var refreshShop = Shop.RefreshType.RefreshIfEmpty;
-                        system.SystemShop.Rehydrate(Sim, system, system.Def.SystemShopItems, refreshShop,
-                            Shop.ShopType.System);
-                    }
+                    Error(ex);
                 }
             }
         }
@@ -227,12 +240,14 @@ namespace GalaxyatWar
 
                     if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                     {
+                        // todo should this be = new List<string> (warFac.attackTargets[neighborSystem.OwnerValue.Name]); tempList.Add(neighbourSystem.OwnerValue.Name, tempList);  ?
                         var tempList = new List<string> {neighborSystem.Name};
                         warFac.attackTargets.Add(neighborSystem.OwnerValue.Name, tempList);
                     }
                     else if (warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name)
                              && !warFac.attackTargets[neighborSystem.OwnerValue.Name].Contains(neighborSystem.Name))
                     {
+                        // bug should Locals be here?
                         warFac.attackTargets[neighborSystem.OwnerValue.Name].Add(neighborSystem.Name);
                     }
 

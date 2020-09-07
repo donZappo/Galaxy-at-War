@@ -51,6 +51,7 @@ namespace GalaxyatWar
                     else
                     {
                         RebuildState();
+                        Globals.WarStatusTracker.FirstTickInitialization = true;
                     }
                 }
                 else
@@ -71,7 +72,7 @@ namespace GalaxyatWar
                 }
 
                 SystemDifficulty();
-                Globals.WarStatusTracker.InitializeAtStart = true;
+                Globals.WarStatusTracker.FirstTickInitialization = true;
                 WarTick.Tick(true, true);
             }
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Helpers;
 using static GalaxyatWar.Resource;
@@ -33,7 +34,7 @@ namespace GalaxyatWar
             if (checkForSystemChange && Globals.Settings.GaW_PoliceSupport)
                 CalculateComstarSupport();
 
-            if (Globals.WarStatusTracker.InitializeAtStart)
+            if (Globals.WarStatusTracker.FirstTickInitialization)
             {
                 var lowestAR = 5000f;
                 var lowestDr = 5000f;
@@ -105,9 +106,8 @@ namespace GalaxyatWar
                 var systemStatus = systemStatuses[i];
                 systemStatus.PriorityAttack = false;
                 systemStatus.PriorityDefense = false;
-                if (Globals.WarStatusTracker.InitializeAtStart)
+                if (Globals.WarStatusTracker.FirstTickInitialization)
                 {
-                    Globals.WarStatusTracker.InitializeAtStart = false;
                     systemStatus.CurrentlyAttackedBy.Clear();
                     CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                     RefreshContracts(systemStatus.starSystem);
@@ -158,7 +158,8 @@ namespace GalaxyatWar
                         Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
                 }
             }
-
+            
+            Globals.WarStatusTracker.FirstTickInitialization = false;
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);
@@ -201,6 +202,8 @@ namespace GalaxyatWar
             }
 
             LogDebug("Changed " + Globals.WarStatusTracker.SystemChangedOwners.Count);
+            Globals.WarStatusTracker.SystemChangedOwners.Do(x =>
+                LogDebug($"  {x}"));
             Globals.WarStatusTracker.SystemChangedOwners.Clear();
             if (StarmapMod.eventPanel != null)
             {

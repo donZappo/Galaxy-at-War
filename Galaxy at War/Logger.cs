@@ -14,10 +14,6 @@ namespace GalaxyatWar
             using (var writer = new StreamWriter(LogFilePath, true))
             {
                 writer.WriteLine($"{ex}");
-                writer.WriteLine($"Message: {ex.Message}");
-                writer.WriteLine($"StackTrace: {ex.StackTrace}");
-                writer.WriteLine($"Source: {ex.Source}");
-                writer.WriteLine($"Data: {ex.Data}");
             }
         }
 
