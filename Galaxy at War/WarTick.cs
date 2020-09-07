@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BattleTech;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Helpers;
@@ -201,13 +202,16 @@ namespace GalaxyatWar
                 RefreshContracts(system.starSystem);
             }
 
-            LogDebug("Changed " + Globals.WarStatusTracker.SystemChangedOwners.Count);
-            Globals.WarStatusTracker.SystemChangedOwners.Do(x =>
-                LogDebug($"  {x}"));
-            Globals.WarStatusTracker.SystemChangedOwners.Clear();
-            if (StarmapMod.eventPanel != null)
+            if (Globals.WarStatusTracker.SystemChangedOwners.Count > 0)
             {
-                StarmapMod.UpdatePanelText();
+                LogDebug($"Changed on {Globals.Sim.CurrentDate}: {Globals.WarStatusTracker.SystemChangedOwners.Count} systems:");
+                Globals.WarStatusTracker.SystemChangedOwners.OrderBy(x => x).Do(x =>
+                    LogDebug($"  {x}"));
+                Globals.WarStatusTracker.SystemChangedOwners.Clear();
+                if (StarmapMod.eventPanel != null)
+                {
+                    StarmapMod.UpdatePanelText();
+                }
             }
 
             //Log("===================================================");

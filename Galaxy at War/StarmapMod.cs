@@ -187,7 +187,7 @@ namespace GalaxyatWar
 
             sb.AppendLine("</line-height>");
             sb.AppendLine();
-            LogDebug("RelationString");
+            LogDebug("BuildRelationString");
         
             // bug? in TMPro shits the bed on a long string with underlines
             if (AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap")))

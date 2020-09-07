@@ -26,7 +26,7 @@ namespace GalaxyatWar
         public string CurSystem;
         public bool HotBoxTravelling;
         public bool StartGameInitialized = false;
-        public bool InitializeAtStart = true;
+        public bool FirstTickInitialization = true;
         public List<string> SystemChangedOwners = new List<string>();
         public List<string> HotBox = new List<string>();
         public List<string> LostSystems = new List<string>();

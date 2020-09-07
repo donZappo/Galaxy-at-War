@@ -505,7 +505,7 @@ namespace GalaxyatWar
             if (checkForSystemChange)
                 WarStatusTracker.LostSystems.Clear();
 
-            LogDebug($"Updating influence for {WarStatusTracker.SystemStatuses.Count.ToString()} systems");
+            //LogDebug($"Updating influence for {WarStatusTracker.SystemStatuses.Count.ToString()} systems");
             foreach (var systemStatus in WarStatusTracker.SystemStatuses)
             {
                 var tempDict = new Dictionary<string, float>();
