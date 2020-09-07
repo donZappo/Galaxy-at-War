@@ -431,33 +431,54 @@ namespace GalaxyatWar
             if (WarStatusTracker.DeathListTrackers.Find(x => x.faction == oldFaction) == null)
                 return;
 
-            var factionTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == oldFaction);
-            if (factionTracker.deathList[faction] < 50)
-                factionTracker.deathList[faction] = 50;
-
-            factionTracker.deathList[faction] += killListDelta;
-            //Allies are upset that their friend is being beaten up.
-            if (!Settings.DefensiveFactions.Contains(oldFaction))
+            try
             {
-                foreach (var ally in Sim.GetFactionDef(oldFaction).Allies)
+                var factionTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == oldFaction);
+                if (factionTracker.deathList.ContainsKey(faction))
                 {
-                    if (!IncludedFactions.Contains(ally) || faction == ally || WarStatusTracker.DeathListTrackers.Find(x => x.faction == ally) == null)
-                        continue;
-                    var factionAlly = WarStatusTracker.DeathListTrackers.Find(x => x.faction == ally);
-                    factionAlly.deathList[faction] += killListDelta / 2;
+                    if (factionTracker.deathList[faction] < 50)
+                        factionTracker.deathList[faction] = 50;
+
+                    factionTracker.deathList[faction] += killListDelta;
+                }
+                else
+                {
+                    LogDebug($"factionTracker missing faction {faction}, ignoring.");
                 }
             }
-
-            //Enemies of the target faction are happy with the faction doing the beating.
-            if (!Settings.DefensiveFactions.Contains(oldFaction))
+            catch (Exception ex)
             {
-                foreach (var enemy in Sim.GetFactionDef(oldFaction).Enemies)
+                LogDebug("factionTracker.deathList[faction]: " + faction);
+                //Error(ex);
+            }
+
+            try
+            {
+                //Allies are upset that their friend is being beaten up.
+                if (!Settings.DefensiveFactions.Contains(oldFaction))
                 {
-                    if (!IncludedFactions.Contains(enemy) || enemy == faction || WarStatusTracker.DeathListTrackers.Find(x => x.faction == enemy) == null)
-                        continue;
-                    var factionEnemy = WarStatusTracker.DeathListTrackers.Find(x => x.faction == enemy);
-                    factionEnemy.deathList[faction] -= killListDelta / 2;
+                    foreach (var ally in Sim.GetFactionDef(oldFaction).Allies)
+                    {
+                        if (!IncludedFactions.Contains(ally) || faction == ally || WarStatusTracker.DeathListTrackers.Find(x => x.faction == ally) == null)
+                            continue;
+                        var factionAlly = WarStatusTracker.DeathListTrackers.Find(x => x.faction == ally);
+                        factionAlly.deathList[faction] += killListDelta / 2;
+                    }
+
+                    //Enemies of the target faction are happy with the faction doing the beating. 
+                    foreach (var enemy in Sim.GetFactionDef(oldFaction).Enemies)
+                    {
+                        if (!IncludedFactions.Contains(enemy) || enemy == faction || WarStatusTracker.DeathListTrackers.Find(x => x.faction == enemy) == null)
+                            continue;
+                        var factionEnemy = WarStatusTracker.DeathListTrackers.Find(x => x.faction == enemy);
+                        factionEnemy.deathList[faction] -= killListDelta / 2;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                LogDebug("factionEnemy/Ally.deathList[faction]");
+                Error(ex);
             }
         }
 
@@ -798,49 +819,49 @@ namespace GalaxyatWar
 
         public static void AdjustDeathList(DeathListTracker deathListTracker, bool reloadFromSave)
         {
-            var deathList = deathListTracker.deathList;
-            var deathListFaction = deathListTracker.faction;
-            var factionDef = Sim.GetFactionDef(deathListFaction);
-            var enemies = new List<string>(factionDef.Enemies);
-            var allies = new List<string>(factionDef.Allies);
+            var trackerDeathList = deathListTracker.deathList;
+            var trackerFaction = deathListTracker.faction;
+            var trackerFactionDef = Sim.GetFactionDef(trackerFaction);
+            var trackerFactionEnemies = new List<string>(trackerFactionDef.Enemies);
+            var trackerFactionAllies = new List<string>(trackerFactionDef.Allies);
 
-            if (WarStatusTracker.InactiveTHRFactions.Contains(deathListFaction) || WarStatusTracker.NeverControl.Contains(deathListFaction))
+            if (WarStatusTracker.InactiveTHRFactions.Contains(trackerFaction) || WarStatusTracker.NeverControl.Contains(trackerFaction))
                 return;
 
             //Check to see if it is an ally or enemy of itself and remove it if so.
-            if (deathList.ContainsKey(deathListTracker.faction))
+            if (trackerDeathList.ContainsKey(trackerFaction))
             {
-                deathList.Remove(deathListTracker.faction);
-                if (allies.Contains(deathListTracker.faction))
+                trackerDeathList.Remove(trackerFaction);
+                if (trackerFactionAllies.Contains(trackerFaction))
                 {
-                    allies.Remove(deathListTracker.faction);
-                    Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
+                    trackerFactionAllies.Remove(trackerFaction);
+                    Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                 }
 
-                if (enemies.Contains(deathListTracker.faction))
+                if (trackerFactionEnemies.Contains(trackerFaction))
                 {
-                    enemies.Remove(deathListTracker.faction);
-                    Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
+                    trackerFactionEnemies.Remove(trackerFaction);
+                    Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
                 }
             }
 
-            var klList = new List<string>(deathList.Keys);
+            var deathListOffensiveFactions = new List<string>(trackerDeathList.Keys.Except(Settings.DefensiveFactions));
             var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
             var hasEnemy = false;
             //Defensive Only factions are always neutral
-            Settings.DefensiveFactions.Do(x => deathList[x] = 50);
+            Settings.DefensiveFactions.Do(x => trackerDeathList[x] = 50);
             if (Settings.GaW_PoliceSupport && warFaction.ComstarSupported)
-                deathList[Settings.GaW_Police] = 99;
+                trackerDeathList[Settings.GaW_Police] = 99;
 
-            foreach (var faction in klList.Except(Settings.DefensiveFactions))
+            foreach (var offensiveFaction in deathListOffensiveFactions)
             {
-                if (WarStatusTracker.InactiveTHRFactions.Contains(faction) || WarStatusTracker.NeverControl.Contains(faction))
+                if (WarStatusTracker.InactiveTHRFactions.Contains(offensiveFaction) || WarStatusTracker.NeverControl.Contains(offensiveFaction))
                     continue;
 
                 //Check to see if factions are always allied with each other.
-                if (Settings.FactionsAlwaysAllies.Keys.Contains(warFaction.faction) && Settings.FactionsAlwaysAllies[warFaction.faction].Contains(faction))
+                if (Settings.FactionsAlwaysAllies.Keys.Contains(warFaction.faction) && Settings.FactionsAlwaysAllies[warFaction.faction].Contains(offensiveFaction))
                 {
-                    deathList[faction] = 99;
+                    trackerDeathList[offensiveFaction] = 99;
                     continue;
                 }
 
@@ -848,100 +869,100 @@ namespace GalaxyatWar
                 {
                     //Factions adjust hatred based upon how much they are being attacked. But there is diminishing returns further from 50.
                     var direction = -1;
-                    if (warFaction.IncreaseAggression.Keys.Contains(faction) && warFaction.IncreaseAggression[faction])
+                    if (warFaction.IncreaseAggression.Keys.Contains(offensiveFaction) && warFaction.IncreaseAggression[offensiveFaction])
                         direction = 1;
                     {
-                        if (deathList[faction] > 50)
-                            deathList[faction] += direction * (1 - (deathList[faction] - 50) / 50);
-                        else if (deathList[faction] <= 50)
-                            deathList[faction] += direction * (1 - (50 - deathList[faction]) / 50);
+                        if (trackerDeathList[offensiveFaction] > 50)
+                            trackerDeathList[offensiveFaction] += direction * (1 - (trackerDeathList[offensiveFaction] - 50) / 50);
+                        else if (trackerDeathList[offensiveFaction] <= 50)
+                            trackerDeathList[offensiveFaction] += direction * (1 - (50 - trackerDeathList[offensiveFaction]) / 50);
                     }
 
                     //Ceiling and floor for faction enmity. 
-                    if (deathList[faction] > 99)
-                        deathList[faction] = 99;
+                    if (trackerDeathList[offensiveFaction] > 99)
+                        trackerDeathList[offensiveFaction] = 99;
 
-                    if (deathList[faction] < 1)
-                        deathList[faction] = 1;
+                    if (trackerDeathList[offensiveFaction] < 1)
+                        trackerDeathList[offensiveFaction] = 1;
                 }
 
-                // BUG is this right? dZ - Yes. If the faction target is Pirates, the faction always hates them. Alternatively, if the faction we are checking
+                // If the faction target is Pirates, the faction always hates them. Alternatively, if the faction we are checking
                 // the DeathList for is Pirates themselves, we must set everybody else to be an enemy.
-                if (faction == "AuriganPirates")
-                    deathList[faction] = 80;
+                if (offensiveFaction == "AuriganPirates")
+                    trackerDeathList[offensiveFaction] = 80;
 
-                if (deathListFaction == "AuriganPirates")
-                    deathList[faction] = 80;
+                if (trackerFaction == "AuriganPirates")
+                    trackerDeathList[offensiveFaction] = 80;
 
-                if (deathList[faction] > 75)
+                if (trackerDeathList[offensiveFaction] > 75)
                 {
-                    if (faction != "AuriganPirates")
+                    if (offensiveFaction != "AuriganPirates")
                         hasEnemy = true;
-                    if (!enemies.Contains(faction))
+                    if (!trackerFactionEnemies.Contains(offensiveFaction))
                     {
-                        enemies.Add(faction);
-                        if (enemies.Contains(deathListFaction))
-                            enemies.Remove(deathListFaction);
-                        if (enemies.Contains("AuriganDirectorate"))
-                            enemies.Remove("AuriganDirectorate");
-                        Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
+                        trackerFactionEnemies.Add(offensiveFaction);
+                        if (trackerFactionEnemies.Contains(trackerFaction))
+                            trackerFactionEnemies.Remove(trackerFaction);
+                        if (trackerFactionEnemies.Contains("AuriganDirectorate"))
+                            trackerFactionEnemies.Remove("AuriganDirectorate");
+                        Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
                     }
 
-                    if (allies.Contains(faction))
+                    if (trackerFactionAllies.Contains(offensiveFaction))
                     {
-                        allies.Remove(faction);
-                        if (allies.Contains(deathListFaction))
-                            allies.Remove(deathListFaction);
-                        if (allies.Contains("AuriganDirectorate"))
-                            allies.Remove("AuriganDirectorate");
-                        Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
+                        trackerFactionAllies.Remove(offensiveFaction);
+                        if (trackerFactionAllies.Contains(trackerFaction))
+                            trackerFactionAllies.Remove(trackerFaction);
+                        if (trackerFactionAllies.Contains("AuriganDirectorate"))
+                            trackerFactionAllies.Remove("AuriganDirectorate");
+                        Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                     }
-                }
+                } else 
 
-                if (deathList[faction] <= 75 && deathList[faction] > 25)
+                if (trackerDeathList[offensiveFaction] <= 75 && trackerDeathList[offensiveFaction] > 25)
                 {
-                    if (enemies.Contains(faction))
+                    if (trackerFactionEnemies.Contains(offensiveFaction))
                     {
-                        enemies.Remove(faction);
-                        if (enemies.Contains(deathListFaction))
-                            enemies.Remove(deathListFaction);
-                        if (enemies.Contains("AuriganDirectorate"))
-                            enemies.Remove("AuriganDirectorate");
-                        Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
+                        trackerFactionEnemies.Remove(offensiveFaction);
+                        if (trackerFactionEnemies.Contains(trackerFaction))
+                            trackerFactionEnemies.Remove(trackerFaction);
+                        if (trackerFactionEnemies.Contains("AuriganDirectorate"))
+                            trackerFactionEnemies.Remove("AuriganDirectorate");
+                        Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
                     }
 
 
-                    if (allies.Contains(faction))
+                    if (trackerFactionAllies.Contains(offensiveFaction))
                     {
-                        allies.Remove(faction);
-                        if (allies.Contains(deathListFaction))
-                            allies.Remove(deathListFaction);
-                        if (allies.Contains("AuriganDirectorate"))
-                            allies.Remove("AuriganDirectorate");
-                        Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
+                        trackerFactionAllies.Remove(offensiveFaction);
+                        if (trackerFactionAllies.Contains(trackerFaction))
+                            trackerFactionAllies.Remove(trackerFaction);
+                        if (trackerFactionAllies.Contains("AuriganDirectorate"))
+                            trackerFactionAllies.Remove("AuriganDirectorate");
+                        Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                     }
-                }
+                }  else 
 
-                if (deathList[faction] <= 25)
+                if (trackerDeathList[offensiveFaction] <= 25)
                 {
-                    if (!allies.Contains(faction))
+                    if (!trackerFactionAllies.Contains(offensiveFaction))
                     {
-                        allies.Add(faction);
-                        if (allies.Contains(deathListFaction))
-                            allies.Remove(deathListFaction);
-                        if (allies.Contains("AuriganDirectorate"))
-                            allies.Remove("AuriganDirectorate");
-                        Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
+                        trackerFactionAllies.Add(offensiveFaction);
+                        if (trackerFactionAllies.Contains(trackerFaction))
+                            trackerFactionAllies.Remove(trackerFaction);
+                        if (trackerFactionAllies.Contains("AuriganDirectorate"))
+                            trackerFactionAllies.Remove("AuriganDirectorate");
+                        Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                     }
 
-                    if (enemies.Contains(faction))
+                    if (trackerFactionEnemies.Contains(offensiveFaction))
                     {
-                        enemies.Remove(faction);
-                        if (enemies.Contains(deathListFaction))
-                            enemies.Remove(deathListFaction);
-                        if (enemies.Contains("AuriganDirectorate"))
-                            enemies.Remove("AuriganDirectorate");
-                        Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
+                        trackerFactionEnemies.Remove(offensiveFaction);
+                        if (trackerFactionEnemies.Contains(trackerFaction))
+                            trackerFactionEnemies.Remove(trackerFaction);
+                        if (trackerFactionEnemies.Contains("AuriganDirectorate"))
+                            trackerFactionEnemies.Remove("AuriganDirectorate");
+                        Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
                     }
                 }
             }
@@ -951,7 +972,7 @@ namespace GalaxyatWar
                 var rand = Rng.Next(0, IncludedFactions.Count);
                 var newEnemy = IncludedFactions[rand];
 
-                while (newEnemy == deathListFaction || Settings.ImmuneToWar.Contains(newEnemy) || Settings.DefensiveFactions.Contains(newEnemy))
+                while (newEnemy == trackerFaction || Settings.ImmuneToWar.Contains(newEnemy) || Settings.DefensiveFactions.Contains(newEnemy))
                 {
                     rand = Rng.Next(0, IncludedFactions.Count);
                     newEnemy = IncludedFactions[rand];
@@ -963,27 +984,27 @@ namespace GalaxyatWar
                     newEnemy = warFaction.adjacentFactions[rand];
                 }
 
-                if (allies.Contains(newEnemy))
+                if (trackerFactionAllies.Contains(newEnemy))
                 {
-                    allies.Remove(newEnemy);
-                    if (allies.Contains(deathListFaction))
-                        allies.Remove(deathListFaction);
-                    if (allies.Contains("AuriganDirectorate"))
-                        allies.Remove("AuriganDirectorate");
-                    Traverse.Create(factionDef).Property("Allies").SetValue(allies.ToArray());
+                    trackerFactionAllies.Remove(newEnemy);
+                    if (trackerFactionAllies.Contains(trackerFaction))
+                        trackerFactionAllies.Remove(trackerFaction);
+                    if (trackerFactionAllies.Contains("AuriganDirectorate"))
+                        trackerFactionAllies.Remove("AuriganDirectorate");
+                    Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                 }
 
-                if (!enemies.Contains(newEnemy))
+                if (!trackerFactionEnemies.Contains(newEnemy))
                 {
-                    enemies.Add(newEnemy);
-                    if (enemies.Contains(deathListFaction))
-                        enemies.Remove(deathListFaction);
-                    if (enemies.Contains("AuriganDirectorate"))
-                        enemies.Remove("AuriganDirectorate");
-                    Traverse.Create(factionDef).Property("Enemies").SetValue(enemies.ToArray());
+                    trackerFactionEnemies.Add(newEnemy);
+                    if (trackerFactionEnemies.Contains(trackerFaction))
+                        trackerFactionEnemies.Remove(trackerFaction);
+                    if (trackerFactionEnemies.Contains("AuriganDirectorate"))
+                        trackerFactionEnemies.Remove("AuriganDirectorate");
+                    Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
                 }
 
-                deathList[newEnemy] = 80;
+                trackerDeathList[newEnemy] = 80;
             }
         }
 

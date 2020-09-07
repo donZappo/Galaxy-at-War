@@ -180,14 +180,13 @@ namespace GalaxyatWar
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
-        private static StarSystem starSystemBackingField;
+        private StarSystem starSystemBackingField;
 
         internal StarSystem starSystem
         {
             get => starSystemBackingField ?? Sim.StarSystems.Find(s => s.Name == name);
             private set => starSystemBackingField = value;
         }
-        //internal StarSystem starSystem => UnityGameInstance.BattleTechGame.Simulation.StarSystems.Find(s => s.Name == name);
 
         [JsonConstructor]
         public SystemStatus()
