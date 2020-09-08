@@ -233,7 +233,7 @@ namespace GalaxyatWar
             }
             catch (Exception ex)
             {
-                Logger.LogDebug(ex);
+                Logger.Error(ex);
             }
         }
 

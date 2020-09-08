@@ -122,7 +122,7 @@ namespace GalaxyatWar
             }
             catch (Exception ex)
             {
-                LogDebug(ex);
+                Error(ex);
             }
         }
 
@@ -229,7 +229,7 @@ namespace GalaxyatWar
                     }
                     catch (Exception ex)
                     {
-                        LogDebug(ex);
+                        Error(ex);
                     }
                 }
             }
@@ -333,7 +333,7 @@ namespace GalaxyatWar
                 }
                 catch (Exception ex)
                 {
-                    LogDebug(ex.ToString());
+                    Error(ex);
                 }
             }
         }

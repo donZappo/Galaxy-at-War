@@ -247,7 +247,7 @@ namespace GalaxyatWar
             }
             catch (Exception ex)
             {
-                LogDebug(ex);
+                Error(ex);
             }
         }
 
