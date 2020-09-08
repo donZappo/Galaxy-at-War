@@ -5,7 +5,7 @@ using Harmony;
 
 namespace GalaxyatWar
 {
-    [HarmonyPatch(typeof(SimGameState), "Update")]
+    //[HarmonyPatch(typeof(SimGameState), "Update")]
     public static class SimGameStateUpdatePatch
     {
         //public static void Postfix()
@@ -29,7 +29,7 @@ namespace GalaxyatWar
         //}
     }
 
-    [HarmonyPatch(typeof(CombatGameState), "Update")]
+    //[HarmonyPatch(typeof(CombatGameState), "Update")]
     public static class CombatGameStateUpdatePatch
     {
         //public static void Postfix()
