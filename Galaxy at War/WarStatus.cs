@@ -5,17 +5,16 @@ using BattleTech;
 using Newtonsoft.Json;
 using static GalaxyatWar.Globals;
 using static GalaxyatWar.Helpers;
-
-namespace GalaxyatWar
-{
-    // ReSharper disable FieldCanBeMadeReadOnly.Global
+// ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
+namespace GalaxyatWar
+{
     public class WarStatus
     {
-        public List<SystemStatus> SystemStatuses = new List<SystemStatus>();
-        public List<DeathListTracker> DeathListTrackers = new List<DeathListTracker>();
+        public List<SystemStatus> systems = new List<SystemStatus>();
+        public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
         public List<WarFaction> warFactionTracker = new List<WarFaction>();
         public bool JustArrived = true;
         public bool Escalation = false;
@@ -78,7 +77,7 @@ namespace GalaxyatWar
             foreach (var faction in Settings.IncludedFactions)
             {
                 warFactionTracker.Add(new WarFaction(faction));
-                DeathListTrackers.Add(new DeathListTracker(faction));
+                deathListTracker.Add(new DeathListTracker(faction));
             }
 
             for (var index = 0; index < Sim.StarSystems.Count; index++)
@@ -137,7 +136,7 @@ namespace GalaxyatWar
             {
                 var system = Sim.StarSystems[index];
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
-                SystemStatuses.Add(systemStatus);
+                systems.Add(systemStatus);
                 if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {
                     FullPirateSystems.Add(system.Name);
@@ -149,7 +148,7 @@ namespace GalaxyatWar
                     HyadesRimGeneralPirateSystems.Add(system.Name);
             }
 
-            SystemStatuses = SystemStatuses.OrderBy(x => x.name).ToList();
+            systems = systems.OrderBy(x => x.name).ToList();
         }
 
         [JsonConstructor]

@@ -17,19 +17,19 @@ namespace GalaxyatWar
         internal static void Tick(bool useFullSet, bool checkForSystemChange)
         {
             Globals.WarStatusTracker.PrioritySystems.Clear();
-            var systemSubsetSize = Globals.WarStatusTracker.SystemStatuses.Count;
+            var systemSubsetSize = Globals.WarStatusTracker.systems.Count;
             List<SystemStatus> systemStatuses;
 
             if (Globals.Settings.UseSubsetOfSystems && !useFullSet)
             {
                 systemSubsetSize = (int) (systemSubsetSize * Globals.Settings.SubSetFraction);
-                systemStatuses = Globals.WarStatusTracker.SystemStatuses
+                systemStatuses = Globals.WarStatusTracker.systems
                     .OrderBy(x => Guid.NewGuid()).Take(systemSubsetSize)
                     .ToList();
             }
             else
             {
-                systemStatuses = Globals.WarStatusTracker.SystemStatuses;
+                systemStatuses = Globals.WarStatusTracker.systems;
             }
 
             if (checkForSystemChange && Globals.Settings.GaW_PoliceSupport)
@@ -41,7 +41,7 @@ namespace GalaxyatWar
                 var lowestDr = 5000f;
                 foreach (var faction in Globals.WarStatusTracker.warFactionTracker.Where(x => Globals.IncludedFactions.Contains(x.faction)))
                 {
-                    var systemCount = Globals.WarStatusTracker.SystemStatuses.Count(x => x.owner == faction.faction);
+                    var systemCount = Globals.WarStatusTracker.systems.Count(x => x.owner == faction.faction);
                     if (!Globals.Settings.ISMCompatibility && systemCount != 0)
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
@@ -94,7 +94,7 @@ namespace GalaxyatWar
                 if (rand < Globals.WarStatusTracker.HyadesRimsSystemsTaken)
                 {
                     var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                    var flipSystem = Globals.WarStatusTracker.SystemStatuses.Find(x => x.name == hyadesSystem).starSystem;
+                    var flipSystem = Globals.WarStatusTracker.systems.Find(x => x.name == hyadesSystem).starSystem;
                     var inactiveFaction = Globals.WarStatusTracker.InactiveTHRFactions.GetRandomElement();
                     ChangeSystemOwnership(flipSystem, inactiveFaction, true);
                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
@@ -195,7 +195,7 @@ namespace GalaxyatWar
                 }
             }
 
-            foreach (var system in Globals.WarStatusTracker.SystemStatuses.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
+            foreach (var system in Globals.WarStatusTracker.systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.starSystem);

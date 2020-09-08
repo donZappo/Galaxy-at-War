@@ -93,10 +93,10 @@ namespace GalaxyatWar
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                if (WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFaction.Name) == null)
+                if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name) == null)
                     return;
 
-                var deathListTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFaction.Name);
+                var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name);
                 AdjustDeathList(deathListTracker, true);
             }
         }
@@ -109,10 +109,10 @@ namespace GalaxyatWar
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                if (WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFactionID) == null)
+                if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID) == null)
                     return;
 
-                var deathListTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFactionID);
+                var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID);
                 AdjustDeathList(deathListTracker, true);
             }
         }
@@ -127,10 +127,10 @@ namespace GalaxyatWar
 
                 foreach (var theFaction in IncludedFactions)
                 {
-                    if (WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFaction) == null)
+                    if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction) == null)
                         continue;
 
-                    var deathListTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFaction);
+                    var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction);
                     AdjustDeathList(deathListTracker, true);
                 }
             }
@@ -146,20 +146,20 @@ namespace GalaxyatWar
 
                 foreach (var theFaction in IncludedFactions)
                 {
-                    if (WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFaction) == null)
+                    if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction) == null)
                         continue;
 
-                    var deathListTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == theFaction);
+                    var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction);
                     AdjustDeathList(deathListTracker, true);
                 }
             }
         }
 
 
+        [HarmonyBefore("com.DropCostPerMech", "de.morphyum.DropCostPerMech")]
         [HarmonyPatch(typeof(Contract), "CompleteContract")]
         public static class CompleteContractPatch
         {
-            [HarmonyBefore("com.DropCostPerMech", "de.morphyum.DropCostPerMech")]
             public static void Postfix(Contract __instance, MissionResult result, bool isGoodFaithEffort)
             {
                 try
@@ -167,7 +167,7 @@ namespace GalaxyatWar
                     if (WarStatusTracker == null || Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                         return;
 
-                    var system = WarStatusTracker.SystemStatuses.Find(x => x.name == Sim.CurSystem.Name);
+                    var system = WarStatusTracker.systems.Find(x => x.name == Sim.CurSystem.Name);
                     if (system.BonusCBills && WarStatusTracker.HotBox.Contains(Sim.CurSystem.Name))
                     {
                         HotSpots.BonusMoney = (int) (__instance.MoneyResults * Settings.BonusCbillsFactor);
@@ -206,7 +206,7 @@ namespace GalaxyatWar
                     if (IsFlashpointContract)
                         return;
 
-                    var warSystem = WarStatusTracker.SystemStatuses.Find(x => x.name == __instance.CurSystem.Name);
+                    var warSystem = WarStatusTracker.systems.Find(x => x.name == __instance.CurSystem.Name);
 
                     if (WarStatusTracker.FlashpointSystems.Contains(warSystem.name))
                         return;
@@ -326,7 +326,7 @@ namespace GalaxyatWar
 
                             foreach (var system in WarStatusTracker.SystemChangedOwners)
                             {
-                                var systemStatus = WarStatusTracker.SystemStatuses.Find(x => x.name == system);
+                                var systemStatus = WarStatusTracker.systems.Find(x => x.name == system);
                                 systemStatus.CurrentlyAttackedBy.Clear();
                                 CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                                 RefreshContracts(systemStatus.starSystem);
@@ -427,7 +427,7 @@ namespace GalaxyatWar
                 else if (DefenseFaction == "AuriganPirates")
                     StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + DefenderString;
 
-                var system = WarStatusTracker.SystemStatuses.Find(x => x.starSystem == SystemName);
+                var system = WarStatusTracker.systems.Find(x => x.starSystem == SystemName);
 
                 if (system.BonusCBills || system.BonusSalvage || system.BonusXP)
                 {

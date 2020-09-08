@@ -32,11 +32,11 @@ namespace GalaxyatWar
 
         public static void SystemDifficulty()
         {
-            var totalSystems = WarStatusTracker.SystemStatuses.Count;
+            var totalSystems = WarStatusTracker.systems.Count;
             var difficultyCutoff = totalSystems / 10;
             var i = 0;
 
-            foreach (var systemStatus in WarStatusTracker.SystemStatuses.OrderBy(x => x.TotalResources))
+            foreach (var systemStatus in WarStatusTracker.systems.OrderBy(x => x.TotalResources))
             {
                 try
                 {
@@ -45,61 +45,61 @@ namespace GalaxyatWar
                     if (systemStatus.OriginalOwner == null)
                         systemStatus.OriginalOwner = systemStatus.owner;
 
-                    if (Settings.ChangeDifficulty && !system.Tags.Contains("planet_start_world"))
+                if (Settings.ChangeDifficulty && !system.Tags.Contains("planet_start_world"))
+                {
+                    Sim.Constants.Story.ContractDifficultyMod = 0;
+                    Sim.CompanyStats.Set<float>("Difficulty", 0);
+                    if (i <= difficultyCutoff)
                     {
-                        Sim.Constants.Story.ContractDifficultyMod = 0;
-                        Sim.CompanyStats.Set<float>("Difficulty", 0);
-                        if (i <= difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 1;
-                        }
+                        systemStatus.DifficultyRating = 1;
+                    }
 
-                        if (i <= difficultyCutoff * 2 && i > difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 2;
-                        }
+                    if (i <= difficultyCutoff * 2 && i > difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 2;
+                    }
 
-                        if (i <= difficultyCutoff * 3 && i > 2 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 3;
-                        }
+                    if (i <= difficultyCutoff * 3 && i > 2 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 3;
+                    }
 
-                        if (i <= difficultyCutoff * 4 && i > 3 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 4;
-                        }
+                    if (i <= difficultyCutoff * 4 && i > 3 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 4;
+                    }
 
-                        if (i <= difficultyCutoff * 5 && i > 4 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 5;
-                        }
+                    if (i <= difficultyCutoff * 5 && i > 4 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 5;
+                    }
 
-                        if (i <= difficultyCutoff * 6 && i > 5 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 6;
-                        }
+                    if (i <= difficultyCutoff * 6 && i > 5 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 6;
+                    }
 
-                        if (i <= difficultyCutoff * 7 && i > 6 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 7;
-                        }
+                    if (i <= difficultyCutoff * 7 && i > 6 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 7;
+                    }
 
-                        if (i <= difficultyCutoff * 8 && i > 7 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 8;
-                        }
+                    if (i <= difficultyCutoff * 8 && i > 7 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 8;
+                    }
 
-                        if (i <= difficultyCutoff * 9 && i > 8 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 9;
-                        }
+                    if (i <= difficultyCutoff * 9 && i > 8 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 9;
+                    }
 
-                        if (i > 9 * difficultyCutoff)
-                        {
-                            systemStatus.DifficultyRating = 10;
-                        }
+                    if (i > 9 * difficultyCutoff)
+                    {
+                        systemStatus.DifficultyRating = 10;
+                    }
 
-                        i++;
+                    i++;
 
                         var amount = systemStatus.DifficultyRating;
                         var difficultyList = new List<int> {amount, amount};
@@ -223,7 +223,7 @@ namespace GalaxyatWar
 
         public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
         {
-            var warSystem = WarStatusTracker.SystemStatuses.Find(x => x.name == starSystem.Name);
+            var warSystem = WarStatusTracker.systems.Find(x => x.name == starSystem.Name);
             var ownerNeighborSystems = warSystem.neighborSystems;
             ownerNeighborSystems.Clear();
             if (starSystem == null || Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
@@ -299,7 +299,7 @@ namespace GalaxyatWar
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
                 warFaction.defenseTargets.Clear();
 
-            foreach (var system in WarStatusTracker.SystemStatuses)
+            foreach (var system in WarStatusTracker.systems)
             {
                 if (WarStatusTracker.FlashpointSystems.Contains(system.name))
                     continue;
@@ -359,7 +359,7 @@ namespace GalaxyatWar
                     }
                 }
 
-                var systemStatus = WarStatusTracker.SystemStatuses.Find(x => x.starSystem == system);
+                var systemStatus = WarStatusTracker.systems.Find(x => x.starSystem == system);
                 var oldOwner = systemStatus.owner;
                 systemStatus.owner = faction;
                 Traverse.Create(system.Def).Property("OwnerID").SetValue(faction);
@@ -428,12 +428,12 @@ namespace GalaxyatWar
             var totalDr = GetTotalDefensiveResources(system);
             var systemValue = totalAR + totalDr;
             var killListDelta = Math.Max(10, systemValue);
-            if (WarStatusTracker.DeathListTrackers.Find(x => x.faction == oldFaction) == null)
+            if (WarStatusTracker.deathListTracker.Find(x => x.faction == oldFaction) == null)
                 return;
 
             try
             {
-                var factionTracker = WarStatusTracker.DeathListTrackers.Find(x => x.faction == oldFaction);
+                var factionTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == oldFaction);
                 if (factionTracker.deathList.ContainsKey(faction))
                 {
                     if (factionTracker.deathList[faction] < 50)
@@ -446,10 +446,9 @@ namespace GalaxyatWar
                     LogDebug($"factionTracker missing faction {faction}, ignoring.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 LogDebug("factionTracker.deathList[faction]: " + faction);
-                //Error(ex);
             }
 
             try
@@ -459,26 +458,25 @@ namespace GalaxyatWar
                 {
                     foreach (var ally in Sim.GetFactionDef(oldFaction).Allies)
                     {
-                        if (!IncludedFactions.Contains(ally) || faction == ally || WarStatusTracker.DeathListTrackers.Find(x => x.faction == ally) == null)
+                        if (!IncludedFactions.Contains(ally) || faction == ally || WarStatusTracker.deathListTracker.Find(x => x.faction == ally) == null)
                             continue;
-                        var factionAlly = WarStatusTracker.DeathListTrackers.Find(x => x.faction == ally);
+                        var factionAlly = WarStatusTracker.deathListTracker.Find(x => x.faction == ally);
                         factionAlly.deathList[faction] += killListDelta / 2;
                     }
 
                     //Enemies of the target faction are happy with the faction doing the beating. 
                     foreach (var enemy in Sim.GetFactionDef(oldFaction).Enemies)
                     {
-                        if (!IncludedFactions.Contains(enemy) || enemy == faction || WarStatusTracker.DeathListTrackers.Find(x => x.faction == enemy) == null)
+                        if (!IncludedFactions.Contains(enemy) || enemy == faction || WarStatusTracker.deathListTracker.Find(x => x.faction == enemy) == null)
                             continue;
-                        var factionEnemy = WarStatusTracker.DeathListTrackers.Find(x => x.faction == enemy);
+                        var factionEnemy = WarStatusTracker.deathListTracker.Find(x => x.faction == enemy);
                         factionEnemy.deathList[faction] -= killListDelta / 2;
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 LogDebug("factionEnemy/Ally.deathList[faction]");
-                Error(ex);
             }
         }
 
@@ -527,7 +525,7 @@ namespace GalaxyatWar
                 WarStatusTracker.LostSystems.Clear();
 
             //LogDebug($"Updating influence for {WarStatusTracker.SystemStatuses.Count.ToString()} systems");
-            foreach (var systemStatus in WarStatusTracker.SystemStatuses)
+            foreach (var systemStatus in WarStatusTracker.systems)
             {
                 var tempDict = new Dictionary<string, float>();
                 var totalInfluence = systemStatus.influenceTracker.Values.Sum();
@@ -576,7 +574,7 @@ namespace GalaxyatWar
             }
 
             CalculateHatred();
-            foreach (var deathListTracker in WarStatusTracker.DeathListTrackers)
+            foreach (var deathListTracker in WarStatusTracker.deathListTracker)
             {
                 AdjustDeathList(deathListTracker, false);
             }
@@ -638,7 +636,7 @@ namespace GalaxyatWar
                 contractTargets.Add(Settings.GaW_Police);
             }
 
-            var warSystem = WarStatusTracker.SystemStatuses.Find(x => x.starSystem == starSystem);
+            var warSystem = WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
             var neighborSystems = warSystem.neighborSystems;
             foreach (var systemNeighbor in neighborSystems.Keys)
             {
@@ -691,7 +689,7 @@ namespace GalaxyatWar
 
         internal static double DeltaInfluence(StarSystem system, double contractDifficulty, string contractTypeID, string defenseFaction, bool piratesInvolved)
         {
-            var targetSystem = WarStatusTracker.SystemStatuses.Find(x => x.starSystem == system);
+            var targetSystem = WarStatusTracker.systems.Find(x => x.starSystem == system);
             float maximumInfluence;
 
             if (piratesInvolved && defenseFaction == "AuriganPirates")
@@ -744,7 +742,7 @@ namespace GalaxyatWar
 
         internal static bool WillSystemFlip(StarSystem system, string winner, string loser, double deltaInfluence, bool preBattle)
         {
-            var warSystem = WarStatusTracker.SystemStatuses.Find(x => x.starSystem == system);
+            var warSystem = WarStatusTracker.systems.Find(x => x.starSystem == system);
             var tempIt = new Dictionary<string, float>(warSystem.influenceTracker);
 
             if (preBattle && !InfluenceMaxed)
@@ -772,7 +770,7 @@ namespace GalaxyatWar
 
         internal static int CalculateFlipMissions(string attacker, StarSystem system)
         {
-            var warSystem = WarStatusTracker.SystemStatuses.Find(x => x.starSystem == system);
+            var warSystem = WarStatusTracker.systems.Find(x => x.starSystem == system);
             var tempIt = new Dictionary<string, float>(warSystem.influenceTracker);
             var missionCounter = 0;
             var influenceDifference = 0.0f;

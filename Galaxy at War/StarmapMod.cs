@@ -130,7 +130,7 @@ namespace GalaxyatWar
         {
             var sb = new StringBuilder();
             sb.AppendLine("<line-height=125%>");
-            foreach (var tracker in Globals.WarStatusTracker.DeathListTrackers.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.faction)))
+            foreach (var tracker in Globals.WarStatusTracker.deathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.faction)))
             {
                 if (!Globals.Settings.FactionNames.ContainsKey(tracker.faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.faction) 
                                                                             || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.faction))
@@ -266,7 +266,7 @@ namespace GalaxyatWar
                 SubString = "";
             factionString.AppendLine(SubString);
 
-            var tracker = Globals.WarStatusTracker.SystemStatuses.Find(x => x.starSystem == starSystem);
+            var tracker = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
             foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
             {
                 string number;

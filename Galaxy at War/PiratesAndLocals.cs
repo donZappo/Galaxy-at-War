@@ -136,7 +136,7 @@ namespace GalaxyatWar
             var i = 0;
             while (CurrentPAResources > 0 && i != 1000)
             {
-                var systemStatus = Globals.WarStatusTracker.SystemStatuses.GetRandomElement();
+                var systemStatus = Globals.WarStatusTracker.systems.GetRandomElement();
                 if (systemStatus.owner == "NoFaction" ||
                     Settings.ImmuneToWar.Contains(systemStatus.owner) ||
                     WarStatusTracker.HotBox.Contains(systemStatus.name) ||

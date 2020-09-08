@@ -43,7 +43,7 @@ namespace GalaxyatWar
                 if (!string.IsNullOrEmpty(gawTag))
                 {
                     DeserializeWar();
-                    if (Globals.WarStatusTracker.SystemStatuses.Count == 0)
+                    if (Globals.WarStatusTracker.systems.Count == 0)
                     {
                         LogDebug("Broken save being respawned.");
                         Spawn();
@@ -147,10 +147,10 @@ namespace GalaxyatWar
                     return;
                 }
 
-                for (var i = 0; i < Globals.WarStatusTracker.SystemStatuses.Count; i++)
+                for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
                 {
                     StarSystemDef systemDef;
-                    var system = Globals.WarStatusTracker.SystemStatuses[i];
+                    var system = Globals.WarStatusTracker.systems[i];
                     if (ssDict.ContainsKey(system.CoreSystemID))
                     {
                         systemDef = ssDict[system.CoreSystemID].Def;
@@ -158,7 +158,7 @@ namespace GalaxyatWar
                     else
                     {
                         LogDebug($"BOMB {system.name} not in StarSystemDictionary, removing it from WarStatus.systems");
-                        Globals.WarStatusTracker.SystemStatuses.Remove(system);
+                        Globals.WarStatusTracker.systems.Remove(system);
                         continue;
                     }
 
@@ -217,10 +217,10 @@ namespace GalaxyatWar
 
                 foreach (var starSystem in Globals.WarStatusTracker.FullPirateSystems)
                 {
-                    PiratesAndLocals.FullPirateListSystems.Add(Globals.WarStatusTracker.SystemStatuses.Find(x => x.name == starSystem));
+                    PiratesAndLocals.FullPirateListSystems.Add(Globals.WarStatusTracker.systems.Find(x => x.name == starSystem));
                 }
 
-                foreach (var deathListTracker in Globals.WarStatusTracker.DeathListTrackers)
+                foreach (var deathListTracker in Globals.WarStatusTracker.deathListTracker)
                 {
                     AdjustDeathList(deathListTracker, true);
                 }

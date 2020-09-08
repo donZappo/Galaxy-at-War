@@ -14,7 +14,7 @@ namespace GalaxyatWar
         {
             //Log("Attacking");
             var factionFaction = warFaction.faction;
-            var deathList = Globals.WarStatusTracker.DeathListTrackers.Find(x => x.faction == factionFaction);
+            var deathList = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == factionFaction);
             var warFar = warFaction.warFactionAttackResources;
             warFar.Clear();
             var tempTargets = new Dictionary<string, float>();
@@ -47,7 +47,7 @@ namespace GalaxyatWar
                 return;
             var warFar = warFaction.warFactionAttackResources;
             //Go through the different resources allocated from attacking faction to spend against each targetFaction
-            var factionDlt = Globals.WarStatusTracker.DeathListTrackers.Find(x => x.faction == warFaction.faction);
+            var factionDlt = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == warFaction.faction);
             foreach (var targetFaction in warFar.Keys)
             {
                 if (!warFaction.attackTargets.Keys.Contains(targetFaction))
@@ -64,12 +64,12 @@ namespace GalaxyatWar
 
                     var rand = Globals.Rng.Next(0, targets.Count);
                     SystemStatus system = default;
-                    for (var i = 0; i < Globals.WarStatusTracker.SystemStatuses.Count; i++)
+                    for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
                     {
                         // todo index access
-                        if (Globals.WarStatusTracker.SystemStatuses[i].name == targets[rand])
+                        if (Globals.WarStatusTracker.systems[i].name == targets[rand])
                         {
-                            system = Globals.WarStatusTracker.SystemStatuses[i];
+                            system = Globals.WarStatusTracker.systems[i];
                             break;
                         }
                     }
@@ -190,11 +190,11 @@ namespace GalaxyatWar
 
                 // fastest loop possible?
                 SystemStatus systemStatus = default;
-                for (var i = 0; i < Globals.WarStatusTracker.SystemStatuses.Count; i++)
+                for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
                 {
-                    if (Globals.WarStatusTracker.SystemStatuses[i].name == system)
+                    if (Globals.WarStatusTracker.systems[i].name == system)
                     {
-                        systemStatus = Globals.WarStatusTracker.SystemStatuses[i];
+                        systemStatus = Globals.WarStatusTracker.systems[i];
                         break;
                     }
                 }
