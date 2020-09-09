@@ -390,12 +390,6 @@ namespace GalaxyatWar
             }
         }
 
-        private static readonly AccessTools.FieldRef<StarmapSystemRenderer, float> selectedScale =
-            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("selectedScale");
-
-        private static readonly AccessTools.FieldRef<StarmapSystemRenderer, float> deselectedScale =
-            AccessTools.FieldRefAccess<StarmapSystemRenderer, float>("deselectedScale");
-
         private static void HighlightSystem(StarmapSystemRenderer __result, bool wasVisited, Color color, bool resize)
         {
             var blackMarketIsActive = __result.blackMarketObj.gameObject.activeInHierarchy;
@@ -410,13 +404,13 @@ namespace GalaxyatWar
                 __result.blackMarketObj.gameObject.SetActive(true);
             if (resize)
             {
-                selectedScale(__result) = 10;
-                deselectedScale(__result) = 8;
+                __result.selectedScale = 10;
+                __result.deselectedScale = 8;
             }
             else
             {
-                selectedScale(__result) = 4;
-                deselectedScale(__result) = 4;
+                __result.selectedScale = 4;
+                __result.deselectedScale = 4;
             }
         }
 
@@ -424,8 +418,8 @@ namespace GalaxyatWar
         {
             __result.Init(__result.system, __result.systemColor, __result.CanTravel, wasVisited);
             __result.transform.localScale = Vector3.one;
-            selectedScale(__result) = 6;
-            deselectedScale(__result) = 4;
+            __result.selectedScale = 6;
+            __result.deselectedScale = 4;
             __result.starOuter.gameObject.SetActive(wasVisited);
         }
     }
