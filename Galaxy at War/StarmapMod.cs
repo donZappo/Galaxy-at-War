@@ -347,6 +347,24 @@ namespace GalaxyatWar
                 }
             }
         }
+        
+        [HarmonyPatch(typeof(StarmapScreen), "RefreshStarmap")]
+        public static class StarmapScreen_RefreshStarmap__Patch
+        {
+            public static void Prefix(StarmapRenderer __instance)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                if (Globals.WarStatusTracker == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                    return;
+
+                if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
+                {
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    Globals.WarStatusTracker.StartGameInitialized = true;
+                }
+            }
+        }
 
         [HarmonyPatch(typeof(StarmapRenderer), "RefreshSystems")]
         public static class StarmapRendererRefreshSystemsPatch
