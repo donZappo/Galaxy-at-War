@@ -379,6 +379,9 @@ namespace GalaxyatWar
 
             if (starSystem.Def.contractTargetIDs.Count == 0)
                 starSystem.Def.contractTargetIDs.Add("AuriganPirates");
+
+            if (!starSystem.Def.contractTargetIDs.Contains("Locals"))
+                starSystem.Def.contractTargetIDs.Add("Locals");
         }
 
         //Deployments area.
