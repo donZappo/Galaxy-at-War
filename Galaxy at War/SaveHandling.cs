@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
+using BattleTech.Save.SaveGameStructure;
 
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
