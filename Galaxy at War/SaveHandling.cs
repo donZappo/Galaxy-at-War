@@ -59,7 +59,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
-                        LogDebug($"{gawTag.Substring(0, 200)}");
+                        LogDebug($"{gawTag}");
                         Spawn();
                     }
                     else
@@ -80,18 +80,17 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker = new WarStatus();
                 Globals.WarStatusTracker.systemsByResources =
                     Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
+                if (!Globals.WarStatusTracker.StartGameInitialized)
+                {
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    Globals.WarStatusTracker.StartGameInitialized = true;
+                }
+
                 SystemDifficulty();
 
                 Globals.WarStatusTracker.FirstTickInitialization = true;
                 WarTick.Tick(true, true);
-
-                //HotSpots.ProcessHotSpots();
-                //if (!Globals.WarStatusTracker.StartGameInitialized)
-                //{
-                //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                //    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                //    Globals.WarStatusTracker.StartGameInitialized = true;
-                //}
             }
         }
 
