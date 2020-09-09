@@ -7,10 +7,12 @@ using BattleTech.UI;
 using BattleTech.UI.Tooltips;
 using Harmony;
 using HBS.Extensions;
+using Localize;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static GalaxyatWar.Logger;
+
 // ReSharper disable StringLiteralTypo
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ClassNeverInstantiated.Global    
@@ -22,7 +24,7 @@ namespace GalaxyatWar
     public class StarmapMod
     {
         internal static SGEventPanel eventPanel;
-        private static TMP_Text descriptionText; 
+        private static TMP_Text descriptionText;
 
         [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
         public static class TooltipPrefab_PlanetSetDataPatch
@@ -40,7 +42,7 @@ namespace GalaxyatWar
 
                 __state = starSystem.Def.Description.Details;
                 var factionString = BuildInfluenceString(starSystem);
-                Traverse.Create(starSystem.Def.Description).Property("Details").SetValue(factionString);
+                starSystem.Def.Description.Details = factionString;
             }
 
             public static void Postfix(object data, string __state)
@@ -54,7 +56,7 @@ namespace GalaxyatWar
                     return;
                 }
 
-                Traverse.Create(starSystem.Def.Description).Property("Details").SetValue(__state);
+                starSystem.Def.Description.Details = __state;
             }
         }
 
@@ -93,20 +95,22 @@ namespace GalaxyatWar
                 var event_OverallLayout = (RectTransform) go.FindFirstChildNamed("event_OverallLayout").transform;
                 event_OverallLayout.sizeDelta = new Vector2(750, 580);
 
-                var results_TextllLayout =(RectTransform) go.FindFirstChildNamed("results_TextllLayout").transform;
+                var results_TextllLayout = (RectTransform) go.FindFirstChildNamed("results_TextllLayout").transform;
                 results_TextllLayout.sizeDelta = new Vector2(750, 900);
 
                 // jebus there is a space after "Viewport"
                 var viewport = go.GetComponentsInChildren<RectTransform>().First(x => x.name == "Viewport ");
                 viewport.sizeDelta = new Vector2(0, 500);
-            
+
                 foreach (var tmpText in eventPanel.gameObject.GetComponentsInChildren<TMP_Text>(true))
                 {
                     switch (tmpText.name)
                     {
-                        case "title_week-day": tmpText.text = Globals.Sim.CurrentDate.ToLongDateString();
+                        case "title_week-day":
+                            tmpText.text = Globals.Sim.CurrentDate.ToLongDateString();
                             break;
-                        case "event_titleText": tmpText.text = "Relationship Summary";
+                        case "event_titleText":
+                            tmpText.text = "Relationship Summary";
                             tmpText.alignment = TextAlignmentOptions.Center;
                             break;
                         case "descriptionText":
@@ -116,7 +120,7 @@ namespace GalaxyatWar
                             break;
                     }
                 }
-            
+
                 eventPanel.gameObject.SetActive(false);
                 LogDebug("RelationPanel created");
             }
@@ -132,12 +136,13 @@ namespace GalaxyatWar
             sb.AppendLine("<line-height=125%>");
             foreach (var tracker in Globals.WarStatusTracker.deathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.faction)))
             {
-                if (!Globals.Settings.FactionNames.ContainsKey(tracker.faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.faction) 
-                                                                            || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.faction))
+                if (!Globals.Settings.FactionNames.ContainsKey(tracker.faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.faction)
+                                                                                || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.faction))
                 {
                     LogDebug($"faction {tracker.faction} doesn't exist in Mod.Globals.Settings.FactionNames, skipping...");
                     continue;
                 }
+
                 var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == tracker.faction);
                 sb.AppendLine($"<b><u>{Globals.Settings.FactionNames[tracker.faction]}</b></u>\n");
                 if (tracker.faction == Globals.WarStatusTracker.ComstarAlly)
@@ -153,17 +158,19 @@ namespace GalaxyatWar
                                   " || Defense Resources: " + warFaction.DefensiveResources.ToString("0")
                                   + " || Change in Systems: " + warFaction.TotalSystemsChanged + "\n");
                 }
+
                 sb.AppendLine("Resources Lost To Piracy: " + (warFaction.PirateARLoss + warFaction.PirateDRLoss).ToString("0") + "\n\n");
                 if (tracker.Enemies.Count > 0)
                     sb.AppendLine("<u>Enemies</u>");
                 foreach (var enemy in tracker.Enemies)
                 {
                     if (!Globals.Settings.FactionNames.ContainsKey(enemy) || Globals.Settings.HyadesNeverControl.Contains(enemy)
-                                                                      || Globals.WarStatusTracker.InactiveTHRFactions.Contains(enemy))
+                                                                          || Globals.WarStatusTracker.InactiveTHRFactions.Contains(enemy))
                     {
                         LogDebug("Mod.Globals.Settings.FactionNames doesn't have " + enemy + " skipping...");
                         continue;
                     }
+
                     sb.AppendLine($"{Globals.Settings.FactionNames[enemy],-20}");
                 }
 
@@ -174,13 +181,15 @@ namespace GalaxyatWar
                 foreach (var ally in tracker.Allies)
                 {
                     if (!Globals.Settings.FactionNames.ContainsKey(ally) || Globals.Settings.HyadesNeverControl.Contains(ally)
-                                                                     || Globals.WarStatusTracker.InactiveTHRFactions.Contains(ally))
+                                                                         || Globals.WarStatusTracker.InactiveTHRFactions.Contains(ally))
                     {
                         LogDebug("Mod.Globals.Settings.FactionNames doesn't have " + ally + " skipping...");
                         continue;
                     }
+
                     sb.AppendLine($"{Globals.Settings.FactionNames[ally],-20}");
                 }
+
                 sb.AppendLine();
                 sb.AppendLine();
             }
@@ -188,16 +197,17 @@ namespace GalaxyatWar
             sb.AppendLine("</line-height>");
             sb.AppendLine();
             LogDebug("BuildRelationString");
-        
+
             // bug? in TMPro shits the bed on a long string with underlines
             if (AppDomain.CurrentDomain.GetAssemblies().Any(x => x.FullName.Contains("InnerSphereMap")))
             {
                 sb.Replace("<u>", "");
                 sb.Replace("</u>", "");
             }
+
             return sb.ToString();
         }
-       
+
         internal static void UpdatePanelText() => descriptionText.text = BuildRelationString();
 
         [HarmonyPatch(typeof(SimGameState), "Update")]
@@ -224,7 +234,7 @@ namespace GalaxyatWar
                         {
                             UpdatePanelText();
                         }
-    
+
                         LogDebug("Event Panel " + eventPanel.gameObject.activeSelf);
                     }
                     catch (Exception ex)
@@ -316,7 +326,7 @@ namespace GalaxyatWar
                     //Mod.timer.Restart();
                     if (Globals.WarStatusTracker != null && !isFlashpoint)
                     {
-                        var VisitedStarSystems = (List<string>)Traverse.Create(Globals.Sim).Field("VisitedStarSystems").GetValue();
+                        var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
                         var wasVisited = VisitedStarSystems.Contains(__result.name);
 
                         if (Globals.WarStatusTracker.HomeContendedStrings.Contains(__result.name))
@@ -361,32 +371,22 @@ namespace GalaxyatWar
 
                 void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
                 {
-                    Globals.T.Restart();
-                    Traverse.Create(mesh).Field("m_fontAsset").SetValue(font);
-                    Traverse.Create(mesh).Field("m_baseFont").SetValue(font);
-                    Traverse.Create(mesh).Method("LoadFontAsset").GetValue();
-                    Traverse.Create(mesh).Field("m_havePropertiesChanged").SetValue(true);
-                    Traverse.Create(mesh).Field("m_isCalculateSizeRequired").SetValue(true);
-                    Traverse.Create(mesh).Field("m_isInputParsingRequired").SetValue(true);
-                    Traverse.Create(mesh).Method("SetVerticesDirty").GetValue();
-                    Traverse.Create(mesh).Method("SetLayoutDirty").GetValue();
+                    mesh.m_fontAsset = font;
+                    // invalid field Traverse.Create(mesh).Field("m_baseFont").SetValue(font);  
+                    mesh.LoadFontAsset();
+                    mesh.m_havePropertiesChanged = true;
+                    mesh.m_isCalculateSizeRequired = true;
+                    mesh.m_isInputParsingRequired = true;
+                    mesh.SetVerticesDirty();
+                    mesh.SetLayoutDirty();
                     LogDebug("SetFont " + Globals.T.Elapsed);
                 }
 
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                     return;
-                
-                // thanks to mpstark for this
-                var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
-                foreach (var o in fonts)
-                {
-                    var font = (TMP_FontAsset) o;
-                    if (font.name == "UnitedSansSemiExt-Light")
-                    {
-                        SetFont(___LabelField, font);
-                        SetFont(___NameField, font);
-                    }
-                }
+
+                SetFont(___LabelField, Globals.font);
+                SetFont(___NameField, Globals.font);
             }
         }
 

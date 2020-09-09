@@ -5,8 +5,11 @@ using BattleTech;
 using BattleTech.Framework;
 using Harmony;
 using Newtonsoft.Json;
+using TMPro;
+using UnityEngine;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
+
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InconsistentNaming
@@ -24,7 +27,17 @@ namespace GalaxyatWar
                 LogDebug("PopulateMap");
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
-
+                // thanks to mpstark for this
+                var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
+                foreach (var o in fonts)
+                {
+                    var font = (TMP_FontAsset) o;
+                    if (font.name == "UnitedSansSemiExt-Light")
+                    {
+                        Globals.font = font;
+                    }
+                }
+                
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                 {
                     LogDebug("Aborting GaW loading.");
@@ -45,7 +58,8 @@ namespace GalaxyatWar
                     DeserializeWar();
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
-                        LogDebug("Broken save being respawned.");
+                        LogDebug("Found tag but it's broken and being respawned:");
+                        LogDebug($"{gawTag.Substring(0, 200)}");
                         Spawn();
                     }
                     else
@@ -64,6 +78,8 @@ namespace GalaxyatWar
             {
                 LogDebug("Spawning new instance");
                 Globals.WarStatusTracker = new WarStatus();
+                Globals.WarStatusTracker.systemsByResources =
+                    Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
@@ -136,6 +152,8 @@ namespace GalaxyatWar
             HotSpots.FullHomeContendedSystems.Clear();
             HotSpots.HomeContendedSystems.Clear();
             var ssDict = Globals.Sim.StarSystemDictionary;
+            Globals.WarStatusTracker.systemsByResources =
+                Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
             SystemDifficulty();
 
             try
@@ -165,9 +183,9 @@ namespace GalaxyatWar
                     var systemOwner = systemDef.OwnerValue.Name;
                     // needs to be refreshed since original declaration in Mod
                     var ownerValue = Globals.FactionValues.Find(x => x.Name == system.owner);
-                    Traverse.Create(systemDef).Property("OwnerValue").SetValue(ownerValue);
-                    Traverse.Create(systemDef).Property("OwnerID").SetValue(system.owner);
-                    RefreshContracts(system.starSystem);
+                    systemDef.OwnerValue = ownerValue;
+                    systemDef.factionShopOwnerID = system.owner;
+                    RefreshContracts(system);
                     if (system.influenceTracker.Keys.Contains("AuriganPirates") && !system.influenceTracker.Keys.Contains("NoFaction"))
                     {
                         system.influenceTracker.Add("NoFaction", system.influenceTracker["AuriganPirates"]);
@@ -182,18 +200,19 @@ namespace GalaxyatWar
                         {
                             var tempList = systemDef.SystemShopItems;
                             tempList.Add(Globals.Settings.FactionShops[system.owner]);
+
                             Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
                         }
 
                         if (systemDef.FactionShopItems != null)
                         {
-                            Traverse.Create(systemDef).Property("FactionShopOwnerValue").SetValue(Globals.FactionValues.Find(x => x.Name == system.owner));
-                            Traverse.Create(systemDef).Property("FactionShopOwnerID").SetValue(system.owner);
+                            systemDef.FactionShopOwnerValue = Globals.FactionValues.Find(x => x.Name == system.owner);
+                            systemDef.factionShopOwnerID = system.owner;
                             var factionShopItems = systemDef.FactionShopItems;
                             if (factionShopItems.Contains(Globals.Settings.FactionShopItems[systemOwner]))
                                 factionShopItems.Remove(Globals.Settings.FactionShopItems[systemOwner]);
                             factionShopItems.Add(Globals.Settings.FactionShopItems[system.owner]);
-                            Traverse.Create(systemDef).Property("FactionShopItems").SetValue(factionShopItems);
+                            systemDef.FactionShopItems = factionShopItems;
                         }
                     }
                 }
@@ -242,7 +261,7 @@ namespace GalaxyatWar
                 foreach (var contract in Globals.Sim.CurSystem.activeSystemBreadcrumbs)
                 {
                     if (Globals.WarStatusTracker.DeploymentContracts.Contains(contract.Override.contractName))
-                        Traverse.Create(contract.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                        contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
                 }
             }
             catch (Exception ex)

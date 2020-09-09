@@ -14,12 +14,6 @@ namespace GalaxyatWar
 {
     public class Helpers
     {
-        private static readonly AccessTools.FieldRef<StarSystemDef, List<int>> DifficultyListRef =
-            AccessTools.FieldRefAccess<StarSystemDef, List<int>>("DifficultyList");
-
-        private static readonly AccessTools.FieldRef<StarSystemDef, int> DefaultDifficultyRef =
-            AccessTools.FieldRefAccess<StarSystemDef, int>("DefaultDifficulty");
-
         internal static void CopySettingsToState()
         {
             if (Settings.ISMCompatibility)
@@ -36,94 +30,93 @@ namespace GalaxyatWar
             var difficultyCutoff = totalSystems / 10;
             var i = 0;
 
-            foreach (var systemStatus in WarStatusTracker.systems.OrderBy(x => x.TotalResources))
+            foreach (var systemStatus in WarStatusTracker.systemsByResources)
             {
                 try
                 {
-                    var system = Sim.StarSystems.Find(x => x == systemStatus.starSystem);
                     //Define the original owner of the system for revolt purposes.
                     if (systemStatus.OriginalOwner == null)
                         systemStatus.OriginalOwner = systemStatus.owner;
 
-                if (Settings.ChangeDifficulty && !system.Tags.Contains("planet_start_world"))
-                {
-                    Sim.Constants.Story.ContractDifficultyMod = 0;
-                    Sim.CompanyStats.Set<float>("Difficulty", 0);
-                    if (i <= difficultyCutoff)
+                    if (Settings.ChangeDifficulty && !systemStatus.starSystem.Tags.Contains("planet_start_world"))
                     {
-                        systemStatus.DifficultyRating = 1;
-                    }
+                        Sim.Constants.Story.ContractDifficultyMod = 0;
+                        Sim.CompanyStats.Set<float>("Difficulty", 0);
+                        if (i <= difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 1;
+                        }
 
-                    if (i <= difficultyCutoff * 2 && i > difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 2;
-                    }
+                        if (i <= difficultyCutoff * 2 && i > difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 2;
+                        }
 
-                    if (i <= difficultyCutoff * 3 && i > 2 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 3;
-                    }
+                        if (i <= difficultyCutoff * 3 && i > 2 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 3;
+                        }
 
-                    if (i <= difficultyCutoff * 4 && i > 3 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 4;
-                    }
+                        if (i <= difficultyCutoff * 4 && i > 3 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 4;
+                        }
 
-                    if (i <= difficultyCutoff * 5 && i > 4 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 5;
-                    }
+                        if (i <= difficultyCutoff * 5 && i > 4 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 5;
+                        }
 
-                    if (i <= difficultyCutoff * 6 && i > 5 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 6;
-                    }
+                        if (i <= difficultyCutoff * 6 && i > 5 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 6;
+                        }
 
-                    if (i <= difficultyCutoff * 7 && i > 6 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 7;
-                    }
+                        if (i <= difficultyCutoff * 7 && i > 6 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 7;
+                        }
 
-                    if (i <= difficultyCutoff * 8 && i > 7 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 8;
-                    }
+                        if (i <= difficultyCutoff * 8 && i > 7 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 8;
+                        }
 
-                    if (i <= difficultyCutoff * 9 && i > 8 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 9;
-                    }
+                        if (i <= difficultyCutoff * 9 && i > 8 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 9;
+                        }
 
-                    if (i > 9 * difficultyCutoff)
-                    {
-                        systemStatus.DifficultyRating = 10;
-                    }
+                        if (i > 9 * difficultyCutoff)
+                        {
+                            systemStatus.DifficultyRating = 10;
+                        }
 
-                    i++;
+                        i++;
 
                         var amount = systemStatus.DifficultyRating;
                         var difficultyList = new List<int> {amount, amount};
-                        DifficultyListRef(system.Def) = difficultyList;
-                        DefaultDifficultyRef(system.Def) = amount;
+                        systemStatus.starSystem.Def.DifficultyList = difficultyList;
+                        systemStatus.starSystem.Def.DefaultDifficulty = amount;
                     }
                     else
                     {
-                        systemStatus.DifficultyRating = system.Def.DefaultDifficulty;
+                        systemStatus.DifficultyRating = systemStatus.starSystem.Def.DefaultDifficulty;
                         i++;
                     }
 
-                    if (system.Def.OwnerValue.Name != "NoFaction" && system.Def.SystemShopItems.Count == 0)
+                    if (systemStatus.starSystem.Def.OwnerValue.Name != "NoFaction" && systemStatus.starSystem.Def.SystemShopItems.Count == 0)
                     {
                         LogDebug("SystemDifficulty fix entry " + T.Elapsed);
                         var tempList = new List<string>
                         {
                             "itemCollection_minor_Locals"
                         };
-                        Traverse.Create(system.Def).Property("SystemShopItems").SetValue(tempList);
-                        if (Sim.CurSystem.Name == system.Def.Description.Name)
+                        systemStatus.starSystem.Def.SystemShopItems = tempList;
+                        if (Sim.CurSystem.Name == systemStatus.starSystem.Def.Description.Name)
                         {
                             var refreshShop = Shop.RefreshType.RefreshIfEmpty;
-                            system.SystemShop.Rehydrate(Sim, system, system.Def.SystemShopItems, refreshShop,
+                            systemStatus.starSystem.SystemShop.Rehydrate(Sim, systemStatus.starSystem, systemStatus.starSystem.Def.SystemShopItems, refreshShop,
                                 Shop.ShopType.System);
                         }
                     }
@@ -598,8 +591,9 @@ namespace GalaxyatWar
             return combinedString;
         }
 
-        public static void RefreshContracts(StarSystem starSystem)
+        public static void RefreshContracts(SystemStatus systemStatus)
         {
+            var starSystem = systemStatus.starSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
             if (WarStatusTracker.HotBox.Contains(starSystem.Name) || (starSystem.Tags.Contains("planet_region_hyadesrim") &&
                                                                       (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction")))
@@ -636,8 +630,7 @@ namespace GalaxyatWar
                 contractTargets.Add(Settings.GaW_Police);
             }
 
-            var warSystem = WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
-            var neighborSystems = warSystem.neighborSystems;
+            var neighborSystems = systemStatus.neighborSystems;
             foreach (var systemNeighbor in neighborSystems.Keys)
             {
                 if (Settings.ImmuneToWar.Contains(systemNeighbor) || Settings.DefensiveFactions.Contains(systemNeighbor))
@@ -650,7 +643,7 @@ namespace GalaxyatWar
                     contractTargets.Add(systemNeighbor);
             }
 
-            if ((warSystem.PirateActivity > 0) && !contractEmployers.Contains("AuriganPirates"))
+            if (systemStatus.PirateActivity > 0 && !contractEmployers.Contains("AuriganPirates"))
             {
                 contractEmployers.Add("AuriganPirates");
                 contractTargets.Add("AuriganPirates");
@@ -915,9 +908,8 @@ namespace GalaxyatWar
                             trackerFactionAllies.Remove("AuriganDirectorate");
                         Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                     }
-                } else 
-
-                if (trackerDeathList[offensiveFaction] <= 75 && trackerDeathList[offensiveFaction] > 25)
+                }
+                else if (trackerDeathList[offensiveFaction] <= 75 && trackerDeathList[offensiveFaction] > 25)
                 {
                     if (trackerFactionEnemies.Contains(offensiveFaction))
                     {
@@ -939,9 +931,8 @@ namespace GalaxyatWar
                             trackerFactionAllies.Remove("AuriganDirectorate");
                         Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
                     }
-                }  else 
-
-                if (trackerDeathList[offensiveFaction] <= 25)
+                }
+                else if (trackerDeathList[offensiveFaction] <= 25)
                 {
                     if (!trackerFactionAllies.Contains(offensiveFaction))
                     {

@@ -96,7 +96,7 @@ namespace GalaxyatWar
             }
             catch (Exception ex)
             {
-                Error(ex);
+                LogDebug(ex);
             }
         }
 
@@ -201,8 +201,8 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.DeploymentContracts.Add(PrioritySystem.Override.contractName);
                         }
 
-                        RefreshContracts(MainBCTarget);
-
+                        var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == MainBCTarget.Name);
+                        RefreshContracts(systemStatus);
                         HomeContendedSystems.Remove(MainBCTarget);
                         Globals.WarStatusTracker.HomeContendedStrings.Add(MainBCTarget.Name);
                         if (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == Globals.Settings.InternalHotSpots)
@@ -238,7 +238,9 @@ namespace GalaxyatWar
                             else
                                 Globals.Sim.GeneratePotentialContracts(false, null, ExternalPriorityTargets[ExtTarget][randTarget]);
                             SystemBonuses(ExternalPriorityTargets[ExtTarget][randTarget]);
-                            RefreshContracts(ExternalPriorityTargets[ExtTarget][randTarget]);
+                            var systemStatus = Globals.WarStatusTracker.systems.Find(x =>
+                                x.name == ExternalPriorityTargets[ExtTarget][randTarget].Name);
+                            RefreshContracts(systemStatus);
                             ExternalPriorityTargets[ExtTarget].RemoveAt(randTarget);
                         } while (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == j && ExternalPriorityTargets[ExtTarget].Count != 0);
 
@@ -476,7 +478,8 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
                             Globals.WarStatusTracker.Escalation = false;
                             Globals.WarStatusTracker.EscalationDays = 0;
-                            RefreshContracts(Globals.Sim.CurSystem);
+                            var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
+                            RefreshContracts(systemStatus);
                             if (Globals.WarStatusTracker.HotBox.Count == 0)
                                 Globals.WarStatusTracker.HotBoxTravelling = false;
 
@@ -520,7 +523,8 @@ namespace GalaxyatWar
 
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
-                RefreshContracts(system);
+                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
+                RefreshContracts(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
             }
@@ -583,7 +587,8 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
                             Globals.WarStatusTracker.Escalation = false;
                             Globals.WarStatusTracker.EscalationDays = 0;
-                            RefreshContracts(Globals.Sim.CurSystem);
+                            var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
+                            RefreshContracts(systemStatus);
                             if (Globals.WarStatusTracker.HotBox.Count == 0)
                                 Globals.WarStatusTracker.HotBoxTravelling = false;
 
@@ -627,7 +632,8 @@ namespace GalaxyatWar
 
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
-                RefreshContracts(system);
+                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
+                RefreshContracts(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
             }
@@ -844,7 +850,8 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
-                RefreshContracts(system);
+                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
+                RefreshContracts(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
             }
@@ -988,7 +995,7 @@ namespace GalaxyatWar
             Globals.WarStatusTracker.PirateDeployment = false;
             Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
             Globals.WarStatusTracker.HotBox.Remove(systemStatus.name);
-            RefreshContracts(systemStatus.starSystem);
+            RefreshContracts(systemStatus);
             var hasFlashpoint = false;
             foreach (var contract in Globals.Sim.CurSystem.SystemContracts)
             {
@@ -1076,7 +1083,7 @@ namespace GalaxyatWar
 
                     if (__instance.SelectedContract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
                     {
-                        var message = "Commander, this contract will bring us right to the front lines. If we accept it, we will be forced to take missions when our employer needs us to simultaneously attack in support of their war effort. We will be commited to this Deployment until the system is taken or properly defended and will lose significant reputation if we end up backing out before the job is done. But, oh man, they will certainly reward us well if their operation is ultimately successful! This Deployment may require missions to be done without time between them for repairs or to properly rest our pilots. I strongly encourage you to only accept this arrangement if you think we're up to it.";
+                        var message = "Commander, this contract will bring us right to the front lines. If we accept it, we will be forced to take missions when our employer needs us to simultaneously attack in support of their war effort. We will be committed to this Deployment until the system is taken or properly defended and will lose significant reputation if we end up backing out before the job is done. But, oh man, they will certainly reward us well if their operation is ultimately successful! This Deployment may require missions to be done without time between them for repairs or to properly rest our pilots. I strongly encourage you to only accept this arrangement if you think we're up to it.";
                         PauseNotification.Show("Deployment", message,
                             Globals.Sim.GetCrewPortrait(SimGameCrew.Crew_Darius), string.Empty, true, delegate { __instance.NegotiateContract(__instance.SelectedContract); }, "Do it anyways", null, "Cancel");
                         return false;

@@ -329,7 +329,7 @@ namespace GalaxyatWar
                                 var systemStatus = WarStatusTracker.systems.Find(x => x.name == system);
                                 systemStatus.CurrentlyAttackedBy.Clear();
                                 CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-                                RefreshContracts(systemStatus.starSystem);
+                                RefreshContracts(systemStatus);
                             }
 
                             WarStatusTracker.SystemChangedOwners.Clear();

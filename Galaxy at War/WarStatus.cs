@@ -5,6 +5,7 @@ using BattleTech;
 using Newtonsoft.Json;
 using static GalaxyatWar.Globals;
 using static GalaxyatWar.Helpers;
+
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -14,6 +15,7 @@ namespace GalaxyatWar
     public class WarStatus
     {
         public List<SystemStatus> systems = new List<SystemStatus>();
+        internal List<SystemStatus> systemsByResources = new List<SystemStatus>();
         public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
         public List<WarFaction> warFactionTracker = new List<WarFaction>();
         public bool JustArrived = true;
@@ -149,6 +151,7 @@ namespace GalaxyatWar
             }
 
             systems = systems.OrderBy(x => x.name).ToList();
+            systemsByResources = systems.OrderBy(x => x.TotalResources).ToList();
         }
 
         [JsonConstructor]
@@ -183,7 +186,10 @@ namespace GalaxyatWar
 
         internal StarSystem starSystem
         {
-            get => starSystemBackingField ?? Sim.StarSystems.Find(s => s.Name == name);
+            get
+            {
+                return starSystemBackingField ?? (starSystemBackingField = Sim.StarSystems.Find(s => s.Name == name));
+            }
             private set => starSystemBackingField = value;
         }
 
@@ -443,7 +449,10 @@ namespace GalaxyatWar
 
         public int NumberOfSystems
         {
-            get { return Sim.StarSystems.Count(system => system.OwnerDef == Sim.factions[faction]); }
+            get
+            {
+                return Sim.StarSystems.Count(system => system.OwnerDef == Sim.factions[faction]);
+            }
         }
 
         public Dictionary<string, float> warFactionAttackResources = new Dictionary<string, float>();

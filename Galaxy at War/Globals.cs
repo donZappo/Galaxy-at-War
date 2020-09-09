@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BattleTech;
 using BattleTech.UI;
+using TMPro;
 using Stopwatch = System.Diagnostics.Stopwatch;
 // ReSharper disable ClassNeverInstantiated.Global
 
@@ -31,6 +32,7 @@ namespace GalaxyatWar
         internal const float SpendFactor = 5;
         internal static SimGameInterruptManager SimGameInterruptManager;
         internal static TaskTimelineWidget TaskTimelineWidget;
+        internal static TMP_FontAsset font;
         // todo remove these unused fields?
         public static bool IsGoodFaithEffort;
         public static Dictionary<string, List<StarSystem>> AttackTargets = new Dictionary<string, List<StarSystem>>();
