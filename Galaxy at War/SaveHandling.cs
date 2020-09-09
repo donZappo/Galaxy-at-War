@@ -131,6 +131,7 @@ namespace GalaxyatWar
                     Globals.FirstDehydrate = false;
                     Globals.WarStatusTracker.StartGameInitialized = false;
                 }
+
             }
 
             public static void Postfix()
