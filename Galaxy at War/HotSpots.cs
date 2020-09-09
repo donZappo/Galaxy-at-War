@@ -26,7 +26,7 @@ namespace GalaxyatWar
         public static readonly List<StarSystem> HomeContendedSystems = new List<StarSystem>();
         public static readonly Dictionary<StarSystem, float> FullHomeContendedSystems = new Dictionary<StarSystem, float>();
 
-        private static void ProcessHotSpots()
+        public static void ProcessHotSpots()
         {
             try
             {
@@ -1063,10 +1063,13 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                     return;
 
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
                 if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
                 {
                     ProcessHotSpots();
                     // StarmapMod.SetupRelationPanel();
+                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     Globals.WarStatusTracker.StartGameInitialized = true;
                 }
 

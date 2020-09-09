@@ -80,16 +80,18 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker = new WarStatus();
                 Globals.WarStatusTracker.systemsByResources =
                     Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
-                if (!Globals.WarStatusTracker.StartGameInitialized)
-                {
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                    Globals.WarStatusTracker.StartGameInitialized = true;
-                }
-
                 SystemDifficulty();
+
                 Globals.WarStatusTracker.FirstTickInitialization = true;
                 WarTick.Tick(true, true);
+
+                //HotSpots.ProcessHotSpots();
+                //if (!Globals.WarStatusTracker.StartGameInitialized)
+                //{
+                //    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
+                //    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                //    Globals.WarStatusTracker.StartGameInitialized = true;
+                //}
             }
         }
 
@@ -122,6 +124,12 @@ namespace GalaxyatWar
                 {
                     ConvertToSave();
                     SerializeWar();
+                }
+
+                if (Globals.FirstDehydrate)
+                {
+                    Globals.FirstDehydrate = false;
+                    Globals.WarStatusTracker.StartGameInitialized = false;
                 }
             }
 

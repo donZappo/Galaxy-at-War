@@ -39,5 +39,6 @@ namespace GalaxyatWar
         public static List<StarSystem> DefenseTargets = new List<StarSystem>();
         public static int LoopCounter;
         public static Contract LoopContract;
+        public static bool FirstDehydrate = true;
     }
 }
