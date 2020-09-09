@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BattleTech;
@@ -7,7 +6,6 @@ using BattleTech.UI;
 using BattleTech.UI.Tooltips;
 using Harmony;
 using HBS.Extensions;
-using Localize;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -403,8 +401,8 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                SetFont(___LabelField, Globals.font);
-                SetFont(___NameField, Globals.font);
+                SetFont(___LabelField, Globals.Font);
+                SetFont(___NameField, Globals.Font);
             }
         }
 

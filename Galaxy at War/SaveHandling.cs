@@ -9,8 +9,6 @@ using TMPro;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
-using BattleTech.Save.SaveGameStructure;
-
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InconsistentNaming
@@ -35,7 +33,7 @@ namespace GalaxyatWar
                     var font = (TMP_FontAsset) o;
                     if (font.name == "UnitedSansSemiExt-Light")
                     {
-                        Globals.font = font;
+                        Globals.Font = font;
                     }
                 }
                 
