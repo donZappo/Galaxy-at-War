@@ -37,7 +37,7 @@ namespace GalaxyatWar
                         Globals.font = font;
                     }
                 }
-
+                
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                 {
                     LogDebug("Aborting GaW loading.");
@@ -59,20 +59,19 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
-                        LogDebug($"{gawTag}");
+                        LogDebug($"{gawTag.Substring(0, 200)}");
                         Spawn();
                     }
                     else
                     {
                         RebuildState();
+                        Globals.WarStatusTracker.FirstTickInitialization = true;
                     }
                 }
                 else
                 {
                     Spawn();
                 }
-
-                Globals.WarStatusTracker.FirstTickInitialization = true;
             }
 
             private static void Spawn()
