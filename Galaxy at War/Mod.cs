@@ -111,23 +111,23 @@ namespace GalaxyatWar
         [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]
         public static class SGFactionRelationShipDisplayDisplayEnemiesOfFactionPatch
         {
-            public static void Prefix(FactionValue faction)
+            public static void Prefix(FactionValue theFaction)
             {
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                if (WarStatusTracker.deathListTracker.Find(x => x.faction == faction.Name) == null)
+                if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name) == null)
                     return;
 
-                var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == faction.Name);
-                LogDebug($"Allies currently, on the deathlist of {faction}:");
+                var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name);
+                LogDebug($"Allies currently, on the deathlist of {theFaction}:");
                 deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies currently, on the deathlist of {faction}:");
+                LogDebug($"Enemies currently, on the deathlist of {theFaction}:");
                 deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 AdjustDeathList(deathListTracker, true);
-                LogDebug($"Allies after, on the deathlist of {faction}:");
+                LogDebug($"Allies after, on the deathlist of {theFaction}:");
                 deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies after, on the deathlist of {faction}:");
+                LogDebug($"Enemies after, on the deathlist of {theFaction}:");
                 deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
             }
         }
@@ -135,23 +135,23 @@ namespace GalaxyatWar
         [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayAlliesOfFaction")]
         public static class SGFactionRelationShipDisplayDisplayAlliesOfFactionPatch
         {
-            public static void Prefix(string faction)
+            public static void Prefix(string theFactionID)
             {
                 if (WarStatusTracker == null || Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (WarStatusTracker.deathListTracker.Find(x => x.faction == faction) == null)
+                if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID) == null)
                     return;
 
-                LogDebug($"Allies currently, on the deathlist of {faction}:");
-                var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == faction);
+                LogDebug($"Allies currently, on the deathlist of {theFactionID}:");
+                var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID);
                 deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies currently, on the deathlist of {faction}:");
+                LogDebug($"Enemies currently, on the deathlist of {theFactionID}:");
                 deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 AdjustDeathList(deathListTracker, true);
-                LogDebug($"Allies after, on the deathlist of {faction}:");
+                LogDebug($"Allies after, on the deathlist of {theFactionID}:");
                 deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies after, on the deathlist of {faction}:");
+                LogDebug($"Enemies after, on the deathlist of {theFactionID}:");
                 deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
             }
         }
