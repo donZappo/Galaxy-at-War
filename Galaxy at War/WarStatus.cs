@@ -189,7 +189,7 @@ namespace GalaxyatWar
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
-        private DateTime? lastUpdatedBackingField;
+        private int? lastUpdatedBackingField;
         private float influenceTrackerSumBackingField;
 
         internal StarSystem starSystem
@@ -205,9 +205,9 @@ namespace GalaxyatWar
         {
             get
             {
-                if (LastUpdated < Sim.CurrentDate)
+                if (LastUpdated < Sim.DaysPassed)
                 {
-                    LastUpdated = Sim.CurrentDate;
+                    LastUpdated = Sim.DaysPassed;
                     return influenceTrackerSumBackingField = influenceTracker.Values.Sum();
                 }
 
@@ -215,9 +215,9 @@ namespace GalaxyatWar
             }
         }
 
-        private DateTime? LastUpdated
+        private int? LastUpdated
         {
-            get => lastUpdatedBackingField ?? (lastUpdatedBackingField = Sim.CurrentDate);
+            get => lastUpdatedBackingField ?? (lastUpdatedBackingField = Sim.DaysPassed);
             set => lastUpdatedBackingField = value;
         }
 
@@ -452,6 +452,7 @@ namespace GalaxyatWar
         public float AR_PerPlanet = 0;
         public float DR_PerPlanet = 0;
 
+        // removing this will break saves 
         public int NumberOfSystems
         {
             get
