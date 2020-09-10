@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
@@ -28,13 +29,15 @@ namespace GalaxyatWar
             public static void Prefix(ref StarSystem system)
             {
                 system.Def.contractEmployerIDs = system.Def.contractEmployerIDs.Distinct().ToList();
+                LogDebug("Contract employers before changes:");
+                system.Def.contractEmployerIDs.Do(x => LogDebug($"  {x}"));
             }
         }
 
         [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
         public static class SimGameStateGenerateContractParticipantsPatch
         {
-            public static void Prefix(FactionDef employer, StarSystemDef system)
+            public static void Prefix(FactionDef employer, StarSystemDef system, ref string[] __state)
             {
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
@@ -42,48 +45,68 @@ namespace GalaxyatWar
                 if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
                     return;
 
-                FactionEnemyHolder.Clear();
-                var newEnemies = system.contractTargetIDs;
-                FactionEnemyHolder = employer.Enemies.ToList();
-                var newFactionEnemies = FactionEnemyHolder;
-                foreach (var Enemy in newEnemies)
+                LogDebug($"GenerateContractParticipants for {employer}");
+                var contractTargetIDs = system.contractTargetIDs;
+                LogDebug("Existing contractTargetIDs:");
+                contractTargetIDs.Do(x => LogDebug($"  {x}"));
+                LogDebug("Their enemies:");
+                employer.Enemies.Do(x => LogDebug($"  {x}"));
+                var newFactionEnemies = new List<string>(employer.Enemies.ToList());
+                foreach (var enemy in contractTargetIDs)
                 {
-                    if (!newFactionEnemies.Contains(Enemy) && !employer.Allies.Contains(Enemy) && Enemy != employer.FactionValue.Name &&
-                        !Settings.ImmuneToWar.Contains(Enemy))
+                    if (enemy != employer.FactionValue.Name &&
+                        !newFactionEnemies.Contains(enemy) &&
+                        !employer.Allies.Contains(enemy) &&
+                        !Settings.ImmuneToWar.Contains(enemy))
                     {
-                        newFactionEnemies.Add(Enemy);
+                        LogDebug($"Adding new enemy: {enemy}");
+                        newFactionEnemies.Add(enemy);
                     }
                 }
 
-                foreach (var faction in Settings.DefensiveFactions)
+                foreach (var enemy in Settings.DefensiveFactions.Except(Settings.ImmuneToWar))
                 {
-                    if (!newFactionEnemies.Contains(faction) && faction != employer.FactionValue.Name)
+                    if (enemy != employer.FactionValue.Name &&
+                        !newFactionEnemies.Contains(enemy))
                     {
-                        if (!Settings.ImmuneToWar.Contains(faction))
-                            newFactionEnemies.Add(faction);
+                        LogDebug($"Adding new enemy: {enemy}");
+                        newFactionEnemies.Add(enemy);
                     }
                 }
 
-                if (Settings.GaW_PoliceSupport && system.OwnerValue.Name == WarStatusTracker.ComstarAlly && employer.Name != WarStatusTracker.ComstarAlly)
+                if (Settings.GaW_PoliceSupport &&
+                    system.OwnerValue.Name == WarStatusTracker.ComstarAlly &&
+                    employer.Name != WarStatusTracker.ComstarAlly)
+                {
+                    LogDebug($"Adding new enemy: {Settings.GaW_Police}");
                     newFactionEnemies.Add(Settings.GaW_Police);
-                if (Settings.GaW_PoliceSupport && employer.Name == Settings.GaW_Police && newFactionEnemies.Contains(WarStatusTracker.ComstarAlly))
-                    newFactionEnemies.Remove(WarStatusTracker.ComstarAlly);
+                }
 
-                Traverse.Create(employer).Property("Enemies").SetValue(newFactionEnemies.ToArray());
+                if (Settings.GaW_PoliceSupport &&
+                    employer.Name == Settings.GaW_Police &&
+                    newFactionEnemies.Contains(WarStatusTracker.ComstarAlly))
+                {
+                    LogDebug($"Removing enemy (Comstar ally): {WarStatusTracker.ComstarAlly}");
+                    newFactionEnemies.Remove(WarStatusTracker.ComstarAlly);
+                }
+
+                employer.Enemies = __state = newFactionEnemies.ToArray();
+                LogDebug("Adjusted enemies list: ");
+                __state.Do(x => LogDebug($"  {x}"));
             }
 
-            public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result)
+            public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result, string[] __state)
             {
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                Traverse.Create(employer).Property("Enemies").SetValue(FactionEnemyHolder.ToArray());
+                LogDebug($"Enemies after GenerateContractParticipants for {employer} list: ");
+                __state.Do(x => LogDebug($"  {x}"));
+                employer.Enemies = __state;
                 var type = __result.Type;
                 __result = __result.Distinct().ToWeightedList(type);
             }
         }
-
-
 
         [HarmonyPatch(typeof(SGFactionRelationshipDisplay), "DisplayEnemiesOfFaction")]
         public static class SGFactionRelationShipDisplayDisplayEnemiesOfFactionPatch

@@ -7,7 +7,7 @@ namespace GalaxyatWar
     public static class Logger
     {
         internal static string LogFilePath =>
-            Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.txt";
+            Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
 
         public static void Error(Exception ex)
         {
