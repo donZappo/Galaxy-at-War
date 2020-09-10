@@ -115,8 +115,9 @@ namespace GalaxyatWar
 
                 foreach (var theFaction in Globals.IncludedFactions)
                 {
-                    if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction) == null)
-                        continue;
+                    // g - commented out 9/9/20
+                    //if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction) == null)
+                    //    continue;
 
                     var deathListTracker = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction);
                     AdjustDeathList(deathListTracker, true);

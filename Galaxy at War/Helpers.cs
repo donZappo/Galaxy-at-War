@@ -183,11 +183,12 @@ namespace GalaxyatWar
 
             WarStatusTracker.ComstarCycle = 1;
             var warFactionList = new List<WarFaction>();
+            var omit = Settings.DefensiveFactions.Concat(Settings.HyadesPirates)
+                .Concat(Settings.NoOffensiveContracts).Concat(new []{"AuriganPirates"});
             foreach (var warFarTemp in WarStatusTracker.warFactionTracker)
             {
                 warFarTemp.ComstarSupported = false;
-                if (Settings.DefensiveFactions.Contains(warFarTemp.faction) || Settings.HyadesPirates.Contains(warFarTemp.faction) ||
-                    warFarTemp.faction == "AuriganPirates" || Settings.NoOffensiveContracts.Contains(warFarTemp.faction))
+                if (omit.Contains(warFarTemp.faction))
                     continue;
                 warFactionList.Add(warFarTemp);
             }
@@ -216,21 +217,22 @@ namespace GalaxyatWar
 
         public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
         {
-            var warSystem = WarStatusTracker.systems.Find(x => x.name == starSystem.Name);
+            var warFac = WarStatusTracker.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
+            if (warFac == null)
+                return;
+            var isFlashpointSystem = WarStatusTracker.FlashpointSystems.Contains(starSystem.Name);
+            var warSystem = WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
             var ownerNeighborSystems = warSystem.neighborSystems;
             ownerNeighborSystems.Clear();
-            if (starSystem == null || Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
+            if (Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
                 return;
 
             foreach (var neighborSystem in Sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                if (!neighborSystem.OwnerValue.Name.Equals(starSystem.OwnerValue.Name) && !WarStatusTracker.FlashpointSystems.Contains(starSystem.Name) &&
+                if (neighborSystem.OwnerValue.Name != starSystem.OwnerValue.Name && 
+                    !isFlashpointSystem &&
                     !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
                 {
-                    var warFac = WarStatusTracker.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
-                    if (warFac == null)
-                        return;
-
                     if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                     {
                         // todo should this be = new List<string> (warFac.attackTargets[neighborSystem.OwnerValue.Name]); tempList.Add(neighbourSystem.OwnerValue.Name, tempList);  ?
@@ -421,8 +423,9 @@ namespace GalaxyatWar
             var totalDr = GetTotalDefensiveResources(system);
             var systemValue = totalAR + totalDr;
             var killListDelta = Math.Max(10, systemValue);
-            if (WarStatusTracker.deathListTracker.Find(x => x.faction == oldFaction) == null)
-                return;
+            // g - commented out 9/9/20 - deathListTracker will have all factions now
+            //if (WarStatusTracker.deathListTracker.Find(x => x.faction == oldFaction) == null)
+            //    return;
 
             try
             {
@@ -439,9 +442,9 @@ namespace GalaxyatWar
                     LogDebug($"factionTracker missing faction {faction}, ignoring.");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                LogDebug("factionTracker.deathList[faction]: " + faction);
+                Error(ex);
             }
 
             try
@@ -467,9 +470,9 @@ namespace GalaxyatWar
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                LogDebug("factionEnemy/Ally.deathList[faction]");
+                Error(ex);
             }
         }
 
@@ -826,18 +829,18 @@ namespace GalaxyatWar
                 if (trackerFactionAllies.Contains(trackerFaction))
                 {
                     trackerFactionAllies.Remove(trackerFaction);
-                    Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
+                    trackerFactionDef.Allies = trackerFactionAllies.ToArray();
                 }
 
                 if (trackerFactionEnemies.Contains(trackerFaction))
                 {
                     trackerFactionEnemies.Remove(trackerFaction);
-                    Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
+                    trackerFactionDef.Enemies = trackerFactionEnemies.ToArray();
                 }
             }
 
             var deathListOffensiveFactions = new List<string>(trackerDeathList.Keys.Except(Settings.DefensiveFactions));
-            var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == deathListTracker.faction);
+            var warFaction = deathListTracker.WarFaction;
             var hasEnemy = false;
             //Defensive Only factions are always neutral
             Settings.DefensiveFactions.Do(x => trackerDeathList[x] = 50);
@@ -896,7 +899,7 @@ namespace GalaxyatWar
                             trackerFactionEnemies.Remove(trackerFaction);
                         if (trackerFactionEnemies.Contains("AuriganDirectorate"))
                             trackerFactionEnemies.Remove("AuriganDirectorate");
-                        Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
+                        trackerFactionDef.Enemies = trackerFactionEnemies.ToArray();
                     }
 
                     if (trackerFactionAllies.Contains(offensiveFaction))
@@ -906,7 +909,7 @@ namespace GalaxyatWar
                             trackerFactionAllies.Remove(trackerFaction);
                         if (trackerFactionAllies.Contains("AuriganDirectorate"))
                             trackerFactionAllies.Remove("AuriganDirectorate");
-                        Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
+                        trackerFactionDef.Allies = trackerFactionAllies.ToArray();
                     }
                 }
                 else if (trackerDeathList[offensiveFaction] <= 75 && trackerDeathList[offensiveFaction] > 25)
@@ -918,7 +921,7 @@ namespace GalaxyatWar
                             trackerFactionEnemies.Remove(trackerFaction);
                         if (trackerFactionEnemies.Contains("AuriganDirectorate"))
                             trackerFactionEnemies.Remove("AuriganDirectorate");
-                        Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
+                        trackerFactionDef.Enemies = trackerFactionEnemies.ToArray();
                     }
 
 
@@ -929,7 +932,7 @@ namespace GalaxyatWar
                             trackerFactionAllies.Remove(trackerFaction);
                         if (trackerFactionAllies.Contains("AuriganDirectorate"))
                             trackerFactionAllies.Remove("AuriganDirectorate");
-                        Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
+                        trackerFactionDef.Allies = trackerFactionAllies.ToArray();
                     }
                 }
                 else if (trackerDeathList[offensiveFaction] <= 25)
@@ -941,7 +944,7 @@ namespace GalaxyatWar
                             trackerFactionAllies.Remove(trackerFaction);
                         if (trackerFactionAllies.Contains("AuriganDirectorate"))
                             trackerFactionAllies.Remove("AuriganDirectorate");
-                        Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
+                        trackerFactionDef.Allies = trackerFactionAllies.ToArray();
                     }
 
                     if (trackerFactionEnemies.Contains(offensiveFaction))
@@ -951,7 +954,7 @@ namespace GalaxyatWar
                             trackerFactionEnemies.Remove(trackerFaction);
                         if (trackerFactionEnemies.Contains("AuriganDirectorate"))
                             trackerFactionEnemies.Remove("AuriganDirectorate");
-                        Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
+                        trackerFactionDef.Enemies = trackerFactionEnemies.ToArray();
                     }
                 }
             }
@@ -980,7 +983,7 @@ namespace GalaxyatWar
                         trackerFactionAllies.Remove(trackerFaction);
                     if (trackerFactionAllies.Contains("AuriganDirectorate"))
                         trackerFactionAllies.Remove("AuriganDirectorate");
-                    Traverse.Create(trackerFactionDef).Property("Allies").SetValue(trackerFactionAllies.ToArray());
+                    trackerFactionDef.Allies = trackerFactionAllies.ToArray();
                 }
 
                 if (!trackerFactionEnemies.Contains(newEnemy))
@@ -990,7 +993,7 @@ namespace GalaxyatWar
                         trackerFactionEnemies.Remove(trackerFaction);
                     if (trackerFactionEnemies.Contains("AuriganDirectorate"))
                         trackerFactionEnemies.Remove("AuriganDirectorate");
-                    Traverse.Create(trackerFactionDef).Property("Enemies").SetValue(trackerFactionEnemies.ToArray());
+                    trackerFactionDef.Enemies = trackerFactionEnemies.ToArray();
                 }
 
                 trackerDeathList[newEnemy] = 80;

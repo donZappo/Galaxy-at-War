@@ -78,8 +78,14 @@ namespace GalaxyatWar
             //initialize all WarFactions, DeathListTrackers, and SystemStatuses
             foreach (var faction in Settings.IncludedFactions)
             {
-                warFactionTracker.Add(new WarFaction(faction));
-                deathListTracker.Add(new DeathListTracker(faction));
+                var warFaction = new WarFaction(faction);
+                var d = new DeathListTracker(faction)
+                {
+                    WarFaction = warFaction
+                };
+                warFaction.DeathListTracker = d;
+                warFactionTracker.Add(warFaction);
+                deathListTracker.Add(d);
             }
 
             for (var index = 0; index < Sim.StarSystems.Count; index++)
@@ -183,7 +189,9 @@ namespace GalaxyatWar
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
-
+        private DateTime? lastUpdatedBackingField;
+        private float influenceTrackerSumBackingField;
+        
         internal StarSystem starSystem
         {
             get
@@ -193,6 +201,26 @@ namespace GalaxyatWar
             private set => starSystemBackingField = value;
         }
 
+        internal float InfluenceTrackerSum
+        {
+            get
+            {
+                if (LastUpdated < Sim.CurrentDate)
+                {
+                    LastUpdated = Sim.CurrentDate;
+                    return influenceTrackerSumBackingField = influenceTracker.Values.Sum();
+                }
+
+                return influenceTrackerSumBackingField;
+            }
+        }
+        
+        private DateTime? LastUpdated                                     
+        {
+            get => lastUpdatedBackingField ?? (lastUpdatedBackingField = Sim.CurrentDate);
+            set => lastUpdatedBackingField = value;
+        }
+        
         [JsonConstructor]
         public SystemStatus()
         {
@@ -403,29 +431,6 @@ namespace GalaxyatWar
                     ContractTargets.Add(systemNeighbor);
             }
         }
-
-        public int CompareTo(object obj)
-        {
-            if (!(obj is StarSystem other))
-                return 1;
-
-            if (starSystem.Name.ToLower()[0] == other.Name.ToLower()[0])
-            {
-                return 0;
-            }
-
-            if (starSystem.Name.ToLower()[0] > other.Name.ToLower()[0])
-            {
-                return 1;
-            }
-
-            if (starSystem.Name.ToLower()[0] < other.Name.ToLower()[0])
-            {
-                return -1;
-            }
-
-            return 1;
-        }
     }
 
     public class WarFaction
@@ -460,14 +465,13 @@ namespace GalaxyatWar
         public List<string> defenseTargets = new List<string>();
         public Dictionary<string, bool> IncreaseAggression = new Dictionary<string, bool>();
         public List<string> adjacentFactions = new List<string>();
-
+        internal DeathListTracker DeathListTracker;
 
         [JsonConstructor]
         public WarFaction()
         {
             // deser ctor
         }
-
 
         public WarFaction(string faction)
         {
@@ -492,7 +496,8 @@ namespace GalaxyatWar
         public Dictionary<string, float> deathList = new Dictionary<string, float>();
         public List<string> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
         public List<string> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
-
+        internal WarFaction WarFaction;
+        
         [JsonConstructor]
         public DeathListTracker()
         {
@@ -507,9 +512,9 @@ namespace GalaxyatWar
             var factionDef = Sim.GetFactionDef(faction);
 
             // TODO comment this
-            foreach (var factionNames in IncludedFactions)
+            foreach (var includedFaction in IncludedFactions)
             {
-                var def = Sim.GetFactionDef(factionNames);
+                var def = Sim.GetFactionDef(includedFaction);
                 if (!IncludedFactions.Contains(def.FactionValue.Name))
                     continue;
                 if (factionDef != def && factionDef.Enemies.Contains(def.FactionValue.Name))

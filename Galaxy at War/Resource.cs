@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 
@@ -13,8 +14,7 @@ namespace GalaxyatWar
         public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
-            var factionFaction = warFaction.faction;
-            var deathList = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == factionFaction);
+            var deathList = warFaction.DeathListTracker;
             var warFar = warFaction.warFactionAttackResources;
             warFar.Clear();
             var tempTargets = new Dictionary<string, float>();
@@ -43,30 +43,24 @@ namespace GalaxyatWar
         {
             var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => x.Name == warFaction.faction));
             var maxContracts = HotSpots.ProcessReputation(factionRep);
-            if (warFaction.warFactionAttackResources.Keys.Count == 0)
+            if (warFaction.warFactionAttackResources.Count == 0)
                 return;
-            var warFar = warFaction.warFactionAttackResources;
+            var warFactionAR = warFaction.warFactionAttackResources;
             //Go through the different resources allocated from attacking faction to spend against each targetFaction
-            var factionDlt = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == warFaction.faction);
-            foreach (var targetFaction in warFar.Keys)
+            var deathListTracker = warFaction.DeathListTracker;
+            foreach (var targetFaction in warFactionAR.Keys.Intersect(warFaction.attackTargets.Keys))
             {
-                if (!warFaction.attackTargets.Keys.Contains(targetFaction))
-                    break;
-                var targetFar = warFar[targetFaction];
+                var targetFar = warFactionAR[targetFaction];
                 var startingTargetFar = targetFar;
                 var targets = warFaction.attackTargets[targetFaction];
-                var hatred = factionDlt.deathList[targetFaction];
-
-                while (targetFar > 0)
+                var hatred = deathListTracker.deathList[targetFaction];
+                var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction);
+                while (targetFar > 0 && targets.Count > 0)
                 {
-                    if (targets.Count == 0)
-                        break;
-
                     var rand = Globals.Rng.Next(0, targets.Count);
                     SystemStatus system = default;
                     for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
                     {
-                        // todo index access
                         if (Globals.WarStatusTracker.systems[i].name == targets[rand])
                         {
                             system = Globals.WarStatusTracker.systems[i];
@@ -109,7 +103,6 @@ namespace GalaxyatWar
                         targets.Remove(system.starSystem.Name);
                         if (targets.Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
                         {
-                            // bug should be continue?
                             break;
                         }
 
@@ -137,7 +130,7 @@ namespace GalaxyatWar
                     {
                         system.influenceTracker[warFaction.faction] += totalAR;
                         targetFar -= totalAR;
-                        Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction).defenseTargets.Add(system.name);
+                        targetWarFaction.defenseTargets.Add(system.name);
                     }
                     else
                     {
@@ -150,7 +143,7 @@ namespace GalaxyatWar
 
         public static void AllocateDefensiveResources(WarFaction warFaction, bool useFullSet)
         {
-            if (warFaction.defenseTargets.Count == 0 || !Globals.WarStatusTracker.warFactionTracker.Contains(warFaction))
+            if (warFaction.defenseTargets.Count == 0)
                 return;
 
             var faction = warFaction.faction;
@@ -163,7 +156,7 @@ namespace GalaxyatWar
             var defensiveCorrection = defensiveResources * (100 * Globals.Settings.GlobalDefenseFactor -
                                                             Globals.Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
             defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
-            defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * (Globals.Settings.ResourceSpread));
+            defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
             var duplicateDefenseTargets = new List<string>(warFaction.defenseTargets);
 
@@ -185,10 +178,9 @@ namespace GalaxyatWar
                     system = warFaction.defenseTargets.GetRandomElement();
                     var drFactor = UnityEngine.Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                     spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
-                    spendDr = spendDr < 1 ? 1 : Math.Max(1, spendDr) * Globals.SpendFactor;
+                    spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
                 }
 
-                // fastest loop possible?
                 SystemStatus systemStatus = default;
                 for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
                 {
@@ -216,7 +208,7 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var total = systemStatus.influenceTracker.Values.Sum();
+                var total = systemStatus.InfluenceTrackerSum;
                 var sequence = systemStatus.influenceTracker
                     .Where(x => x.Value != 0)
                     .Select(x => x.Key);
@@ -248,7 +240,7 @@ namespace GalaxyatWar
                 else
                 {
                     var diffRes = systemStatus.influenceTracker[highestFaction] / total - systemStatus.influenceTracker[faction] / total;
-                    var bonusDefense = spendDr + (diffRes * total - (Globals.Settings.TakeoverThreshold / 100) * total) / (Globals.Settings.TakeoverThreshold / 100 + 1);
+                    var bonusDefense = spendDr + (diffRes * total - Globals.Settings.TakeoverThreshold / 100 * total) / (Globals.Settings.TakeoverThreshold / 100 + 1);
                     //LogDebug(bonusDefense);
                     if (100 * diffRes > Globals.Settings.TakeoverThreshold)
                         if (defensiveResources >= bonusDefense)
