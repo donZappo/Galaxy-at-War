@@ -28,6 +28,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(ref StarSystem system)
             {
+                LogDebug("GetValidParticipants");
                 system.Def.contractEmployerIDs = system.Def.contractEmployerIDs.Distinct().ToList();
                 LogDebug("Contract employers before changes:");
                 system.Def.contractEmployerIDs.Do(x => LogDebug($"  {x}"));
@@ -45,11 +46,12 @@ namespace GalaxyatWar
                 if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
                     return;
 
-                LogDebug($"GenerateContractParticipants for {employer}");
+                LogDebug("");
+                LogDebug($"GenerateContractParticipants for {employer.Name}");
                 var contractTargetIDs = system.contractTargetIDs;
                 LogDebug("Existing contractTargetIDs:");
                 contractTargetIDs.Do(x => LogDebug($"  {x}"));
-                LogDebug("Their enemies:");
+                LogDebug("Faction enemies:");
                 employer.Enemies.Do(x => LogDebug($"  {x}"));
                 var newFactionEnemies = new List<string>(employer.Enemies.ToList());
                 foreach (var enemy in contractTargetIDs)
@@ -90,9 +92,17 @@ namespace GalaxyatWar
                     newFactionEnemies.Remove(WarStatusTracker.ComstarAlly);
                 }
 
-                employer.Enemies = __state = newFactionEnemies.ToArray();
-                LogDebug("Adjusted enemies list: ");
-                __state.Do(x => LogDebug($"  {x}"));
+                var array = newFactionEnemies.ToArray();
+                employer.Enemies = __state = array;
+                if (employer.Enemies == array)
+                {
+                    LogDebug("No changes.");
+                }
+                else
+                {
+                    LogDebug("Adjusted enemies list: ");
+                    __state.Do(x => LogDebug($"  {x}"));
+                }
             }
 
             public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result, string[] __state)
@@ -100,8 +110,6 @@ namespace GalaxyatWar
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                LogDebug($"Enemies after GenerateContractParticipants for {employer} list: ");
-                __state.Do(x => LogDebug($"  {x}"));
                 employer.Enemies = __state;
                 var type = __result.Type;
                 __result = __result.Distinct().ToWeightedList(type);
@@ -113,6 +121,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(FactionValue theFaction)
             {
+                LogDebug("DisplayEnemiesOfFaction");
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
@@ -120,15 +129,7 @@ namespace GalaxyatWar
                     return;
 
                 var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name);
-                LogDebug($"Allies currently, on the deathlist of {theFaction}:");
-                deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies currently, on the deathlist of {theFaction}:");
-                deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 AdjustDeathList(deathListTracker, true);
-                LogDebug($"Allies after, on the deathlist of {theFaction}:");
-                deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies after, on the deathlist of {theFaction}:");
-                deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
             }
         }
 
@@ -137,22 +138,15 @@ namespace GalaxyatWar
         {
             public static void Prefix(string theFactionID)
             {
+                LogDebug("DisplayAlliesOfFaction");
                 if (WarStatusTracker == null || Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID) == null)
                     return;
 
-                LogDebug($"Allies currently, on the deathlist of {theFactionID}:");
                 var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID);
-                deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies currently, on the deathlist of {theFactionID}:");
-                deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 AdjustDeathList(deathListTracker, true);
-                LogDebug($"Allies after, on the deathlist of {theFactionID}:");
-                deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Enemies after, on the deathlist of {theFactionID}:");
-                deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
             }
         }
 
@@ -164,20 +158,23 @@ namespace GalaxyatWar
                 if (WarStatusTracker == null || Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return;
 
+                LogDebug("");
+                LogDebug("SGCaptainsQuartersReputationScreen.Init");
                 foreach (var faction in IncludedFactions)
                 {
                     if (WarStatusTracker.deathListTracker.Find(x => x.faction == faction) == null)
                         continue;
 
                     var deathListTracker = WarStatusTracker.deathListTracker.Find(x => x.faction == faction);
+                    LogDebug($"{deathListTracker.faction}'s deathListTracker:");
+                    LogDebug("Allies currently:");
                     deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                    LogDebug($"Enemies currently, on the deathlist of {faction}:");
+                    LogDebug("Enemies currently:");
                     deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                     AdjustDeathList(deathListTracker, true);
-                    AdjustDeathList(deathListTracker, true);
-                    LogDebug($"Allies after, on the deathlist of {faction}:");
+                    LogDebug("Allies after:");
                     deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                    LogDebug($"Enemies after, on the deathlist of {faction}:");
+                    LogDebug($"Enemies after:");
                     deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 }
             }
@@ -191,6 +188,7 @@ namespace GalaxyatWar
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
+                LogDebug("RefreshWidgets");
                 foreach (var faction in IncludedFactions)
                 {
                     if (WarStatusTracker.deathListTracker.Find(x => x.faction == faction) == null)
@@ -415,10 +413,9 @@ namespace GalaxyatWar
         {
             private static bool Prefix(ref int __result, Contract contract)
             {
-                if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
+                if (WarStatusTracker == null || Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return true;
 
-                LogDebug("GetContractComparePriority");
                 var difficulty = contract.Override.GetUIDifficulty();
                 int result;
                 if (Sim.ContractUserMeetsReputation(contract))
@@ -432,12 +429,17 @@ namespace GalaxyatWar
                     else if (contract.TargetSystem == Sim.CurSystem.ID)
                         result = difficulty + 1;
                     else
+                    {
                         result = difficulty + 21;
+                    }
                 }
                 else
+                {
                     result = difficulty + 31;
+                }
 
                 __result = result;
+                LogDebug($"GetContractComparePriority set to {__result, -3}Is Flashpoint? {contract.IsFlashpointContract}.  Is Campaign Flashpoint? {contract.IsFlashpointCampaignContract}");
                 return false;
             }
         }
@@ -451,10 +453,10 @@ namespace GalaxyatWar
                 if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                LogDebug("PopulateContract");
+                LogDebug($"Contract: {contract.Name}.");
                 if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
                 {
-                    LogDebug($"{contract.Name} is Flashpoint, skipping.");
+                    LogDebug("is Flashpoint, skipping.");
                     return;
                 }
 
@@ -472,7 +474,11 @@ namespace GalaxyatWar
                 var DeltaInfluence = Helpers.DeltaInfluence(SystemName, contract.Difficulty, contract.Override.ContractTypeValue.Name, DefenseFaction, pirates);
                 var SystemFlip = false;
                 if (EmployerFaction != "AuriganPirates" && DefenseFaction != "AuriganPirates")
+                {
                     SystemFlip = WillSystemFlip(SystemName, EmployerFaction, DefenseFaction, DeltaInfluence, true);
+                    LogDebug($"System {SystemName.Name} will flip.");
+                }
+
                 var AttackerString = Settings.FactionNames[EmployerFaction] + ": +" + DeltaInfluence;
                 var DefenderString = Settings.FactionNames[DefenseFaction] + ": -" + DeltaInfluence;
 
