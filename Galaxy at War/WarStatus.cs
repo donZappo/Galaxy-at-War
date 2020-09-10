@@ -191,7 +191,7 @@ namespace GalaxyatWar
         private StarSystem starSystemBackingField;
         private DateTime? lastUpdatedBackingField;
         private float influenceTrackerSumBackingField;
-        
+
         internal StarSystem starSystem
         {
             get
@@ -214,13 +214,13 @@ namespace GalaxyatWar
                 return influenceTrackerSumBackingField;
             }
         }
-        
-        private DateTime? LastUpdated                                     
+
+        private DateTime? LastUpdated
         {
             get => lastUpdatedBackingField ?? (lastUpdatedBackingField = Sim.CurrentDate);
             set => lastUpdatedBackingField = value;
         }
-        
+
         [JsonConstructor]
         public SystemStatus()
         {
@@ -465,7 +465,13 @@ namespace GalaxyatWar
         public List<string> defenseTargets = new List<string>();
         public Dictionary<string, bool> IncreaseAggression = new Dictionary<string, bool>();
         public List<string> adjacentFactions = new List<string>();
-        internal DeathListTracker DeathListTracker;
+        private DeathListTracker deathListTrackerBackingField;
+
+        internal DeathListTracker DeathListTracker
+        {
+            get => deathListTrackerBackingField ?? (deathListTrackerBackingField = WarStatusTracker.deathListTracker.Find(x => x.faction == faction));
+            set => deathListTrackerBackingField = value;
+        }
 
         [JsonConstructor]
         public WarFaction()
@@ -496,8 +502,17 @@ namespace GalaxyatWar
         public Dictionary<string, float> deathList = new Dictionary<string, float>();
         public List<string> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
         public List<string> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
-        internal WarFaction WarFaction;
-        
+        private WarFaction warFactionBackingField;
+
+        internal WarFaction WarFaction
+        {
+            get
+            {
+                return warFactionBackingField ?? (warFactionBackingField = WarStatusTracker.warFactionTracker.Find(x => x.faction == faction));
+            }
+            set => warFactionBackingField = value;
+        }
+
         [JsonConstructor]
         public DeathListTracker()
         {
