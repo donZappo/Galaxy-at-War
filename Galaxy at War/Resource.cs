@@ -208,7 +208,7 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var total = systemStatus.InfluenceTrackerSum;
+                var total = systemStatus.influenceTracker.Values.Sum();
                 var sequence = systemStatus.influenceTracker
                     .Where(x => x.Value != 0)
                     .Select(x => x.Key);

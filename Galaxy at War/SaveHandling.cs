@@ -75,14 +75,15 @@ namespace GalaxyatWar
 
             private static void Spawn()
             {
-                LogDebug("Spawning new instance");
+                LogDebug("Spawning new instance.");
                 Globals.WarStatusTracker = new WarStatus();
+                LogDebug("New global state created.");
                 Globals.WarStatusTracker.systemsByResources =
                     Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                    Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                     Globals.WarStatusTracker.StartGameInitialized = true;
                 }
 

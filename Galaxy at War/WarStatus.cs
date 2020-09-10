@@ -189,8 +189,6 @@ namespace GalaxyatWar
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
-        private int? lastUpdatedBackingField;
-        private float influenceTrackerSumBackingField;
 
         internal StarSystem starSystem
         {
@@ -199,26 +197,6 @@ namespace GalaxyatWar
                 return starSystemBackingField ?? (starSystemBackingField = Sim.StarSystems.Find(s => s.Name == name));
             }
             private set => starSystemBackingField = value;
-        }
-
-        internal float InfluenceTrackerSum
-        {
-            get
-            {
-                if (LastUpdated < Sim.DaysPassed)
-                {
-                    LastUpdated = Sim.DaysPassed;
-                    return influenceTrackerSumBackingField = influenceTracker.Values.Sum();
-                }
-
-                return influenceTrackerSumBackingField;
-            }
-        }
-
-        private int? LastUpdated
-        {
-            get => lastUpdatedBackingField ?? (lastUpdatedBackingField = Sim.DaysPassed);
-            set => lastUpdatedBackingField = value;
         }
 
         [JsonConstructor]

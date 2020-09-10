@@ -184,7 +184,7 @@ namespace GalaxyatWar
             WarStatusTracker.ComstarCycle = 1;
             var warFactionList = new List<WarFaction>();
             var omit = Settings.DefensiveFactions.Concat(Settings.HyadesPirates)
-                .Concat(Settings.NoOffensiveContracts).Concat(new []{"AuriganPirates"});
+                .Concat(Settings.NoOffensiveContracts).Concat(new []{"AuriganPirates"}).ToList();
             foreach (var warFarTemp in WarStatusTracker.warFactionTracker)
             {
                 warFarTemp.ComstarSupported = false;
