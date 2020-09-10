@@ -544,9 +544,11 @@ namespace GalaxyatWar
                     if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                         return true;
 
+                    LogDebug("OnFlashpointAccepted");
                     if (Globals.WarStatusTracker.Deployment)
                     {
-                        var uiManager = (UIManager) AccessTools.Field(typeof(SGNavigationScreen), "uiManager").GetValue(__instance);
+                        LogDebug("Deployment.");
+                        var uiManager = __instance.uiManager;
 
                         void Cleanup()
                         {
@@ -625,10 +627,10 @@ namespace GalaxyatWar
 
             private static void Postfix()
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
+                var system = Globals.Sim.CurSystem;
                 if (Globals.WarStatusTracker.HotBox.Contains(system.Name))
                 {
                     Globals.WarStatusTracker.HotBox.Remove(system.Name);
@@ -667,14 +669,21 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.JustArrived = true;
 
                 if (!Globals.WarStatusTracker.Deployment)
+                {
+                    LogDebug($"Not a deployment.  Escalation days: {Globals.Settings.EscalationDays}");
                     Globals.WarStatusTracker.EscalationDays = Globals.Settings.EscalationDays;
+                }
                 else
                 {
+                    LogDebug($"Deployment.  Escalation days: {Globals.Settings.EscalationDays}");
                     var rand = new Random();
                     Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
                     if (Globals.WarStatusTracker.EscalationDays < Globals.Settings.DeploymentRerollBound * Globals.WarStatusTracker.EscalationDays ||
                         Globals.WarStatusTracker.EscalationDays > (1 - Globals.Settings.DeploymentRerollBound) * Globals.WarStatusTracker.EscalationDays)
+                    {
                         Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
+                        LogDebug($"New escalation days set to {Globals.WarStatusTracker.EscalationDays}");
+                    }
                 }
 
                 foreach (var contract in Globals.Sim.CurSystem.SystemContracts)
@@ -685,8 +694,8 @@ namespace GalaxyatWar
 
                 if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !HasFlashpoint && !Globals.HoldContracts)
                 {
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                    Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                 }
 
                 Globals.HoldContracts = false;
@@ -768,10 +777,13 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                     return;
 
+                LogDebug("OnBreadcrumbArrival");
                 if (!__instance.ActiveTravelContract.IsPriorityContract)
                 {
+                    LogDebug("Is not a priority contract.");
                     if (!Globals.WarStatusTracker.Deployment)
                     {
+                        LogDebug("Is not a deployment.");
                         Globals.WarStatusTracker.Escalation = true;
                         Globals.WarStatusTracker.EscalationDays = Globals.Settings.EscalationDays;
                         Globals.WarStatusTracker.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Escalation Days Remaining");
@@ -782,6 +794,7 @@ namespace GalaxyatWar
                     }
                     else
                     {
+                        LogDebug("Is something else.");
                         var rand = new Random();
                         Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
                         if (Globals.WarStatusTracker.EscalationDays < Globals.Settings.DeploymentRerollBound * Globals.WarStatusTracker.EscalationDays ||
@@ -839,7 +852,8 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
+                LogDebug("OnBreadcrumbCancelledByUser");
+                var system = Globals.Sim.CurSystem;
                 if (Globals.WarStatusTracker.HotBox.Count == 2)
                 {
                     Globals.WarStatusTracker.HotBox.RemoveAt(0);
@@ -926,7 +940,7 @@ namespace GalaxyatWar
         {
             private static void Prefix(ref int xpEarned, UnitResult ___UnitData)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 var system = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.WarStatusTracker.CurSystem);
@@ -1169,7 +1183,7 @@ namespace GalaxyatWar
                 }
 
                 if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
-                { 
+                {
                     Globals.Sim.Constants.Story.ContractSuccessReduction = 100;
                     Globals.WarStatusTracker.DeploymentInfluenceIncrease *= Globals.Settings.DeploymentEscalationFactor;
                     if (!HasFlashpoint)

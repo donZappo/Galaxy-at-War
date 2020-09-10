@@ -388,14 +388,12 @@ namespace GalaxyatWar
                 void SetFont(TextMeshProUGUI mesh, TMP_FontAsset font)
                 {
                     mesh.m_fontAsset = font;
-                    // invalid field Traverse.Create(mesh).Field("m_baseFont").SetValue(font);  
                     mesh.LoadFontAsset();
                     mesh.m_havePropertiesChanged = true;
                     mesh.m_isCalculateSizeRequired = true;
                     mesh.m_isInputParsingRequired = true;
                     mesh.SetVerticesDirty();
                     mesh.SetLayoutDirty();
-                    LogDebug("SetFont " + Globals.T.Elapsed);
                 }
 
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
