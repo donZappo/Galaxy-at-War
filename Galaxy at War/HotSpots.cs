@@ -396,6 +396,7 @@ namespace GalaxyatWar
 
                 if (!__instance.CurSystem.Def.Description.Id.StartsWith(contract.TargetSystem))
                 {
+                    Logger.LogDebug("Preparing the Breadcrumbs");
                     var starSystem = Globals.Sim.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Globals.WarStatusTracker.HotBox.Add(starSystem.Name);
                     Globals.WarStatusTracker.HotBoxTravelling = true;
@@ -712,6 +713,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                         return;
 
+                    Logger.LogDebug("AAR Salvage Screen Completed");
                     Globals.WarStatusTracker.JustArrived = false;
                     Globals.WarStatusTracker.HotBoxTravelling = false;
                 }
@@ -1182,7 +1184,7 @@ namespace GalaxyatWar
                         HasFlashpoint = true;
                 }
 
-                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment)
                 {
                     Globals.Sim.Constants.Story.ContractSuccessReduction = 100;
                     Globals.WarStatusTracker.DeploymentInfluenceIncrease *= Globals.Settings.DeploymentEscalationFactor;

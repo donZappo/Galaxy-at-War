@@ -23,6 +23,9 @@ namespace GalaxyatWar
                     return;
 
                 WarStatusTracker.CurSystem = Sim.CurSystem.Name;
+                LogDebug($"HotBox contains CurSystem? {WarStatusTracker.HotBox.Contains(Sim.CurSystem.Name)}");
+                LogDebug($"Is it a Deployment? {WarStatusTracker.Deployment}");
+                LogDebug($"HotBox Travelling? {WarStatusTracker.HotBoxTravelling}");
                 if (WarStatusTracker.HotBox.Contains(Sim.CurSystem.Name) && !WarStatusTracker.HotBoxTravelling)
                 {
                     WarStatusTracker.EscalationDays--;
