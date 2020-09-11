@@ -439,7 +439,7 @@ namespace GalaxyatWar
                 }
 
                 __result = result;
-                LogDebug($"GetContractComparePriority set to {__result, -3}Is Flashpoint? {contract.IsFlashpointContract}.  Is Campaign Flashpoint? {contract.IsFlashpointCampaignContract}");
+                LogDebug($"GetContractComparePriority set to {__result,-3}Is Flashpoint? {contract.IsFlashpointContract}.  Is Campaign Flashpoint? {contract.IsFlashpointCampaignContract}");
                 return false;
             }
         }
@@ -450,92 +450,103 @@ namespace GalaxyatWar
         {
             public static void Prefix(ref Contract contract, ref string __state)
             {
-                if (WarStatusTracker == null || (Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete")))
+                if (WarStatusTracker == null || Sim.IsCampaign && !Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 LogDebug($"Contract: {contract.Name}.");
-                if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
+                try
                 {
-                    LogDebug("is Flashpoint, skipping.");
-                    return;
-                }
+                    if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
+                    {
+                        LogDebug("is Flashpoint, skipping.");
+                        return;
+                    }
 
-                __state = contract.Override.shortDescription;
-                var StringHolder = contract.Override.shortDescription;
-                var EmployerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-                if (Settings.GaW_PoliceSupport && EmployerFaction == Settings.GaW_Police)
-                    EmployerFaction = WarStatusTracker.ComstarAlly;
-                var DefenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-                if (Settings.GaW_PoliceSupport && DefenseFaction == Settings.GaW_Police)
-                    DefenseFaction = WarStatusTracker.ComstarAlly;
-                var TargetSystem = contract.TargetSystem;
-                var SystemName = Sim.StarSystems.Find(x => x.ID == TargetSystem);
-                bool pirates = EmployerFaction == "AuriganPirates" || DefenseFaction == "AuriganPirates";
-                var DeltaInfluence = Helpers.DeltaInfluence(SystemName, contract.Difficulty, contract.Override.ContractTypeValue.Name, DefenseFaction, pirates);
-                var SystemFlip = false;
-                if (EmployerFaction != "AuriganPirates" && DefenseFaction != "AuriganPirates")
+                    __state = contract.Override.shortDescription;
+                    var stringHolder = contract.Override.shortDescription;
+                    var employerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
+                    if (Settings.GaW_PoliceSupport && employerFaction == Settings.GaW_Police)
+                        employerFaction = WarStatusTracker.ComstarAlly;
+                    var defenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
+                    if (Settings.GaW_PoliceSupport && defenseFaction == Settings.GaW_Police)
+                        defenseFaction = WarStatusTracker.ComstarAlly;
+                    var targetSystem = contract.TargetSystem;
+                    var systemName = Sim.StarSystems.Find(x => x.ID == targetSystem);
+                    bool pirates = employerFaction == "AuriganPirates" || defenseFaction == "AuriganPirates";
+                    var deltaInfluence = Helpers.DeltaInfluence(systemName, contract.Difficulty, contract.Override.ContractTypeValue.Name, defenseFaction, pirates);
+                    var systemFlip = false;
+                    if (employerFaction != "AuriganPirates" && defenseFaction != "AuriganPirates")
+                    {
+                        systemFlip = WillSystemFlip(systemName, employerFaction, defenseFaction, deltaInfluence, true);
+                        LogDebug($"System {systemName.Name} will flip.");
+                    }
+
+                    var attackerString = Settings.FactionNames[employerFaction] + ": +" + deltaInfluence;
+                    var defenderString = Settings.FactionNames[defenseFaction] + ": -" + deltaInfluence;
+
+                    if (employerFaction != "AuriganPirates" && defenseFaction != "AuriganPirates")
+                    {
+                        if (!systemFlip)
+                            stringHolder = "<b>Impact on System Conflict:</b>\n   " + attackerString + "; " + defenderString;
+                        else
+                            stringHolder = "<b>***SYSTEM WILL CHANGE OWNERS*** Impact on System Conflict:</b>\n   " + attackerString + "; " + defenderString;
+                    }
+                    else if (employerFaction == "AuriganPirates")
+                        stringHolder = "<b>Impact on Pirate Activity:</b>\n   " + attackerString;
+                    else if (defenseFaction == "AuriganPirates")
+                        stringHolder = "<b>Impact on Pirate Activity:</b>\n   " + defenderString;
+
+                    var system = WarStatusTracker.systems.Find(x => x.starSystem == systemName);
+                    if (system == null)
+                    {
+                        LogDebug($"CRITICAL:  System {systemName.Name} not found");
+                        return;
+                    }
+                    if (system.BonusCBills || system.BonusSalvage || system.BonusXP)
+                    {
+                        stringHolder = stringHolder + "\n<b>Escalation Bonuses:</b> ";
+                        if (system.BonusCBills)
+                            stringHolder = stringHolder + "+C-Bills ";
+                        if (system.BonusSalvage)
+                            stringHolder = stringHolder + "+Salvage ";
+                        if (system.BonusXP)
+                            stringHolder = stringHolder + "+XP";
+                    }
+
+                    if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
+                    {
+                        var estimatedMissions = CalculateFlipMissions(employerFaction, systemName);
+                        int totalDifficulty;
+
+                        if (Settings.ChangeDifficulty)
+                            totalDifficulty = estimatedMissions * systemName.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
+                        else
+                            totalDifficulty = estimatedMissions * (int) (systemName.Def.DefaultDifficulty + Sim.GlobalDifficulty);
+
+                        if (totalDifficulty >= 150)
+                            system.DeploymentTier = 6;
+                        else if (totalDifficulty >= 100)
+                            system.DeploymentTier = 5;
+                        else if (totalDifficulty >= 75)
+                            system.DeploymentTier = 4;
+                        else if (totalDifficulty >= 50)
+                            system.DeploymentTier = 3;
+                        else if (totalDifficulty >= 25)
+                            system.DeploymentTier = 2;
+                        else
+                            system.DeploymentTier = 1;
+
+                        stringHolder = stringHolder + "\n<b>Estimated Missions to Wrest Control of System:</b> " + estimatedMissions;
+                        stringHolder = stringHolder + "\n   Deployment Reward: Tier " + system.DeploymentTier;
+                    }
+
+                    stringHolder = stringHolder + "\n\n" + __state;
+                    contract.Override.shortDescription = stringHolder;
+                }
+                catch (Exception ex)
                 {
-                    SystemFlip = WillSystemFlip(SystemName, EmployerFaction, DefenseFaction, DeltaInfluence, true);
-                    LogDebug($"System {SystemName.Name} will flip.");
+                    Error(ex);
                 }
-
-                var AttackerString = Settings.FactionNames[EmployerFaction] + ": +" + DeltaInfluence;
-                var DefenderString = Settings.FactionNames[DefenseFaction] + ": -" + DeltaInfluence;
-
-                if (EmployerFaction != "AuriganPirates" && DefenseFaction != "AuriganPirates")
-                {
-                    if (!SystemFlip)
-                        StringHolder = "<b>Impact on System Conflict:</b>\n   " + AttackerString + "; " + DefenderString;
-                    else
-                        StringHolder = "<b>***SYSTEM WILL CHANGE OWNERS*** Impact on System Conflict:</b>\n   " + AttackerString + "; " + DefenderString;
-                }
-                else if (EmployerFaction == "AuriganPirates")
-                    StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + AttackerString;
-                else if (DefenseFaction == "AuriganPirates")
-                    StringHolder = "<b>Impact on Pirate Activity:</b>\n   " + DefenderString;
-
-                var system = WarStatusTracker.systems.Find(x => x.starSystem == SystemName);
-
-                if (system.BonusCBills || system.BonusSalvage || system.BonusXP)
-                {
-                    StringHolder = StringHolder + "\n<b>Escalation Bonuses:</b> ";
-                    if (system.BonusCBills)
-                        StringHolder = StringHolder + "+C-Bills ";
-                    if (system.BonusSalvage)
-                        StringHolder = StringHolder + "+Salvage ";
-                    if (system.BonusXP)
-                        StringHolder = StringHolder + "+XP";
-                }
-
-                if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
-                {
-                    var estimatedMissions = CalculateFlipMissions(EmployerFaction, SystemName);
-                    int totalDifficulty;
-
-                    if (Settings.ChangeDifficulty)
-                        totalDifficulty = estimatedMissions * SystemName.Def.GetDifficulty(SimGameState.SimGameType.CAREER);
-                    else
-                        totalDifficulty = estimatedMissions * (int) (SystemName.Def.DefaultDifficulty + Sim.GlobalDifficulty);
-
-                    if (totalDifficulty >= 150)
-                        system.DeploymentTier = 6;
-                    else if (totalDifficulty >= 100)
-                        system.DeploymentTier = 5;
-                    else if (totalDifficulty >= 75)
-                        system.DeploymentTier = 4;
-                    else if (totalDifficulty >= 50)
-                        system.DeploymentTier = 3;
-                    else if (totalDifficulty >= 25)
-                        system.DeploymentTier = 2;
-                    else
-                        system.DeploymentTier = 1;
-
-                    StringHolder = StringHolder + "\n<b>Estimated Missions to Wrest Control of System:</b> " + estimatedMissions;
-                    StringHolder = StringHolder + "\n   Deployment Reward: Tier " + system.DeploymentTier;
-                }
-
-                StringHolder = StringHolder + "\n\n" + __state;
-                contract.Override.shortDescription = StringHolder;
             }
 
             public static void Postfix(ref Contract contract, ref string __state)
