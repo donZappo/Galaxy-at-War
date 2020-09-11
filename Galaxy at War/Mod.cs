@@ -220,12 +220,12 @@ namespace GalaxyatWar
                     }
 
                     // g - dead code?
-                    //TeamFaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
-                    //if (Settings.GaW_PoliceSupport && TeamFaction == Settings.GaW_Police)
-                    //    TeamFaction = WarStatusTracker.ComstarAlly;
-                    //EnemyFaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
-                    //if (Settings.GaW_PoliceSupport && EnemyFaction == Settings.GaW_Police)
-                    //    EnemyFaction = WarStatusTracker.ComstarAlly;
+                    TeamFaction = __instance.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
+                    if (Settings.GaW_PoliceSupport && TeamFaction == Settings.GaW_Police)
+                        TeamFaction = WarStatusTracker.ComstarAlly;
+                    EnemyFaction = __instance.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
+                    if (Settings.GaW_PoliceSupport && EnemyFaction == Settings.GaW_Police)
+                        EnemyFaction = WarStatusTracker.ComstarAlly;
                     Difficulty = __instance.Difficulty;
                     Globals.MissionResult = result;
                     Globals.ContractType = __instance.Override.ContractTypeValue.Name;
