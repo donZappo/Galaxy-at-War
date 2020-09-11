@@ -25,7 +25,7 @@ namespace GalaxyatWar
         public int EscalationDays = 0;
         public List<string> PrioritySystems = new List<string>();
         public string CurSystem;
-        public bool HotBoxTravelling;
+        public bool IsTravellingToSpecialContract;
         public bool StartGameInitialized = false;
         public bool FirstTickInitialization = true;
         public List<string> SystemChangedOwners = new List<string>();
@@ -66,7 +66,7 @@ namespace GalaxyatWar
 
             CurSystem = Sim.CurSystem.Name;
             TempPRGain = 0;
-            HotBoxTravelling = false;
+            IsTravellingToSpecialContract = false;
             HotBox = new List<string>();
             if (Settings.HyadesRimCompatible)
             {
