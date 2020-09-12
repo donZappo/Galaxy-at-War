@@ -41,13 +41,6 @@ namespace GalaxyatWar
                     return;
                 }
 
-                if (Globals.Settings.ResetMap)
-                {
-                    LogDebug("Resetting map due to settings.");
-                    Spawn();
-                    return;
-                }
-
                 // thanks to mpstark for this
                 var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
                 foreach (var o in fonts)
@@ -57,6 +50,13 @@ namespace GalaxyatWar
                     {
                         Globals.Font = font;
                     }
+                }
+
+                if (Globals.Settings.ResetMap)
+                {
+                    LogDebug("Resetting map due to settings.");
+                    Spawn();
+                    return;
                 }
 
                 // is there a tag?  does it deserialize properly?
