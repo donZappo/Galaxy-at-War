@@ -41,7 +41,6 @@ namespace GalaxyatWar
         public static void DefendAgainstPirates()
         {
             var factionEscalateDefense = new Dictionary<WarFaction, bool>();
-            var rand = new Random();
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
                 var defenseValue = 100 * (warFaction.PirateARLoss + warFaction.PirateDRLoss) /
@@ -58,9 +57,9 @@ namespace GalaxyatWar
                 var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
                 float PAChange;
                 if (factionEscalateDefense[warFaction])
-                    PAChange = (float) (rand.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
+                    PAChange = (float) (Rng.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
                 else
-                    PAChange = (float) (rand.NextDouble() * (system.PirateActivity / 3));
+                    PAChange = (float) (Rng.NextDouble() * (system.PirateActivity / 3));
 
                 var attackResources = warFaction.AttackResources;
 

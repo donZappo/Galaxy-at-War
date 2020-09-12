@@ -184,7 +184,7 @@ namespace GalaxyatWar
             WarStatusTracker.ComstarCycle = 1;
             var warFactionList = new List<WarFaction>();
             var omit = Settings.DefensiveFactions.Concat(Settings.HyadesPirates)
-                .Concat(Settings.NoOffensiveContracts).Concat(new []{"AuriganPirates"}).ToList();
+                .Concat(Settings.NoOffensiveContracts).Concat(new[] {"AuriganPirates"}).ToList();
             foreach (var warFarTemp in WarStatusTracker.warFactionTracker)
             {
                 warFarTemp.ComstarSupported = false;
@@ -229,14 +229,14 @@ namespace GalaxyatWar
 
             foreach (var neighborSystem in Sim.Starmap.GetAvailableNeighborSystem(starSystem))
             {
-                if (neighborSystem.OwnerValue.Name != starSystem.OwnerValue.Name && 
+                if (neighborSystem.OwnerValue.Name != starSystem.OwnerValue.Name &&
                     !isFlashpointSystem &&
                     !Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
                 {
                     if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                     {
-                        // todo should this be = new List<string> (warFac.attackTargets[neighborSystem.OwnerValue.Name]); tempList.Add(neighbourSystem.OwnerValue.Name, tempList);  ?
                         var tempList = new List<string> {neighborSystem.Name};
+                        //var tempList = new List<string>(warFac.attackTargets[neighborSystem.OwnerValue.Name]);
                         warFac.attackTargets.Add(neighborSystem.OwnerValue.Name, tempList);
                     }
                     else if (warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name)

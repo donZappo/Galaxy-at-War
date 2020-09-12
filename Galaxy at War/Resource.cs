@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
+using BattleTech;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 
@@ -52,32 +55,30 @@ namespace GalaxyatWar
             {
                 var targetFar = warFactionAR[targetFaction];
                 var startingTargetFar = targetFar;
-                var targets = warFaction.attackTargets[targetFaction];
+                var attackTargets = warFaction.attackTargets[targetFaction];
+                var map = new Dictionary<string, SystemStatus>();
+                foreach (var targetName in attackTargets)
+                {
+                    map.Add(targetName, Globals.WarStatusTracker.systems.Find(x => x.name == targetName));
+                }
+
                 var hatred = deathListTracker.deathList[targetFaction];
                 var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction);
-                while (targetFar > 0 && targets.Count > 0)
+                while (targetFar > 0 && attackTargets.Count > 0)
                 {
-                    var rand = Globals.Rng.Next(0, targets.Count);
-                    SystemStatus system = default;
-                    for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
-                    {
-                        if (Globals.WarStatusTracker.systems[i].name == targets[rand])
-                        {
-                            system = Globals.WarStatusTracker.systems[i];
-                            break;
-                        }
-                    }
+                    // DE-CONSTRUCTOR!
+                    var (target, system) = map.GetRandomElement();
 
                     if (system == null)
                     {
-                        Log("ERROR - No system found at AllocateAttackResources, aborting processing.");
+                        Log("CRITICAL:  No system found at AllocateAttackResources, aborting processing.");
                         return;
                     }
 
                     if (system.owner == warFaction.faction || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
                     {
-                        targets.RemoveAt(rand);
-                        continue;
+                        attackTargets.Remove(target);
+                        return;
                     }
 
                     //Find most valuable target for attacking for later. Used in HotSpots.
@@ -100,8 +101,8 @@ namespace GalaxyatWar
                     //Distribute attacking resources to systems.
                     if (system.Contended || Globals.WarStatusTracker.HotBox.Contains(system.name))
                     {
-                        targets.Remove(system.starSystem.Name);
-                        if (targets.Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
+                        attackTargets.Remove(system.starSystem.Name);
+                        if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
                         {
                             break;
                         }
@@ -140,6 +141,7 @@ namespace GalaxyatWar
                 }
             }
         }
+
 
         public static void AllocateDefensiveResources(WarFaction warFaction, bool useFullSet)
         {
