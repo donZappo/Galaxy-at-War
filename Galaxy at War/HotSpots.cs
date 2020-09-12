@@ -399,7 +399,7 @@ namespace GalaxyatWar
                     Logger.LogDebug("Preparing the Breadcrumbs");
                     var starSystem = Globals.Sim.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Globals.WarStatusTracker.HotBox.Add(starSystem.Name);
-                    Globals.WarStatusTracker.IsTravellingToSpecialContract = true;
+                    Globals.WarStatusTracker.HotBoxTravelling = true;
 
                     if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
                     {
@@ -486,7 +486,7 @@ namespace GalaxyatWar
                             var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
                             RefreshContracts(systemStatus);
                             if (Globals.WarStatusTracker.HotBox.Count == 0)
-                                Globals.WarStatusTracker.IsTravellingToSpecialContract = false;
+                                Globals.WarStatusTracker.HotBoxTravelling = false;
 
                             if (Globals.WarStatusTracker.EscalationOrder != null)
                             {
@@ -531,7 +531,7 @@ namespace GalaxyatWar
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
                 RefreshContracts(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
-                    Globals.WarStatusTracker.IsTravellingToSpecialContract = false;
+                    Globals.WarStatusTracker.HotBoxTravelling = false;
             }
         }
 
@@ -597,7 +597,7 @@ namespace GalaxyatWar
                             var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
                             RefreshContracts(systemStatus);
                             if (Globals.WarStatusTracker.HotBox.Count == 0)
-                                Globals.WarStatusTracker.IsTravellingToSpecialContract = false;
+                                Globals.WarStatusTracker.HotBoxTravelling = false;
 
                             if (Globals.WarStatusTracker.EscalationOrder != null)
                             {
@@ -642,7 +642,7 @@ namespace GalaxyatWar
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
                 RefreshContracts(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
-                    Globals.WarStatusTracker.IsTravellingToSpecialContract = false;
+                    Globals.WarStatusTracker.HotBoxTravelling = false;
             }
         }
 
@@ -693,7 +693,7 @@ namespace GalaxyatWar
                         HasFlashpoint = true;
                 }
 
-                if (!Globals.WarStatusTracker.IsTravellingToSpecialContract && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !HasFlashpoint && !Globals.HoldContracts)
+                if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !HasFlashpoint && !Globals.HoldContracts)
                 {
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                     Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
@@ -715,7 +715,7 @@ namespace GalaxyatWar
 
                     Logger.LogDebug("AAR Salvage Screen Completed");
                     Globals.WarStatusTracker.JustArrived = false;
-                    Globals.WarStatusTracker.IsTravellingToSpecialContract = false;
+                    Globals.WarStatusTracker.HotBoxTravelling = false;
                 }
                 catch (Exception e)
                 {
@@ -873,7 +873,7 @@ namespace GalaxyatWar
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
                 RefreshContracts(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
-                    Globals.WarStatusTracker.IsTravellingToSpecialContract = false;
+                    Globals.WarStatusTracker.HotBoxTravelling = false;
             }
         }
 
@@ -1132,7 +1132,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                         return true;
 
-                    if (!Globals.Settings.ResetMap && Globals.WarStatusTracker.Deployment && !Globals.WarStatusTracker.IsTravellingToSpecialContract && Globals.WarStatusTracker.EscalationDays <= 0)
+                    if (!Globals.Settings.ResetMap && Globals.WarStatusTracker.Deployment && !Globals.WarStatusTracker.HotBoxTravelling && Globals.WarStatusTracker.EscalationDays <= 0)
                     {
                         return false;
                     }

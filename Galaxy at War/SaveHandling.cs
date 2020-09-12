@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using Harmony;
 using Newtonsoft.Json;
 using TMPro;
+using TScript.Ops;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
+
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InconsistentNaming
@@ -24,19 +27,14 @@ namespace GalaxyatWar
             private static void Postfix(Starmap __instance)
             {
                 LogDebug("PopulateMap");
+                if (Globals.ModInitialized)
+                {
+                    return;
+                }
+
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
-                // thanks to mpstark for this
-                var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
-                foreach (var o in fonts)
-                {
-                    var font = (TMP_FontAsset) o;
-                    if (font.name == "UnitedSansSemiExt-Light")
-                    {
-                        Globals.Font = font;
-                    }
-                }
-                
+
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                 {
                     LogDebug("Aborting GaW loading.");
@@ -50,7 +48,18 @@ namespace GalaxyatWar
                     return;
                 }
 
-                // is there a tag?  is it not just an empty broken shell?
+                // thanks to mpstark for this
+                var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
+                foreach (var o in fonts)
+                {
+                    var font = (TMP_FontAsset) o;
+                    if (font.name == "UnitedSansSemiExt-Light")
+                    {
+                        Globals.Font = font;
+                    }
+                }
+
+                // is there a tag?  does it deserialize properly?
                 var gawTag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"));
                 if (!string.IsNullOrEmpty(gawTag))
                 {
@@ -71,6 +80,8 @@ namespace GalaxyatWar
                 {
                     Spawn();
                 }
+
+                Globals.ModInitialized = true;
             }
 
             private static void Spawn()
@@ -130,7 +141,6 @@ namespace GalaxyatWar
                     Globals.FirstDehydrate = false;
                     Globals.WarStatusTracker.StartGameInitialized = false;
                 }
-
             }
 
             public static void Postfix()

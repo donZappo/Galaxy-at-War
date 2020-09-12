@@ -25,8 +25,8 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.CurSystem = Globals.Sim.CurSystem.Name;
                 LogDebug($"HotBox contains CurSystem? {Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name)}");
                 LogDebug($"Is it a Deployment? {Globals.WarStatusTracker.Deployment}");
-                LogDebug($"HotBox Travelling? {Globals.WarStatusTracker.IsTravellingToSpecialContract}");
-                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !Globals.WarStatusTracker.IsTravellingToSpecialContract)
+                LogDebug($"HotBox Travelling? {Globals.WarStatusTracker.HotBoxTravelling}");
+                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !Globals.WarStatusTracker.HotBoxTravelling)
                 {
                     Globals.WarStatusTracker.EscalationDays--;
 
@@ -137,7 +137,7 @@ namespace GalaxyatWar
                     {
                         WarTick.Tick(true, true);
                         var hasFlashPoint = Globals.Sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
-                        if (!Globals.WarStatusTracker.IsTravellingToSpecialContract && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !hasFlashPoint)
+                        if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !hasFlashPoint)
                         {
                             var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                             Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));

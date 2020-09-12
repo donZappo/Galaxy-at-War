@@ -351,7 +351,7 @@ namespace GalaxyatWar
                                 }
 
                                 WarStatusTracker.JustArrived = false;
-                                WarStatusTracker.IsTravellingToSpecialContract = false;
+                                WarStatusTracker.HotBoxTravelling = false;
                                 WarStatusTracker.Escalation = false;
                                 WarStatusTracker.HotBox.Clear();
                                 WarStatusTracker.EscalationDays = 0;

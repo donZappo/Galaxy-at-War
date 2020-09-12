@@ -40,5 +40,6 @@ namespace GalaxyatWar
         public static int LoopCounter;
         public static Contract LoopContract;
         public static bool FirstDehydrate = true;
+        internal static bool ModInitialized;
     }
 }
