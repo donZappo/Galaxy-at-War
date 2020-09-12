@@ -160,39 +160,22 @@ namespace GalaxyatWar
             defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
-            var duplicateDefenseTargets = new List<string>(warFaction.defenseTargets);
+            var map = new Dictionary<string, SystemStatus>();
+            foreach (var defenseTarget in warFaction.defenseTargets.Distinct())
+            {
+                map.Add(defenseTarget, Globals.WarStatusTracker.systems.Find(x => x.name == defenseTarget));
+            }
 
             // spend and decrement defensiveResources
             while (defensiveResources > float.Epsilon)
             {
-                //LogDebug(spendDR);
                 var highest = 0f;
                 var highestFaction = faction;
-                var spendDr = 1.0f;
-                string system;
-                if (duplicateDefenseTargets.Count != 0)
-                {
-                    system = duplicateDefenseTargets.GetRandomElement();
-                    duplicateDefenseTargets.Remove(system);
-                }
-                else
-                {
-                    system = warFaction.defenseTargets.GetRandomElement();
-                    var drFactor = UnityEngine.Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
-                    spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
-                    spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
-                }
+                var drFactor = UnityEngine.Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
+                var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
+                spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
 
-                SystemStatus systemStatus = default;
-                for (var i = 0; i < Globals.WarStatusTracker.systems.Count; i++)
-                {
-                    if (Globals.WarStatusTracker.systems[i].name == system)
-                    {
-                        systemStatus = Globals.WarStatusTracker.systems[i];
-                        break;
-                    }
-                }
-
+                var systemStatus = map.GetRandomElement().Value;
                 if (systemStatus == null)
                 {
                     LogDebug("NULL SystemStatus at AllocateDefensiveResources");
@@ -261,10 +244,6 @@ namespace GalaxyatWar
                         defensiveResources -= Math.Min(defensiveResources, 50);
                     }
                 }
-
-                //Log("After Defense");
-                //foreach (var foo in systemStatus.influenceTracker.Keys)
-                //    Log("    " + foo + ": " + systemStatus.influenceTracker[foo]);
             }
         }
     }
