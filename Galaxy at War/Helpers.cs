@@ -851,7 +851,7 @@ namespace GalaxyatWar
             if (Globals.Settings.GaW_PoliceSupport && warFaction.ComstarSupported)
                 trackerDeathList[Globals.Settings.GaW_Police] = 99;
 
-            foreach (var offensiveFaction in Globals.OffensiveFactions)
+            foreach (var offensiveFaction in deathListOffensiveFactions)
             {
                 if (Globals.WarStatusTracker.InactiveTHRFactions.Contains(offensiveFaction) || Globals.WarStatusTracker.NeverControl.Contains(offensiveFaction))
                     continue;

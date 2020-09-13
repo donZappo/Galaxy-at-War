@@ -57,6 +57,7 @@ namespace GalaxyatWar
                 var startingTargetFar = targetFar;
                 var attackTargets = warFaction.attackTargets[targetFaction];
                 var map = new Dictionary<string, SystemStatus>();
+                
                 foreach (var targetName in attackTargets)
                 {
                     map.Add(targetName, Globals.WarStatusTracker.systems.Find(x => x.name == targetName));
