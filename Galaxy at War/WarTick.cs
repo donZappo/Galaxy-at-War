@@ -17,6 +17,7 @@ namespace GalaxyatWar
     {
         internal static void Tick(bool useFullSet, bool checkForSystemChange)
         {
+            LogDebug("Tick...");
             Globals.WarStatusTracker.PrioritySystems.Clear();
             var systemSubsetSize = Globals.WarStatusTracker.systems.Count;
             List<SystemStatus> systemStatuses;
@@ -83,6 +84,7 @@ namespace GalaxyatWar
             }
 
             //Distribute Pirate Influence throughout the StarSystems
+            LogDebug("Processing pirates.");
             PiratesAndLocals.CorrectResources();
             PiratesAndLocals.PiratesStealResources();
             PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
@@ -106,6 +108,7 @@ namespace GalaxyatWar
                 }
             }
 
+            LogDebug("Processing systems' influence.");
             foreach (var systemStatus in systemStatuses)
             {
                 systemStatus.PriorityAttack = false;
@@ -173,6 +176,7 @@ namespace GalaxyatWar
             Globals.Tasks.Clear();
             Globals.WarStatusTracker.FirstTickInitialization = false;
 
+            LogDebug("Processing resource spending.");
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);
@@ -220,7 +224,7 @@ namespace GalaxyatWar
 
             if (Globals.WarStatusTracker.SystemChangedOwners.Count > 0)
             {
-                LogDebug($"Changed on {Globals.Sim.CurrentDate}: {Globals.WarStatusTracker.SystemChangedOwners.Count} systems:");
+                LogDebug($"Changed on {Globals.Sim.CurrentDate.ToShortDateString()}: {Globals.WarStatusTracker.SystemChangedOwners.Count} systems:");
                 Globals.WarStatusTracker.SystemChangedOwners.OrderBy(x => x).Do(x =>
                     LogDebug($"  {x}"));
                 Globals.WarStatusTracker.SystemChangedOwners.Clear();

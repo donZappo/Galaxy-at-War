@@ -118,16 +118,14 @@ namespace GalaxyatWar
                     var pMaxValue = 200.0f;
                     if (maxValueList.Count > 1)
                         pMaxValue = maxValueList[1];
-
+                    
                     var itValue = system.influenceTracker[warFaction.faction];
                     var basicAR = (float) (11 - system.DifficultyRating) / 2;
-
                     var bonusAR = 0f;
                     if (itValue > pMaxValue)
                         bonusAR = (itValue - pMaxValue) * 0.15f;
-
-                    var totalAR = (basicAR + bonusAR) + spendAR;
-
+                    
+                    var totalAR = basicAR + bonusAR + spendAR;
                     if (targetFar > totalAR)
                     {
                         system.influenceTracker[warFaction.faction] += totalAR;

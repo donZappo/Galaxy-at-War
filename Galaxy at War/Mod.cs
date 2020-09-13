@@ -46,8 +46,8 @@ namespace GalaxyatWar
                 if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
                     return;
 
-                LogDebug("");
-                LogDebug($"GenerateContractParticipants for {employer.Name}");
+                LogDebug(new string('=', 30));
+                LogDebug($"GenerateContractParticipants for {employer.Name} in {system.Description.Name}");
                 var contractTargetIDs = system.contractTargetIDs;
                 LogDebug("Existing contractTargetIDs:");
                 contractTargetIDs.Do(x => LogDebug($"  {x}"));

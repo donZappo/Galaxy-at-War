@@ -1,10 +1,12 @@
-
-
 // ReSharper disable InconsistentNaming
+
+using BattleTech;
+using Harmony;
+using UnityEngine;
 
 namespace GalaxyatWar
 {
-    //[HarmonyPatch(typeof(SimGameState), "Update")]
+    [HarmonyPatch(typeof(UnityGameInstance), "Update")]
     public static class SimGameStateUpdatePatch
     {
         //public static void Postfix()
@@ -26,38 +28,19 @@ namespace GalaxyatWar
         //        Mod.WarStatus = null;
         //    }
         //}
-    }
 
-    //[HarmonyPatch(typeof(CombatGameState), "Update")]
-    public static class CombatGameStateUpdatePatch
-    {
-        //public static void Postfix()
-        //{
-        //    var hotkeyM = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.M);
-        //    if (hotkeyM)
-        //    {
-        //        Logger.LogDebug("M");
-        //        foreach (var combatant in UnityGameInstance.BattleTechGame.Combat.allCombatants)
-        //        {
-        //            if (combatant is Mech mech)
-        //            {
-        //                Logger.LogDebug($"mech {mech.DisplayName}");
-        //                mech.GetTags().Do(Logger.LogDebug);
-        //            }
-
-        //            if (combatant is Vehicle vee)
-        //            {
-        //                Logger.LogDebug($"vee {vee.DisplayName}");
-        //                vee.GetTags().Do(Logger.LogDebug);
-        //            }
-
-        //            if (combatant is Turret turret)
-        //            {
-        //                Logger.LogDebug($"turret {turret.DisplayName}");
-        //                turret.GetTags().Do(Logger.LogDebug);
-        //            }
-        //        }
-        //    }
-        //}
+        public static void Postfix()
+        {
+            var hotkeyT = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.T);
+            if (hotkeyT)
+            {
+                const int loops = 100;
+                Logger.LogDebug($"Running {loops} full ticks.");
+                for (var i = 0; i < loops; i++)
+                {
+                    WarTick.Tick(true, true);
+                }
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
+using BattleTech.Save.SaveGameStructure;
 using Harmony;
 using Newtonsoft.Json;
 using TMPro;
@@ -21,6 +22,15 @@ namespace GalaxyatWar
 {
     public static class SaveHandling
     {
+        [HarmonyPatch(typeof(SaveGameStructure), "Load", typeof(string))]
+        public class SimGameStateRehydratePatch
+        {
+            private static void Postfix()
+            {
+                Globals.ModInitialized = false;
+            }
+        }
+        
         [HarmonyPatch(typeof(Starmap), "PopulateMap", typeof(SimGameState))]
         public class StarmapPopulateMapPatch
         {

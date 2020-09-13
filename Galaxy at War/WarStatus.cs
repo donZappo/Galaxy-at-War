@@ -178,7 +178,19 @@ namespace GalaxyatWar
         public string owner;
 
         public Dictionary<string, int> neighborSystems = new Dictionary<string, int>();
-        public Dictionary<string, float> influenceTracker = new Dictionary<string, float>();
+        internal Dictionary<string, float> influenceTrackerBf = new Dictionary<string, float>();
+
+        public Dictionary<string, float> influenceTracker
+        {
+            get => influenceTrackerBf;
+            set
+            {
+                influenceTrackerBf = value;
+                influenceTrackerDescendingValue = influenceTrackerBf.Values.OrderByDescending(x => x).ToList();
+            }
+        }
+
+        internal List<float> influenceTrackerDescendingValue;
         public float TotalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;

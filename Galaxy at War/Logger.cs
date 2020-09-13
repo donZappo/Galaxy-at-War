@@ -1,13 +1,17 @@
 using System;
 using System.IO;
 using System.Reflection;
-   using static GalaxyatWar.Globals;
+using Harmony;
+using static GalaxyatWar.Globals;
+
 namespace GalaxyatWar
 {
     public static class Logger
     {
-        internal static string LogFilePath =>
-            Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
+        private static string logFilePath;
+
+        private static string LogFilePath =>
+            logFilePath ?? (logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log");
 
         public static void Error(Exception ex)
         {
@@ -17,14 +21,22 @@ namespace GalaxyatWar
             }
         }
 
-        public static void LogDebug(object line)
+        public static async void LogDebug(object line)
         {
-            if (!Settings.Debug) return;
-            using (var writer = new StreamWriter(LogFilePath, true))
+            try
             {
-                writer.WriteLine(line.ToString());
+                if (!Settings.Debug) return;
+                using (var writer = new StreamWriter(LogFilePath, true))
+                {
+                    await writer.WriteLineAsync(line.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLog.Log(ex.ToString());
             }
         }
+
         public static void Log(string line)
         {
             using (var writer = new StreamWriter(LogFilePath, true))
