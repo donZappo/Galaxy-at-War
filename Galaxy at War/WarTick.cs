@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using BattleTech;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Helpers;
 using static GalaxyatWar.Resource;
 using static GalaxyatWar.Logger;
-
 // ReSharper disable ClassNeverInstantiated.Global
 
 namespace GalaxyatWar
@@ -17,7 +14,6 @@ namespace GalaxyatWar
     {
         internal static void Tick(bool useFullSet, bool checkForSystemChange)
         {
-            LogDebug("Tick...");
             Globals.WarStatusTracker.PrioritySystems.Clear();
             var systemSubsetSize = Globals.WarStatusTracker.systems.Count;
             List<SystemStatus> systemStatuses;
@@ -90,8 +86,6 @@ namespace GalaxyatWar
             PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
             PiratesAndLocals.DistributePirateResources();
             PiratesAndLocals.DefendAgainstPirates();
-            Task.WaitAll(Globals.Tasks.ToArray());
-            Globals.Tasks.Clear();
 
             if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
                 && Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Count != 0)
@@ -117,65 +111,56 @@ namespace GalaxyatWar
                 {
                     systemStatus.CurrentlyAttackedBy.Clear();
                     CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-                    Globals.Tasks.Add(Task.Factory.StartNew(() =>
-                    {
-                        RefreshContracts(systemStatus);
-                    }));
+                    RefreshContracts(systemStatus);
                 }
 
-                Globals.Tasks.Add(Task.Factory.StartNew(() =>
+                if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
+                    continue;
+
+                if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") &&
+                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                 {
-                    if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
-                        return;
+                    systemStatus.influenceTracker["Locals"] *= 1.1f;
+                }
 
-                    if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") &&
-                        !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                //Add resources from neighboring systems.
+                if (systemStatus.neighborSystems.Count != 0)
+                {
+                    foreach (var neighbor in systemStatus.neighborSystems.Keys)
                     {
-                        systemStatus.influenceTracker["Locals"] *= 1.1f;
-                    }
-
-                    //Add resources from neighboring systems.
-                    if (systemStatus.neighborSystems.Count != 0)
-                    {
-                        foreach (var neighbor in systemStatus.neighborSystems.Keys)
+                        if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
+                            !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
-                            if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
-                                !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
-                            {
-                                var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
-                                systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
-                            }
+                            var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
+                            systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
                         }
                     }
+                }
 
-                    //Revolt on previously taken systems.
-                    if (systemStatus.owner != systemStatus.OriginalOwner)
-                        systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
+                //Revolt on previously taken systems.
+                if (systemStatus.owner != systemStatus.OriginalOwner)
+                    systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
 
-                    var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
+                var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
 
-                    if (Globals.Settings.ISMCompatibility)
-                        pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
+                if (Globals.Settings.ISMCompatibility)
+                    pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
-                    var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
 
-                    if (totalPirates >= pirateSystemFlagValue)
-                    {
-                        if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                            Globals.WarStatusTracker.PirateHighlight.Add(systemStatus.name);
-                    }
-                    else
-                    {
-                        if (Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                            Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
-                    }
-                }));
+                if (totalPirates >= pirateSystemFlagValue)
+                {
+                    if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
+                        Globals.WarStatusTracker.PirateHighlight.Add(systemStatus.name);
+                }
+                else
+                {
+                    if (Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
+                        Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
+                }
             }
 
-            Task.WaitAll(Globals.Tasks.ToArray());
-            Globals.Tasks.Clear();
             Globals.WarStatusTracker.FirstTickInitialization = false;
-
             LogDebug("Processing resource spending.");
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
@@ -183,13 +168,13 @@ namespace GalaxyatWar
             }
 
             CalculateDefensiveSystems();
-
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 AllocateDefensiveResources(warFaction, useFullSet);
                 AllocateAttackResources(warFaction);
             }
 
+            LogDebug("Processing influence changes.");
             UpdateInfluenceFromAttacks(checkForSystemChange);
 
             //Increase War Escalation or decay defenses.
@@ -212,15 +197,13 @@ namespace GalaxyatWar
                 }
             }
 
+            LogDebug("Processing flipped systems.");
             foreach (var system in Globals.WarStatusTracker.systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.starSystem);
-                Globals.Tasks.Add(Task.Factory.StartNew(() => RefreshContracts(system)));
+                RefreshContracts(system);
             }
-
-            Task.WaitAll(Globals.Tasks.ToArray());
-            Globals.Tasks.Clear();
 
             if (Globals.WarStatusTracker.SystemChangedOwners.Count > 0)
             {

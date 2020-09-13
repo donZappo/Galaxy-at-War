@@ -1,6 +1,5 @@
 using System.Linq;
 using BattleTech;
-using BattleTech.UI;
 using Harmony;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;

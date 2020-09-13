@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
@@ -8,7 +7,6 @@ using BattleTech.Save.SaveGameStructure;
 using Harmony;
 using Newtonsoft.Json;
 using TMPro;
-using TScript.Ops;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;

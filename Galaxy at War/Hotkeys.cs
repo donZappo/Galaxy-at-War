@@ -1,5 +1,6 @@
 // ReSharper disable InconsistentNaming
 
+using System;
 using BattleTech;
 using Harmony;
 using UnityEngine;
@@ -31,14 +32,23 @@ namespace GalaxyatWar
 
         public static void Postfix()
         {
-            var hotkeyT = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.T);
+            var hotkeyT = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
+                          (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)
             {
                 const int loops = 100;
                 Logger.LogDebug($"Running {loops} full ticks.");
                 for (var i = 0; i < loops; i++)
                 {
-                    WarTick.Tick(true, true);
+                    Logger.LogDebug("Tick " + $"{i,5}...");
+                    try
+                    {
+                        WarTick.Tick(true, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex);
+                    }
                 }
             }
         }

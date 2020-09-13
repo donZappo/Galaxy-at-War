@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using BattleTech;
 using BattleTech.UI;
-using ImageMagick;
 using TMPro;
 using Stopwatch = System.Diagnostics.Stopwatch;
 // ReSharper disable ClassNeverInstantiated.Global
@@ -43,6 +41,5 @@ namespace GalaxyatWar
         public static Contract LoopContract;
         public static bool FirstDehydrate = true;
         internal static bool ModInitialized;
-        internal static List<Task> Tasks = new List<Task>();
     }
 }
