@@ -38,6 +38,34 @@ namespace GalaxyatWar
 
         public static void Postfix()
         {
+            var hotkey1 = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.Alpha1);
+            if (hotkey1)
+            {
+                try
+                {
+                    foreach (var contract in Globals.Sim.CurSystem.SystemContracts)
+                    {
+                        Logger.LogDebug(contract.Name);
+                        Logger.LogDebug(contract.mapPath);
+                        Logger.LogDebug(contract.MissionObjectiveResultList);
+                    }
+                    Logger.LogDebug(Globals.Sim.pendingBreadcrumb.Override.OnContractSuccessResults.First()?.Actions[0].additionalValues[10]);
+                    Logger.LogDebug("*");
+                    Logger.LogDebug(Globals.Sim.pendingBreadcrumb.Override.travelSeed);
+                    Logger.LogDebug("*");
+                    Logger.LogDebug("*");
+                    foreach (var contract in Globals.Sim.CurSystem.activeSystemContracts)
+                    {
+                        Logger.LogDebug(contract);
+                        Logger.LogDebug(contract.Override.OnContractSuccessResults.First()?.Actions[0].additionalValues[10]);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex);
+                }
+            }
+
             var hotkeyC = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.C);
             if (hotkeyC)
             {
@@ -45,15 +73,26 @@ namespace GalaxyatWar
                 {
                     Logger.LogDebug("Hotkey C");
                     var contracts = new List<Contract>();
-                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 2, 2, "Locals", new List<string> {"AuriganPirates"}));
-                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 4, 4, "Locals"));
-                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 6, 6, "Locals", new List<string>{"Steiner"}));
-                    contracts.Add(Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 6, 6, "Kurita"));
+                    Logger.LogDebug(0);
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 2, 2, "AuriganPirates", null, true));
+                    Logger.LogDebug(1);
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 4, 4, "Locals", Globals.Settings.IncludedFactions));
+                    Logger.LogDebug(2);
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 6, 6, "Locals", Globals.Settings.IncludedFactions));
+                    Logger.LogDebug(3);
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 6, 6, "Kurita", null, true));
+                    Logger.LogDebug(4);
                     contracts.Add(Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 8, 8, "Steiner"));
-                    var deployment = Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 10, 10, "TaurianConcordat");
+                    Logger.LogDebug(5);
+                    var deployment = Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 10, 10, "TaurianConcordat", null, true);
+                    Logger.LogDebug(6);
+                    deployment.Override.OnContractSuccessResults.Do(Logger.LogDebug);
+                    Logger.LogDebug(7);
+                    Logger.LogDebug(deployment.Override.OnContractSuccessResults.First()?.Actions[0].additionalValues[10]);
+                    Logger.LogDebug(8);
                     deployment.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
                     contracts.Add(deployment);
-                    
+
                     //for (var j = 0; j < 2; j++)
                     //{
                     //    for (var i = 2; i <= 10; i += 2)

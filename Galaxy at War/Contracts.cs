@@ -5,8 +5,6 @@ using BattleTech;
 using BattleTech.Data;
 using BattleTech.Framework;
 using Harmony;
-// ReSharper disable UnusedType.Global
-// ReSharper disable UnusedMember.Local
 
 namespace GalaxyatWar
 {
@@ -93,7 +91,16 @@ namespace GalaxyatWar
 
             Globals.Sim.mapDiscardPile.Add(level.Map.MapID);
             Globals.Sim.contractDiscardPile.Add(contractOverride.ID);
-            PrepContract(contract, employer, employerAlly, target, targetAlly, neutralToAll, hostileToAll, level.Map.BiomeSkinEntry.BiomeSkin, contract.Override.travelSeed, system);
+            PrepContract(contract,
+                employer,
+                employerAlly,
+                target,
+                targetAlly,
+                neutralToAll,
+                hostileToAll,
+                level.Map.BiomeSkinEntry.BiomeSkin,
+                contract.Override.travelSeed,
+                system);
             return contract;
         }
 
@@ -113,6 +120,7 @@ namespace GalaxyatWar
             bool isGlobal,
             int difficulty)
         {
+            Logger.Log("CreateTravelContract");
             var starSystem = context.GetObject(GameContextObjectTagEnum.TargetStarSystem) as StarSystem;
             var seed = Globals.Rng.Next(0, int.MaxValue);
             ovr.FullRehydrate();
@@ -150,9 +158,15 @@ namespace GalaxyatWar
             gameResultAction.additionalValues[11] = employersAlly.Name;
             gameResultAction.additionalValues[12] = neutralToAll.Name;
             gameResultAction.additionalValues[13] = hostileToAll.Name;
-            simGameEventResult.Actions = new SimGameResultAction[1];
+            Logger.LogDebug("-");
+            Logger.LogDebug(gameResultAction);
+            Logger.LogDebug("--");
+            gameResultAction.additionalValues.Do(Logger.LogDebug);
+            Logger.LogDebug("---");
+           simGameEventResult.Actions = new SimGameResultAction[1];
             simGameEventResult.Actions[0] = gameResultAction;
             contractOverride.OnContractSuccessResults.Add(simGameEventResult);
+            Logger.LogDebug(contractOverride.OnContractSuccessResults[0]);
             return new Contract(mapName, mapPath, encounterGuid, contractTypeValue, Globals.Sim.BattleTechGame, contractOverride, context, true, actualDifficulty)
             {
                 Override =
@@ -176,7 +190,8 @@ namespace GalaxyatWar
         {
             if (presetSeed != 0 && !contract.IsPriorityContract)
             {
-                contract.SetFinalDifficulty(actualDifficulty);
+                var diff = Globals.Rng.Next(min, max + 1);
+                contract.SetFinalDifficulty(diff);
             }
 
             var unitFactionValue1 = FactionEnumeration.GetPlayer1sMercUnitFactionValue();
@@ -190,8 +205,9 @@ namespace GalaxyatWar
             contract.AddTeamFaction("61612bb3-abf9-4586-952a-0559fa9dcd75", NeutralToAll.ID);
             contract.AddTeamFaction("3c9f3a20-ab03-4bcb-8ab6-b1ef0442bbf0", HostileToAll.ID);
             contract.SetupContext();
+            var finalDifficulty = contract.Override.finalDifficulty;
             var cbills = SimGameState.RoundTo(contract.Override.contractRewardOverride < 0
-                ? Globals.Sim.CalculateContractValueByContractType(contract.ContractTypeValue, actualDifficulty, Globals.Sim.Constants.Finances.ContractPricePerDifficulty, Globals.Sim.Constants.Finances.ContractPriceVariance, presetSeed)
+                ? Globals.Sim.CalculateContractValueByContractType(contract.ContractTypeValue, finalDifficulty, Globals.Sim.Constants.Finances.ContractPricePerDifficulty, Globals.Sim.Constants.Finances.ContractPriceVariance, presetSeed)
                 : (float) contract.Override.contractRewardOverride, 1000);
             contract.SetInitialReward(cbills);
             contract.SetBiomeSkin(skin);
@@ -226,7 +242,7 @@ namespace GalaxyatWar
             FactionDef employerDef = default;
             if (!string.IsNullOrEmpty(employer))
             {
-                employers = new[] {employer};
+                employers = new []{employer};
                 employerDef = FactionEnumeration.GetFactionByName(employer).FactionDef;
             }
 
