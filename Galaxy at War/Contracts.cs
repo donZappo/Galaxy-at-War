@@ -5,6 +5,8 @@ using BattleTech;
 using BattleTech.Data;
 using BattleTech.Framework;
 using Harmony;
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Local
 
 namespace GalaxyatWar
 {
@@ -91,16 +93,7 @@ namespace GalaxyatWar
 
             Globals.Sim.mapDiscardPile.Add(level.Map.MapID);
             Globals.Sim.contractDiscardPile.Add(contractOverride.ID);
-            PrepContract(contract,
-                employer,
-                employerAlly,
-                target,
-                targetAlly,
-                neutralToAll,
-                hostileToAll,
-                level.Map.BiomeSkinEntry.BiomeSkin,
-                contract.Override.travelSeed,
-                system);
+            PrepContract(contract, employer, employerAlly, target, targetAlly, neutralToAll, hostileToAll, level.Map.BiomeSkinEntry.BiomeSkin, contract.Override.travelSeed, system);
             return contract;
         }
 
@@ -183,8 +176,7 @@ namespace GalaxyatWar
         {
             if (presetSeed != 0 && !contract.IsPriorityContract)
             {
-                var diff = Globals.Rng.Next(min, max + 1);
-                contract.SetFinalDifficulty(diff);
+                contract.SetFinalDifficulty(actualDifficulty);
             }
 
             var unitFactionValue1 = FactionEnumeration.GetPlayer1sMercUnitFactionValue();
@@ -198,9 +190,8 @@ namespace GalaxyatWar
             contract.AddTeamFaction("61612bb3-abf9-4586-952a-0559fa9dcd75", NeutralToAll.ID);
             contract.AddTeamFaction("3c9f3a20-ab03-4bcb-8ab6-b1ef0442bbf0", HostileToAll.ID);
             contract.SetupContext();
-            var finalDifficulty = contract.Override.finalDifficulty;
             var cbills = SimGameState.RoundTo(contract.Override.contractRewardOverride < 0
-                ? Globals.Sim.CalculateContractValueByContractType(contract.ContractTypeValue, finalDifficulty, Globals.Sim.Constants.Finances.ContractPricePerDifficulty, Globals.Sim.Constants.Finances.ContractPriceVariance, presetSeed)
+                ? Globals.Sim.CalculateContractValueByContractType(contract.ContractTypeValue, actualDifficulty, Globals.Sim.Constants.Finances.ContractPricePerDifficulty, Globals.Sim.Constants.Finances.ContractPriceVariance, presetSeed)
                 : (float) contract.Override.contractRewardOverride, 1000);
             contract.SetInitialReward(cbills);
             contract.SetBiomeSkin(skin);
@@ -235,7 +226,7 @@ namespace GalaxyatWar
             FactionDef employerDef = default;
             if (!string.IsNullOrEmpty(employer))
             {
-                employers = new []{employer};
+                employers = new[] {employer};
                 employerDef = FactionEnumeration.GetFactionByName(employer).FactionDef;
             }
 
@@ -271,6 +262,17 @@ namespace GalaxyatWar
             }
 
             return weightedList1;
+        }
+
+        [HarmonyPatch(typeof(ContractOverride), "GetUIDifficulty")]
+        public class ContractOverrideGetUIDifficultyPatch
+        {
+            private static void Postfix(ContractOverride __instance, ref int __result)
+            {
+                __result = __instance.contract.Difficulty != __result
+                    ? __instance.contract.Difficulty
+                    : __result;
+            }
         }
 
         [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]

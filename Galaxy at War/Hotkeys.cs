@@ -13,30 +13,6 @@ using UnityEngine;
 
 namespace GalaxyatWar
 {
-    //[HarmonyPatch(typeof(SGDifficultyIndicatorWidget), "SetDifficulty")]
-    //public class asdff
-    //{
-    //    private static void Postfix(int difficulty)
-    //    {
-    //        if (difficulty % 2 != 0)
-    //        {
-    //            Logger.LogDebug($"SetDifficulty: {difficulty}");
-    //            Logger.LogDebug(new StackTrace());
-    //        }
-    //    }
-    //}
-
-    [HarmonyPatch(typeof(ContractOverride), "GetUIDifficulty")]
-    public class ContractOverrideGetUIDifficultyPatch
-    {
-        private static void Postfix(ContractOverride __instance, ref int __result)
-        {
-            __result = __instance.contract.Difficulty != __result
-                ? __instance.contract.Difficulty
-                : __result;
-        }
-    }
-
     [HarmonyPatch(typeof(UnityGameInstance), "Update")]
     public static class SimGameStateUpdatePatch
     {
