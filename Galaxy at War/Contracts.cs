@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
@@ -12,8 +13,8 @@ namespace GalaxyatWar
         private static int min;
         private static int max;
         private static int actualDifficulty;
-        
-        internal static Contract GenerateContract(StarSystem system, int minDiff, int maxDiff, bool usingBreadcrumbs = false, bool includeOwnershipCheck = false)
+
+        internal static Contract GenerateContract(StarSystem system, int minDiff, int maxDiff, string employer = null, List<string> opFor = null, bool usingBreadcrumbs = false, bool includeOwnershipCheck = false)
         {
             min = minDiff;
             max = maxDiff;
@@ -23,7 +24,7 @@ namespace GalaxyatWar
                 .Where(x => x.Value.Any(c => c.finalDifficulty + c.difficultyUIModifier <= actualDifficulty))
                 .ToDictionary(k => k.Key, v => v.Value);
             var playableMaps = GetSinglePlayerProceduralPlayableMaps(system, includeOwnershipCheck);
-            var validParticipants = GetValidParticipants(system);
+            var validParticipants = GetValidParticipants(system, employer, opFor);
             var source = playableMaps.Select(map => map.Map.Weight);
             var activeMaps = new WeightedList<MapAndEncounters>(WeightedListType.SimpleRandom, playableMaps.ToList(), source.ToList());
             var next = activeMaps.GetNext();
@@ -34,8 +35,9 @@ namespace GalaxyatWar
             if (mapEncounterContractData.FlatContracts.rootList == null ||
                 mapEncounterContractData.FlatContracts.rootList.Count < 1)
             {
-                return GenerateContract(system, minDiff, maxDiff, usingBreadcrumbs, includeOwnershipCheck);
+                return GenerateContract(system, minDiff, maxDiff, employer, opFor, usingBreadcrumbs, includeOwnershipCheck);
             }
+
             var proceduralContract = CreateProceduralContract(system, usingBreadcrumbs, next, mapEncounterContractData, gameContext);
             return proceduralContract;
         }
@@ -227,13 +229,48 @@ namespace GalaxyatWar
                 .ToWeightedList(WeightedListType.SimpleRandom);
         }
 
-        private static Dictionary<string, WeightedList<SimGameState.ContractParticipants>> GetValidParticipants(StarSystem system)
+        private static Dictionary<string, WeightedList<SimGameState.ContractParticipants>> GetValidParticipants(StarSystem system, string employer, List<string> opFor)
         {
-            return system.Def.ContractEmployerIDList.Where(e => !Globals.Sim.ignoredContractEmployers.Contains(e)).Select(e => new
+            var employers = system.Def.ContractEmployerIDList.Where(e => !Globals.Sim.ignoredContractEmployers.Contains(e));
+            FactionDef employerDef = default;
+            if (!string.IsNullOrEmpty(employer))
             {
-                Employer = e,
-                Participants = Globals.Sim.GenerateContractParticipants(Globals.Sim.factions[e], system.Def)
-            }).Where(e => e.Participants.Any()).ToDictionary(e => e.Employer, t => t.Participants);
+                employers = new []{employer};
+                employerDef = FactionEnumeration.GetFactionByName(employer).FactionDef;
+            }
+
+            var result = employers.Select(e => new
+                {
+                    Employer = employer ?? e,
+                    Participants = GenerateContractParticipants(employerDef ?? Globals.Sim.factions[e], system.Def, opFor)
+                })
+                .Where(e => e.Participants.Any()).ToDictionary(e => e.Employer, t => t.Participants);
+            return result;
+        }
+
+        private static WeightedList<SimGameState.ContractParticipants> GenerateContractParticipants(FactionDef employer, StarSystemDef system, List<string> opFor)
+        {
+            var weightedList1 = new WeightedList<SimGameState.ContractParticipants>(WeightedListType.PureRandom);
+            var list1 = opFor?.Count > 0 ? opFor : employer.Enemies.Where(t => system.ContractTargetIDList.Contains(t) && !Globals.Sim.IgnoredContractTargets.Contains(t) && !Globals.Sim.IsFactionAlly(FactionEnumeration.GetFactionByName(t))).ToList();
+            var source1 = FactionEnumeration.PossibleNeutralToAllList.Where(f => !employer.FactionValue.Equals(f) && !Globals.Sim.IgnoredContractTargets.Contains(f.Name)).ToList();
+            var source2 = FactionEnumeration.PossibleHostileToAllList.Where(f => !employer.FactionValue.Equals(f) && !Globals.Sim.IgnoredContractTargets.Contains(f.Name)).ToList();
+            var source3 = FactionEnumeration.PossibleAllyFallbackList.Where(f => !employer.FactionValue.Equals(f) && !Globals.Sim.IgnoredContractTargets.Contains(f.Name)).ToList();
+            foreach (var str in list1)
+            {
+                var target = str;
+                var targetFactionDef = Globals.Sim.factions[target];
+                var mercenariesFactionValue = FactionEnumeration.GetHostileMercenariesFactionValue();
+                var defaultHostileFaction = Globals.Sim.GetDefaultHostileFaction(employer.FactionValue, targetFactionDef.FactionValue);
+                var defaultTargetAlly = source3.Where(f => !targetFactionDef.Enemies.Contains(f.Name) && !employer.Allies.Contains(f.Name) && target != f.Name).DefaultIfEmpty(targetFactionDef.FactionValue).GetRandomElement(Globals.Sim.NetworkRandom);
+                var randomElement = source3.Where(f => !employer.Enemies.Contains(f.Name) && !targetFactionDef.Allies.Contains(f.Name) && defaultTargetAlly != f && target != f.Name).DefaultIfEmpty(employer.FactionValue).GetRandomElement(Globals.Sim.NetworkRandom);
+                var weightedList2 = targetFactionDef.Allies.Select(FactionEnumeration.GetFactionByName).Where((f => !employer.Allies.Contains(f.Name) && !Globals.Sim.IgnoredContractTargets.Contains(f.Name))).DefaultIfEmpty(defaultTargetAlly).ToWeightedList(WeightedListType.PureRandom);
+                var weightedList3 = employer.Allies.Select(FactionEnumeration.GetFactionByName).Where(f => !targetFactionDef.Allies.Contains(f.Name) && !Globals.Sim.IgnoredContractTargets.Contains(f.Name)).DefaultIfEmpty(randomElement).ToWeightedList(WeightedListType.PureRandom);
+                var list2 = source1.Where(f => target != f.Name && !targetFactionDef.Enemies.Contains(f.Name) && !employer.Enemies.Contains(f.Name)).DefaultIfEmpty(mercenariesFactionValue).ToList();
+                var list3 = source2.Where(f => target != f.Name && !targetFactionDef.Allies.Contains(f.Name) && !employer.Allies.Contains(f.Name)).DefaultIfEmpty(defaultHostileFaction).ToList();
+                weightedList1.Add(new SimGameState.ContractParticipants(targetFactionDef.FactionValue, weightedList2, weightedList3, list2, list3));
+            }
+
+            return weightedList1;
         }
 
         [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]

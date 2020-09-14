@@ -69,22 +69,31 @@ namespace GalaxyatWar
                 {
                     Logger.LogDebug("Hotkey C");
                     var contracts = new List<Contract>();
-                    for (var j = 0; j < 2; j++)
-                    {
-                        for (var i = 2; i <= 10; i += 2)
-                        {
-                            var system = Globals.Sim.StarSystems.GetRandomElement();
-                            var contract = Contracts.GenerateContract(system, i, i);
-                            if (contract == null)
-                            {
-                                Logger.LogDebug($"Couldn't find contract for {system.Name,-20}, system is {system.Def.GetDifficulty(SimGameState.SimGameType.CAREER),-2} and contract attempt is rank {i,-2}.");
-                                continue;
-                            }
-
-                            contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
-                            contracts.Add(contract);
-                        }
-                    }
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 2, 2, "Locals", new List<string> {"AuriganPirates"}));
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 4, 4, "Locals"));
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.CurSystem, 6, 6, "Locals", new List<string>{"Steiner"}));
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 6, 6, "Kurita"));
+                    contracts.Add(Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 8, 8, "Steiner"));
+                    var deployment = Contracts.GenerateContract(Globals.Sim.StarSystems.GetRandomElement(), 10, 10, "TaurianConcordat");
+                    deployment.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
+                    contracts.Add(deployment);
+                    
+                    //for (var j = 0; j < 2; j++)
+                    //{
+                    //    for (var i = 2; i <= 10; i += 2)
+                    //    {
+                    //        var system = Globals.Sim.StarSystems.GetRandomElement();
+                    //        var contract = Contracts.GenerateContract(system, i, i, "Davion", new List<string> {"Kurita", "Steiner"});
+                    //        if (contract == null)
+                    //        {
+                    //            Logger.LogDebug($"Couldn't find contract for {system.Name,-20} system is {system.Def.GetDifficulty(SimGameState.SimGameType.CAREER),-2} and contract attempt is rank {i,-2}");
+                    //            continue;
+                    //        }
+                    //
+                    //        contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
+                    //        contracts.Add(contract);
+                    //    }
+                    //}
 
                     Globals.Sim.CurSystem.activeSystemBreadcrumbs = contracts;
                     Globals.Sim.CurSystem.activeSystemContracts = contracts;
