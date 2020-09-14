@@ -169,7 +169,7 @@ namespace GalaxyatWar
             };
         }
 
-        public static void PrepContract(
+        private static void PrepContract(
             Contract contract,
             FactionValue employer,
             FactionValue employersAlly,
