@@ -220,8 +220,13 @@ namespace GalaxyatWar
                     var j = startBC;
                     foreach (var ExtTarget in ExternalPriorityTargets.Keys)
                     {
-                        if (ExternalPriorityTargets[ExtTarget].Count == 0 || Globals.Settings.DefensiveFactions.Contains(ExtTarget) ||
-                            !Globals.IncludedFactions.Contains(ExtTarget)) continue;
+                        if (ExternalPriorityTargets[ExtTarget].Count == 0 ||
+                            Globals.Settings.DefensiveFactions.Contains(ExtTarget) ||
+                            !Globals.IncludedFactions.Contains(ExtTarget))
+                        {
+                            continue;
+                        }
+
                         do
                         {
                             var randTarget = Globals.Rng.Next(0, ExternalPriorityTargets[ExtTarget].Count);
