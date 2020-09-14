@@ -12,7 +12,7 @@ namespace GalaxyatWar
         private static int min;
         private static int max;
         private static int actualDifficulty;
-
+        
         internal static Contract GenerateContract(StarSystem system, int minDiff, int maxDiff, bool usingBreadcrumbs = false, bool includeOwnershipCheck = false)
         {
             min = minDiff;

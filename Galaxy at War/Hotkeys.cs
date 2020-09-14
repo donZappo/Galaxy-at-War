@@ -69,12 +69,11 @@ namespace GalaxyatWar
                 {
                     Logger.LogDebug("Hotkey C");
                     var contracts = new List<Contract>();
-                    StarSystem system = default;
-                    for (var j = 0; j < 3; j++)
+                    for (var j = 0; j < 2; j++)
                     {
                         for (var i = 2; i <= 10; i += 2)
                         {
-                            system = Globals.Sim.StarSystems.GetRandomElement();
+                            var system = Globals.Sim.StarSystems.GetRandomElement();
                             var contract = Contracts.GenerateContract(system, i, i);
                             if (contract == null)
                             {
@@ -87,8 +86,8 @@ namespace GalaxyatWar
                         }
                     }
 
-                    system.activeSystemContracts = contracts;
-                    system.activeSystemBreadcrumbs = contracts;
+                    Globals.Sim.CurSystem.activeSystemBreadcrumbs = contracts;
+                    Globals.Sim.CurSystem.activeSystemContracts = contracts;
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                     cmdCenter.contractsWidget.ListContracts(contracts, cmdCenter.contractDisplayAutoSelect);
                 }

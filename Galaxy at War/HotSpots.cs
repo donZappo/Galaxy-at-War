@@ -105,19 +105,18 @@ namespace GalaxyatWar
         {
             private static void Prefix(ref float __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                Traverse.Create(Globals.Sim.CurSystem).Property("MissionsCompleted").SetValue(0);
-                Traverse.Create(Globals.Sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(0);
-                Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(0);
+                Globals.Sim.CurSystem.MissionsCompleted = 0;
+                Globals.Sim.CurSystem.CurBreadcrumbOverride = 0;
+                Globals.Sim.CurSystem.CurMaxBreadcrumbs = 0;
                 __state = Globals.Sim.CurSystem.CurMaxContracts;
 
                 foreach (var theFaction in Globals.IncludedFactions)
                 {
-                    // g - commented out 9/9/20
-                    //if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction) == null)
-                    //    continue;
+                    if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction) == null)
+                        continue;
 
                     var deathListTracker = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction);
                     AdjustDeathList(deathListTracker, true);
@@ -125,15 +124,14 @@ namespace GalaxyatWar
 
                 if (Globals.Settings.LimitSystemContracts.ContainsKey(Globals.Sim.CurSystem.Name))
                 {
-                    Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxContracts").SetValue(Globals.Settings.LimitSystemContracts[Globals.Sim.CurSystem.Name]);
+                    Globals.Sim.CurSystem.CurMaxContracts = Globals.Settings.LimitSystemContracts[Globals.Sim.CurSystem.Name];
                 }
 
                 if (Globals.WarStatusTracker.Deployment)
                 {
-                    Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxContracts").SetValue(Globals.Settings.DeploymentContracts);
+                    Globals.Sim.CurSystem.CurMaxContracts = Globals.Settings.DeploymentContracts;
                 }
             }
-
 
             private static void Postfix(ref float __state)
             {
@@ -145,9 +143,9 @@ namespace GalaxyatWar
 
                 isBreadcrumb = true;
                 Globals.Sim.CurSystem.activeSystemBreadcrumbs.Clear();
-                Traverse.Create(Globals.Sim.CurSystem).Property("MissionsCompleted").SetValue(20);
-                Traverse.Create(Globals.Sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(1);
-                Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
+                Globals.Sim.CurSystem.MissionsCompleted = 20;
+                Globals.Sim.CurSystem.CurBreadcrumbOverride = 1;
+                Globals.Sim.CurSystem.CurMaxBreadcrumbs = 1;
                 Globals.WarStatusTracker.DeploymentContracts.Clear();
 
                 if (HomeContendedSystems.Count != 0 && !Globals.Settings.DefensiveFactions.Contains(Globals.Sim.CurSystem.OwnerValue.Name) && !Globals.WarStatusTracker.Deployment)
@@ -158,8 +156,8 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.HomeContendedStrings.Clear();
                     while (HomeContendedSystems.Count != 0)
                     {
-                        Traverse.Create(Globals.Sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
-                        Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
+                        Globals.Sim.CurSystem.CurBreadcrumbOverride = i + 1;
+                        Globals.Sim.CurSystem.CurMaxBreadcrumbs = i + 1;
                         if (twiddle == 0)
                             twiddle = -1;
                         else if (twiddle == 1)
@@ -178,13 +176,13 @@ namespace GalaxyatWar
                         }
 
                         TemporaryFlip(MainBCTarget, Globals.Sim.CurSystem.OwnerValue.Name);
-                        if (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == 0 && MainBCTarget.OwnerValue.Name != Globals.Sim.CurSystem.OwnerValue.Name)
+                        if (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == 0 &&
+                            MainBCTarget.OwnerValue.Name != Globals.Sim.CurSystem.OwnerValue.Name)
                         {
                             Globals.Sim.GeneratePotentialContracts(true, null, MainBCTarget);
                             SystemBonuses(MainBCTarget);
-
                             var PrioritySystem = Globals.Sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
-                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                            PrioritySystem.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
                             Globals.WarStatusTracker.DeploymentContracts.Add(PrioritySystem.Override.contractName);
                         }
                         else if (twiddle == -1 || MainBCTarget.OwnerValue.Name == Globals.Sim.CurSystem.OwnerValue.Name)
@@ -196,9 +194,8 @@ namespace GalaxyatWar
                         {
                             Globals.Sim.GeneratePotentialContracts(false, null, MainBCTarget);
                             SystemBonuses(MainBCTarget);
-
                             var PrioritySystem = Globals.Sim.CurSystem.SystemBreadcrumbs.Find(x => x.TargetSystem == MainBCTarget.ID);
-                            Traverse.Create(PrioritySystem.Override).Field("contractDisplayStyle").SetValue(ContractDisplayStyle.BaseCampaignStory);
+                            PrioritySystem.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
                             Globals.WarStatusTracker.DeploymentContracts.Add(PrioritySystem.Override.contractName);
                         }
 
@@ -230,8 +227,8 @@ namespace GalaxyatWar
                         do
                         {
                             var randTarget = Globals.Rng.Next(0, ExternalPriorityTargets[ExtTarget].Count);
-                            Traverse.Create(Globals.Sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(j + 1);
-                            Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(j + 1);
+                            Globals.Sim.CurSystem.CurBreadcrumbOverride = j + 1;
+                            Globals.Sim.CurSystem.CurMaxBreadcrumbs = j + 1;
                             if (ExternalPriorityTargets[ExtTarget][randTarget] == Globals.Sim.CurSystem)
                             {
                                 ExternalPriorityTargets[ExtTarget].Remove(Globals.Sim.CurSystem);
@@ -257,7 +254,7 @@ namespace GalaxyatWar
                 }
 
                 isBreadcrumb = false;
-                Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxContracts").SetValue(__state);
+                Globals.Sim.CurSystem.CurMaxContracts = __state;
             }
         }
 
