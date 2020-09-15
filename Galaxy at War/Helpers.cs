@@ -1045,5 +1045,33 @@ namespace GalaxyatWar
             //Globals.SimGameState.ApplyEventAction(Globals.SimGameResultAction, null);
             //UnityGameInstance.BattleTechGame.Globals.Simulation.StopPlayMode();
         }
+
+        public static void GenerateMonthlyContracts()
+        {
+            var contracts = new List<Contract>();
+            LogDebug(0);
+            var system = Globals.Sim.CurSystem;
+            var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+            var influenceTracker = systemStatus.influenceTracker;
+            var owner = influenceTracker.First().Key;
+            var second = influenceTracker.Skip(1).First().Key;
+            LogDebug(0);
+            var contract = Contracts.GenerateContract(system, 2, 2, owner);
+            contracts.Add(contract);
+            LogDebug(1);
+            contract = Contracts.GenerateContract(system, 4, 4, owner);
+            contracts.Add(contract);
+            LogDebug(2);
+            contract = Contracts.GenerateContract(system, 2, 2, second);
+            contracts.Add(contract);
+            LogDebug(3);
+            contract = Contracts.GenerateContract(system, 4, 4, second);
+            contracts.Add(contract);
+            LogDebug(4);
+            contract = Contracts.GenerateContract(system, 6, 6, Globals.Settings.IncludedFactions.Where(x => x != "NoFaction").GetRandomElement());
+            contracts.Add(contract);
+            LogDebug(5);
+            Globals.Sim.CurSystem.activeSystemContracts = contracts;
+        }
     }
 }

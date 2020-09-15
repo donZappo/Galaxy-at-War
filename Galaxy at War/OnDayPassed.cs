@@ -131,6 +131,7 @@ namespace GalaxyatWar
                     }
                     else
                     {
+                        Helpers.GenerateMonthlyContracts();
                         WarTick.Tick(true, true);
                         var hasFlashPoint = Globals.Sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
                         if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !hasFlashPoint)
