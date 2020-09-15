@@ -174,7 +174,7 @@ namespace GalaxyatWar
                     AdjustDeathList(deathListTracker, true);
                     LogDebug("Allies after:");
                     deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
-                    LogDebug($"Enemies after:");
+                    LogDebug("Enemies after:");
                     deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 }
             }
@@ -471,9 +471,9 @@ namespace GalaxyatWar
                     if (Settings.GaW_PoliceSupport && defenseFaction == Settings.GaW_Police)
                         defenseFaction = WarStatusTracker.ComstarAlly;
                     var targetSystem = contract.TargetSystem;
-                    var systemName = Sim.StarSystems.Find(x => x.ID == targetSystem);
+                    var systemName = GaWSystems.Find(x => x.ID == targetSystem);
                     bool pirates = employerFaction == "AuriganPirates" || defenseFaction == "AuriganPirates";
-                    var deltaInfluence = Helpers.DeltaInfluence(systemName, contract.Difficulty, contract.Override.ContractTypeValue.Name, defenseFaction, pirates);
+                    var deltaInfluence = DeltaInfluence(systemName, contract.Difficulty, contract.Override.ContractTypeValue.Name, defenseFaction, pirates);
                     var systemFlip = false;
                     if (employerFaction != "AuriganPirates" && defenseFaction != "AuriganPirates")
                     {

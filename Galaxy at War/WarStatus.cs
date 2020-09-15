@@ -87,7 +87,7 @@ namespace GalaxyatWar
                 deathListTracker.Add(d);
             }
 
-            foreach (var system in Globals.Sim.StarSystems)
+            foreach (var system in Globals.GaWSystems)
             {
                 if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                     AbandonedSystems.Add(system.Name);
@@ -141,10 +141,10 @@ namespace GalaxyatWar
             MinimumPirateResources = PirateResources;
             StartingPirateResources = PirateResources;
             Logger.LogDebug("SystemStatus mass creation...");
-            systems = new List<SystemStatus>(Globals.Sim.StarSystems.Count);
-            for (var index = 0; index < Globals.Sim.StarSystems.Count; index++)
+            systems = new List<SystemStatus>(Globals.GaWSystems.Count);
+            for (var index = 0; index < Globals.GaWSystems.Count; index++)
             {
-                var system = Globals.Sim.StarSystems[index];
+                var system = Globals.GaWSystems[index];
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
                 systems.Add(systemStatus);
                 if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
@@ -452,7 +452,7 @@ namespace GalaxyatWar
         {
             get
             {
-                return Globals.Sim.StarSystems.Count(system => system.OwnerDef == Globals.Sim.factions[faction]);
+                return Globals.GaWSystems.Count(system => system.OwnerDef == Globals.Sim.factions[faction]);
             }
         }
 

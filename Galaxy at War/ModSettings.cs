@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable ConvertToConstant.Global
 // ReSharper disable InconsistentNaming

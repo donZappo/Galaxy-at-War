@@ -42,7 +42,7 @@ namespace GalaxyatWar
 
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
-                Globals.GaWSystems = Globals.Sim.StarSystems.Where(x =>
+                Globals.GaWSystems = Globals.GaWSystems.Where(x =>
                     !Globals.Settings.ImmuneToWar.Contains(x.OwnerValue.Name)).ToList();
 
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
@@ -75,18 +75,51 @@ namespace GalaxyatWar
                 {
                     DeserializeWar();
                     // cleaning up old tag data
-                    if (Globals.GaWSystems.Count != Globals.WarStatusTracker.systems.Count)
+                    if (Globals.GaWSystems.Count < Globals.WarStatusTracker.systems.Count)
                     {
                         for (var index = 0; index < Globals.WarStatusTracker.systems.Count; index++)
                         {
                             var systemStatus = Globals.WarStatusTracker.systems[index];
                             if (Globals.Settings.ImmuneToWar.Contains(systemStatus.OriginalOwner))
                             {
-                                LogDebug($"Removed: {systemStatus.starSystem.Name,-15} -> Immune to war, owned by {systemStatus.OriginalOwner}.");
+                                LogDebug($"Removed: {systemStatus.starSystem.Name,-15} -> Immune to war, owned by {systemStatus.starSystem.OwnerValue.Name}.");
                                 Globals.WarStatusTracker.systems.Remove(systemStatus);
                             }
                         }
                     }
+
+                    foreach (var deathListTracker in Globals.WarStatusTracker.deathListTracker)
+                    {
+                        if (deathListTracker.Enemies.Any(x => Globals.Settings.ImmuneToWar.Contains(x)))
+                        {
+                            LogDebug($"Pruning immune factions from deathListTracker of {deathListTracker.faction}.");
+                        }
+
+                        for (var i = 0; i < deathListTracker.Enemies.Count; i++)
+                        {
+                            if (Globals.Settings.ImmuneToWar.Contains(deathListTracker.Enemies[i]))
+                            {
+                                LogDebug($"Removing enemy {deathListTracker.Enemies[i]} from {deathListTracker.faction}.");
+                                deathListTracker.Enemies.Remove(deathListTracker.Enemies[i]);
+                            }
+                        }
+                    }
+
+                    var _ = new Dictionary<string, float>();
+                    foreach (var kvp in Globals.WarStatusTracker.FullHomeContendedSystems)
+                    {
+                        if (!Globals.Settings.ImmuneToWar.Contains(kvp.Key))
+                        {
+                            _.Add(kvp.Key, kvp.Value);
+                        }
+                        else
+                        {
+                            LogDebug($"Removing {kvp.Key} from FullHomeContendedSystems, as they are immune to war.");
+                        }
+                    }
+
+                    Globals.WarStatusTracker.FullHomeContendedSystems = _;
+
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
@@ -191,7 +224,7 @@ namespace GalaxyatWar
             HotSpots.ExternalPriorityTargets.Clear();
             HotSpots.FullHomeContendedSystems.Clear();
             HotSpots.HomeContendedSystems.Clear();
-            var ssDict = Globals.Sim.StarSystemDictionary;
+            var starSystemDictionary = Globals.Sim.StarSystemDictionary;
             Globals.WarStatusTracker.systemsByResources =
                 Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
             SystemDifficulty();
@@ -209,9 +242,9 @@ namespace GalaxyatWar
                 {
                     StarSystemDef systemDef;
                     var system = Globals.WarStatusTracker.systems[i];
-                    if (ssDict.ContainsKey(system.CoreSystemID))
+                    if (starSystemDictionary.ContainsKey(system.CoreSystemID))
                     {
-                        systemDef = ssDict[system.CoreSystemID].Def;
+                        systemDef = starSystemDictionary[system.CoreSystemID].Def;
                     }
                     else
                     {
@@ -261,17 +294,17 @@ namespace GalaxyatWar
                 {
                     HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
                     foreach (var system in Globals.WarStatusTracker.ExternalPriorityTargets[faction])
-                        HotSpots.ExternalPriorityTargets[faction].Add(ssDict[system]);
+                        HotSpots.ExternalPriorityTargets[faction].Add(starSystemDictionary[system]);
                 }
 
                 foreach (var system in Globals.WarStatusTracker.FullHomeContendedSystems)
                 {
-                    HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(ssDict[system.Key], system.Value));
+                    HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(starSystemDictionary[system.Key], system.Value));
                 }
 
                 foreach (var system in Globals.WarStatusTracker.HomeContendedSystems)
                 {
-                    HotSpots.HomeContendedSystems.Add(ssDict[system]);
+                    HotSpots.HomeContendedSystems.Add(starSystemDictionary[system]);
                 }
 
                 foreach (var starSystem in Globals.WarStatusTracker.FullPirateSystems)

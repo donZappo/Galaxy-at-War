@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using BattleTech;
 using BattleTech.UI;
 using TMPro;
-using Stopwatch = System.Diagnostics.Stopwatch;
+
 // ReSharper disable ClassNeverInstantiated.Global
 
 namespace GalaxyatWar
@@ -33,7 +34,7 @@ namespace GalaxyatWar
         internal static SimGameInterruptManager SimGameInterruptManager;
         internal static TaskTimelineWidget TaskTimelineWidget;
         internal static TMP_FontAsset Font;
-        // todo remove these unused fields?
+        // todo don't remove any fields from this class or it will break deserialization. probably.
         public static bool IsGoodFaithEffort;
         public static Dictionary<string, List<StarSystem>> AttackTargets = new Dictionary<string, List<StarSystem>>();
         public static List<StarSystem> DefenseTargets = new List<StarSystem>();

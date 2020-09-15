@@ -38,12 +38,12 @@ namespace GalaxyatWar
                     return;
                 }
 
+                __state = starSystem.Def.Description.Details;
                 if (Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
                 {
                     return;
                 }
 
-                __state = starSystem.Def.Description.Details;
                 var factionString = BuildInfluenceString(starSystem);
                 starSystem.Def.Description.Details = factionString;
             }

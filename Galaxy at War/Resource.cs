@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static GalaxyatWar.Logger;
+using Random = UnityEngine.Random;
 
 // ReSharper disable ClassNeverInstantiated.Global
 
@@ -107,7 +108,7 @@ namespace GalaxyatWar
                         continue;
                     }
 
-                    var arFactor = UnityEngine.Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
+                    var arFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                     var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
                     spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor);
                     var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
@@ -166,7 +167,7 @@ namespace GalaxyatWar
             {
                 var highest = 0f;
                 var highestFaction = faction;
-                var drFactor = UnityEngine.Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
+                var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                 var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
                 spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
 

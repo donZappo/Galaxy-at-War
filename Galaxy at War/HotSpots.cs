@@ -7,8 +7,8 @@ using BattleTech.UI;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
-using Random = System.Random;
 using static GalaxyatWar.Helpers;
+using Random = System.Random;
 
 // ReSharper disable ClassNeverInstantiated.Global
 // ReSharper disable InconsistentNaming
@@ -396,8 +396,8 @@ namespace GalaxyatWar
 
                 if (!__instance.CurSystem.Def.Description.Id.StartsWith(contract.TargetSystem))
                 {
-                    Logger.LogDebug("Preparing the Breadcrumbs");
-                    var starSystem = Globals.Sim.StarSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
+                    LogDebug("Preparing the Breadcrumbs");
+                    var starSystem = Globals.GaWSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Globals.WarStatusTracker.HotBox.Add(starSystem.Name);
                     Globals.WarStatusTracker.HotBoxTravelling = true;
 
@@ -713,7 +713,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                         return;
 
-                    Logger.LogDebug("AAR Salvage Screen Completed");
+                    LogDebug("AAR Salvage Screen Completed");
                     Globals.WarStatusTracker.JustArrived = false;
                     Globals.WarStatusTracker.HotBoxTravelling = false;
                 }
