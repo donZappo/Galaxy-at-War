@@ -691,6 +691,11 @@ namespace GalaxyatWar
         internal static double DeltaInfluence(StarSystem system, double contractDifficulty, string contractTypeID, string defenseFaction, bool piratesInvolved)
         {
             var targetSystem = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+            if (targetSystem == null)
+            {
+                LogDebug($"null systemStatus {system.Name} at DeltaInfluence");
+            }
+
             float maximumInfluence;
 
             if (piratesInvolved && defenseFaction == "AuriganPirates")
@@ -744,6 +749,11 @@ namespace GalaxyatWar
         internal static bool WillSystemFlip(StarSystem system, string winner, string loser, double deltaInfluence, bool preBattle)
         {
             var warSystem = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+            if (warSystem == null)
+            {
+                LogDebug($"null systemStatus {system.Name} at WillSystemFlip");
+            }
+
             var tempIt = new Dictionary<string, float>(warSystem.influenceTracker);
 
             if (preBattle && !Globals.InfluenceMaxed)
@@ -972,7 +982,7 @@ namespace GalaxyatWar
                 var rand = Globals.Rng.Next(0, Globals.IncludedFactions.Count);
                 var newEnemy = Globals.IncludedFactions[rand];
 
-              while (newEnemy == trackerFaction || Globals.Settings.ImmuneToWar.Contains(newEnemy) || Globals.Settings.DefensiveFactions.Contains(newEnemy))
+                while (newEnemy == trackerFaction || Globals.Settings.ImmuneToWar.Contains(newEnemy) || Globals.Settings.DefensiveFactions.Contains(newEnemy))
                 {
                     rand = Globals.Rng.Next(0, Globals.IncludedFactions.Count);
                     newEnemy = Globals.IncludedFactions[rand];

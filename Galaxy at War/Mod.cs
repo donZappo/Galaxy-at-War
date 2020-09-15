@@ -461,7 +461,12 @@ namespace GalaxyatWar
                         LogDebug("is Flashpoint, skipping.");
                         return;
                     }
-
+                    var targetSystem = contract.TargetSystem;
+                    var systemName = GaWSystems.Find(x => x.ID == targetSystem);
+                    if (systemName == null)
+                    {
+                        LogDebug("Null systemStatus at PopulateContract");
+                    }
                     __state = contract.Override.shortDescription;
                     var stringHolder = contract.Override.shortDescription;
                     var employerFaction = contract.GetTeamFaction("ecc8d4f2-74b4-465d-adf6-84445e5dfc230").Name;
@@ -470,8 +475,7 @@ namespace GalaxyatWar
                     var defenseFaction = contract.GetTeamFaction("be77cadd-e245-4240-a93e-b99cc98902a5").Name;
                     if (Settings.GaW_PoliceSupport && defenseFaction == Settings.GaW_Police)
                         defenseFaction = WarStatusTracker.ComstarAlly;
-                    var targetSystem = contract.TargetSystem;
-                    var systemName = GaWSystems.Find(x => x.ID == targetSystem);
+
                     bool pirates = employerFaction == "AuriganPirates" || defenseFaction == "AuriganPirates";
                     var deltaInfluence = DeltaInfluence(systemName, contract.Difficulty, contract.Override.ContractTypeValue.Name, defenseFaction, pirates);
                     var systemFlip = false;
