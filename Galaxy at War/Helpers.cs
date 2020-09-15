@@ -225,11 +225,10 @@ namespace GalaxyatWar
             if (Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
                 return;
 
-            foreach (var neighborSystem in Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem))
+            foreach (var neighborSystem in Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem).Where(x => !Globals.Settings.ImmuneToWar.Contains(x.OwnerValue.Name)))
             {
                 if (neighborSystem.OwnerValue.Name != starSystem.OwnerValue.Name &&
-                    !isFlashpointSystem &&
-                    !Globals.Settings.ImmuneToWar.Contains(neighborSystem.OwnerValue.Name))
+                    !isFlashpointSystem)
                 {
                     if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                     {
@@ -545,10 +544,12 @@ namespace GalaxyatWar
                 var diffStatus = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[systemStatus.owner];
                 var starSystem = systemStatus.starSystem;
 
-                if (highestFaction != systemStatus.owner && !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name) &&
-                    (diffStatus > Globals.Settings.TakeoverThreshold && !Globals.WarStatusTracker.HotBox.Contains(systemStatus.name)
-                                                                     && (!Globals.Settings.DefensiveFactions.Contains(highestFaction) || highestFaction == "Locals") &&
-                                                                     !Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name)))
+                if (highestFaction != systemStatus.owner &&
+                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name) &&
+                    diffStatus > Globals.Settings.TakeoverThreshold &&
+                    !Globals.WarStatusTracker.HotBox.Contains(systemStatus.name) &&
+                    (!Globals.Settings.DefensiveFactions.Contains(highestFaction) || highestFaction == "Locals") &&
+                    !Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
                 {
                     if (!systemStatus.Contended)
                     {
@@ -761,9 +762,12 @@ namespace GalaxyatWar
             tempIt.Remove(highKey);
             var secondValue = tempIt.OrderByDescending(x => x.Value).Select(x => x.Value).First();
 
-            if (highKey != warSystem.owner && highKey == winner && highValue - secondValue > Globals.Settings.TakeoverThreshold
-                && !Globals.WarStatusTracker.FlashpointSystems.Contains(system.Name) &&
-                (!Globals.Settings.DefensiveFactions.Contains(winner) && !Globals.Settings.ImmuneToWar.Contains(loser)))
+            if (highKey != warSystem.owner &&
+                highKey == winner &&
+                highValue - secondValue > Globals.Settings.TakeoverThreshold &&
+                !Globals.WarStatusTracker.FlashpointSystems.Contains(system.Name) &&
+                !Globals.Settings.DefensiveFactions.Contains(winner) &&
+                !Globals.Settings.ImmuneToWar.Contains(loser))
                 return true;
             return false;
         }
@@ -968,7 +972,7 @@ namespace GalaxyatWar
                 var rand = Globals.Rng.Next(0, Globals.IncludedFactions.Count);
                 var newEnemy = Globals.IncludedFactions[rand];
 
-                while (newEnemy == trackerFaction || Globals.Settings.ImmuneToWar.Contains(newEnemy) || Globals.Settings.DefensiveFactions.Contains(newEnemy))
+              while (newEnemy == trackerFaction || Globals.Settings.ImmuneToWar.Contains(newEnemy) || Globals.Settings.DefensiveFactions.Contains(newEnemy))
                 {
                     rand = Globals.Rng.Next(0, Globals.IncludedFactions.Count);
                     newEnemy = Globals.IncludedFactions[rand];

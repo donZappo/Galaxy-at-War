@@ -38,6 +38,11 @@ namespace GalaxyatWar
                     return;
                 }
 
+                if (Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
+                {
+                    return;
+                }
+
                 __state = starSystem.Def.Description.Details;
                 var factionString = BuildInfluenceString(starSystem);
                 starSystem.Def.Description.Details = factionString;
@@ -45,7 +50,7 @@ namespace GalaxyatWar
 
             public static void Postfix(object data, string __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 var starSystem = (StarSystem) data;
@@ -246,7 +251,7 @@ namespace GalaxyatWar
         private static string BuildInfluenceString(StarSystem starSystem)
         {
             var factionString = new StringBuilder();
-            if (Globals.WarStatusTracker.FlashpointSystems.Contains(starSystem.Name) || Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
+            if (Globals.WarStatusTracker.FlashpointSystems.Contains(starSystem.Name))
             {
                 factionString.AppendLine("<b>" + starSystem.Name + "     ***System Immune to War***</b>");
                 return factionString.ToString();
@@ -345,7 +350,7 @@ namespace GalaxyatWar
                 }
             }
         }
-        
+
         [HarmonyPatch(typeof(StarmapScreen), "RefreshStarmap")]
         public static class StarmapScreen_RefreshStarmap__Patch
         {

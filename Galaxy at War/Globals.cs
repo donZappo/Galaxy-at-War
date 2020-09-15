@@ -41,5 +41,6 @@ namespace GalaxyatWar
         public static Contract LoopContract;
         public static bool FirstDehydrate = true;
         internal static bool ModInitialized;
+        internal static List<StarSystem> GaWSystems = new List<StarSystem>();
     }
 }

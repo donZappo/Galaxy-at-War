@@ -28,7 +28,7 @@ namespace GalaxyatWar
                 Globals.ModInitialized = false;
             }
         }
-        
+
         [HarmonyPatch(typeof(Starmap), "PopulateMap", typeof(SimGameState))]
         public class StarmapPopulateMapPatch
         {
@@ -42,6 +42,8 @@ namespace GalaxyatWar
 
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
+                Globals.GaWSystems = Globals.Sim.StarSystems.Where(x =>
+                    !Globals.Settings.ImmuneToWar.Contains(x.OwnerValue.Name)).ToList();
 
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                 {
@@ -72,6 +74,19 @@ namespace GalaxyatWar
                 if (!string.IsNullOrEmpty(gawTag))
                 {
                     DeserializeWar();
+                    // cleaning up old tag data
+                    if (Globals.GaWSystems.Count != Globals.WarStatusTracker.systems.Count)
+                    {
+                        for (var index = 0; index < Globals.WarStatusTracker.systems.Count; index++)
+                        {
+                            var systemStatus = Globals.WarStatusTracker.systems[index];
+                            if (Globals.Settings.ImmuneToWar.Contains(systemStatus.OriginalOwner))
+                            {
+                                LogDebug($"Removed: {systemStatus.starSystem.Name,-15} -> Immune to war, owned by {systemStatus.OriginalOwner}.");
+                                Globals.WarStatusTracker.systems.Remove(systemStatus);
+                            }
+                        }
+                    }
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
@@ -107,7 +122,6 @@ namespace GalaxyatWar
                 }
 
                 SystemDifficulty();
-
                 Globals.WarStatusTracker.FirstTickInitialization = true;
                 WarTick.Tick(true, true);
             }
