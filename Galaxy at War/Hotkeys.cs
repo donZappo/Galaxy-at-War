@@ -5,6 +5,7 @@ using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using BattleTech.UI;
+using Google.GData.Extensions;
 using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -49,6 +50,7 @@ namespace GalaxyatWar
                         Logger.LogDebug(contract.mapPath);
                         Logger.LogDebug(contract.MissionObjectiveResultList);
                     }
+
                     Logger.LogDebug(Globals.Sim.pendingBreadcrumb.Override.OnContractSuccessResults.First()?.Actions[0].additionalValues[10]);
                     Logger.LogDebug("*");
                     Logger.LogDebug(Globals.Sim.pendingBreadcrumb.Override.travelSeed);
@@ -61,6 +63,46 @@ namespace GalaxyatWar
                     }
                 }
                 catch (Exception ex)
+                {
+                    Logger.Error(ex);
+                }
+            }
+
+            var hotkeyG = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.G);
+            if (hotkeyG)
+            {
+                try
+                {
+                    Logger.LogDebug("Hotkey G");
+                    var contracts = new List<Contract>();
+                    Logger.LogDebug(0);
+                    var system = Globals.Sim.CurSystem;
+                    var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+                    var influenceTracker = systemStatus.influenceTracker;
+                    var owner = influenceTracker.First().Key;
+                    var second = influenceTracker.Skip(1).First().Key;
+                    Logger.LogDebug(0);
+                    var contract = Contracts.GenerateContract(system, 2, 2, owner);
+                    contracts.Add(contract);
+                    Logger.LogDebug(1);
+                    contract = Contracts.GenerateContract(system, 4, 4, owner);
+                    contracts.Add(contract);
+                    Logger.LogDebug(2);
+                    contract = Contracts.GenerateContract(system, 2, 2, second);
+                    contracts.Add(contract);
+                    Logger.LogDebug(3);
+                    contract = Contracts.GenerateContract(system, 4, 4, second);
+                    contracts.Add(contract);
+                    Logger.LogDebug(4);
+                    contract = Contracts.GenerateContract(system, 6, 6, Globals.Settings.IncludedFactions.Where(x => x != "NoFaction").GetRandomElement());
+                    contracts.Add(contract);
+                    Logger.LogDebug(5);
+                    Globals.Sim.CurSystem.activeSystemContracts = contracts;
+                    var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                    cmdCenter.contractsWidget.ListContracts(contracts, cmdCenter.contractDisplayAutoSelect);
+                }
+
+                catch              (Exception ex)
                 {
                     Logger.Error(ex);
                 }

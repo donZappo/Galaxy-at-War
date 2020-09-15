@@ -9,7 +9,6 @@ using UnityEngine;
 using static GalaxyatWar.Logger;
 using Random = System.Random;
 using static GalaxyatWar.Helpers;
-
 // ReSharper disable ClassNeverInstantiated.Global
 // ReSharper disable InconsistentNaming
 // ReSharper disable UnusedMember.Local
