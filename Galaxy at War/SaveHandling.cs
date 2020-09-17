@@ -42,9 +42,8 @@ namespace GalaxyatWar
 
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
-                Globals.GaWSystems = Globals.GaWSystems.Where(x =>
+                Globals.GaWSystems = Globals.Sim.StarSystems.Where(x =>
                     !Globals.Settings.ImmuneToWar.Contains(x.OwnerValue.Name)).ToList();
-
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                 {
                     LogDebug("Aborting GaW loading.");
@@ -75,55 +74,25 @@ namespace GalaxyatWar
                 {
                     DeserializeWar();
                     // cleaning up old tag data
-                    if (Globals.GaWSystems.Count < Globals.WarStatusTracker.systems.Count)
+                    ValidateState();
+                    // copied from WarStatus - establish any systems that are new
+                    AddNewStarSystems();
+
+                    // try to recover from negative DR
+                    foreach (var systemStatus in Globals.WarStatusTracker.systems)
                     {
-                        for (var index = 0; index < Globals.WarStatusTracker.systems.Count; index++)
+                        if (systemStatus.DefenseResources <= 0)
                         {
-                            var systemStatus = Globals.WarStatusTracker.systems[index];
-                            if (Globals.Settings.ImmuneToWar.Contains(systemStatus.OriginalOwner))
-                            {
-                                LogDebug($"Removed: {systemStatus.starSystem.Name,-15} -> Immune to war, owned by {systemStatus.starSystem.OwnerValue.Name}.");
-                                Globals.WarStatusTracker.systems.Remove(systemStatus);
-                            }
+                            systemStatus.AttackResources = GetTotalAttackResources(systemStatus.starSystem);
+                            systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.starSystem);
+                            systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
                         }
                     }
-
-                    foreach (var deathListTracker in Globals.WarStatusTracker.deathListTracker)
-                    {
-                        if (deathListTracker.Enemies.Any(x => Globals.Settings.ImmuneToWar.Contains(x)))
-                        {
-                            LogDebug($"Pruning immune factions from deathListTracker of {deathListTracker.faction}.");
-                        }
-
-                        for (var i = 0; i < deathListTracker.Enemies.Count; i++)
-                        {
-                            if (Globals.Settings.ImmuneToWar.Contains(deathListTracker.Enemies[i]))
-                            {
-                                LogDebug($"Removing enemy {deathListTracker.Enemies[i]} from {deathListTracker.faction}.");
-                                deathListTracker.Enemies.Remove(deathListTracker.Enemies[i]);
-                            }
-                        }
-                    }
-
-                    var _ = new Dictionary<string, float>();
-                    foreach (var kvp in Globals.WarStatusTracker.FullHomeContendedSystems)
-                    {
-                        if (!Globals.Settings.ImmuneToWar.Contains(kvp.Key))
-                        {
-                            _.Add(kvp.Key, kvp.Value);
-                        }
-                        else
-                        {
-                            LogDebug($"Removing {kvp.Key} from FullHomeContendedSystems, as they are immune to war.");
-                        }
-                    }
-
-                    Globals.WarStatusTracker.FullHomeContendedSystems = _;
 
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
-                        LogDebug($"{gawTag}");
+                        LogDebug($"{gawTag.Substring(0, 500)}");
                         Spawn();
                     }
                     else
@@ -140,6 +109,81 @@ namespace GalaxyatWar
                 Globals.ModInitialized = true;
             }
 
+            private static void ValidateState()
+            {
+                if (Globals.GaWSystems.Count < Globals.WarStatusTracker.systems.Count)
+                {
+                    for (var index = 0; index < Globals.WarStatusTracker.systems.Count; index++)
+                    {
+                        var systemStatus = Globals.WarStatusTracker.systems[index];
+                        if (Globals.Settings.ImmuneToWar.Contains(systemStatus.OriginalOwner))
+                        {
+                            LogDebug($"Removed: {systemStatus.starSystem.Name,-15} -> Immune to war, owned by {systemStatus.starSystem.OwnerValue.Name}.");
+                            Globals.WarStatusTracker.systems.Remove(systemStatus);
+                        }
+                    }
+                }
+
+                foreach (var deathListTracker in Globals.WarStatusTracker.deathListTracker)
+                {
+                    if (deathListTracker.Enemies.Any(x => Globals.Settings.ImmuneToWar.Contains(x)))
+                    {
+                        LogDebug($"Pruning immune factions from deathListTracker of {deathListTracker.faction}.");
+                    }
+
+                    for (var i = 0; i < deathListTracker.Enemies.Count; i++)
+                    {
+                        if (Globals.Settings.ImmuneToWar.Contains(deathListTracker.Enemies[i]))
+                        {
+                            LogDebug($"Removing enemy {deathListTracker.Enemies[i]} from {deathListTracker.faction}.");
+                            deathListTracker.Enemies.Remove(deathListTracker.Enemies[i]);
+                        }
+                    }
+                }
+
+                var _ = new Dictionary<string, float>();
+                foreach (var kvp in Globals.WarStatusTracker.FullHomeContendedSystems)
+                {
+                    if (!Globals.Settings.ImmuneToWar.Contains(kvp.Key))
+                    {
+                        _.Add(kvp.Key, kvp.Value);
+                    }
+                    else
+                    {
+                        LogDebug($"Removing {kvp.Key} from FullHomeContendedSystems, as they are immune to war.");
+                    }
+                }
+
+                Globals.WarStatusTracker.FullHomeContendedSystems = _;
+            }
+
+            private static void AddNewStarSystems()
+            {
+                for (var index = 0; index < Globals.Sim.StarSystems.Count; index++)
+                {
+                    var system = Globals.Sim.StarSystems[index];
+                    if (Globals.Settings.ImmuneToWar.Contains(Globals.Sim.StarSystems[index].OwnerValue.Name) ||
+                        Globals.WarStatusTracker.systems.Any(x => x.starSystem == system))
+                    {
+                        continue;
+                    }
+
+                    LogDebug($"Trying to add {system.Name}, owner {system.OwnerValue.Name}.");
+                    var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+                    Globals.WarStatusTracker.systems.Add(systemStatus);
+                    if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
+                    {
+                        Globals.WarStatusTracker.FullPirateSystems.Add(system.Name);
+                        PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
+                    }
+
+                    if (system.Tags.Contains("planet_region_hyadesrim") &&
+                        !Globals.WarStatusTracker.FlashpointSystems.Contains(system.Name) &&
+                        (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
+                        Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Add(system.Name);
+                }
+            }
+
             private static void Spawn()
             {
                 LogDebug("Spawning new instance.");
@@ -149,6 +193,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
+                    LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem}).");
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                     Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                     Globals.WarStatusTracker.StartGameInitialized = true;
@@ -258,7 +303,7 @@ namespace GalaxyatWar
                     var ownerValue = Globals.FactionValues.Find(x => x.Name == system.owner);
                     systemDef.OwnerValue = ownerValue;
                     systemDef.factionShopOwnerID = system.owner;
-                    RefreshContracts(system);
+                    RefreshContractsEmployersAndTargets(system);
                     if (system.influenceTracker.Keys.Contains("AuriganPirates") && !system.influenceTracker.Keys.Contains("NoFaction"))
                     {
                         system.influenceTracker.Add("NoFaction", system.influenceTracker["AuriganPirates"]);

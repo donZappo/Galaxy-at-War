@@ -4,7 +4,6 @@ using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
 using static GalaxyatWar.Helpers;
-
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
@@ -142,9 +141,13 @@ namespace GalaxyatWar
             StartingPirateResources = PirateResources;
             Logger.LogDebug("SystemStatus mass creation...");
             systems = new List<SystemStatus>(Globals.GaWSystems.Count);
-            for (var index = 0; index < Globals.GaWSystems.Count; index++)
+            for (var index = 0; index < Globals.Sim.StarSystems.Count; index++)
             {
-                var system = Globals.GaWSystems[index];
+                var system = Globals.Sim.StarSystems[index];
+                if (Globals.Settings.ImmuneToWar.Contains(system.OwnerValue.Name))
+                {
+                    continue;
+                }
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
                 systems.Add(systemStatus);
                 if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))

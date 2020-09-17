@@ -111,7 +111,7 @@ namespace GalaxyatWar
                 {
                     systemStatus.CurrentlyAttackedBy.Clear();
                     CalculateAttackAndDefenseTargets(systemStatus.starSystem);
-                    RefreshContracts(systemStatus);
+                    RefreshContractsEmployersAndTargets(systemStatus);
                 }
 
                 if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
@@ -202,7 +202,7 @@ namespace GalaxyatWar
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.starSystem);
-                RefreshContracts(system);
+                RefreshContractsEmployersAndTargets(system);
             }
 
             if (Globals.WarStatusTracker.SystemChangedOwners.Count > 0)

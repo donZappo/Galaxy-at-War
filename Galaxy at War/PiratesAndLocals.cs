@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using static GalaxyatWar.Globals;
 
@@ -125,7 +126,7 @@ namespace GalaxyatWar
 
                 var warFDRChange = system.DefenseResources * system.PirateActivity / 100;
                 warFaction.PirateDRLoss += warFDRChange;
-                warFaction.DefensiveResources -= warFDRChange;
+                warFaction.DefensiveResources = Math.Max(0, warFaction.DefensiveResources - warFDRChange);
             }
         }
 

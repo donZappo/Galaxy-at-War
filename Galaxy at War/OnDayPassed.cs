@@ -18,6 +18,33 @@ namespace GalaxyatWar
             private static void Prefix()
             {
                 LogDebug("OnDayPassed");
+                var starSystem = Globals.Sim.CurSystem;
+                var contractEmployers = starSystem.Def.contractEmployerIDs;
+                var contractTargets = starSystem.Def.contractTargetIDs;
+                var owner = starSystem.OwnerValue;
+                LogDebug($"{starSystem.Name} owned by {owner.Name}");
+                LogDebug($"Employers in {starSystem.Name}");
+                contractEmployers.Do(x => LogDebug($"  {x}"));
+                LogDebug($"Targets in {starSystem.Name}");
+                contractTargets.Do(x => LogDebug($"  {x}"));
+                Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
+                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
+                var employers = systemStatus.influenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
+                foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
+                {
+                    LogDebug($"Faction {faction}:");
+                    LogDebug("Enemies:");
+                    FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Do(x => LogDebug($"  {x}"));
+                    LogDebug("Allies:");
+                    FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
+                    Log("");
+                }
+                LogDebug("Player allies:");
+                foreach (var faction in Globals.Sim.AlliedFactions)
+                {
+                    LogDebug($"  {faction}");
+                }
+                
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
@@ -79,6 +106,7 @@ namespace GalaxyatWar
 
                 if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
+                    LogDebug("Reinitializing contracts because !StartGameInitialized");
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                     Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     Globals.WarStatusTracker.StartGameInitialized = true;
@@ -131,11 +159,12 @@ namespace GalaxyatWar
                     }
                     else
                     {
-                        Helpers.GenerateMonthlyContracts();
+                        //GenerateMonthlyContracts();
                         WarTick.Tick(true, true);
                         var hasFlashPoint = Globals.Sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
                         if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !hasFlashPoint)
                         {
+                            LogDebug("Regenerating contracts because month-end.");
                             var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                             Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                         }

@@ -9,6 +9,7 @@ using Google.GData.Extensions;
 using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
+using static GalaxyatWar.Logger;
 
 // ReSharper disable InconsistentNaming
 
@@ -17,65 +18,55 @@ namespace GalaxyatWar
     [HarmonyPatch(typeof(UnityGameInstance), "Update")]
     public static class SimGameStateUpdatePatch
     {
-        //public static void Postfix()
-        //{
-        //    var hotkeyT = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.T);
-        //    if (hotkeyT)
-        //    {
-        //        Logger.LogDebug(JsonConvert.SerializeObject(
-        //            Mod.WarStatus, new JsonSerializerSettings {ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented}));
-        //    }
-
-        //    var hotkeyC = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.C);
-        //    if (hotkeyC)
-        //    {
-        //        Sim.CompanyTags
-        //            .Where(tag => tag.StartsWith("GalaxyAtWar"))
-        //            .Do(tag => Sim.CompanyTags.Remove(tag));
-
-        //        Mod.WarStatus = null;
-        //    }
-        //}
-
         public static void Postfix()
         {
-            var hotkey1 = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.Alpha1);
-            if (hotkey1)
+            var hotkeyG = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.G) &&
+                          (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
+            if (hotkeyG)
             {
                 try
                 {
-                    foreach (var contract in Globals.Sim.CurSystem.SystemContracts)
+                    var starSystem = Globals.Sim.CurSystem;
+                    var contractEmployers = starSystem.Def.contractEmployerIDs;
+                    var contractTargets = starSystem.Def.contractTargetIDs;
+                    var owner = starSystem.OwnerValue;
+                    LogDebug($"{starSystem.Name} owned by {owner.Name}");
+                    LogDebug($"Employers in {starSystem.Name}");
+                    contractEmployers.Do(x => LogDebug($"  {x}"));
+                    LogDebug($"Targets in {starSystem.Name}");
+                    contractTargets.Do(x => LogDebug($"  {x}"));
+                    Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
+                    var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
+                    var employers = systemStatus.influenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
+                    foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
                     {
-                        Logger.LogDebug(contract.Name);
-                        Logger.LogDebug(contract.mapPath);
-                        Logger.LogDebug(contract.MissionObjectiveResultList);
+                        LogDebug($"{faction} Enemies:");
+                        FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Do(x => LogDebug($"  {x}"));
+                        LogDebug($"{faction} Allies:");
+                        FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
+                        Log("");
                     }
 
-                    Logger.LogDebug(Globals.Sim.pendingBreadcrumb.Override.OnContractSuccessResults.First()?.Actions[0].additionalValues[10]);
-                    Logger.LogDebug("*");
-                    Logger.LogDebug(Globals.Sim.pendingBreadcrumb.Override.travelSeed);
-                    Logger.LogDebug("*");
-                    Logger.LogDebug("*");
-                    foreach (var contract in Globals.Sim.CurSystem.activeSystemContracts)
+                    LogDebug("Player allies:");
+                    foreach (var faction in Globals.Sim.AlliedFactions)
                     {
-                        Logger.LogDebug(contract);
-                        Logger.LogDebug(contract.Override.OnContractSuccessResults.First()?.Actions[0].additionalValues[10]);
+                        LogDebug($"  {faction}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex);
+                    Error(ex);
                 }
             }
 
-            var hotkeyG = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.G);
-            if (hotkeyG)
+            var hotkeyB = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.B) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
+            if (hotkeyB)
             {
                 try
                 {
                     Logger.LogDebug("Hotkey G");
                     var contracts = new List<Contract>();
-                    Logger.LogDebug(0);
+                    Globals.Sim.CurSystem.activeSystemContracts.Clear();
                     var system = Globals.Sim.CurSystem;
                     var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
                     var influenceTracker = systemStatus.influenceTracker;
@@ -94,21 +85,28 @@ namespace GalaxyatWar
                     contract = Contracts.GenerateContract(system, 4, 4, second);
                     contracts.Add(contract);
                     Logger.LogDebug(4);
-                    contract = Contracts.GenerateContract(system, 6, 6, Globals.Settings.IncludedFactions.Where(x => x != "NoFaction").GetRandomElement());
+                    contract = Contracts.GenerateContract(system, 6, 6);
                     contracts.Add(contract);
                     Logger.LogDebug(5);
+                    contract = Contracts.GenerateContract(Globals.Sim.Starmap.GetAvailableNeighborSystem(Globals.Sim.CurSystem).GetRandomElement(), 2, 2, null, null, true);
+                    contracts.Add(contract);
+                    Logger.LogDebug(6);
+                    contract = Contracts.GenerateContract(system, 10, 10, null, null, true);
+                    contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
+                    contracts.Add(contract);
                     Globals.Sim.CurSystem.activeSystemContracts = contracts;
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
-                    cmdCenter.contractsWidget.ListContracts(contracts, cmdCenter.contractDisplayAutoSelect);
+                    cmdCenter.contractsWidget.ListContracts(Globals.Sim.GetAllCurrentlySelectableContracts(), cmdCenter.contractDisplayAutoSelect);
                 }
 
-                catch              (Exception ex)
+                catch (Exception ex)
                 {
                     Logger.Error(ex);
                 }
             }
 
-            var hotkeyC = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.C);
+            var hotkeyC = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.C) &&
+                          (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
             if (hotkeyC)
             {
                 try

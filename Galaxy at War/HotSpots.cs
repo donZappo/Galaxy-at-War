@@ -96,7 +96,7 @@ namespace GalaxyatWar
             }
             catch (Exception ex)
             {
-                LogDebug(ex);
+                Error(ex);
             }
         }
 
@@ -203,7 +203,7 @@ namespace GalaxyatWar
                         }
 
                         var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == MainBCTarget.Name);
-                        RefreshContracts(systemStatus);
+                        RefreshContractsEmployersAndTargets(systemStatus);
                         HomeContendedSystems.Remove(MainBCTarget);
                         Globals.WarStatusTracker.HomeContendedStrings.Add(MainBCTarget.Name);
                         if (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == Globals.Settings.InternalHotSpots)
@@ -241,7 +241,7 @@ namespace GalaxyatWar
                             SystemBonuses(ExternalPriorityTargets[ExtTarget][randTarget]);
                             var systemStatus = Globals.WarStatusTracker.systems.Find(x =>
                                 x.name == ExternalPriorityTargets[ExtTarget][randTarget].Name);
-                            RefreshContracts(systemStatus);
+                            RefreshContractsEmployersAndTargets(systemStatus);
                             ExternalPriorityTargets[ExtTarget].RemoveAt(randTarget);
                         } while (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == j && ExternalPriorityTargets[ExtTarget].Count != 0);
 
@@ -484,7 +484,7 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.Escalation = false;
                             Globals.WarStatusTracker.EscalationDays = 0;
                             var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
-                            RefreshContracts(systemStatus);
+                            RefreshContractsEmployersAndTargets(systemStatus);
                             if (Globals.WarStatusTracker.HotBox.Count == 0)
                                 Globals.WarStatusTracker.HotBoxTravelling = false;
 
@@ -529,7 +529,7 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
-                RefreshContracts(systemStatus);
+                RefreshContractsEmployersAndTargets(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
             }
@@ -595,7 +595,7 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.Escalation = false;
                             Globals.WarStatusTracker.EscalationDays = 0;
                             var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
-                            RefreshContracts(systemStatus);
+                            RefreshContractsEmployersAndTargets(systemStatus);
                             if (Globals.WarStatusTracker.HotBox.Count == 0)
                                 Globals.WarStatusTracker.HotBoxTravelling = false;
 
@@ -640,7 +640,7 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
-                RefreshContracts(systemStatus);
+                RefreshContractsEmployersAndTargets(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
             }
@@ -695,6 +695,7 @@ namespace GalaxyatWar
 
                 if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !HasFlashpoint && !Globals.HoldContracts)
                 {
+                    LogDebug("Regenerating contracts because entering system.");
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                     Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                 }
@@ -871,7 +872,7 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
-                RefreshContracts(systemStatus);
+                RefreshContractsEmployersAndTargets(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
             }
@@ -1015,7 +1016,7 @@ namespace GalaxyatWar
             Globals.WarStatusTracker.PirateDeployment = false;
             Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
             Globals.WarStatusTracker.HotBox.Remove(systemStatus.name);
-            RefreshContracts(systemStatus);
+            RefreshContractsEmployersAndTargets(systemStatus);
             var hasFlashpoint = false;
             foreach (var contract in Globals.Sim.CurSystem.SystemContracts)
             {
@@ -1025,6 +1026,7 @@ namespace GalaxyatWar
 
             if (!hasFlashpoint)
             {
+                LogDebug("Refresh contracts because CompleteEscalation.");
                 var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                 Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
             }
@@ -1080,16 +1082,33 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
                     return;
 
-                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var contracts = Globals.Sim.GetAllCurrentlySelectableContracts();
+                if (contracts.Count > 0)
+                {
+                    LogDebug("Contracts before:");
+                }
+                //foreach (var contract in contracts)
+                //{
+                //    LogDebug($"{contract.Name,-25} ({contract.Override.employerTeam.FactionValue.Name} vs {contract.Override.targetTeam.FactionValue.Name}).  Difficulties: C:{contract.Difficulty} CO:{contract.Override.difficulty} CUI:{contract.Override.difficultyUIModifier} UI:{contract.Override.GetUIDifficulty()}");
+                //    LogDebug($"Flashpoint? {contract.IsFlashpointContract}.  Campaign Flashpoint? {contract.IsFlashpointCampaignContract}.  Priority? {contract.IsPriorityContract}.  Travel? {contract.Override.travelSeed != 0}");
+                //}
+
                 if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
                 {
                     ProcessHotSpots();
-                    // StarmapMod.SetupRelationPanel();
-                    var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
-                    Globals.WarStatusTracker.StartGameInitialized = true;
+                    LogDebug($"Refreshing contracts at StartContractScreen because !StartGameInitialized ({Globals.Sim.CurSystem.Name})");
+                    var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                    Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
+                    Globals.WarStatusTracker.StartGameInitialized = true;             
+                    LogDebug("Contracts generated:");
+                    //foreach (var contract in Globals.Sim.GetAllCurrentlySelectableContracts())
+                    //{
+                    //    LogDebug($"{contract.Name,-25} ({contract.Override.employerTeam.FactionValue.Name} vs {contract.Override.targetTeam.FactionValue.Name}).  Difficulties: C:{contract.Difficulty} CO:{contract.Override.difficulty} CUI:{contract.Override.difficultyUIModifier} UI:{contract.Override.GetUIDifficulty()}");
+                    //    LogDebug($"Flashpoint? {contract.IsFlashpointContract}.  Campaign Flashpoint? {contract.IsFlashpointCampaignContract}.  Priority? {contract.IsPriorityContract}.  Travel? {contract.Override.travelSeed != 0}");
+                    //}
                 }
 
+                LogDebug("HoldContracts");
                 Globals.HoldContracts = true;
             }
         }

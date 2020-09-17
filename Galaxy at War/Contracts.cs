@@ -1,10 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
 using BattleTech.Data;
 using BattleTech.Framework;
 using Harmony;
+using static GalaxyatWar.Logger;
 
 namespace GalaxyatWar
 {
@@ -13,6 +13,7 @@ namespace GalaxyatWar
         private static int min;
         private static int max;
         private static int actualDifficulty;
+        private static int loops;
 
         internal static Contract GenerateContract(StarSystem system, int minDiff, int maxDiff, string employer = null,
             List<string> opFor = null, bool usingBreadcrumbs = false, bool includeOwnershipCheck = false)
@@ -23,7 +24,7 @@ namespace GalaxyatWar
             var difficultyRange = new SimGameState.ContractDifficultyRange(
                 actualDifficulty, actualDifficulty, ContractDifficulty.Easy, ContractDifficulty.Easy);
             var potentialContracts = GetSinglePlayerProceduralContractOverrides(difficultyRange)
-                .Where(x => x.Value.Any(c => c.finalDifficulty + c.difficultyUIModifier <= actualDifficulty))
+                //.Where(x => x.Value.Any(c => c.finalDifficulty + c.difficultyUIModifier <= actualDifficulty))
                 .ToDictionary(k => k.Key, v => v.Value);
             var playableMaps = GetSinglePlayerProceduralPlayableMaps(system, includeOwnershipCheck);
             var validParticipants = GetValidParticipants(system, employer, opFor);
@@ -37,7 +38,9 @@ namespace GalaxyatWar
             if (mapEncounterContractData.FlatContracts.rootList == null ||
                 mapEncounterContractData.FlatContracts.rootList.Count < 1)
             {
-                return GenerateContract(system, minDiff, maxDiff, employer, opFor, usingBreadcrumbs, includeOwnershipCheck);
+                loops++;
+                LogDebug("Recursion...");
+                return loops > 10 ? null : GenerateContract(system, minDiff, maxDiff, employer, opFor, usingBreadcrumbs, includeOwnershipCheck);
             }
 
             var proceduralContract = CreateProceduralContract(system, usingBreadcrumbs, next, mapEncounterContractData, gameContext);
@@ -122,7 +125,7 @@ namespace GalaxyatWar
             bool isGlobal,
             int difficulty)
         {
-            Logger.Log("CreateTravelContract");
+            Log("CreateTravelContract");
             var starSystem = context.GetObject(GameContextObjectTagEnum.TargetStarSystem) as StarSystem;
             var seed = Globals.Rng.Next(0, int.MaxValue);
             ovr.FullRehydrate();
@@ -142,7 +145,7 @@ namespace GalaxyatWar
             contractOverride.difficultyUIModifier = ovr.difficultyUIModifier;
             var simGameEventResult = new SimGameEventResult();
             var gameResultAction = new SimGameResultAction();
-            var length = 14;
+            const int length = 14;
             gameResultAction.Type = SimGameResultAction.ActionType.System_StartNonProceduralContract;
             gameResultAction.value = mapName;
             gameResultAction.additionalValues = new string[length];
@@ -160,15 +163,9 @@ namespace GalaxyatWar
             gameResultAction.additionalValues[11] = employersAlly.Name;
             gameResultAction.additionalValues[12] = neutralToAll.Name;
             gameResultAction.additionalValues[13] = hostileToAll.Name;
-            Logger.LogDebug("-");
-            Logger.LogDebug(gameResultAction);
-            Logger.LogDebug("--");
-            gameResultAction.additionalValues.Do(Logger.LogDebug);
-            Logger.LogDebug("---");
             simGameEventResult.Actions = new SimGameResultAction[1];
             simGameEventResult.Actions[0] = gameResultAction;
             contractOverride.OnContractSuccessResults.Add(simGameEventResult);
-            Logger.LogDebug(contractOverride.OnContractSuccessResults[0]);
             return new Contract(mapName, mapPath, encounterGuid, contractTypeValue, Globals.Sim.BattleTechGame, contractOverride, context, true, actualDifficulty)
             {
                 Override =
@@ -308,17 +305,6 @@ namespace GalaxyatWar
             }
 
             return weightedList1;
-        }
-
-        [HarmonyPatch(typeof(ContractOverride), "GetUIDifficulty")]
-        public class ContractOverrideGetUIDifficultyPatch
-        {
-            private static void Postfix(ContractOverride __instance, ref int __result)
-            {
-                __result = __instance.contract.Difficulty != __result
-                    ? __instance.contract.Difficulty
-                    : __result;
-            }
         }
 
         [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]

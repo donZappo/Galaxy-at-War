@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using BattleTech;
+using BattleTech.Framework;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
@@ -599,7 +601,7 @@ namespace GalaxyatWar
             return combinedString;
         }
 
-        public static void RefreshContracts(SystemStatus systemStatus)
+        public static void RefreshContractsEmployersAndTargets(SystemStatus systemStatus)
         {
             var starSystem = systemStatus.starSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
@@ -1049,7 +1051,6 @@ namespace GalaxyatWar
         public static void GenerateMonthlyContracts()
         {
             var contracts = new List<Contract>();
-            LogDebug(0);
             var system = Globals.Sim.CurSystem;
             var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
             var influenceTracker = systemStatus.influenceTracker;
@@ -1072,6 +1073,52 @@ namespace GalaxyatWar
             contracts.Add(contract);
             LogDebug(5);
             Globals.Sim.CurSystem.activeSystemContracts = contracts;
+        }
+
+        internal static void BackFillContracts()
+        {
+            const int ownerContracts = 5;
+            const int secondContracts = 3;
+            const int otherContracts = 2;
+            var isTravel = Globals.Rng.Next(0, 2) == 0;
+            var isPriority = Globals.Rng.Next(0, 11) == 0;
+            var system = isTravel ? Globals.GaWSystems.Where(x => x.JumpDistance < 10).GetRandomElement() : Globals.Sim.CurSystem;
+            var variedDifficulty = Variance(system);
+            var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+            var owner = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).First();
+            var second = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).Skip(1).First();
+            var currentOwnerContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == owner);
+            var currentSecondContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == second);
+            var currentOtherContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count - currentOwnerContracts - currentSecondContracts;
+            if (currentOwnerContracts < ownerContracts)
+            {
+                AddContract(system, variedDifficulty, owner, isTravel, isPriority);
+            }
+            else if (currentSecondContracts < secondContracts)
+            {
+                AddContract(system, variedDifficulty, second, isTravel, isPriority); 
+            }
+            else if (currentOtherContracts < otherContracts)
+            {
+                AddContract(system, variedDifficulty, systemStatus, isTravel, isPriority);
+            }
+        }
+
+        private static void AddContract(StarSystem system, int variedDifficulty, string owner, bool isTravel, bool isPriority)
+        {
+            var contract = Contracts.GenerateContract(system, variedDifficulty, variedDifficulty, owner, null, isTravel);
+            if (isPriority)
+            {
+                contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
+            }
+
+            system.activeSystemContracts.Add(contract);
+        }
+
+        internal static int Variance(StarSystem starSystem)
+        {
+            const int variance = 2;
+            return starSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) + Globals.Rng.Next(-variance, variance + 1);
         }
     }
 }

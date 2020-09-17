@@ -362,6 +362,7 @@ namespace GalaxyatWar
 
                 if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
                 {
+                    LogDebug($"Refreshing contracts at RefreshStarmap. ({Globals.Sim.CurSystem.Name})");
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
                     sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                     Globals.WarStatusTracker.StartGameInitialized = true;
