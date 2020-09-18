@@ -263,7 +263,7 @@ namespace GalaxyatWar
         {
             private static void Postfix(ref bool __result)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (Globals.WarStatusTracker.StartGameInitialized)
