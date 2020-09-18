@@ -1080,33 +1080,42 @@ namespace GalaxyatWar
             const int ownerContracts = 5;
             const int secondContracts = 3;
             const int otherContracts = 2;
-            var isTravel = Globals.Rng.Next(0, 2) == 0;
-            var isPriority = Globals.Rng.Next(0, 11) == 0;
-            var system = isTravel ? Globals.GaWSystems.Where(x => x.JumpDistance < 10).GetRandomElement() : Globals.Sim.CurSystem;
-            var variedDifficulty = Variance(system);
-            var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
-            var owner = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).First();
-            var second = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).Skip(1).First();
-            var currentOwnerContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == owner);
-            var currentSecondContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == second);
-            var currentOtherContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count - currentOwnerContracts - currentSecondContracts;
-            if (currentOwnerContracts < ownerContracts)
+
+            //var loops = 10 - ownerContracts + secondContracts;
+            for (var i = 0; i < 10; i++)
             {
-                AddContract(system, variedDifficulty, owner, isTravel, isPriority);
-            }
-            else if (currentSecondContracts < secondContracts)
-            {
-                AddContract(system, variedDifficulty, second, isTravel, isPriority); 
-            }
-            else if (currentOtherContracts < otherContracts)
-            {
-                AddContract(system, variedDifficulty, systemStatus, isTravel, isPriority);
+                int variedDifficulty;
+                var isTravel = Globals.Rng.Next(0, 2) == 0;
+                var isPriority = Globals.Rng.Next(0, 11) == 0;
+                var system = isTravel ? Globals.GaWSystems.Where(x => x.JumpDistance < 10).GetRandomElement() : Globals.Sim.CurSystem;
+                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+                var owner = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).First();
+                var second = systemStatus.influenceTracker.OrderByDescending(x =>
+                    x.Value).Select(x => x.Key).Skip(1).Take(1).First();
+                var currentOwnerContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == owner);
+                var currentSecondContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == second);
+                var currentOtherContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count - currentOwnerContracts - currentSecondContracts;
+                if (currentOwnerContracts < ownerContracts)
+                {
+                    variedDifficulty = Variance(system);
+                    AddContract(system, variedDifficulty, owner, isTravel, isPriority);
+                }
+                else if (currentSecondContracts < secondContracts)
+                {
+                    variedDifficulty = Variance(system);
+                    AddContract(system, variedDifficulty, second, isTravel, isPriority);
+                }
+                else if (currentOtherContracts < otherContracts)
+                {
+                    variedDifficulty = Variance(system);
+                    AddContract(system, variedDifficulty, systemStatus.influenceTracker.Select(x => x.Key).GetRandomElement(), isTravel, isPriority);
+                }
             }
         }
 
-        private static void AddContract(StarSystem system, int variedDifficulty, string owner, bool isTravel, bool isPriority)
+        private static void AddContract(StarSystem system, int variedDifficulty, string employer, bool isTravel, bool isPriority)
         {
-            var contract = Contracts.GenerateContract(system, variedDifficulty, variedDifficulty, owner, null, isTravel);
+            var contract = Contracts.GenerateContract(system, variedDifficulty, variedDifficulty, employer, null, isTravel);
             if (isPriority)
             {
                 contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;

@@ -189,6 +189,7 @@ namespace GalaxyatWar
                 LogDebug("Spawning new instance.");
                 Globals.WarStatusTracker = new WarStatus();
                 LogDebug("New global state created.");
+                // TODO is this value unchanging?  this is wrong if not
                 Globals.WarStatusTracker.systemsByResources =
                     Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)

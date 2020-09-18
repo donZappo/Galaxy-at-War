@@ -364,7 +364,7 @@ namespace GalaxyatWar
                 {
                     LogDebug($"Refreshing contracts at RefreshStarmap. ({Globals.Sim.CurSystem.Name})");
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;
-                    sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
+                    sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                     Globals.WarStatusTracker.StartGameInitialized = true;
                 }
             }

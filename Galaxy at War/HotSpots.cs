@@ -651,7 +651,7 @@ namespace GalaxyatWar
         {
             private static void Postfix()
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 Globals.HoldContracts = false;
@@ -693,7 +693,9 @@ namespace GalaxyatWar
                         HasFlashpoint = true;
                 }
 
-                if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !HasFlashpoint && !Globals.HoldContracts)
+                if (!Globals.WarStatusTracker.HotBoxTravelling &&
+                    !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) &&
+                    !HasFlashpoint && !Globals.HoldContracts)
                 {
                     LogDebug("Regenerating contracts because entering system.");
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
@@ -1079,21 +1081,10 @@ namespace GalaxyatWar
         {
             private static void Prefix()
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var contracts = Globals.Sim.GetAllCurrentlySelectableContracts();
-                if (contracts.Count > 0)
-                {
-                    LogDebug("Contracts before:");
-                }
-                //foreach (var contract in contracts)
-                //{
-                //    LogDebug($"{contract.Name,-25} ({contract.Override.employerTeam.FactionValue.Name} vs {contract.Override.targetTeam.FactionValue.Name}).  Difficulties: C:{contract.Difficulty} CO:{contract.Override.difficulty} CUI:{contract.Override.difficultyUIModifier} UI:{contract.Override.GetUIDifficulty()}");
-                //    LogDebug($"Flashpoint? {contract.IsFlashpointContract}.  Campaign Flashpoint? {contract.IsFlashpointCampaignContract}.  Priority? {contract.IsPriorityContract}.  Travel? {contract.Override.travelSeed != 0}");
-                //}
-
-                if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
+                if (!Globals.HoldContracts || !Globals.WarStatusTracker.StartGameInitialized)
                 {
                     ProcessHotSpots();
                     LogDebug($"Refreshing contracts at StartContractScreen because !StartGameInitialized ({Globals.Sim.CurSystem.Name})");

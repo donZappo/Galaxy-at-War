@@ -32,10 +32,9 @@ namespace GalaxyatWar
                 var employers = systemStatus.influenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
                 foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
                 {
-                    LogDebug($"Faction {faction}:");
-                    LogDebug("Enemies:");
-                    FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Do(x => LogDebug($"  {x}"));
-                    LogDebug("Allies:");
+                    LogDebug($"{faction} Enemies:");
+                    FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
+                    LogDebug($"{faction} Allies:");
                     FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
                     Log("");
                 }

@@ -37,11 +37,11 @@ namespace GalaxyatWar
                     contractTargets.Do(x => LogDebug($"  {x}"));
                     Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
                     var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
-                    var employers = systemStatus.influenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
+                    var employers = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).Take(2);
                     foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
                     {
                         LogDebug($"{faction} Enemies:");
-                        FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Do(x => LogDebug($"  {x}"));
+                        FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
                         LogDebug($"{faction} Allies:");
                         FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
                         Log("");
@@ -57,6 +57,16 @@ namespace GalaxyatWar
                 {
                     Error(ex);
                 }
+            }
+
+            var hotkeyJ = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.J) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
+            if (hotkeyJ)
+            {
+                Globals.Sim.CurSystem.activeSystemContracts.Clear();
+                Globals.Sim.CurSystem.activeSystemBreadcrumbs.Clear();
+                Helpers.BackFillContracts();
+                var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                cmdCenter.contractsWidget.ListContracts(Globals.Sim.GetAllCurrentlySelectableContracts(), cmdCenter.contractDisplayAutoSelect);
             }
 
             var hotkeyB = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.B) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));

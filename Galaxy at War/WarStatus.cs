@@ -192,6 +192,7 @@ namespace GalaxyatWar
             }
         }
 
+        // TODO wire this up
         internal List<float> influenceTrackerDescendingValue;
         public float TotalResources;
         public bool PriorityDefense = false;
