@@ -1084,7 +1084,7 @@ namespace GalaxyatWar
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (!Globals.HoldContracts || !Globals.WarStatusTracker.StartGameInitialized)
+                if (!Globals.HoldContracts && !Globals.WarStatusTracker.StartGameInitialized)
                 {
                     ProcessHotSpots();
                     LogDebug($"Refreshing contracts at StartContractScreen because !StartGameInitialized ({Globals.Sim.CurSystem.Name})");
