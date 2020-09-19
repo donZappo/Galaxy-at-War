@@ -92,6 +92,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdvanceToTask.cs" />
+    <Compile Include="Contracts.cs" />
+    <Compile Include="DeathListTracker.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Mod.cs" />
@@ -107,6 +109,8 @@
     <Compile Include="Resource.cs" />
     <Compile Include="SaveHandling.cs" />
     <Compile Include="StarmapMod.cs" />
+    <Compile Include="SystemStatus.cs" />
+    <Compile Include="WarFaction.cs" />
     <Compile Include="WarStatus.cs" />
     <Compile Include="WarTick.cs" />
   </ItemGroup>

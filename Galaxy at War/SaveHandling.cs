@@ -79,6 +79,7 @@ namespace GalaxyatWar
                     AddNewStarSystems();
 
                     // try to recover from negative DR
+                    // temporary code
                     foreach (var systemStatus in Globals.WarStatusTracker.systems)
                     {
                         if (systemStatus.DefenseResources <= 0)
