@@ -10,10 +10,16 @@ namespace GalaxyatWar
 {
     public static class Contracts
     {
-        private static int min;
-        private static int max;
+        private static int min = -1;
+        private static int max = -1;
         private static int actualDifficulty;
-        private static int loops;
+        private static int loops = 0;
+
+        internal static Contract GenerateContract(StarSystem system, int difficulty, string employer = null,
+            List<string> opFor = null, bool usingBreadcrumbs = false, bool includeOwnershipCheck = false)
+        {
+            return GenerateContract(system, difficulty, difficulty, employer, opFor, usingBreadcrumbs, includeOwnershipCheck);
+        }
 
         internal static Contract GenerateContract(StarSystem system, int minDiff, int maxDiff, string employer = null,
             List<string> opFor = null, bool usingBreadcrumbs = false, bool includeOwnershipCheck = false)
@@ -21,16 +27,14 @@ namespace GalaxyatWar
             min = minDiff;
             max = maxDiff;
             actualDifficulty = Globals.Rng.Next(min, max + 1);
-            var difficultyRange = new SimGameState.ContractDifficultyRange(
-                actualDifficulty, actualDifficulty, ContractDifficulty.Easy, ContractDifficulty.Easy);
-            var potentialContracts = GetSinglePlayerProceduralContractOverrides(difficultyRange)
-                //.Where(x => x.Value.Any(c => c.finalDifficulty + c.difficultyUIModifier <= actualDifficulty))
-                .ToDictionary(k => k.Key, v => v.Value);
+            var difficultyRange = new SimGameState.ContractDifficultyRange(actualDifficulty, actualDifficulty, ContractDifficulty.Easy, ContractDifficulty.Easy);
+            var potentialContracts = GetSinglePlayerProceduralContractOverrides(difficultyRange).ToDictionary(k => k.Key, v => v.Value);
             var playableMaps = GetSinglePlayerProceduralPlayableMaps(system, includeOwnershipCheck);
             var validParticipants = GetValidParticipants(system, employer, opFor);
             var source = playableMaps.Select(map => map.Map.Weight);
             var activeMaps = new WeightedList<MapAndEncounters>(WeightedListType.SimpleRandom, playableMaps.ToList(), source.ToList());
             var next = activeMaps.GetNext();
+            LogDebug($"{system.Name} {difficultyRange.MinDifficulty}/{difficultyRange.MaxDifficulty} {potentialContracts.Count} {validParticipants.Count} {next._encounters.Count}");
             var mapEncounterContractData = Globals.Sim.FillMapEncounterContractData(system, difficultyRange, potentialContracts, validParticipants, next);
             system.SetCurrentContractFactions();
             var gameContext = new GameContext(Globals.Sim.Context);
@@ -40,11 +44,16 @@ namespace GalaxyatWar
             {
                 loops++;
                 LogDebug("Recursion...");
-                return loops > 10 ? null : GenerateContract(system, minDiff, maxDiff, employer, opFor, usingBreadcrumbs, includeOwnershipCheck);
+                if (loops > 10)
+                {
+                    loops = 0;
+                    return null;
+                }
+
+                return GenerateContract(system, minDiff, maxDiff, employer, opFor, usingBreadcrumbs, includeOwnershipCheck);
             }
 
-            var proceduralContract = CreateProceduralContract(system, usingBreadcrumbs, next, mapEncounterContractData, gameContext);
-            return proceduralContract;
+            return CreateProceduralContract(system, usingBreadcrumbs, next, mapEncounterContractData, gameContext);
         }
 
         private static Contract CreateProceduralContract(
@@ -125,7 +134,7 @@ namespace GalaxyatWar
             bool isGlobal,
             int difficulty)
         {
-            Log("CreateTravelContract");
+            LogDebug("CreateTravelContract");
             var starSystem = context.GetObject(GameContextObjectTagEnum.TargetStarSystem) as StarSystem;
             var seed = Globals.Rng.Next(0, int.MaxValue);
             ovr.FullRehydrate();
@@ -260,10 +269,7 @@ namespace GalaxyatWar
             var weightedList1 = new WeightedList<SimGameState.ContractParticipants>(WeightedListType.PureRandom);
             var enemies = opFor?.Count > 0
                 ? opFor
-                : employer.Enemies.Where(t =>
-                    system.ContractTargetIDList.Contains(t) &&
-                    !Globals.Sim.IgnoredContractTargets.Contains(t) &&
-                    !Globals.Sim.IsFactionAlly(FactionEnumeration.GetFactionByName(t))).ToList();
+                : system.contractTargetIDs.Except(employer.Allies).Except(Globals.Sim.GetAllCareerAllies());
             var neutrals = FactionEnumeration.PossibleNeutralToAllList.Where(f =>
                 !employer.FactionValue.Equals(f) &&
                 !Globals.Sim.IgnoredContractTargets.Contains(f.Name)).ToList();

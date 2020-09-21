@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
-using BattleTech.UI;
-using Google.GData.Extensions;
 using Harmony;
 using Newtonsoft.Json;
 using UnityEngine;
