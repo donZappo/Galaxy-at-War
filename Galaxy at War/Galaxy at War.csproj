@@ -92,6 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdvanceToTask.cs" />
+    <Compile Include="Contracts.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Mod.cs" />
