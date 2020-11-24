@@ -82,10 +82,10 @@ namespace GalaxyatWar
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
             PiratesAndLocals.CorrectResources();
+            PiratesAndLocals.DefendAgainstPirates();
             PiratesAndLocals.PiratesStealResources();
             PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
-            PiratesAndLocals.DistributePirateResources();
-            PiratesAndLocals.DefendAgainstPirates();
+            PiratesAndLocals.DistributePirateResources();            
 
             if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
                 && Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Count != 0)
