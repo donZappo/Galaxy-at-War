@@ -84,7 +84,7 @@ namespace GalaxyatWar
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
             PiratesAndLocals.CorrectResources();
-            PiratesAndLocals.DefendAgainstPirates();
+            PiratesAndLocals.DefendAgainstPirates();     //moved from bottem of block to here.
             PiratesAndLocals.PiratesStealResources();
             PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
             PiratesAndLocals.DistributePirateResources();            
