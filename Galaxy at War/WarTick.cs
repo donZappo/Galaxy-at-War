@@ -79,6 +79,8 @@ namespace GalaxyatWar
                 }
             }
 
+
+            //patched by advice from YerghaizVerot it's a massive improvement, just don't know if it is working as is invisioned by Dz and Gnivler
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
             PiratesAndLocals.CorrectResources();
