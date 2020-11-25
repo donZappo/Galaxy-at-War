@@ -7,18 +7,12 @@ using static GalaxyatWar.Globals;
 
 namespace GalaxyatWar
 {
-    public class Logger
+    public static class Logger
     {
         private static string logFilePath;
-        private static string logFileName = "Galaxy-at-War.log";
-
-        public Logger(string lfName)
-        {
-            logFileName = lfName;
-        }
 
         private static string LogFilePath =>
-            logFilePath ?? (logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/" + logFileName);
+            logFilePath ?? (logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log");
 
         public static void Error(Exception ex)
         {
