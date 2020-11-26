@@ -159,8 +159,8 @@ namespace GalaxyatWar
                 {
                     if (totalPA <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity) * SpendFactor;
-                        CurrentPAResources -= Math.Min(totalPA, 100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity);//* SpendFactor
+                        CurrentPAResources -= Math.Min(totalPA, 100 - systemStatus.PirateActivity); //* SpendFactor
                         i = 0;
                         if (!pirateSystemsContainsSystemStatus)
                         {
@@ -183,8 +183,8 @@ namespace GalaxyatWar
                 {
                     if (100 - systemStatus.PirateActivity <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += (100 - systemStatus.PirateActivity) * SpendFactor;
-                        CurrentPAResources -= (100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += (100 - systemStatus.PirateActivity);//* SpendFactor
+                        CurrentPAResources -= (100 - systemStatus.PirateActivity);// * SpendFactor
                         i++;
                         if (!pirateSystemsContainsSystemStatus)
                         {
