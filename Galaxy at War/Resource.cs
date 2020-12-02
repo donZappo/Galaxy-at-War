@@ -24,15 +24,17 @@ namespace GalaxyatWar
             }
 
             var total = tempTargets.Values.Sum();
-            var attackResources = warFaction.AttackResources - warFaction.AR_Against_Pirates;
+            var attackResources = Helpers.Clamp( warFaction.AttackResources - warFaction.AR_Against_Pirates,100000);
             if (warFaction.ComstarSupported)
                 attackResources += Globals.Settings.GaW_Police_ARBonus;
             warFaction.AR_Against_Pirates = 0;
             if (Globals.Settings.AggressiveToggle && !Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
                 attackResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
 
-            attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Globals.Settings.AResourceAdjustmentPerCycle / 100);
+            attackResources = Helpers.Clamp(attackResources * (1 + warFaction.DaysSinceSystemAttacked * Globals.Settings.AResourceAdjustmentPerCycle / 100), 100000);
             attackResources += attackResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
+            attackResources = Helpers.Clamp(attackResources, 100000);
+
             foreach (var rfact in tempTargets.Keys)
             {
                 warFar.Add(rfact, tempTargets[rfact] * attackResources / total);
@@ -144,7 +146,7 @@ namespace GalaxyatWar
                 return;
 
             var faction = warFaction.faction;
-            var defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
+            var defensiveResources = Helpers.Clamp( warFaction.DefensiveResources + warFaction.DR_Against_Pirates, 100000);
             if (warFaction.ComstarSupported)
                 defensiveResources += Globals.Settings.GaW_Police_DRBonus;
             warFaction.DR_Against_Pirates = 0;
@@ -152,6 +154,7 @@ namespace GalaxyatWar
                 defensiveResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
             var defensiveCorrection = defensiveResources * (100 * Globals.Settings.GlobalDefenseFactor -
                                                             Globals.Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+
             defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
