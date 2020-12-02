@@ -111,7 +111,7 @@ namespace GalaxyatWar
 
                     var arFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                     var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
-                    spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor);
+                    spendAR =Helpers.Clamp( spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor), 100000);
                     var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                     var pMaxValue = 200.0f;
                     if (maxValueList.Count > 1)
@@ -171,7 +171,7 @@ namespace GalaxyatWar
                 var highestFaction = faction;
                 var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                 var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
-                spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
+                spendDr = Helpers.Clamp( spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor),100000);
 
                 var systemStatus = map.GetRandomElement().Value;
                 if (systemStatus == null)
