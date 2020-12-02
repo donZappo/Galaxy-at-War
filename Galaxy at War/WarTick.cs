@@ -73,9 +73,13 @@ namespace GalaxyatWar
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
                     systemStatus.AttackResources += warFaction.AR_PerPlanet;
+                    systemStatus.AttackResources = Helpers.Clamp(systemStatus.AttackResources, 5000);
                     systemStatus.TotalResources += warFaction.AR_PerPlanet;
+                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, 100000);
                     systemStatus.DefenseResources += warFaction.DR_PerPlanet;
+                    systemStatus.DefenseResources = Helpers.Clamp(systemStatus.DefenseResources, 5000);
                     systemStatus.TotalResources += warFaction.DR_PerPlanet;
+                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, 100000);
                 }
             }
 
@@ -146,7 +150,7 @@ namespace GalaxyatWar
                 if (Globals.Settings.ISMCompatibility)
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
-                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                var totalPirates = Helpers.Clamp(systemStatus.PirateActivity * systemStatus.TotalResources / 100, 100000);
 
                 if (totalPirates >= pirateSystemFlagValue)
                 {

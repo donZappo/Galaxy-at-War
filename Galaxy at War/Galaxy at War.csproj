@@ -94,6 +94,7 @@
     <Compile Include="AdvanceToTask.cs" />
     <Compile Include="Contracts.cs" />
     <Compile Include="DeathListTracker.cs" />
+    <Compile Include="DeconstructorExtention.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Mod.cs" />
