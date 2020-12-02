@@ -24,16 +24,18 @@ namespace GalaxyatWar
             }
 
             var total = tempTargets.Values.Sum();
-            var attackResources = Helpers.Clamp( warFaction.AttackResources - warFaction.AR_Against_Pirates,100000);
+            var attackResources =  warFaction.AttackResources - warFaction.AR_Against_Pirates;
+            attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
             if (warFaction.ComstarSupported)
                 attackResources += Globals.Settings.GaW_Police_ARBonus;
             warFaction.AR_Against_Pirates = 0;
             if (Globals.Settings.AggressiveToggle && !Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
                 attackResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
 
-            attackResources = Helpers.Clamp(attackResources * (1 + warFaction.DaysSinceSystemAttacked * Globals.Settings.AResourceAdjustmentPerCycle / 100), 100000);
+            attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Globals.Settings.AResourceAdjustmentPerCycle / 100);
+            attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
             attackResources += attackResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
-            attackResources = Helpers.Clamp(attackResources, 100000);
+            attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
 
             foreach (var rfact in tempTargets.Keys)
             {
@@ -112,7 +114,8 @@ namespace GalaxyatWar
 
                     var arFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                     var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
-                    spendAR =Helpers.Clamp( spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor), 100000);
+                    spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor);
+                    spendAR = Helpers.Clamp(spendAR, Globals.ResourceGenericMax);
                     var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
                     var pMaxValue = 200.0f;
                     if (maxValueList.Count > 1)
@@ -147,7 +150,9 @@ namespace GalaxyatWar
                 return;
 
             var faction = warFaction.faction;
-            var defensiveResources = Helpers.Clamp( warFaction.DefensiveResources + warFaction.DR_Against_Pirates, 100000);
+            var defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
+            defensiveResources = Helpers.Clamp(defensiveResources, Globals.ResourceGenericMax);
+
             if (warFaction.ComstarSupported)
                 defensiveResources += Globals.Settings.GaW_Police_DRBonus;
             warFaction.DR_Against_Pirates = 0;
@@ -172,7 +177,8 @@ namespace GalaxyatWar
                 var highestFaction = faction;
                 var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                 var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
-                spendDr = Helpers.Clamp( spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor),100000);
+                spendDr =  spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
+                spendDr = Helpers.Clamp(spendDr, Globals.ResourceGenericMax);
 
                 var systemStatus = map.GetRandomElement().Value;
                 if (systemStatus == null)
