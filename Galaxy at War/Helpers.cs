@@ -601,6 +601,11 @@ namespace GalaxyatWar
             return combinedString;
         }
 
+        public static float Clamp(float input, float max)
+        {
+            return Mathf.Clamp(input, 0, max);
+        }
+
         public static void RefreshContractsEmployersAndTargets(SystemStatus systemStatus)
         {
             var starSystem = systemStatus.starSystem;

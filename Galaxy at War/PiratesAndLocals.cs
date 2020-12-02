@@ -32,7 +32,9 @@ namespace GalaxyatWar
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
                 warFaction.AttackResources += warFaction.PirateARLoss;
+                warFaction.AttackResources = Helpers.Clamp(warFaction.AttackResources, 5000);          //clamping resource to zero if negative 5k is just a high value will tweek
                 warFaction.DefensiveResources += warFaction.PirateDRLoss;
+                warFaction.DefensiveResources = Helpers.Clamp(warFaction.DefensiveResources, 5000);    //clamping resource to zero if negative
             }
 
             WarStatusTracker.LastPRGain = WarStatusTracker.TempPRGain;
