@@ -92,7 +92,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdvanceToTask.cs" />
-    <Compile Include="DeconstrutTargetFactionSystemStatusPair.cs" />
     <Compile Include="Contracts.cs" />
     <Compile Include="DeathListTracker.cs" />
     <Compile Include="DeconstructorExtention.cs" />
