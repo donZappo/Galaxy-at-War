@@ -73,13 +73,13 @@ namespace GalaxyatWar
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
                     systemStatus.AttackResources += warFaction.AR_PerPlanet;
-                    systemStatus.AttackResources = Helpers.Clamp(systemStatus.AttackResources, 5000);
+                    systemStatus.AttackResources = Helpers.Clamp(systemStatus.AttackResources, Globals.ResourceGenericMax);
                     systemStatus.TotalResources += warFaction.AR_PerPlanet;
-                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, 100000);
+                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
                     systemStatus.DefenseResources += warFaction.DR_PerPlanet;
-                    systemStatus.DefenseResources = Helpers.Clamp(systemStatus.DefenseResources, 5000);
+                    systemStatus.DefenseResources = Helpers.Clamp(systemStatus.DefenseResources, Globals.ResourceGenericMax);
                     systemStatus.TotalResources += warFaction.DR_PerPlanet;
-                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, 100000);
+                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
                 }
             }
 
@@ -152,8 +152,8 @@ namespace GalaxyatWar
                 if (Globals.Settings.ISMCompatibility)
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
-                var totalPirates = Helpers.Clamp(systemStatus.PirateActivity * systemStatus.TotalResources / 100, 100000);
-
+                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                totalPirates = Helpers.Clamp(totalPirates, Globals.ResourceGenericMax);
                 if (totalPirates >= pirateSystemFlagValue)
                 {
                     if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
