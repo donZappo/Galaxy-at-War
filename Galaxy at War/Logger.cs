@@ -10,9 +10,12 @@ namespace GalaxyatWar
     public static class Logger
     {
         private static string logFilePath;
+        private static string logFilePath2;
 
         private static string LogFilePath =>
             logFilePath ?? (logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log");
+        private static string LogFilePath2 =>
+            logFilePath2 ?? (logFilePath2 = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Pirate-Values.log");
 
         public static void Error(Exception ex)
         {
@@ -55,6 +58,14 @@ namespace GalaxyatWar
         public static void Log(string line)
         {
             using (var writer = new StreamWriter(LogFilePath, true))
+            {
+                writer.WriteLine(line);
+            }
+        }
+
+        public static void ValueLog(string line)
+        {
+            using (var writer = new StreamWriter(LogFilePath2, true))
             {
                 writer.WriteLine(line);
             }

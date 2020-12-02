@@ -65,8 +65,9 @@ namespace GalaxyatWar
                 var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction);
                 while (targetFar > 0 && attackTargets.Count > 0)
                 {
+
                     // DE-CONSTRUCTOR!
-                    var (target, system) = map.GetRandomElement();
+                    (string target, SystemStatus system) = map.GetRandomElement();
 
                     if (system == null)
                     {
@@ -243,6 +244,7 @@ namespace GalaxyatWar
                     }
                 }
             }
-        }
+        }   
+   
     }
 }
