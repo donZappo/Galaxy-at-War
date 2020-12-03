@@ -152,7 +152,12 @@ namespace GalaxyatWar
                 if (Globals.Settings.ISMCompatibility)
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
-                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                var totalPirates = systemStatus.PirateActivity;
+
+                //var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+
+                ValueLog("System Name: " + systemStatus.name + "\n" + "Current PA: " + systemStatus.PirateActivity+ "\n" + "current AR: " + systemStatus.AttackResources + "\n" + "CurrentDR: " 
+                    + systemStatus.DefenseResources + "\n" + "Current TotalResources: " + systemStatus.TotalResources + "\n" + "totalPirates: " + totalPirates + "\n");
                 totalPirates = Helpers.Clamp(totalPirates, Globals.ResourceGenericMax);
                 if (totalPirates >= pirateSystemFlagValue)
                 {
