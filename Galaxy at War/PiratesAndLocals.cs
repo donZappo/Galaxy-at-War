@@ -45,7 +45,7 @@ namespace GalaxyatWar
             var factionEscalateDefense = new Dictionary<WarFaction, bool>();
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
             {
-                var defenseValue = 100 * (warFaction.PirateARLoss + warFaction.PirateDRLoss) /
+                var defenseValue = /*100 * */(warFaction.PirateARLoss + warFaction.PirateDRLoss) /
                                    (warFaction.AttackResources + warFaction.DefensiveResources + warFaction.PirateARLoss + warFaction.PirateDRLoss);
                 if (defenseValue > 5)
                     factionEscalateDefense.Add(warFaction, true);
