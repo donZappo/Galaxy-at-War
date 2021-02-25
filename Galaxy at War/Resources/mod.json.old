@@ -2,18 +2,17 @@
     "Name": "Galaxy at War",
     "Enabled": true,
 
-    "Version": "4.7.2",
+    "Version": "4.5.3",
     "Author": "don Zappo and gnivler",
     
     "DLL": "GalaxyatWar.dll",
-	"OptionallyDependsOn": [ 
-		"BT_Extended_Overrides" 
-	],
+	"OptionallyDependsOn": [ "BT_Extended_Overrides" ],
+
     "Settings": 
 	{
-		"StartingPirateActivity" : 10.0,
+		"StartingPirateActivity" : 25.0,
 		"BonusPirateResources" : 500.0,
-		"PirateSystemFlagValue" : 65.0,
+		"PirateSystemFlagValue" : 5.0,
 		"FractionPirateResources" : 1,
 		
 		"ResourceScale" : 0.5,
@@ -28,14 +27,7 @@
 		"ExternalHotSpots" : 5,
 		
 		"ChangeDifficulty" : true,
-		"ExpandedMap" : true,
 		"ResetMap" : false,
-		"AggressiveToggle" : false,
-		
-		"ComstarSupport" : true,
-		"ComstarARBonus" : 500,
-		"ComstarDRBonus" : 500,
-		"ComstarSupportTime" : 3,
 		
 		"DeploymentMinDays" : 1,
 		"DeploymentMaxDays" : 6,
@@ -43,32 +35,12 @@
 		"DeploymentEscalationFactor" : 1.1,
 		"InfluenceDivisor" : 1.25,
 		"DeploymentRerollBound" : 0.33,
-		"DeploymentReward_01" : "itemCollection_BTR_GaWReward_1",
-		"DeploymentReward_02" : "itemCollection_BTR_GaWReward_2",
-		"DeploymentReward_03" : "itemCollection_BTR_GaWReward_3",
-		"DeploymentReward_04" : "itemCollection_BTR_GaWReward_4",
-		"DeploymentReward_05" : "itemCollection_BTR_GaWReward_5",
-		"DeploymentReward_06" : "itemCollection_BTR_GaWReward_6",
-		
-		//***Attacking Resources
-		"planet_industry_poor" : 5,
-		"planet_industry_mining" : 10,
-		"planet_industry_rich" : 15,
-		"planet_industry_manufacturing" : 20,
-		"planet_industry_research" : 25,
-		"planet_other_starleague" : 30,
-		
-		//***Defending Resources
-		"planet_industry_agriculture" : 10,
-		"planet_industry_aquaculture" : 10,
-		"planet_other_hub" : 15,
-		"planet_other_capital" : 20,
-		"planet_pop_none" : 2,
-		"planet_pop_small" : 4,
-		"planet_pop_medium" : 6,
-		"planet_pop_large" : 8,
-		"planet_other_megacity" : 10,
-		"planet_other_comstar" : 0,
+		"DeploymentReward_01" : "itemCollection_loot_careerReward_1",
+		"DeploymentReward_02" : "itemCollection_loot_careerReward_2",
+		"DeploymentReward_03" : "itemCollection_loot_careerReward_3",
+		"DeploymentReward_04" : "itemCollection_loot_careerReward_4",
+		"DeploymentReward_05" : "itemCollection_loot_careerReward_5",
+		"DeploymentReward_06" : "itemCollection_loot_careerReward_6",
 		
 		"IncludedFactions": [
 			"Davion",
@@ -80,40 +52,39 @@
 			"AuriganPirates",
 			"NoFaction",
 			"Locals",
-			"ComStar"
+			"ComStar",
 			],
 		"DefensiveFactions": [
 			"Locals",
 			"NoFaction",
 			"ComStar",
-			"AuriganPirates"
 			],
 		"ImmuneToWar" : [
-			"ComStar"
+			"ComStar",
 			],
 		"BonusAttackResources": {
-			"MagistracyOfCanopus" : 250,
-			"Davion" : 250,
-			"Liao" : 250,
-			"Marik" : 250,
-			"AuriganRestoration" : 250,
-			"TaurianConcordat" : 250,
-			"Locals" : 250,
-			"NoFaction" : 250,
+			"MagistracyOfCanopus" : 576,
+			"Davion" : 576,
+			"Liao" : 776,
+			"Marik" : 576,
+			"AuriganRestoration" : 576,
+			"TaurianConcordat" : 576,
+			"Locals" : 576,
+			"NoFaction" : 576,
 			"ComStar" : 0,
-			"AuriganPirates" : 0
+			"AuriganPirates" : 0,
 			},
 		"BonusDefensiveResources": {
-			"MagistracyOfCanopus" : 250,
-			"Davion" : 250,
-			"Liao" : 600,
-			"Marik" : 250,
-			"AuriganRestoration" : 250,
-			"TaurianConcordat" : 250,
-			"Locals" : 250,
-			"NoFaction" : 250,
+			"MagistracyOfCanopus" : 568,
+			"Davion" : 568,
+			"Liao" : 1568,
+			"Marik" : 568,
+			"AuriganRestoration" : 568,
+			"TaurianConcordat" : 568,
+			"Locals" : 568,
+			"NoFaction" : 568,
 			"ComStar" : 0,
-			"AuriganPirates" : 0
+			"AuriganPirates" : 0,
 			},
 		"FactionNames": {
 			"Davion" : "The Federated Suns",
@@ -123,11 +94,11 @@
 			"MagistracyOfCanopus" : "The Magistracy of Canopus",
 			"AuriganRestoration" : "The Arano Restoration",
 			"Kurita" : "The Draconis Combine",
-			"Steiner" : "The Lyran Commonwealth",
+			"Steiner" : "The Lyran Commonwealth",                          
 			"ComStar" : "ComStar",
 			"Locals" : "Local Government",
 			"AuriganPirates" : "Pirates",
-			"NoFaction" : "Local Factions"
+			"NoFaction" : "Local Factions",
 			},
 		"FactionStrings": {
 			"Davion" : "Davion",
@@ -141,7 +112,7 @@
 			"ComStar" : "ComStar",
 			"Locals" : "Locals",
 			"NoFaction" : "NoFaction",
-			"AuriganPirates" : "AuriganPirates"
+			"AuriganPirates" : "AuriganPirates",
 			},
 		"FactionShopItems": {
 			"Davion" : "itemCollection_faction_Davion",
@@ -155,7 +126,7 @@
 			"NoFaction" : "itemCollection_minor_Locals",
 			"Locals" : "itemCollection_minor_Locals",
 			"AuriganDirectorate" : "itemCollection_minor_Locals",
-			"AuriganPirates" : "itemCollection_minor_Locals"
+			"AuriganPirates" : "itemCollection_minor_Locals",
 			},
 		"FactionShops": {
 			"Davion" : "itemCollection_minor_Davion",
@@ -168,7 +139,7 @@
 			"Steiner" : "itemCollection_minor_Steiner",
 			"Locals" : "itemCollection_minor_Locals",
 			"NoFaction" : "itemCollection_minor_Locals",
-			"AuriganPirates" : "itemCollection_minor_Locals"
+			"AuriganPirates" : "itemCollection_minor_Locals",
 			},
 		"FactionTags": {
 			"Davion" : "planet_faction_davion",
@@ -183,7 +154,7 @@
 			"Locals" : "planet_faction_independent",
 			"NoFaction" : "planet_faction_nofaction",
 			"AuriganDirectorate" : "planet_faction_directorate",
-			"AuriganPirates" : "planet_faction_auriganpirates"
+			"AuriganPirates" : "planet_faction_auriganpirates",
 			},
 		//*** SimpleBattle: 3, DestroyBase: 6, CaptureBase: 7, CaptureEscort: 8, Rescue: 9, Assassinate: 10,
 		//*** DefendBase: 11, EscortSingle: 12, AmbushConvoy: 15, FireMission: 50, ThreeWayBattle: 52, AttackDefend: 53, 
@@ -202,51 +173,14 @@
 			"AttackDefend" : 1.6,
 			"SoloDuel" : 0.4,
 			"DuoDuel" : 0.4,
-			"Blackout" : 1.6
 			},
-		"LogoNames": {
-			"Davion" : "davionLogo",
-			"Marik" : "marikLogo",
-			"Liao" : "liaoLogo",
-			"TaurianConcordat" : "taurianLogo",
-			"MagistracyOfCanopus" : "magistracyLogo",
-			"AuriganRestoration" : "restorationLogo",
-			"Kurita" : "kuritaLogo",
-			"Steiner" : "steinerLogo"
-			},
-		
-		
-		//** If enabled, the listed faction will support the weakest faction for X months providing bonus Attack and Defensive resources during that time. 
-		"GaW_PoliceSupport" : true,
-		"GaW_Police" : "ComStar",
-		"GaW_Police_ARBonus" : 250,
-		"GaW_Police_DRBonus" : 500,
-		"GaW_Police_SupportTime": 3,
-		
-		//** Prevent systems from taking place in the Galaxy at War until after a Flashpoint has occurred. 
-		//** List<string, string> "Flashpoint Tag when Complete" : "System Name"	
-		"FlashpointReleaseSystems": { "" : "" },
-		
-		//** Force alliances. Dictionary<string, List<string> of Faction Names. Formatted: "This Faction" : [ "Allied with", "These Factions" ]		
-		"FactionsAlwaysAllies": { "" : [ "" ] },
-		
-		"LimitSystemContracts": { "ExampleSystem" : 0 },
 			
-		//** Hyades Rim compatibility specific settings.
-		"HyadesRimCompatible" : false,
-		"HyadesPirates": [],
-		"HyadesFlashpointSystems": [],
-		"HyadesAppearingPirates": [],
-		"HyadesEmployersOnly": [],
-		"HyadesTargetsOnly": [],
-		"HyadesNeverControl": [],
 			
-		// ** ISM Compatibility specific section.	
 		"ISMCompatibility" : false,
 		
 		"StartingPirateActivity_ISM" : 5.0,
 		"BonusPirateResources_ISM" : 0.0,
-		"PirateSystemFlagValue_ISM" : 5.0,
+		"PirateSystemFlagValue_ISM" : 50.0,
 		"FractionPirateResources_ISM" : 1,
 		
 		"IncludedFactions_ISM": [
@@ -261,7 +195,7 @@
 			"AuriganPirates",
 			"NoFaction",
 			"Locals",
-			"ComStar"
+			"ComStar",
 			],
 		"BonusAttackResources_ISM": {
 			"MagistracyOfCanopus" : 0,
@@ -275,7 +209,7 @@
 			"Locals" : 0,
 			"NoFaction" : 0,
 			"ComStar" : 0,
-			"AuriganPirates" : 0
+			"AuriganPirates" : 0,
 			},
 		"BonusDefensiveResources_ISM": {
 			"MagistracyOfCanopus" : 0,
@@ -289,11 +223,22 @@
 			"Locals" : 0,
 			"NoFaction" : 0,
 			"ComStar" : 0,
-			"AuriganPirates" : 0
+			"AuriganPirates" : 0,
 			},
-		
+		"LogoNames": {
+			"Davion" : "davionLogo",
+			"Marik" : "marikLogo",
+			"Liao" : "liaoLogo",
+			"TaurianConcordat" : "taurianLogo",
+			"MagistracyOfCanopus" : "magistracyLogo",
+			"AuriganRestoration" : "restorationLogo",
+			"Kurita" : "kuritaLogo",
+			"Steiner" : "steinerLogo",
+			},
+			
+			
 		"LongWarTesting" : false,
-		"Debug" : true,
+		"Debug" : false,
 		"CleanUpCompanyTag" : false
     }
 }
