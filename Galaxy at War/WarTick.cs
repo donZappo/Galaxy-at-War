@@ -82,16 +82,15 @@ namespace GalaxyatWar
                     systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
                 }
             }
-
-
-            //patched by advice from YerghaizVerot it's a massive improvement, just don't know if it is working as is invisioned by Dz and Gnivler
+            
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
             PiratesAndLocals.CorrectResources();            
             PiratesAndLocals.PiratesStealResources();
             PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
             PiratesAndLocals.DistributePirateResources();
-            PiratesAndLocals.DefendAgainstPirates();     //moved from bottem of block to here.
+            PiratesAndLocals.DefendAgainstPirates();    
+
 
             if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
                 && Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Count != 0)
