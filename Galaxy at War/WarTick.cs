@@ -35,6 +35,7 @@ namespace GalaxyatWar
 
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
+                ///------------work on first-------
                 var lowestAR = 5000f;
                 var lowestDr = 5000f;
                 var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
@@ -61,6 +62,7 @@ namespace GalaxyatWar
                             lowestDr = faction.DR_PerPlanet;
                     }
                 }
+                ///-------------
 
                 foreach (var faction in sequence)
                 {
@@ -85,11 +87,11 @@ namespace GalaxyatWar
             
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
-            PiratesAndLocals.CorrectResources();            
-            PiratesAndLocals.PiratesStealResources();
-            PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
-            PiratesAndLocals.DistributePirateResources();
-            PiratesAndLocals.DefendAgainstPirates();    
+            //PiratesAndLocals.CorrectResources();            
+           // PiratesAndLocals.PiratesStealResources();
+            //PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
+            //PiratesAndLocals.DistributePirateResources();
+            //PiratesAndLocals.DefendAgainstPirates();    
 
 
             if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
@@ -131,13 +133,25 @@ namespace GalaxyatWar
                 //Add resources from neighboring systems.
                 if (systemStatus.neighborSystems.Count != 0)
                 {
+
                     foreach (var neighbor in systemStatus.neighborSystems.Keys)
                     {
                         if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
                             !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
-                            var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
-                            systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
+                            if (neighbor == systemStatus.owner)
+                            {
+                                var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
+                                systemStatus.influenceTracker[neighbor] += systemStatus.influenceTracker[neighbor]/100 + pushFactor;
+                            }
+                            /*else 
+                            {
+                                int a = 0;
+                                int b = 0;
+                                systemStatus.neighborSystems.TryGetValue(, out a);
+                                systemStatus.neighborSystems.TryGetValue(neighbor, out b);
+                                var diffeence = Math.Abs(a - b);
+                            }*/
                         }
                     }
                 }
@@ -171,6 +185,7 @@ namespace GalaxyatWar
             }
 
             Globals.WarStatusTracker.FirstTickInitialization = false;
+
             LogDebug("Processing resource spending.");
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {

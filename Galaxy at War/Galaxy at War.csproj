@@ -97,6 +97,7 @@
     <Compile Include="DeconstructorExtention.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Helpers.cs" />
+    <Compile Include="Influence.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="DynamicLogos.cs" />
     <Compile Include="GalaxyatWar.cs" />

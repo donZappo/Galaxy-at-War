@@ -108,7 +108,6 @@ namespace GalaxyatWar
                         {
                             break;
                         }
-
                         continue;
                     }
 
