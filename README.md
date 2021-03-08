@@ -1,3 +1,10 @@
+Edit:
+Will be overhauling resource distrobution and if necessary influence processing as well.
+Influence should more then likely have a class of it's own so it is easier to track, as it seems to be tied into many things.
+In it's current state, it is not easy to trace problems. If required will be stripping things back and re-doing them in a modular fasion.
+To make sure each facet works properly before re-adding the next one.
+end edit:
+
 # Galaxy At War
 
 In Galaxy at War, the Great Houses of the Inner Sphere will not simply wait for a wedding invitation to show their disdain for each other. To that end, war will break out as petty bickering turns into all out conflict. Your reputation with the factions is key - the more they like you, the more they'll bring you to the front lines and the greater the rewards. Perhaps an enterprising mercenary could make their fortune changing the tides of battle and helping a faction dominate the Inner Sphere.
