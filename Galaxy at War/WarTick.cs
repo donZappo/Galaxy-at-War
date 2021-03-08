@@ -63,10 +63,10 @@ namespace GalaxyatWar
                 {
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
-                    systemStatus.AttackResources += warFaction.AR_PerPlanet;                    
-                    systemStatus.TotalResources += warFaction.AR_PerPlanet;                    
-                    systemStatus.DefenseResources += warFaction.DR_PerPlanet;                    
-                    systemStatus.TotalResources += warFaction.DR_PerPlanet;                    
+                    systemStatus.AttackResources += warFaction.AR_PerPlanet + GetTotalAttackResources(systemStatus.starSystem);          //probably doesn't need to be += as it should be 0        
+                    systemStatus.TotalResources += warFaction.AR_PerPlanet + GetTotalAttackResources(systemStatus.starSystem);           //may remove will leave in place for now       
+                    systemStatus.DefenseResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);      //probably doesn't need to be += as it should be 0              
+                    systemStatus.TotalResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);        //may remove will leave in place for now       
                 }
             }
             
