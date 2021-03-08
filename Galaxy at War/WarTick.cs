@@ -35,9 +35,6 @@ namespace GalaxyatWar
 
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
-                ///------------work on first-------
-                //var lowestAR = 5000f;
-                //var lowestDr = 5000f;
                 var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.faction)).ToList();
                 foreach (var faction in sequence)
@@ -47,19 +44,11 @@ namespace GalaxyatWar
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
-                    /*    if (faction.AR_PerPlanet < lowestAR)
-                            lowestAR = faction.AR_PerPlanet;
-                        if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;*/
                     }
                     else if (systemCount != 0)
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
-                        /*if (faction.AR_PerPlanet < lowestAR)
-                            lowestAR = faction.AR_PerPlanet;
-                        if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;*/
                     }
                 }
                 ///-------------
@@ -74,14 +63,10 @@ namespace GalaxyatWar
                 {
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
-                    systemStatus.AttackResources += warFaction.AR_PerPlanet;
-                    //systemStatus.AttackResources = Helpers.Clamp(systemStatus.AttackResources, Globals.ResourceGenericMax);
-                    systemStatus.TotalResources += warFaction.AR_PerPlanet;
-                    //systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
-                    systemStatus.DefenseResources += warFaction.DR_PerPlanet;
-                    //systemStatus.DefenseResources = Helpers.Clamp(systemStatus.DefenseResources, Globals.ResourceGenericMax);
-                    systemStatus.TotalResources += warFaction.DR_PerPlanet;
-                    //systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
+                    systemStatus.AttackResources += warFaction.AR_PerPlanet;                    
+                    systemStatus.TotalResources += warFaction.AR_PerPlanet;                    
+                    systemStatus.DefenseResources += warFaction.DR_PerPlanet;                    
+                    systemStatus.TotalResources += warFaction.DR_PerPlanet;                    
                 }
             }
             
@@ -186,6 +171,13 @@ namespace GalaxyatWar
 
             Globals.WarStatusTracker.FirstTickInitialization = false;
 
+            /*--------start-next------------
+             Intention is to make it so that each system will retain at least it's base min resources and only push out any resources that exceed that base value.
+             A system that is requesting resources, will pull the maximum available resource from faction systems withen range that are not in conflict with another system.
+             Instead of a global pool of resources that all faction systems pull from systems can only get reources from systems that are near them and the resources they generate
+             themselves if neccessary.
+             Any system that has excess resources and is not in conflict with another system will divide it's excess reources by the amount of faction systems within range and push those resources out
+             */
             LogDebug("Processing resource spending.");
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
@@ -198,6 +190,8 @@ namespace GalaxyatWar
                 AllocateDefensiveResources(warFaction, useFullSet);
                 AllocateAttackResources(warFaction);
             }
+            //--------end-next-----------------------------
+
 
             LogDebug("Processing influence changes.");
             UpdateInfluenceFromAttacks(checkForSystemChange);
