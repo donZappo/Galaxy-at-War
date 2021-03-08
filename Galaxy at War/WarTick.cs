@@ -36,8 +36,8 @@ namespace GalaxyatWar
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
                 ///------------work on first-------
-                var lowestAR = 5000f;
-                var lowestDr = 5000f;
+                //var lowestAR = 5000f;
+                //var lowestDr = 5000f;
                 var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.faction)).ToList();
                 foreach (var faction in sequence)
@@ -47,41 +47,41 @@ namespace GalaxyatWar
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
-                        if (faction.AR_PerPlanet < lowestAR)
+                    /*    if (faction.AR_PerPlanet < lowestAR)
                             lowestAR = faction.AR_PerPlanet;
                         if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;
+                            lowestDr = faction.DR_PerPlanet;*/
                     }
                     else if (systemCount != 0)
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
-                        if (faction.AR_PerPlanet < lowestAR)
+                        /*if (faction.AR_PerPlanet < lowestAR)
                             lowestAR = faction.AR_PerPlanet;
                         if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;
+                            lowestDr = faction.DR_PerPlanet;*/
                     }
                 }
                 ///-------------
 
-                foreach (var faction in sequence)
+                /*foreach (var faction in sequence)
                 {
                     faction.AR_PerPlanet = Mathf.Min(faction.AR_PerPlanet, 2 * lowestAR);
                     faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDr);
-                }
+                }*/
 
                 foreach (var systemStatus in systemStatuses)
                 {
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
                     systemStatus.AttackResources += warFaction.AR_PerPlanet;
-                    systemStatus.AttackResources = Helpers.Clamp(systemStatus.AttackResources, Globals.ResourceGenericMax);
+                    //systemStatus.AttackResources = Helpers.Clamp(systemStatus.AttackResources, Globals.ResourceGenericMax);
                     systemStatus.TotalResources += warFaction.AR_PerPlanet;
-                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
+                    //systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
                     systemStatus.DefenseResources += warFaction.DR_PerPlanet;
-                    systemStatus.DefenseResources = Helpers.Clamp(systemStatus.DefenseResources, Globals.ResourceGenericMax);
+                    //systemStatus.DefenseResources = Helpers.Clamp(systemStatus.DefenseResources, Globals.ResourceGenericMax);
                     systemStatus.TotalResources += warFaction.DR_PerPlanet;
-                    systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
+                    //systemStatus.TotalResources = Helpers.Clamp(systemStatus.TotalResources, Globals.ResourceGenericMax);
                 }
             }
             
