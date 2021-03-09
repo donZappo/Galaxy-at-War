@@ -35,7 +35,9 @@ namespace GalaxyatWar
 
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
-                var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
+                AddBaseWarTickResourcesPerSystem();
+
+                /*var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.faction)).ToList();
                 foreach (var faction in sequence)
                 {
@@ -50,7 +52,7 @@ namespace GalaxyatWar
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
                     }
-                }
+                }*/
                 ///-------------
 
                 /*foreach (var faction in sequence)
@@ -59,7 +61,7 @@ namespace GalaxyatWar
                     faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDr);
                 }*/
 
-                foreach (var systemStatus in systemStatuses)
+                /*foreach (var systemStatus in systemStatuses)
                 {
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
@@ -67,7 +69,7 @@ namespace GalaxyatWar
                     systemStatus.TotalResources += warFaction.AR_PerPlanet + GetTotalAttackResources(systemStatus.starSystem);           //may remove will leave in place for now       
                     systemStatus.DefenseResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);      //probably doesn't need to be += as it should be 0              
                     systemStatus.TotalResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);        //may remove will leave in place for now       
-                }
+                }*/
             }
             
             //Distribute Pirate Influence throughout the StarSystems
@@ -179,7 +181,15 @@ namespace GalaxyatWar
              Any system that has excess resources and is not in conflict with another system will divide it's excess reources by the amount of faction systems within range and push those resources out
              */
             LogDebug("Processing resource spending.");
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+
+            AddBaseWarTickResourcesPerSystem();
+            
+            foreach(var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            {
+                DistributeResourcesBetweenFactionSystems(warFaction, useFullSet);
+            }
+
+            /*foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);
             }
@@ -189,12 +199,12 @@ namespace GalaxyatWar
             {
                 AllocateDefensiveResources(warFaction, useFullSet);
                 AllocateAttackResources(warFaction);
-            }
+            }*/
             //--------end-next-----------------------------
 
 
             LogDebug("Processing influence changes.");
-            UpdateInfluenceFromAttacks(checkForSystemChange);
+            /*UpdateInfluenceFromAttacks(checkForSystemChange);
 
             //Increase War Escalation or decay defenses.
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
@@ -214,10 +224,10 @@ namespace GalaxyatWar
                     warFaction.DaysSinceSystemLost = 0;
                     warFaction.LostSystem = false;
                 }
-            }
+            }*/
 
             LogDebug("Processing flipped systems.");
-            foreach (var system in Globals.WarStatusTracker.systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
+            /* foreach (var system in Globals.WarStatusTracker.systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.starSystem);
@@ -234,7 +244,7 @@ namespace GalaxyatWar
                 {
                     StarmapMod.UpdatePanelText();
                 }
-            }
+            }*/
 
             //Log("===================================================");
             //Log("TESTING ZONE");

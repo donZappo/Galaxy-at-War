@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using BattleTech;
 using static GalaxyatWar.Logger;
 using Random = UnityEngine.Random;
+using static GalaxyatWar.Helpers;
 
 // ReSharper disable ClassNeverInstantiated.Global
 
@@ -11,6 +13,27 @@ namespace GalaxyatWar
 {
     public class Resource
     {
+        public static void AddBaseWarTickResourcesPerSystem()
+        {
+            foreach (SystemStatus system in Globals.WarStatusTracker.systems)
+            {
+                system.AttackResources += GetTotalAttackResources(system.starSystem);
+            }
+        }
+
+        public static void DistributeResourcesBetweenFactionSystems(WarFaction warFaction, bool useFullSet)
+        {
+            //TODO make a function in SystemStatus, that processess and stores Neighbor Systems As a list of SystemStatus
+            List<SystemStatus> localSystems = new List<SystemStatus>();
+
+            foreach (SystemStatus starSystem in Globals.WarStatusTracker.systems)
+            {                 
+                if (starSystem.owner == warFaction.faction)
+                {
+
+                }
+            }
+        }
         public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
