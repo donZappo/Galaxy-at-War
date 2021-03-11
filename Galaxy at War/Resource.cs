@@ -11,6 +11,13 @@ using static GalaxyatWar.Helpers;
 
 namespace GalaxyatWar
 {
+    //The random Number generator should more then likely be Instanciated In WarStatus
+    //Being Called here would only mean it keeps being regenerated right ?
+    //using a single instance of random that gets used against all processes that call it
+    //would give much better random number results, or even initiating it in globals.
+
+    //Resource should probably be restructured to be an internal class of SystemStatus Class.
+    //TODO check viability.
     public class Resource
     {
         public static void AddBaseWarTickResourcesPerSystem()
@@ -18,6 +25,7 @@ namespace GalaxyatWar
             foreach (SystemStatus system in Globals.WarStatusTracker.systems)
             {
                 system.AttackResources += GetTotalAttackResources(system.starSystem);
+                system.DefenseResources += GetTotalDefensiveResources(system.starSystem);
             }
         }
 
@@ -34,6 +42,7 @@ namespace GalaxyatWar
                 }
             }
         }
+
         public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
