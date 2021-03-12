@@ -37,19 +37,16 @@ namespace GalaxyatWar
             BaseSystemDefenceResources = Helpers.GetTotalDefensiveResources(system);
         }
 
-
-        //this will more then likely get changed when influence gets re-introduced
+        //TODO Remember to edit this code block, when re-introducing Influence.
+        //this will more then likely get changed when influence gets re-introduced.
         public void AddBaseWarTickResourcesForSystem()
         {
             AttackResources += BaseSystemAttackResources;
             DefenceResources += BaseSystemDefenceResources;
-            /*foreach (SystemStatus system in Globals.WarStatusTracker.systems)
-            {
-                system.AttackResources += GetTotalAttackResources(system.starSystem);
-                system.DefenseResources += GetTotalDefensiveResources(system.starSystem);
-            }*/
         }
 
+        //TODO re-work for use of purpose.
+        //not currently wired to be run inside SystemStatus.
         public static void DistributeResourcesBetweenFactionSystems(WarFaction warFaction, bool useFullSet)
         {
             //TODO make a function in SystemStatus, that processess and stores Neighbor Systems As a list of SystemStatus
