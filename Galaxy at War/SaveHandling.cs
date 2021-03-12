@@ -80,7 +80,7 @@ namespace GalaxyatWar
 
                     // try to recover from negative DR
                     // temporary code
-                    foreach (var systemStatus in Globals.WarStatusTracker.systems)
+                    /*foreach (var systemStatus in Globals.WarStatusTracker.systems)
                     {
                         if (systemStatus.DefenseResources <= 0)
                         {
@@ -88,7 +88,7 @@ namespace GalaxyatWar
                             systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.starSystem);
                             systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
                         }
-                    }
+                    }*/
 
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {

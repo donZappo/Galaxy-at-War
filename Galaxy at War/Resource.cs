@@ -20,13 +20,34 @@ namespace GalaxyatWar
     //TODO check viability.
     public class Resource
     {
-        public static void AddBaseWarTickResourcesPerSystem()
+        internal float BaseSystemAttackResources;
+        internal float BaseSystemDefenceResources;
+        public float AttackResources;
+        public float DefenceResources;
+
+        
+        public Resource()
         {
-            foreach (SystemStatus system in Globals.WarStatusTracker.systems)
+
+        }
+
+        public Resource(StarSystem system)
+        {
+            BaseSystemAttackResources = Helpers.GetTotalAttackResources(system);
+            BaseSystemDefenceResources = Helpers.GetTotalDefensiveResources(system);
+        }
+
+
+        //this will more then likely get changed when influence gets re-introduced
+        public void AddBaseWarTickResourcesForSystem()
+        {
+            AttackResources += BaseSystemAttackResources;
+            DefenceResources += BaseSystemDefenceResources;
+            /*foreach (SystemStatus system in Globals.WarStatusTracker.systems)
             {
                 system.AttackResources += GetTotalAttackResources(system.starSystem);
                 system.DefenseResources += GetTotalDefensiveResources(system.starSystem);
-            }
+            }*/
         }
 
         public static void DistributeResourcesBetweenFactionSystems(WarFaction warFaction, bool useFullSet)

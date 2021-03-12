@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
+using static GalaxyatWar.Resource;
 
 namespace GalaxyatWar
 {
@@ -35,8 +36,9 @@ namespace GalaxyatWar
         public bool BonusSalvage;
         public bool BonusXP;
         public bool BonusCBills;
-        public float AttackResources;
-        public float DefenseResources;
+        public Resource systemResources;
+        //public float AttackResources;
+        //public float DefenseResources;
         public float PirateActivity;
         public string CoreSystemID;
         public int DeploymentTier = 0;
@@ -64,9 +66,10 @@ namespace GalaxyatWar
             name = system.Name;
             owner = faction;
             starSystem = system;
-            AttackResources = Helpers.GetTotalAttackResources(starSystem);
-            DefenseResources = Helpers.GetTotalDefensiveResources(starSystem);
-            TotalResources = AttackResources + DefenseResources;
+            systemResources = new Resource(starSystem);
+            //AttackResources = Helpers.GetTotalAttackResources(starSystem);
+            //DefenseResources = Helpers.GetTotalDefensiveResources(starSystem);
+            TotalResources = systemResources.AttackResources + systemResources.DefenceResources;
             CoreSystemID = system.Def.CoreSystemID;
             BonusCBills = false;
             BonusSalvage = false;

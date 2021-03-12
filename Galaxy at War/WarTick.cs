@@ -181,11 +181,17 @@ namespace GalaxyatWar
              Any system that has excess resources and is not in conflict with another system will divide it's excess reources by the amount of faction systems within range and push those resources out
              */
             LogDebug("Processing resource spending.");
-            if (!Globals.WarStatusTracker.FirstTickInitialization)
+
+            foreach(SystemStatus system in Globals.WarStatusTracker.systems)
+            {
+                system.systemResources.AddBaseWarTickResourcesForSystem();
+            }
+
+            /*if (!Globals.WarStatusTracker.FirstTickInitialization)
                 AddBaseWarTickResourcesPerSystem();
             else
-                Globals.WarStatusTracker.FirstTickInitialization = false;
-            
+                Globals.WarStatusTracker.FirstTickInitialization = false;*/
+
             //foreach(var warFaction in Globals.WarStatusTracker.warFactionTracker)
             //{
             //    DistributeResourcesBetweenFactionSystems(warFaction, useFullSet);

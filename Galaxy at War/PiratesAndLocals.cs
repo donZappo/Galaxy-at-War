@@ -125,7 +125,7 @@ namespace GalaxyatWar
                 //WarStatusTracker.TempPRGain += system.TotalResources * system.PirateActivity / 100;
 
                 var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
-                var warFARChange = system.AttackResources * system.PirateActivity / 100;
+                var warFARChange = system.systemResources.AttackResources * system.PirateActivity / 100;
                 if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
                     warFaction.PirateDRLoss += warFARChange;
                 else
@@ -142,7 +142,7 @@ namespace GalaxyatWar
                     warFaction.AttackResources = Helpers.Clamp(warFaction.AttackResources, Globals.ResourceGenericMax);
                 }
 
-                var warFDRChange = system.DefenseResources * system.PirateActivity / 100;
+                var warFDRChange = system.systemResources.DefenceResources * system.PirateActivity / 100;
                 warFaction.PirateDRLoss += warFDRChange;
                 warFaction.DefensiveResources = Math.Max(0, warFaction.DefensiveResources - warFDRChange);
                 warFaction.DefensiveResources = Helpers.Clamp(warFaction.DefensiveResources, Globals.ResourceGenericMax);
