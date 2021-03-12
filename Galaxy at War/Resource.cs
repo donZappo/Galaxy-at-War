@@ -43,7 +43,7 @@ namespace GalaxyatWar
             }
         }
 
-        public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
+        /*public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
             var deathList = warFaction.DeathListTracker;
@@ -281,7 +281,7 @@ namespace GalaxyatWar
                     }
                 }
             }
-        }   
+        }*/  
    
     }
 }

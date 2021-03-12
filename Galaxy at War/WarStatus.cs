@@ -85,7 +85,7 @@ namespace GalaxyatWar
                 deathListTracker.Add(d);
             }
 
-            foreach (var system in Globals.GaWSystems)
+           /* foreach (var system in Globals.GaWSystems)
             {
                 if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                     AbandonedSystems.Add(system.Name);
@@ -95,10 +95,10 @@ namespace GalaxyatWar
                 else
                     warFaction.AttackResources += GetTotalAttackResources(system);
                 warFaction.DefensiveResources += GetTotalDefensiveResources(system);
-            }
+            }*/
 
             Logger.LogDebug("WarFaction AR/DR set.");
-            var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
+            /*var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
             var maxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
 
             foreach (var faction in Globals.Settings.IncludedFactions)
@@ -128,16 +128,16 @@ namespace GalaxyatWar
                         warFaction.DefensiveResources = maxDR + Globals.Settings.BonusDefensiveResources_ISM[faction];
                     }
                 }
-            }
+            }*/
 
             Logger.LogDebug("WarFaction bonus AR/DR set.");
-            if (!Globals.Settings.ISMCompatibility)
+            /*if (!Globals.Settings.ISMCompatibility)
                 PirateResources = maxAR * Globals.Settings.FractionPirateResources + Globals.Settings.BonusPirateResources;
             else
                 PirateResources = maxAR * Globals.Settings.FractionPirateResources_ISM + Globals.Settings.BonusPirateResources_ISM;
 
             MinimumPirateResources = PirateResources;
-            StartingPirateResources = PirateResources;
+            StartingPirateResources = PirateResources;*/
             Logger.LogDebug("SystemStatus mass creation...");
             systems = new List<SystemStatus>(Globals.GaWSystems.Count);
             for (var index = 0; index < Globals.Sim.StarSystems.Count; index++)
@@ -150,7 +150,7 @@ namespace GalaxyatWar
 
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
                 systems.Add(systemStatus);
-                if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
+                /*if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {
                     FullPirateSystems.Add(system.Name);
                     PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
@@ -158,7 +158,7 @@ namespace GalaxyatWar
 
                 if (system.Tags.Contains("planet_region_hyadesrim") && !FlashpointSystems.Contains(system.Name)
                                                                     && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
-                    HyadesRimGeneralPirateSystems.Add(system.Name);
+                    HyadesRimGeneralPirateSystems.Add(system.Name);*/
             }
 
             Logger.LogDebug("Full pirate systems created.");

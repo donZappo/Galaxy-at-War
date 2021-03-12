@@ -14,7 +14,7 @@ namespace GalaxyatWar
     {
         internal static void Tick(bool useFullSet, bool checkForSystemChange)
         {
-            Globals.WarStatusTracker.PrioritySystems.Clear();
+            /*Globals.WarStatusTracker.PrioritySystems.Clear();
             var systemSubsetSize = Globals.WarStatusTracker.systems.Count;
             List<SystemStatus> systemStatuses;
 
@@ -35,9 +35,9 @@ namespace GalaxyatWar
 
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
-                AddBaseWarTickResourcesPerSystem();
+                //AddBaseWarTickResourcesPerSystem();
 
-                /*var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
+                var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.faction)).ToList();
                 foreach (var faction in sequence)
                 {
@@ -52,16 +52,16 @@ namespace GalaxyatWar
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
                     }
-                }*/
+                }
                 ///-------------
 
-                /*foreach (var faction in sequence)
+                foreach (var faction in sequence)
                 {
                     faction.AR_PerPlanet = Mathf.Min(faction.AR_PerPlanet, 2 * lowestAR);
                     faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDr);
-                }*/
+                }
 
-                /*foreach (var systemStatus in systemStatuses)
+                foreach (var systemStatus in systemStatuses)
                 {
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
@@ -69,7 +69,7 @@ namespace GalaxyatWar
                     systemStatus.TotalResources += warFaction.AR_PerPlanet + GetTotalAttackResources(systemStatus.starSystem);           //may remove will leave in place for now       
                     systemStatus.DefenseResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);      //probably doesn't need to be += as it should be 0              
                     systemStatus.TotalResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);        //may remove will leave in place for now       
-                }*/
+                }
             }
             
             //Distribute Pirate Influence throughout the StarSystems
@@ -131,14 +131,14 @@ namespace GalaxyatWar
                                 var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
                                 systemStatus.influenceTracker[neighbor] += systemStatus.influenceTracker[neighbor]/100 + pushFactor;
                             }
-                            /*else 
+                            else 
                             {
                                 int a = 0;
                                 int b = 0;
                                 systemStatus.neighborSystems.TryGetValue(, out a);
                                 systemStatus.neighborSystems.TryGetValue(neighbor, out b);
                                 var diffeence = Math.Abs(a - b);
-                            }*/
+                            }
                         }
                     }
                 }
@@ -181,13 +181,15 @@ namespace GalaxyatWar
              Any system that has excess resources and is not in conflict with another system will divide it's excess reources by the amount of faction systems within range and push those resources out
              */
             LogDebug("Processing resource spending.");
-
-            AddBaseWarTickResourcesPerSystem();
+            if (!Globals.WarStatusTracker.FirstTickInitialization)
+                AddBaseWarTickResourcesPerSystem();
+            else
+                Globals.WarStatusTracker.FirstTickInitialization = false;
             
-            foreach(var warFaction in Globals.WarStatusTracker.warFactionTracker)
-            {
-                DistributeResourcesBetweenFactionSystems(warFaction, useFullSet);
-            }
+            //foreach(var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            //{
+            //    DistributeResourcesBetweenFactionSystems(warFaction, useFullSet);
+            //}
 
             /*foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {

@@ -71,11 +71,11 @@ namespace GalaxyatWar
             BonusCBills = false;
             BonusSalvage = false;
             BonusXP = false;
-            if (system.Tags.Contains("planet_other_pirate") && !Globals.Settings.HyadesFlashpointSystems.Contains(name))
+            /*if (system.Tags.Contains("planet_other_pirate") && !Globals.Settings.HyadesFlashpointSystems.Contains(name))
                 if (!Globals.Settings.ISMCompatibility)
                     PirateActivity = Globals.Settings.StartingPirateActivity;
                 else
-                    PirateActivity = Globals.Settings.StartingPirateActivity_ISM;
+                    PirateActivity = Globals.Settings.StartingPirateActivity_ISM;*/
             FindNeighbors();
             CalculateSystemInfluence();
             InitializeContracts();
