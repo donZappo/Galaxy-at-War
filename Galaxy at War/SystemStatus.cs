@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
-using static GalaxyatWar.Resource;
-using UnityEngine;
+//using static GalaxyatWar.Resource;
+//using UnityEngine;
 
 namespace GalaxyatWar
 {
@@ -27,6 +27,7 @@ namespace GalaxyatWar
         }
 
         // TODO wire this up
+        internal List<SystemStatus> NeighborSystems = new List<SystemStatus>();
         internal List<float> influenceTrackerDescendingValue;
         //public float TotalResources;
         public bool PriorityDefense = false;
@@ -80,13 +81,26 @@ namespace GalaxyatWar
                     PirateActivity = Globals.Settings.StartingPirateActivity;
                 else
                     PirateActivity = Globals.Settings.StartingPirateActivity_ISM;*/
-            FindNeighbors();
+            //FindNeighbors();
             CalculateSystemInfluence();
             InitializeContracts();
         }
 
+        //Created a horrible loop if FindNeighbors was run in ctor
+        //removed FindNeighbors from ctor
+        //Find neighbors is now called manually during init of warstatus
+        //This is going to be used in extention for finding the systems easier,
+        //it is probably overkill but im not currently able to properly think of
+        //a easier way to do it, just do a search by name maybe ?
+        //current objective get something working that proves concept.
+        //TODO after testing decide if there is a better way to do this.
+        internal void AddNeigborsToList(StarSystem system)
+        {
+            var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+            NeighborSystems.Add(systemStatus);
+        }
+
         //will use to call another method that will set a list of SystemStatus for neighbor systems
-        //TODO make method to list nebor systems
         public void FindNeighbors()
         {
             try
@@ -94,23 +108,16 @@ namespace GalaxyatWar
                 neighborSystems.Clear();
                 var neighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem);
 
-                Logger.ValueLog(this.name);  //name of system, that is getting neighbor system positions.
-
                 foreach (var neighborSystem in neighbors)
                 {
-                    //added logging block to determine if systems were withen 35ly ? of eachother
-                    //TODO remember to remove this block when done.
-                    var systemPos = neighborSystem.Position;
-                    Logger.ValueLog(neighborSystem.Name);
-                    Logger.ValueLog(Math.Abs(this.starSystem.Position.x - systemPos.x).ToString());
-                    Logger.ValueLog(Math.Abs(this.starSystem.Position.y - systemPos.y).ToString());
+                    //test line
+                    this.AddNeigborsToList(neighborSystem);
 
                     if (neighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
                         neighborSystems[neighborSystem.OwnerValue.Name] += 1;
                     else
                         neighborSystems.Add(neighborSystem.OwnerValue.Name, 1);
                 }
-                Logger.ValueLog("\n");
             }
             catch (Exception ex)
             {
