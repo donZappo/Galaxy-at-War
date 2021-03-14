@@ -76,7 +76,7 @@ namespace GalaxyatWar
                     attackResources = Helpers.Clamp( warFaction.DefensiveResources, Globals.ResourceGenericMax);
                 
 
-                var defenseCost = Mathf.Min(PAChange * system.TotalResources / 100, warFaction.AttackResources * 0.01f);
+                var defenseCost = Mathf.Min(PAChange * system.systemResources.TotalResources / 100, warFaction.AttackResources * 0.01f);
 
                 if (attackResources >= defenseCost)
                 {
@@ -121,7 +121,7 @@ namespace GalaxyatWar
             for (var i = 0; i < FullPirateListSystems.Count; i++)
             {
                 var system = FullPirateListSystems[i];
-                WarStatusTracker.PirateResources += system.TotalResources * system.PirateActivity / 100;
+                WarStatusTracker.PirateResources += system.systemResources.TotalResources * system.PirateActivity / 100;
                 //WarStatusTracker.TempPRGain += system.TotalResources * system.PirateActivity / 100;
 
                 var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);

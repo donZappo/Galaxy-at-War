@@ -192,7 +192,7 @@ namespace GalaxyatWar
                 LogDebug("New global state created.");
                 // TODO is this value unchanging?  this is wrong if not
                 Globals.WarStatusTracker.systemsByResources =
-                    Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
+                    Globals.WarStatusTracker.systems.OrderBy(x => x.systemResources.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
                     LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem}).");
@@ -273,7 +273,7 @@ namespace GalaxyatWar
             HotSpots.HomeContendedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
             Globals.WarStatusTracker.systemsByResources =
-                Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
+                Globals.WarStatusTracker.systems.OrderBy(x => x.systemResources.TotalResources).ToList();
             SystemDifficulty();
 
             try

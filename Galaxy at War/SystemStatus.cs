@@ -4,6 +4,7 @@ using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
 using static GalaxyatWar.Resource;
+using UnityEngine;
 
 namespace GalaxyatWar
 {
@@ -27,7 +28,7 @@ namespace GalaxyatWar
 
         // TODO wire this up
         internal List<float> influenceTrackerDescendingValue;
-        public float TotalResources;
+        //public float TotalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
         public List<string> CurrentlyAttackedBy = new List<string>();
@@ -69,7 +70,7 @@ namespace GalaxyatWar
             systemResources = new Resource(starSystem);
             //AttackResources = Helpers.GetTotalAttackResources(starSystem);
             //DefenseResources = Helpers.GetTotalDefensiveResources(starSystem);
-            TotalResources = systemResources.AttackResources + systemResources.DefenceResources;
+            //TotalResources = systemResources.AttackResources + systemResources.DefenceResources;
             CoreSystemID = system.Def.CoreSystemID;
             BonusCBills = false;
             BonusSalvage = false;
@@ -84,19 +85,32 @@ namespace GalaxyatWar
             InitializeContracts();
         }
 
+        //will use to call another method that will set a list of SystemStatus for neighbor systems
+        //TODO make method to list nebor systems
         public void FindNeighbors()
         {
             try
             {
                 neighborSystems.Clear();
                 var neighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem);
+
+                Logger.ValueLog(this.name);  //name of system, that is getting neighbor system positions.
+
                 foreach (var neighborSystem in neighbors)
                 {
+                    //added logging block to determine if systems were withen 35ly ? of eachother
+                    //TODO remember to remove this block when done.
+                    var systemPos = neighborSystem.Position;
+                    Logger.ValueLog(neighborSystem.Name);
+                    Logger.ValueLog(Math.Abs(this.starSystem.Position.x - systemPos.x).ToString());
+                    Logger.ValueLog(Math.Abs(this.starSystem.Position.y - systemPos.y).ToString());
+
                     if (neighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
                         neighborSystems[neighborSystem.OwnerValue.Name] += 1;
                     else
                         neighborSystems.Add(neighborSystem.OwnerValue.Name, 1);
                 }
+                Logger.ValueLog("\n");
             }
             catch (Exception ex)
             {

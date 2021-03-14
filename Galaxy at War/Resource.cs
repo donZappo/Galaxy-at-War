@@ -24,7 +24,7 @@ namespace GalaxyatWar
         internal float BaseSystemDefenceResources;
         public float AttackResources;
         public float DefenceResources;
-
+        public float TotalResources;
         
         public Resource()
         {
@@ -43,6 +43,7 @@ namespace GalaxyatWar
         {
             AttackResources += BaseSystemAttackResources;
             DefenceResources += BaseSystemDefenceResources;
+            TotalResources = BaseSystemAttackResources + BaseSystemDefenceResources;
         }
 
         //TODO re-work for use of purpose.
