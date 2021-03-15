@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
@@ -149,6 +150,10 @@ namespace GalaxyatWar
                 }
 
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+
+                systemStatus.absPosX = Math.Abs(0 - system.Position.x);
+                systemStatus.absPosY = Math.Abs(0 - system.Position.y);
+                Logger.ValueLog(system.Name + " AbsX = " + systemStatus.absPosX + "; AbsY = " + systemStatus.absPosY + ";");
                 //systemStatus.FindNeighbors();
                 systems.Add(systemStatus);
                 /*if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))

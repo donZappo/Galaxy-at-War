@@ -32,6 +32,9 @@ namespace GalaxyatWar
 
         internal List<float> influenceTrackerDescendingValue;
 
+        public float absPosX;
+        public float absPosY;
+
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
         public List<string> CurrentlyAttackedBy = new List<string>();
@@ -136,15 +139,15 @@ namespace GalaxyatWar
                             try
                             {
                                 indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
-                            }catch(Exception e)
+                                //Logger.ValueLog(system.name + " Index of neighbor system is " + indexOfSystem);
+                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
+                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
+                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
+                            }
+                            catch(Exception e)
                             {
                                 Logger.Log(e.Message + "\n" + "Index Does Not Exist");
                             }
-
-                            Logger.ValueLog(system.name + " Index of neighbor system is " + indexOfSystem); 
-                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
-                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
-                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
                         }
                     }
                 }
@@ -179,6 +182,7 @@ namespace GalaxyatWar
         {
             try
             {
+                //nSystems.Clear();
                 neighborSystems.Clear();
                 var neighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem);
 
