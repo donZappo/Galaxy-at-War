@@ -149,7 +149,7 @@ namespace GalaxyatWar
                 }
 
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
-                systemStatus.FindNeighbors();
+                //systemStatus.FindNeighbors();
                 systems.Add(systemStatus);
                 /*if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {

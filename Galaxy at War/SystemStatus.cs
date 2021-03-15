@@ -27,9 +27,11 @@ namespace GalaxyatWar
         }
 
         // TODO wire this up
-        internal List<SystemStatus> NeighborSystems = new List<SystemStatus>();
+        internal List<SystemStatus> nSystems = new List<SystemStatus>();
+        internal bool inRangeOfEnemy = false;
+
         internal List<float> influenceTrackerDescendingValue;
-        //public float TotalResources;
+
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
         public List<string> CurrentlyAttackedBy = new List<string>();
@@ -39,8 +41,7 @@ namespace GalaxyatWar
         public bool BonusXP;
         public bool BonusCBills;
         public Resource systemResources;
-        //public float AttackResources;
-        //public float DefenseResources;
+
         public float PirateActivity;
         public string CoreSystemID;
         public int DeploymentTier = 0;
@@ -69,9 +70,6 @@ namespace GalaxyatWar
             owner = faction;
             starSystem = system;
             systemResources = new Resource(starSystem);
-            //AttackResources = Helpers.GetTotalAttackResources(starSystem);
-            //DefenseResources = Helpers.GetTotalDefensiveResources(starSystem);
-            //TotalResources = systemResources.AttackResources + systemResources.DefenceResources;
             CoreSystemID = system.Def.CoreSystemID;
             BonusCBills = false;
             BonusSalvage = false;
@@ -81,14 +79,81 @@ namespace GalaxyatWar
                     PirateActivity = Globals.Settings.StartingPirateActivity;
                 else
                     PirateActivity = Globals.Settings.StartingPirateActivity_ISM;*/
-            //FindNeighbors();
             CalculateSystemInfluence();
             InitializeContracts();
         }
 
+        //basic initial implimentation
+        //does a check if it is withen range of an enemy, if it is holds
+        //onto its resources.
+        //otherwise
+        public void DistributeResourcesToLocalFactionSystems()
+        {
+            if (!inRangeOfEnemy)
+            {
+                int divisor = nSystems.Count();
+                foreach(SystemStatus system in nSystems)
+                {
+                    if (system.systemResources.hasDoneDistrobution)
+                        divisor -= 1;
+                }
+
+                if (divisor > 0)
+                {
+                    float ARPerSystem;
+                    float DRPerSystem;
+
+                    try
+                    {
+                        if ((ARPerSystem = (this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources) / divisor) >= 0)
+                            this.systemResources.AttackResources -= Math.Abs(this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources);
+                        else
+                            ARPerSystem = 0;
+                    }catch(Exception e)
+                    {
+                        Logger.Log(e.Message);
+                        ARPerSystem = 0;
+                    }
+
+                    try
+                    {
+                        if ((DRPerSystem = (this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources) / divisor) >= 0)
+                            this.systemResources.BaseSystemDefenceResources -= Math.Abs(this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources);
+                        else
+                            DRPerSystem = 0;
+                    }
+                    catch(Exception e)
+                    {
+                        Logger.Log(e.Message);
+                        DRPerSystem = 0;
+                    }
+
+                    foreach (SystemStatus system in nSystems)
+                    {
+                        if (!system.systemResources.hasDoneDistrobution)
+                        {
+                            int indexOfSystem = 0;
+                            try
+                            {
+                                indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
+                            }catch(Exception e)
+                            {
+                                Logger.Log(e.Message + "\n" + "Index Does Not Exist");
+                            }
+
+                            Logger.ValueLog(system.name + " Index of neighbor system is " + indexOfSystem); 
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
+                        }
+                    }
+                }
+            }
+        }
+
         //Created a horrible loop if FindNeighbors was run in ctor
         //removed FindNeighbors from ctor
-        //Find neighbors is now called manually during init of warstatus
+        //FindNeighbors is now called manually during init of warstatus
         //This is going to be used in extention for finding the systems easier,
         //it is probably overkill but im not currently able to properly think of
         //a easier way to do it, just do a search by name maybe ?
@@ -96,8 +161,16 @@ namespace GalaxyatWar
         //TODO after testing decide if there is a better way to do this.
         internal void AddNeigborsToList(StarSystem system)
         {
-            var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
-            NeighborSystems.Add(systemStatus);
+            //var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+            SystemStatus sysStatus = new SystemStatus();
+            try
+            {
+                sysStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system.Name);
+                Logger.Log(system.Name + " System found!");
+            } catch (Exception e) {
+                Logger.Log(e.Message + "\n" + " System not Found");
+            }
+            nSystems.Add(sysStatus);
         }
 
         //will use to call another method that will set a list of SystemStatus for neighbor systems
@@ -112,6 +185,9 @@ namespace GalaxyatWar
                 {
                     //test line
                     this.AddNeigborsToList(neighborSystem);
+
+                    if (this.owner != neighborSystem.OwnerValue.Name)
+                        inRangeOfEnemy = true;
 
                     if (neighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
                         neighborSystems[neighborSystem.OwnerValue.Name] += 1;

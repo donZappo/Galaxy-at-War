@@ -184,8 +184,16 @@ namespace GalaxyatWar
 
             foreach(SystemStatus system in Globals.WarStatusTracker.systems)
             {
+                system.FindNeighbors();
+                system.systemResources.hasDoneDistrobution = false;
                 system.systemResources.AddBaseWarTickResourcesForSystem();
             }
+
+            foreach(SystemStatus system in Globals.WarStatusTracker.systems)
+            {
+                system.DistributeResourcesToLocalFactionSystems();
+            }
+
 
             /*if (!Globals.WarStatusTracker.FirstTickInitialization)
                 AddBaseWarTickResourcesPerSystem();

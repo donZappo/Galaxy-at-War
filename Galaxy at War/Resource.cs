@@ -22,6 +22,7 @@ namespace GalaxyatWar
     {
         internal float BaseSystemAttackResources;
         internal float BaseSystemDefenceResources;
+        public bool hasDoneDistrobution;               //used as a check to make sure the system does not distribute resources more then once per tick.
         public float AttackResources;
         public float DefenceResources;
         public float TotalResources;
@@ -35,6 +36,7 @@ namespace GalaxyatWar
         {
             BaseSystemAttackResources = Helpers.GetTotalAttackResources(system);
             BaseSystemDefenceResources = Helpers.GetTotalDefensiveResources(system);
+            hasDoneDistrobution = false;
         }
 
         //TODO Remember to edit this code block, when re-introducing Influence.
@@ -44,22 +46,6 @@ namespace GalaxyatWar
             AttackResources += BaseSystemAttackResources;
             DefenceResources += BaseSystemDefenceResources;
             TotalResources = BaseSystemAttackResources + BaseSystemDefenceResources;
-        }
-
-        //TODO re-work for use of purpose.
-        //not currently wired to be run inside SystemStatus.
-        public static void DistributeResourcesBetweenFactionSystems(WarFaction warFaction, bool useFullSet)
-        {
-            //TODO make a function in SystemStatus, that processess and stores Neighbor Systems As a list of SystemStatus
-            List<SystemStatus> localSystems = new List<SystemStatus>();
-
-            foreach (SystemStatus starSystem in Globals.WarStatusTracker.systems)
-            {                 
-                if (starSystem.owner == warFaction.faction)
-                {
-
-                }
-            }
         }
 
         /*public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
