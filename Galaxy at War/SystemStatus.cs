@@ -118,7 +118,7 @@ namespace GalaxyatWar
                     try
                     {
                         if ((DRPerSystem = (this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources) / divisor) >= 0)
-                            this.systemResources.BaseSystemDefenceResources -= Math.Abs(this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources);
+                            this.systemResources.DefenceResources -= Math.Abs(this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources);
                         else
                             DRPerSystem = 0;
                     }
