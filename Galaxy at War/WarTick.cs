@@ -191,14 +191,24 @@ namespace GalaxyatWar
 
             //Testing wether it is easier/better to let there be a single tick of resources
             //before starting distrobution (Tick 2)
-            //TODO check DistrobuteResourcesToLocalFactionSystems for bugs.
+            //TODO check DistrobuteResourcesToLocalFactionSystems for bugs. Cureently looks fine.
+            //Have noticed that to bug check, Total resources should be wired up properly, or i just shouldn't use it for testing output till it is wired up.
             //Have a feeling systems with local faction stopped getting resources will run a few tests first before diving back in.
             //Want to make sure that it is working correctly before moving on otherwise the problems will pile up.
             if (!Globals.WarStatusTracker.FirstTickInitialization)
             {
                 foreach (SystemStatus system in Globals.WarStatusTracker.systems)
                 {
-                    system.DistributeResourcesToLocalFactionSystems();
+                    if(system.owner == "Locals")
+                    {
+                        Logger.ValueLog("Locals system " + system.name + "; ARBefore = " + system.systemResources.AttackResources +"; DRBefore = " + system.systemResources.DefenceResources);
+                        Logger.ValueLog("TotalResources = " + system.systemResources.TotalResources);
+                        system.DistributeResourcesToLocalFactionSystems();
+                        Logger.ValueLog("Locals system " + system.name + "; ARBefore = " + system.systemResources.AttackResources + "; DRBefore = " + system.systemResources.DefenceResources);
+                        Logger.ValueLog("TotalResources = " + system.systemResources.TotalResources);
+                    }
+                    else
+                        system.DistributeResourcesToLocalFactionSystems();
                 }
             }else
                 Globals.WarStatusTracker.FirstTickInitialization = false; 
