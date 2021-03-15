@@ -148,6 +148,7 @@ namespace GalaxyatWar
                         }
                     }
                 }
+                this.systemResources.hasDoneDistrobution = true;
             }
         }
 
