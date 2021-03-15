@@ -189,37 +189,45 @@ namespace GalaxyatWar
                 system.systemResources.AddBaseWarTickResourcesForSystem();
             }
 
-            foreach(SystemStatus system in Globals.WarStatusTracker.systems)
+            //Testing wether it is easier/better to let there be a single tick of resources
+            //before starting distrobution (Tick 2)
+            //TODO check DistrobuteResourcesToLocalFactionSystems for bugs.
+            //Have a feeling systems with local faction stopped getting resources will run a few tests first before diving back in.
+            //Want to make sure that it is working correctly before moving on otherwise the problems will pile up.
+            if (!Globals.WarStatusTracker.FirstTickInitialization)
             {
-                system.DistributeResourcesToLocalFactionSystems();
-            }
+                foreach (SystemStatus system in Globals.WarStatusTracker.systems)
+                {
+                    system.DistributeResourcesToLocalFactionSystems();
+                }
+            }else
+                Globals.WarStatusTracker.FirstTickInitialization = false; 
+
+             /*if (!Globals.WarStatusTracker.FirstTickInitialization)
+                 AddBaseWarTickResourcesPerSystem();
+             else
+                 Globals.WarStatusTracker.FirstTickInitialization = false;*/
+
+             //foreach(var warFaction in Globals.WarStatusTracker.warFactionTracker)
+             //{
+             //    DistributeResourcesBetweenFactionSystems(warFaction, useFullSet);
+             //}
+
+             /*foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+             {
+                 DivideAttackResources(warFaction, useFullSet);
+             }
+
+             CalculateDefensiveSystems();
+             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+             {
+                 AllocateDefensiveResources(warFaction, useFullSet);
+                 AllocateAttackResources(warFaction);
+             }*/
+             //--------end-next-----------------------------
 
 
-            /*if (!Globals.WarStatusTracker.FirstTickInitialization)
-                AddBaseWarTickResourcesPerSystem();
-            else
-                Globals.WarStatusTracker.FirstTickInitialization = false;*/
-
-            //foreach(var warFaction in Globals.WarStatusTracker.warFactionTracker)
-            //{
-            //    DistributeResourcesBetweenFactionSystems(warFaction, useFullSet);
-            //}
-
-            /*foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
-            {
-                DivideAttackResources(warFaction, useFullSet);
-            }
-
-            CalculateDefensiveSystems();
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
-            {
-                AllocateDefensiveResources(warFaction, useFullSet);
-                AllocateAttackResources(warFaction);
-            }*/
-            //--------end-next-----------------------------
-
-
-            LogDebug("Processing influence changes.");
+             LogDebug("Processing influence changes.");
             /*UpdateInfluenceFromAttacks(checkForSystemChange);
 
             //Increase War Escalation or decay defenses.

@@ -149,13 +149,18 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+                SystemStatus systemStatus = new SystemStatus(system, system.OwnerValue.Name);
 
+                //--new-block------------------------
                 systemStatus.absPosX = Math.Abs(0 - system.Position.x);
                 systemStatus.absPosY = Math.Abs(0 - system.Position.y);
+
                 Logger.ValueLog(system.Name + " AbsX = " + systemStatus.absPosX + "; AbsY = " + systemStatus.absPosY + ";");
                 //systemStatus.FindNeighbors();
+
                 systems.Add(systemStatus);
+                //---end-new-block-------------------
+
                 /*if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {
                     FullPirateSystems.Add(system.Name);
