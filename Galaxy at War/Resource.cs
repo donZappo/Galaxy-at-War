@@ -45,7 +45,7 @@ namespace GalaxyatWar
         {
             AttackResources += BaseSystemAttackResources;
             DefenceResources += BaseSystemDefenceResources;
-            TotalResources = BaseSystemAttackResources + BaseSystemDefenceResources;
+            TotalResources = AttackResources + DefenceResources;
         }
 
         /*public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)

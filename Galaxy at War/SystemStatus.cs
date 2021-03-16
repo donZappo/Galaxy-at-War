@@ -109,8 +109,14 @@ namespace GalaxyatWar
 
                     try
                     {
-                        if ((ARPerSystem = (this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources) / divisor) >= 0)
-                            this.systemResources.AttackResources -= Math.Abs(this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources);
+                        ARPerSystem = (this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources) / divisor;
+                        //float diff = 0;
+                        if (ARPerSystem >= 0)
+                        {
+                            float diff = Math.Abs(this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources);
+                            this.systemResources.AttackResources -= diff;
+                            this.systemResources.TotalResources -= diff;
+                        }
                         else
                             ARPerSystem = 0;
                     }catch(Exception e)
@@ -121,8 +127,13 @@ namespace GalaxyatWar
 
                     try
                     {
-                        if ((DRPerSystem = (this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources) / divisor) >= 0)
-                            this.systemResources.DefenceResources -= Math.Abs(this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources);
+                        DRPerSystem = (this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources) / divisor;
+                        if (DRPerSystem >= 0)
+                        {
+                            float diff = Math.Abs(this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources);
+                            this.systemResources.DefenceResources -= diff;
+                            this.systemResources.TotalResources -= diff;
+                        }
                         else
                             DRPerSystem = 0;
                     }
@@ -143,7 +154,18 @@ namespace GalaxyatWar
                                 //Logger.ValueLog(system.name + " Index of neighbor system is " + indexOfSystem);
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
-                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
+                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources + Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources;
+
+                                //--debug-----block
+                                float totalSauce = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources;
+                                string faction = Globals.WarStatusTracker.systems[indexOfSystem].owner;
+
+                                if(faction == "Locals")
+                                {
+                                    Logger.ValueLog("TotalResources During processing = " + totalSauce);
+                                }
+                                //--end-debug----
+                                //Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
                             }
                             catch(Exception e)
                             {
