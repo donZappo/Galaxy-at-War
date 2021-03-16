@@ -154,7 +154,7 @@ namespace GalaxyatWar
                                 //Logger.ValueLog(system.name + " Index of neighbor system is " + indexOfSystem);
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
-                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources + Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources;
+                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
 
                                 //--debug-----block
                                 float totalSauce = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources;
