@@ -34,6 +34,7 @@ namespace GalaxyatWar
 
         public float absPosX;
         public float absPosY;
+        public float systemsDistanceFromZero;
 
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;

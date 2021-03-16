@@ -154,6 +154,7 @@ namespace GalaxyatWar
                 //--new-block------------------------
                 systemStatus.absPosX = Math.Abs(0 - system.Position.x);
                 systemStatus.absPosY = Math.Abs(0 - system.Position.y);
+                systemStatus.systemsDistanceFromZero = (float)Math.Sqrt((systemStatus.absPosX * systemStatus.absPosX) + (systemStatus.absPosY * systemStatus.absPosY));
 
                 Logger.ValueLog(system.Name + " AbsX = " + systemStatus.absPosX + "; AbsY = " + systemStatus.absPosY + ";");
                 //systemStatus.FindNeighbors();
@@ -176,6 +177,20 @@ namespace GalaxyatWar
             systems = systems.OrderBy(x => x.name).ToList();
             systemsByResources = systems.OrderBy(x => x.systemResources.TotalResources).ToList();
             PrioritySystems = new List<string>(systems.Count);
+
+            //----new---block---
+            /*
+             * an attempt at sorting the systems in a way that is good for resource distrobution.
+             * Sort by faction, then by systems distance from 0 (zero).
+             */
+
+            systems.Sort((f1, f2) =>
+            {
+                int result = string.Compare(f1.owner, f2.owner, StringComparison.Ordinal);
+                return result == 0 ? f2.systemsDistanceFromZero.CompareTo(f1.systemsDistanceFromZero) : result;
+            });
+
+            //---end---block
             Logger.LogDebug("SystemStatus ordered lists created.");
         }
 
