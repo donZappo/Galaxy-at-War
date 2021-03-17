@@ -87,6 +87,34 @@ namespace GalaxyatWar
             InitializeContracts();
         }
 
+        /******************************************************************************************************************
+         * This function will check if the current resource can be pushed to other local faction members
+         * then sets the amount each member will recieve.
+         * returning that value.
+         *******************************************************************************************************************/
+        internal float CalculateRersourcesToPushToLocalFactionMembers(ref float sysRes, float sysBaseRes, ref float sysTotalRes, int divisor)
+        {
+            float currentResource = 0;
+
+            try
+            {
+                currentResource = (sysRes - sysBaseRes) / divisor;
+                if (currentResource >= 0)
+                {
+                    float diff = Math.Abs(sysRes - sysBaseRes);
+                    sysRes -= diff;
+                    sysTotalRes -= diff;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e.Message);
+                return currentResource;
+            }
+
+            return currentResource;
+        }
+
         //basic initial implimentation
         //does a check if it is withen range of an enemy, if it is holds
         //onto its resources.
@@ -105,50 +133,8 @@ namespace GalaxyatWar
                 //determines amount of resources to give to each same faction system
                 if (divisor > 0)
                 {
-                    /************************************************
-                     * TODO Going to turn this block into a method/function
-                     * big double up of code that can be condensed
-                     * ***********************************************/
-                     //--------------start---condense---block-------------------------
-                    float ARPerSystem;
-                    float DRPerSystem;
-
-                    try
-                    {
-                        ARPerSystem = (this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources) / divisor;
-                        //float diff = 0;
-                        if (ARPerSystem >= 0)
-                        {
-                            float diff = Math.Abs(this.systemResources.AttackResources - this.systemResources.BaseSystemAttackResources);
-                            this.systemResources.AttackResources -= diff;
-                            this.systemResources.TotalResources -= diff;
-                        }
-                        else
-                            ARPerSystem = 0;
-                    }catch(Exception e)
-                    {
-                        Logger.Log(e.Message);
-                        ARPerSystem = 0;
-                    }
-
-                    try
-                    {
-                        DRPerSystem = (this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources) / divisor;
-                        if (DRPerSystem >= 0)
-                        {
-                            float diff = Math.Abs(this.systemResources.DefenceResources - this.systemResources.BaseSystemDefenceResources);
-                            this.systemResources.DefenceResources -= diff;
-                            this.systemResources.TotalResources -= diff;
-                        }
-                        else
-                            DRPerSystem = 0;
-                    }
-                    catch(Exception e)
-                    {
-                        Logger.Log(e.Message);
-                        DRPerSystem = 0;
-                    }
-                    //---------------end-----condense-----------block-------------------------
+                    float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.AttackResources, this.systemResources.BaseSystemAttackResources, ref this.systemResources.TotalResources, divisor);
+                    float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.DefenceResources, this.systemResources.BaseSystemDefenceResources, ref this.systemResources.TotalResources, divisor);
 
                     //distributes resources to neighbor faction systems
                     foreach (SystemStatus system in nSystems)
