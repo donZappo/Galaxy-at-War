@@ -90,7 +90,7 @@ namespace GalaxyatWar
         //basic initial implimentation
         //does a check if it is withen range of an enemy, if it is holds
         //onto its resources.
-        //otherwise
+        //TODO decide wether this belongs here or in the Resource Class.
         public void DistributeResourcesToLocalFactionSystems()
         {
             if (!inRangeOfEnemy)
@@ -102,8 +102,14 @@ namespace GalaxyatWar
                         divisor -= 1;
                 }
 
+                //determines amount of resources to give to each same faction system
                 if (divisor > 0)
                 {
+                    /************************************************
+                     * TODO Going to turn this block into a method/function
+                     * big double up of code that can be condensed
+                     * ***********************************************/
+                     //--------------start---condense---block-------------------------
                     float ARPerSystem;
                     float DRPerSystem;
 
@@ -142,7 +148,9 @@ namespace GalaxyatWar
                         Logger.Log(e.Message);
                         DRPerSystem = 0;
                     }
+                    //---------------end-----condense-----------block-------------------------
 
+                    //distributes resources to neighbor faction systems
                     foreach (SystemStatus system in nSystems)
                     {
                         if (!system.systemResources.hasDoneDistrobution)
@@ -174,6 +182,19 @@ namespace GalaxyatWar
                         }
                     }
                 }
+                /***************************************************************
+                 * This section Will get activated if the system is in range of an enemy Faction.               
+                 * TODO need to decide if a SystemStatus will process ask requests
+                 * for resources here or not.
+                 * a function(s)? will probably need to be made so that resource queries can be proccessed 
+                 * and resources can be returned if available.
+                 * **************************************************************/
+                 //--Start-enemy-in-range-resource-block--------------------------------------------------                
+                else
+                {
+
+                }
+                //-----End-----enemy-faction--in-range---resource-Block------------------------------------
                 this.systemResources.hasDoneDistrobution = true;
             }
         }
