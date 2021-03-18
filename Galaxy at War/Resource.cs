@@ -48,7 +48,9 @@ namespace GalaxyatWar
             TotalResources = AttackResources + DefenceResources;
         }
 
-        /*public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
+
+        //TODO go through this code.
+        public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
             var deathList = warFaction.DeathListTracker;
@@ -80,6 +82,7 @@ namespace GalaxyatWar
             }
         }
 
+        //TODO go through this code.
         public static void AllocateAttackResources(WarFaction warFaction)
         {
             var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => x.Name == warFaction.faction));
@@ -179,7 +182,7 @@ namespace GalaxyatWar
             }
         }
 
-
+        //TODO go through this code.
         public static void AllocateDefensiveResources(WarFaction warFaction, bool useFullSet)
         {
             if (warFaction.defenseTargets.Count == 0)
@@ -286,7 +289,6 @@ namespace GalaxyatWar
                     }
                 }
             }
-        }*/  
-   
+        }   
     }
 }
