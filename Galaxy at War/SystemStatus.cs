@@ -254,8 +254,9 @@ namespace GalaxyatWar
         }
 
         // determine starting influence based on neighboring systems
-        // TODO seperating this block out into external methods that are called internally
-        // Will condense if possible, hopefully will be easier to navigate when finished.
+        // TODO Determin What was broken when I started changing code
+        // assuming it was to do with neighborSystems Variable
+        // Need to check WarStatus, WarTick and OnDayPassed.
         public void CalculateSystemInfluence()
         {
             influenceTracker.Clear();
@@ -266,12 +267,12 @@ namespace GalaxyatWar
                 if (owner == "Locals")
                     influenceTracker.Add("Locals", 100);
 
-                //call to original code segment.
+                // call to original code segment.
                 UnmodedSystemInfluenceCalc();
             }
             else
             {
-                // Is Processed if HyadesRimCompatible is flagged as true
+                // Is Processed if HyadesRimCompatible is flagged as true (HyadesRim Mod Compatability Code)
                 if (owner == "NoFaction" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
                     influenceTracker.Add("NoFaction", 100);
                 if (owner == "Locals" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
