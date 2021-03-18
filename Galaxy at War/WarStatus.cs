@@ -86,17 +86,17 @@ namespace GalaxyatWar
                 deathListTracker.Add(d);
             }
 
-           /* foreach (var system in Globals.GaWSystems)
+            foreach (var system in Globals.GaWSystems)
             {
                 if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                     AbandonedSystems.Add(system.Name);
                 var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
-                if (Globals.Settings.DefensiveFactions.Contains(warFaction.faction) && Globals.Settings.DefendersUseARforDR)
+                /*if (Globals.Settings.DefensiveFactions.Contains(warFaction.faction) && Globals.Settings.DefendersUseARforDR)
                     warFaction.DefensiveResources += GetTotalAttackResources(system);
-                else
-                    warFaction.AttackResources += GetTotalAttackResources(system);
+                else*/
+                warFaction.AttackResources += GetTotalAttackResources(system);
                 warFaction.DefensiveResources += GetTotalDefensiveResources(system);
-            }*/
+            }
 
             Logger.LogDebug("WarFaction AR/DR set.");
             /*var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
@@ -155,14 +155,15 @@ namespace GalaxyatWar
                 systemStatus.absPosX = Math.Abs(0 - system.Position.x);
                 systemStatus.absPosY = Math.Abs(0 - system.Position.y);
                 systemStatus.systemsDistanceFromZero = (float)Math.Sqrt((systemStatus.absPosX * systemStatus.absPosX) + (systemStatus.absPosY * systemStatus.absPosY));
-
-                //Logger.ValueLog(system.Name + " AbsX = " + systemStatus.absPosX + "; AbsY = " + systemStatus.absPosY + ";");
-                //systemStatus.FindNeighbors();
-
                 systems.Add(systemStatus);
+
+                foreach (SystemStatus curSystem in systems)
+                {
+                    curSystem.InitializeContracts();
+                }
                 //---end-new-block-------------------
 
-                /*if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
+                if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {
                     FullPirateSystems.Add(system.Name);
                     PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
@@ -170,13 +171,7 @@ namespace GalaxyatWar
 
                 if (system.Tags.Contains("planet_region_hyadesrim") && !FlashpointSystems.Contains(system.Name)
                                                                     && (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "Locals"))
-                    HyadesRimGeneralPirateSystems.Add(system.Name);*/
-            }
-
-            foreach(SystemStatus system in systems)
-            {
-                system.CalculateSystemInfluence();
-                system.InitializeContracts();
+                    HyadesRimGeneralPirateSystems.Add(system.Name);
             }
 
             Logger.LogDebug("Full pirate systems created.");
@@ -184,26 +179,16 @@ namespace GalaxyatWar
             systemsByResources = systems.OrderBy(x => x.systemResources.TotalResources).ToList();
             PrioritySystems = new List<string>(systems.Count);
 
-            //----new---block---
             /*
              * an attempt at sorting the systems in a way that is good for resource distrobution.
              * Sort by faction, then by systems distance from 0 (zero), decending.
              */
-
             systems.Sort((f1, f2) =>
             {
                 int result = string.Compare(f1.owner, f2.owner, StringComparison.Ordinal);
                 return result == 0 ? f2.systemsDistanceFromZero.CompareTo(f1.systemsDistanceFromZero) : result;
             });
 
-            //debug block
-            //TODO remember to remove
-            foreach(SystemStatus system in systems)
-            {
-                Logger.ValueLog(system.owner + " Distance from zero = " + system.systemsDistanceFromZero);
-            }
-            //---end--debug---------
-            //---end---new-block----
             Logger.LogDebug("SystemStatus ordered lists created.");
         }
 

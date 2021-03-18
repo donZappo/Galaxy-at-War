@@ -83,7 +83,7 @@ namespace GalaxyatWar
                     PirateActivity = Globals.Settings.StartingPirateActivity;
                 else
                     PirateActivity = Globals.Settings.StartingPirateActivity_ISM;*/
-            //CalculateSystemInfluence();
+            CalculateSystemInfluence();
             //InitializeContracts();
         }
 
@@ -158,13 +158,11 @@ namespace GalaxyatWar
                 if (system.systemResources.hasDoneDistrobution)
                     divisor -= 1;
             }
-
             //determines amount of resources to give to each same faction system
             if (divisor > 0)
             {
                 float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.AttackResources, this.systemResources.BaseSystemAttackResources, ref this.systemResources.TotalResources, divisor);
                 float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.DefenceResources, this.systemResources.BaseSystemDefenceResources, ref this.systemResources.TotalResources, divisor);
-
                 //distributes resources to neighbor faction systems
                 foreach (SystemStatus system in nSystems)
                 {
@@ -174,20 +172,9 @@ namespace GalaxyatWar
                         try
                         {
                             indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
-
                             Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
                             Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
                             Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
-
-                            //--debug-----block
-                            float totalSauce = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources;
-                            string faction = Globals.WarStatusTracker.systems[indexOfSystem].owner;
-
-                            if (faction == "Locals")
-                            {
-                                Logger.ValueLog("TotalResources During processing = " + totalSauce);
-                            }
-                            //--end-debug----
                         }
                         catch (Exception e)
                         {
@@ -205,9 +192,9 @@ namespace GalaxyatWar
          *************************************************************************************************/
         public void ResourcesRequestedFromNeighbor()
         {
-            foreach (SystemStatus neibSystems in nSystems)
+            foreach (SystemStatus system in nSystems)
             {
-                if (neibSystems.owner == this.owner)
+                if (system.owner == this.owner)
                 {
 
                 }
@@ -278,7 +265,6 @@ namespace GalaxyatWar
                     influenceTracker.Add("NoFaction", 100);
                 if (owner == "Locals")
                     influenceTracker.Add("Locals", 100);
-
                 // call to original code segment.
                 UnmodedSystemInfluenceCalc();
             }
@@ -289,7 +275,6 @@ namespace GalaxyatWar
                     influenceTracker.Add("NoFaction", 100);
                 if (owner == "Locals" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
                     influenceTracker.Add("Locals", 100);
-
                 // calls original code segments.
                 ModedSystemInfluenceCalc();
                 UnmodedSystemInfluenceCalc();
