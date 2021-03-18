@@ -120,75 +120,81 @@ namespace GalaxyatWar
         //does a check if it is withen range of an enemy, if it is holds
         //onto its resources.
         //TODO decide wether this belongs here or in the Resource Class.
-        public void DistributeResourcesToLocalFactionSystems()
+        public void DistributeResources()
         {
             if (!inRangeOfEnemy)
             {
-                int divisor = nSystems.Count();
-                foreach(SystemStatus system in nSystems)
-                {
-                    if (system.systemResources.hasDoneDistrobution)
-                        divisor -= 1;
-                }
+                PushResourcesToLocalFactionSystems();
+            }
+            /***************************************************************
+            * This section Will get activated if the system is in range of an enemy Faction.               
+            * TODO need to decide if a SystemStatus will process ask requests
+            * for resources here or not.
+            * a function(s)? will probably need to be made so that resource queries can be proccessed 
+            * and resources can be returned if available.
+            * 
+            * Originally had this else statement in the wronge place.*            
+            * **************************************************************/
+            //--Start-enemy-in-range-resource-block--------------------------------------------------                
+            else
+            {
+                //ResourcesRequestedFromNeighbor();
+            }
+            //-----End-----enemy-faction--in-range---resource-Block------------------------------------
+            this.systemResources.hasDoneDistrobution = true;
+        }
 
-                //determines amount of resources to give to each same faction system
-                if (divisor > 0)
-                {
-                    float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.AttackResources, this.systemResources.BaseSystemAttackResources, ref this.systemResources.TotalResources, divisor);
-                    float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.DefenceResources, this.systemResources.BaseSystemDefenceResources, ref this.systemResources.TotalResources, divisor);
+        /**********************************************************************************************
+         * 
+         *  Determines number of local systems to push resources to and calculates how much resources
+         *  they will recieve. Then Distributes those resources.
+         * 
+         **********************************************************************************************/
+         internal void PushResourcesToLocalFactionSystems()
+         {   
+            int divisor = nSystems.Count();
+            foreach (SystemStatus system in nSystems)
+            {
+                if (system.systemResources.hasDoneDistrobution)
+                    divisor -= 1;
+            }
 
-                    //distributes resources to neighbor faction systems
-                    foreach (SystemStatus system in nSystems)
+            //determines amount of resources to give to each same faction system
+            if (divisor > 0)
+            {
+                float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.AttackResources, this.systemResources.BaseSystemAttackResources, ref this.systemResources.TotalResources, divisor);
+                float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref this.systemResources.DefenceResources, this.systemResources.BaseSystemDefenceResources, ref this.systemResources.TotalResources, divisor);
+
+                //distributes resources to neighbor faction systems
+                foreach (SystemStatus system in nSystems)
+                {
+                    if (!system.systemResources.hasDoneDistrobution)
                     {
-                        if (!system.systemResources.hasDoneDistrobution)
+                        int indexOfSystem = 0;
+                        try
                         {
-                            int indexOfSystem = 0;
-                            try
+                            indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
+
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
+
+                            //--debug-----block
+                            float totalSauce = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources;
+                            string faction = Globals.WarStatusTracker.systems[indexOfSystem].owner;
+
+                            if (faction == "Locals")
                             {
-                                indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
-
-                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
-                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
-                                Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
-
-                                //--debug-----block
-                                float totalSauce = Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources;
-                                string faction = Globals.WarStatusTracker.systems[indexOfSystem].owner;
-
-                                if(faction == "Locals")
-                                {
-                                    Logger.ValueLog("TotalResources During processing = " + totalSauce);
-                                }
-                                //--end-debug----
-                                //Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
+                                Logger.ValueLog("TotalResources During processing = " + totalSauce);
                             }
-                            catch(Exception e)
-                            {
-                                Logger.Log(e.Message + "\n" + "Index Does Not Exist");
-                            }
+                            //--end-debug----
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Log(e.Message + "\n" + "Index Does Not Exist");
                         }
                     }
                 }
-                /***************************************************************
-                 * This section Will get activated if the system is in range of an enemy Faction.               
-                 * TODO need to decide if a SystemStatus will process ask requests
-                 * for resources here or not.
-                 * a function(s)? will probably need to be made so that resource queries can be proccessed 
-                 * and resources can be returned if available.
-                 * **************************************************************/
-                 //--Start-enemy-in-range-resource-block--------------------------------------------------                
-                else
-                {
-                    foreach(SystemStatus neibSystems in nSystems)
-                    {
-                        if (neibSystems.owner == this.owner)
-                        {
-
-                        }
-                    }
-                }
-                //-----End-----enemy-faction--in-range---resource-Block------------------------------------
-                this.systemResources.hasDoneDistrobution = true;
             }
         }
 
@@ -199,7 +205,13 @@ namespace GalaxyatWar
          *************************************************************************************************/
         public void ResourcesRequestedFromNeighbor()
         {
- 
+            foreach (SystemStatus neibSystems in nSystems)
+            {
+                if (neibSystems.owner == this.owner)
+                {
+
+                }
+            }
         }
 
         //Created a horrible loop if FindNeighbors was run in ctor

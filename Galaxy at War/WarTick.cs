@@ -203,12 +203,12 @@ namespace GalaxyatWar
                     {
                         Logger.ValueLog("Locals system " + system.name + "; ARBefore = " + system.systemResources.AttackResources +"; DRBefore = " + system.systemResources.DefenceResources);
                         Logger.ValueLog("TotalResources = " + system.systemResources.TotalResources);
-                        system.DistributeResourcesToLocalFactionSystems();
+                        system.DistributeResources();
                         Logger.ValueLog("Locals system " + system.name + "; ARAfter = " + system.systemResources.AttackResources + "; DRAfter = " + system.systemResources.DefenceResources);
                         Logger.ValueLog("TotalResources = " + system.systemResources.TotalResources);
                     }
                     else
-                        system.DistributeResourcesToLocalFactionSystems();
+                        system.DistributeResources();
 
                     //system.CalculateSystemInfluence();
                     //system.InitializeContracts();
