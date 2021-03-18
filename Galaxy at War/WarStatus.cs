@@ -173,6 +173,12 @@ namespace GalaxyatWar
                     HyadesRimGeneralPirateSystems.Add(system.Name);*/
             }
 
+            foreach(SystemStatus system in systems)
+            {
+                system.CalculateSystemInfluence();
+                system.InitializeContracts();
+            }
+
             Logger.LogDebug("Full pirate systems created.");
             systems = systems.OrderBy(x => x.name).ToList();
             systemsByResources = systems.OrderBy(x => x.systemResources.TotalResources).ToList();

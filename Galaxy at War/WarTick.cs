@@ -209,6 +209,9 @@ namespace GalaxyatWar
                     }
                     else
                         system.DistributeResourcesToLocalFactionSystems();
+
+                    //system.CalculateSystemInfluence();
+                    //system.InitializeContracts();
                 }
             }else
                 Globals.WarStatusTracker.FirstTickInitialization = false; 

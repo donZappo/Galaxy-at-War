@@ -83,14 +83,15 @@ namespace GalaxyatWar
                     PirateActivity = Globals.Settings.StartingPirateActivity;
                 else
                     PirateActivity = Globals.Settings.StartingPirateActivity_ISM;*/
-            CalculateSystemInfluence();
-            InitializeContracts();
+            //CalculateSystemInfluence();
+            //InitializeContracts();
         }
 
         /******************************************************************************************************************
          * This function will check if the current resource can be pushed to other local faction members
          * then sets the amount each member will recieve.
          * returning that value.
+         * Otherwise will return value of zero, meaning it has no available resource of that type to give.        
          *******************************************************************************************************************/
         internal float CalculateRersourcesToPushToLocalFactionMembers(ref float sysRes, float sysBaseRes, ref float sysTotalRes, int divisor)
         {
@@ -145,7 +146,7 @@ namespace GalaxyatWar
                             try
                             {
                                 indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
-                                //Logger.ValueLog(system.name + " Index of neighbor system is " + indexOfSystem);
+
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
                                 Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
@@ -178,11 +179,27 @@ namespace GalaxyatWar
                  //--Start-enemy-in-range-resource-block--------------------------------------------------                
                 else
                 {
+                    foreach(SystemStatus neibSystems in nSystems)
+                    {
+                        if (neibSystems.owner == this.owner)
+                        {
 
+                        }
+                    }
                 }
                 //-----End-----enemy-faction--in-range---resource-Block------------------------------------
                 this.systemResources.hasDoneDistrobution = true;
             }
+        }
+
+        /*************************************************************************************************
+         * 
+         * 
+         * 
+         *************************************************************************************************/
+        public void ResourcesRequestedFromNeighbor()
+        {
+ 
         }
 
         //Created a horrible loop if FindNeighbors was run in ctor
