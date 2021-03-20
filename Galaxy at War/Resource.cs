@@ -49,33 +49,59 @@ namespace GalaxyatWar
         }
 
 
-        //TODO go through this code.
+        // TODO go through this code.
+        // putting in notes, there are somethings that i don't quiet understand in it
+        // Will repurpose modify/take parts that are needed
+        // So far my understanding is this takes the factions total attack resources
+        // divides it all up. Then stores the total amount that is going to be used agaisnt each other faction it is currently
+        // in combat with. Assuming this gets carried on in the next method AllocateAttackResources.
         public static void DivideAttackResources(WarFaction warFaction, bool useFullSet)
         {
             //Log("Attacking");
-            var deathList = warFaction.DeathListTracker;
-            var warFar = warFaction.warFactionAttackResources;
+            var deathList = warFaction.DeathListTracker;  // Still really need to properly figure out what this is (assumed systems faction is attacking)
+            var warFar = warFaction.warFactionAttackResources; //is this attack resources spent against each faction ? key == faction value==attackresources
             warFar.Clear();
-            var tempTargets = new Dictionary<string, float>();
+
+            var tempTargets = new Dictionary<string, float>(); //targets current faction is attacking
+
+            //gets all systems on the factions deathlist
             foreach (var fact in warFaction.attackTargets.Keys)
             {
                 tempTargets.Add(fact, deathList.deathList[fact]);
             }
 
-            var total = tempTargets.Values.Sum();
-            var attackResources =  warFaction.AttackResources - warFaction.AR_Against_Pirates;
-            attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
+            var total = tempTargets.Values.Sum();  //total amount of systems in combat with
+
+
+            // this one line wouldve been making some pretty heafty negative values, while the pirates math was going awol
+            var attackResources =  warFaction.AttackResources - warFaction.AR_Against_Pirates;  //total amount of attack resources
+
+            //attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
+            //---look---at-this-some-more-
             if (warFaction.ComstarSupported)
                 attackResources += Globals.Settings.GaW_Police_ARBonus;
+
             warFaction.AR_Against_Pirates = 0;
+
             if (Globals.Settings.AggressiveToggle && !Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
                 attackResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
 
+            //not sure why this is necessary.
             attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Globals.Settings.AResourceAdjustmentPerCycle / 100);
-            attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
-            attackResources += attackResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
-            attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
 
+            //attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
+
+            //potential negative value -1,1
+            attackResources += attackResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread); 
+            //---end--looking--------------
+
+            ///attackResources = Helpers.Clamp(attackResources, Globals.ResourceGenericMax);
+
+            //warFar changes never do anything, unless DIctionarys are passed by ref nativly.
+            //TODO check how dictionarys are passed
+            //some of this doesn't add up sit right with me, more code to follow, but since i will be 
+            //doing processing differently, by a system calculating it's own resources do not believe much of the code
+            //in here will be used.
             foreach (var rfact in tempTargets.Keys)
             {
                 warFar.Add(rfact, tempTargets[rfact] * attackResources / total);
