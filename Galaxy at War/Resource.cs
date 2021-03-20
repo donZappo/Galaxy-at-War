@@ -104,38 +104,50 @@ namespace GalaxyatWar
             //in here will be used.
             foreach (var rfact in tempTargets.Keys)
             {
-                warFar.Add(rfact, tempTargets[rfact] * attackResources / total);
-            }
+                warFar.Add(rfact, tempTargets[rfact] * attackResources / total); //ahh warfar is pretty much just a label/pointer that refers to
+            }                                                                    //warFaction.warFactionAttackResources
         }
 
         //TODO go through this code.
         public static void AllocateAttackResources(WarFaction warFaction)
         {
+            //contracts--code-------
             var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => x.Name == warFaction.faction));
             var maxContracts = HotSpots.ProcessReputation(factionRep);
+            //end------contracts---code----- 
+
+
             if (warFaction.warFactionAttackResources.Count == 0)
                 return;
+
             var warFactionAR = warFaction.warFactionAttackResources;
             //Go through the different resources allocated from attacking faction to spend against each targetFaction
             var deathListTracker = warFaction.DeathListTracker;
             foreach (var targetFaction in warFactionAR.Keys.Intersect(warFaction.attackTargets.Keys))
             {
-                var targetFar = warFactionAR[targetFaction];
+                var targetFar = warFactionAR[targetFaction]; //gets resources allocated to swing at other faction
                 var startingTargetFar = targetFar;
-                var attackTargets = warFaction.attackTargets[targetFaction];
+                var attackTargets = warFaction.attackTargets[targetFaction];  //gets the list of systems names in combat with, of the currently selected faction
+
+                // makes a list of systemStatus of the currents systems of the current faction this faction is at war with
                 var map = new Dictionary<string, SystemStatus>();
                 foreach (var targetName in attackTargets)
                 {
                     map.Add(targetName, Globals.WarStatusTracker.systems.Find(x => x.name == targetName));
                 }
 
-                var hatred = deathListTracker.deathList[targetFaction];
-                var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction);
+                var hatred = deathListTracker.deathList[targetFaction];  // I dont actualy know what the float is refering to for this, AR or DR ?
+                                                                         // or something else entirely
+
+                var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction); //gets opposong factions warfaction info
+
+                // this loop keeps going untill the total amount of resources to use against the current enemy faction is exausted
+                // targetFar is the total allocated resource
                 while (targetFar > 0 && attackTargets.Count > 0)
                 {
 
                     // DE-CONSTRUCTOR!
-                    (string target, SystemStatus system) = map.GetRandomElement();
+                    (string target, SystemStatus system) = map.GetRandomElement(); // gets a random system or a return value of null
 
                     if (system == null)
                     {
@@ -143,9 +155,10 @@ namespace GalaxyatWar
                         return;
                     }
 
+                    //this looks like a filter check to catch anything that should not have gotten through, or is currently immune to war.
                     if (system.owner == warFaction.faction || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
                     {
-                        attackTargets.Remove(target);
+                        attackTargets.Remove(target); 
                         return;
                     }
 
@@ -154,19 +167,22 @@ namespace GalaxyatWar
                         system.DifficultyRating <= maxContracts &&
                         system.DifficultyRating >= maxContracts - 4)
                     {
-                        system.PriorityAttack = true;
-                        if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
-                        {
+                        system.PriorityAttack = true; //another item i'm not so sure on, have to dig some to find out.
+
+
+                        if (!system.CurrentlyAttackedBy.Contains(warFaction.faction)) //does a check to see if the opposing system is currently beiing attacked
+                        {                                                             //by this faction
                             system.CurrentlyAttackedBy.Add(warFaction.faction);
                         }
 
-                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(system.starSystem.Name))
+                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(system.starSystem.Name)) 
                         {
                             Globals.WarStatusTracker.PrioritySystems.Add(system.starSystem.Name);
                         }
                     }
 
                     //Distribute attacking resources to systems.
+                    //TODO find out what triggers/flags the Contended status
                     if (system.Contended || Globals.WarStatusTracker.HotBox.Contains(system.name))
                     {
                         attackTargets.Remove(system.starSystem.Name);
@@ -178,24 +194,45 @@ namespace GalaxyatWar
                     }
 
                     var arFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
-                    var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
-                    spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor);
-                    spendAR = Helpers.Clamp(spendAR, Globals.ResourceGenericMax);
-                    var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
-                    var pMaxValue = 200.0f;
-                    if (maxValueList.Count > 1)
-                        pMaxValue = maxValueList[1];
 
-                    var itValue = system.influenceTracker[warFaction.faction];
-                    var basicAR = (float) (11 - system.DifficultyRating) / 2;
+                    // this calculates the total amount of resources the current system will get upto the the total amount that can potentially be
+                    // allocated to it. 
+                    var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
+
+                    spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor); //Spend factor could inflate value considerably
+
+                    //clamp that had been put in many places to try get rid of the crazy negative values.
+                    spendAR = Helpers.Clamp(spendAR, Globals.ResourceGenericMax);
+
+                    var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
+
+                    var pMaxValue = 200.0f;          //What is P ?
+
+                    if (maxValueList.Count > 1)
+                        pMaxValue = maxValueList[1];  //why 1 instead of 0
+
+                    var itValue = system.influenceTracker[warFaction.faction]; //should be a value between or equal to 0 and 100
+
+                    var basicAR = (float) (11 - system.DifficultyRating) / 2; //I changed this from memory it was creating a much larger value and wasnt / 2
+                                                                              //just seemed like there was way to much inflation of values
+                                                                              //almost like numbers were inflated so more weird dodgy math could be added to
+                                                                              //try fix a problem.
                     var bonusAR = 0f;
-                    if (itValue > pMaxValue)
+
+                    if (itValue > pMaxValue)                                  //either ive missed something or this code should never have to be called
                         bonusAR = (itValue - pMaxValue) * 0.15f;
 
-                    var totalAR = basicAR + bonusAR + spendAR;
+                    var totalAR = basicAR + bonusAR + spendAR;                // actuall amount of AR being swung at the current enemy system                
+
+                    //looking back at things I modified this block of code originally not realising what it did.
+                    //from memory this one block, affects overaul influence way more then you would expect.
                     if (targetFar > totalAR)
                     {
-                        system.influenceTracker[warFaction.faction] += totalAR;
+                        system.influenceTracker[warFaction.faction] += totalAR; //what i don't get is why boost the enemys influence by the amount of resources
+                                                                                //they lose.  It is possible that at the time i may have changed them to +
+                                                                                //while trying to get rid of negative values. ahh yes because of the resource
+                                                                                //system getting mangled and throwing massive negative values everywhere
+                                                                                //influence was all over the place as well.
                         targetFar -= totalAR;
                         targetWarFaction.defenseTargets.Add(system.name);
                     }
@@ -204,6 +241,7 @@ namespace GalaxyatWar
                         system.influenceTracker[warFaction.faction] += targetFar;
                         targetFar = 0;
                     }
+
                 }
             }
         }
@@ -234,6 +272,7 @@ namespace GalaxyatWar
             {
                 map.Add(defenseTarget, Globals.WarStatusTracker.systems.Find(x => x.name == defenseTarget));
             }
+
 
             // spend and decrement defensiveResources
             while (defensiveResources > float.Epsilon)
