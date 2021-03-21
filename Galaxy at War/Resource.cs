@@ -249,25 +249,40 @@ namespace GalaxyatWar
         //TODO go through this code.
         public static void AllocateDefensiveResources(WarFaction warFaction, bool useFullSet)
         {
-            if (warFaction.defenseTargets.Count == 0)
+            if (warFaction.defenseTargets.Count == 0)                  // not going to change it, but systems defending would be easier to understand
+                                                                       // or defendingSystems. just checks if the current faction is defending itself from
+                                                                       // another faction or not.
                 return;
 
             var faction = warFaction.faction;
-            var defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
+            var defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates; // calculates the total amount of the current factions pool
+                                                                                                    // of defence resources.
+            // was clamped to make sure the value was not negative.
             defensiveResources = Helpers.Clamp(defensiveResources, Globals.ResourceGenericMax);
 
             if (warFaction.ComstarSupported)
                 defensiveResources += Globals.Settings.GaW_Police_DRBonus;
-            warFaction.DR_Against_Pirates = 0;
+
+            warFaction.DR_Against_Pirates = 0;              // not sure why this gets set to 0, the resources have already been applied to the factions
+                                                            // total defence resources. Maybe i made that change last year ?
+                                       
             if (Globals.Settings.AggressiveToggle && Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
-                defensiveResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
+                defensiveResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;   // gonna take a stab in the dark and assume that is adding
+                                                                                                   // a negative value.
+
+            // TODO follow the Globals
+            // Currently not sure why this exists, player added difficulty ?
             var defensiveCorrection = defensiveResources * (100 * Globals.Settings.GlobalDefenseFactor -
                                                             Globals.Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
 
             defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
+
+
             var startingDefensiveResources = defensiveResources;
             var map = new Dictionary<string, SystemStatus>();
+
+            // makes a dictionary of SystemStatus of this factions defending systems.
             foreach (var defenseTarget in warFaction.defenseTargets.Distinct())
             {
                 map.Add(defenseTarget, Globals.WarStatusTracker.systems.Find(x => x.name == defenseTarget));
@@ -275,12 +290,14 @@ namespace GalaxyatWar
 
 
             // spend and decrement defensiveResources
-            while (defensiveResources > float.Epsilon)
+            while (defensiveResources > 0.0f)  
             {
                 var highest = 0f;
                 var highestFaction = faction;
                 var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
+
                 var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
+
                 spendDr =  spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
                 spendDr = Helpers.Clamp(spendDr, Globals.ResourceGenericMax);
 
@@ -302,11 +319,15 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var total = systemStatus.influenceTracker.Values.Sum();
+                var total = systemStatus.influenceTracker.Values.Sum();  // Influence code, gets total influence, should equal 100 
+
+                // sorts influence by faction name and influence is greater then 0, I think?
                 var sequence = systemStatus.influenceTracker
                     .Where(x => x.Value != 0)
                     .Select(x => x.Key);
-                foreach (var factionStr in sequence)
+
+                foreach (var factionStr in sequence)                                // finds the first faction with influence greater then or equal to 50 
+                                                                                    // and exits loop imidiately
                 {
                     if (systemStatus.influenceTracker[factionStr] > highest)
                     {
@@ -322,17 +343,21 @@ namespace GalaxyatWar
                 {
                     if (defensiveResources > 0)
                     {
-                        systemStatus.influenceTracker[faction] += spendDr;
+                        systemStatus.influenceTracker[faction] += spendDr;         // gives the owner faction in the system more influence if they are still
+                                                                                   // the main influence holder of the system.
                         defensiveResources -= spendDr;
                     }
                     else
                     {
-                        systemStatus.influenceTracker[faction] += defensiveResources;
+                        systemStatus.influenceTracker[faction] += defensiveResources; // this should probably just be commented out, or removed.
                         defensiveResources = 0;
                     }
                 }
                 else
                 {
+                    // is processed when the owner faction no longer has majority Influence
+                    // There is one thing that confuses me most, shouldnt someone who is defending be reducing an attackers attack points with defence points
+                    // in both the attack and defence methods, atk reduces atk and def reduces def. You may have atk vs atk posibly, but def vs def makes no sense at all.
                     var diffRes = systemStatus.influenceTracker[highestFaction] / total - systemStatus.influenceTracker[faction] / total;
                     var bonusDefense = spendDr + (diffRes * total - Globals.Settings.TakeoverThreshold / 100 * total) / (Globals.Settings.TakeoverThreshold / 100 + 1);
                     //LogDebug(bonusDefense);
