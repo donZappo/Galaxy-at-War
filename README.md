@@ -1,3 +1,9 @@
+Focussed a bit of time recently, to look at how the old resource code works.
+To keep the code in line with as much of the old code as possible, so that a lot of the helper code doesn't break.
+Need to make sure, the correct trackers are being used in the new code base.
+Only realy at the stage, where correct trackers need to be applied and testing of resource distrobution, both adding and removing is working at least resonably well.
+Without using influence.
+
 Edit:
 Will be overhauling resource distrobution and if necessary influence processing as well.
 Influence should more then likely have a class of it's own so it is easier to track, as it seems to be tied into many things.
