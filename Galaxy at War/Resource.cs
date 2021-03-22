@@ -48,13 +48,113 @@ namespace GalaxyatWar
             TotalResources = AttackResources + DefenceResources;
         }
 
+        //basic initial implimentation
+        //does a check if it is withen range of an enemy, if it is holds
+        //onto its resources.
+        //TODO decide wether this belongs here or in the Resource Class.
+        public void DistributeResources(List<SystemStatus> nSystems, bool inRangeOfEnemy)
+        {
+            if (!inRangeOfEnemy)
+            {
+                PushResourcesToLocalFactionSystems(nSystems);
+            }
+            /***************************************************************
+            * This section Will get activated if the system is in range of an enemy Faction.               
+            * TODO need to decide if a SystemStatus will process ask requests
+            * for resources here or not.
+            * a function(s)? will probably need to be made so that resource queries can be proccessed 
+            * and resources can be returned if available.
+            * 
+            * Originally had this else statement in the wronge place.*            
+            * **************************************************************/
+            //--Start-enemy-in-range-resource-block--------------------------------------------------                
+            else
+            {
+                //ResourcesRequestedFromNeighbor();
+            }
+            //-----End-----enemy-faction--in-range---resource-Block------------------------------------
+            hasDoneDistrobution = true;
+        }
+
+        /******************************************************************************************************************
+         * This function will check if the current resource can be pushed to other local faction members
+         * then sets the amount each member will recieve.
+         * returning that value.
+         * Otherwise will return value of zero, meaning it has no available resource of that type to give.        
+         *******************************************************************************************************************/
+        internal float CalculateRersourcesToPushToLocalFactionMembers(ref float sysRes, float sysBaseRes, ref float sysTotalRes, int divisor)
+        {
+            float currentResource = 0;
+
+            try
+            {
+                currentResource = (sysRes - sysBaseRes) / divisor;
+                if (currentResource >= 0)
+                {
+                    float diff = Math.Abs(sysRes - sysBaseRes);
+                    sysRes -= diff;
+                    sysTotalRes -= diff;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e.Message);
+                return currentResource;
+            }
+
+            return currentResource;
+        }
+
+        /**********************************************************************************************
+        * 
+        *  Determines number of local systems to push resources to and calculates how much resources
+        *  they will recieve. Then Distributes those resources.
+        * 
+        **********************************************************************************************/
+        internal void PushResourcesToLocalFactionSystems(List<SystemStatus> nSystems)
+        {
+            int divisor = nSystems.Count();
+            foreach (SystemStatus system in nSystems)
+            {
+                if (system.systemResources.hasDoneDistrobution)
+                    divisor -= 1;
+            }
+            //determines amount of resources to give to each same faction system
+            if (divisor > 0)
+            {
+                float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref AttackResources, BaseSystemAttackResources, ref TotalResources, divisor);
+                float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref DefenceResources, BaseSystemDefenceResources, ref TotalResources, divisor);
+                //distributes resources to neighbor faction systems
+                foreach (SystemStatus system in nSystems)
+                {
+                    if (!system.systemResources.hasDoneDistrobution)
+                    {
+                        int indexOfSystem = 0;
+                        try
+                        {
+                            indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
+                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Log(e.Message + "\n" + "Index Does Not Exist");
+                        }
+                    }
+                }
+            }
+        }
+
+        //---------------------^^------------------------------------^^------------------
 
         /*******************************************************************************
          *  This code block may be used long term. For now though it will be used
          *  as a staging filter for Items from the old Resource code base that needs to be
          *  kept, like trackers. currently its a storage area, not so great.
          *******************************************************************************/
-        /*public void extractedResourceCode()
+        /*
+        public void extractedResourceCode()
         {
             //------From-----DivideAttackResources----will more then likely not use any of it---
             var deathList = warFaction.DeathListTracker;  // Still really need to properly figure out what this is (assumed systems faction is attacking)
@@ -166,8 +266,8 @@ namespace GalaxyatWar
             //---Basic core of what I want to test. The Code will obviously not work in it's current state, its just the blocks i will be
             //---working from, with changes. probably some stuff in the influence area that needs to be untangled more will worry about that later
             //---if required.
-        }*/
-
+        }
+        */
 
         // TODO go through this code.
         // putting in notes, there are somethings that i don't quiet understand in it
