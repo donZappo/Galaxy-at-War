@@ -49,6 +49,126 @@ namespace GalaxyatWar
         }
 
 
+        /*******************************************************************************
+         *  This code block may be used long term. For now though it will be used
+         *  as a staging filter for Items from the old Resource code base that needs to be
+         *  kept, like trackers. currently its a storage area, not so great.
+         *******************************************************************************/
+        /*public void extractedResourceCode()
+        {
+            //------From-----DivideAttackResources----will more then likely not use any of it---
+            var deathList = warFaction.DeathListTracker;  // Still really need to properly figure out what this is (assumed systems faction is attacking)
+            var tempTargets = new Dictionary<string, float>(); //targets current faction is attacking
+
+            //gets all systems on the factions deathlist
+            foreach (var fact in warFaction.attackTargets.Keys)
+            {
+                tempTargets.Add(fact, deathList.deathList[fact]);
+            }
+
+            var total = tempTargets.Values.Sum();  //total amount of systems in combat with
+
+            //warFar changes never do anything, unless DIctionarys are passed by ref nativly.
+            //TODO check how dictionarys are passed
+            //some of this doesn't add up sit right with me, more code to follow, but since i will be 
+            //doing processing differently, by a system calculating it's own resources do not believe much of the code
+            //in here will be used.
+            foreach (var rfact in tempTargets.Keys)
+            {
+                warFar.Add(rfact, tempTargets[rfact] * attackResources / total); //ahh warfar is pretty much just a label/pointer that refers to
+            }                                                                    //warFaction.warFactionAttackResources
+            //-----------End Divide attack resources-------------------------------------------------
+
+            //--------From allocate attack resources-------------------------------------------------
+            var deathListTracker = warFaction.DeathListTracker;
+
+            //sinse a system is checking itself no loop is needed to determin faction.
+            //this code will need to be adjusted to reflect that.
+            var attackTargets = warFaction.attackTargets[targetFaction];  //gets the list of systems names in combat with, of the currently selected faction
+                                                                          // makes a list of systemStatus of the currents systems of the current faction this faction is at war with
+            var map = new Dictionary<string, SystemStatus>();
+            foreach (var targetName in attackTargets)
+            {
+                map.Add(targetName, Globals.WarStatusTracker.systems.Find(x => x.name == targetName));
+            }
+
+            var hatred = deathListTracker.deathList[targetFaction];  // I dont actualy know what the float is refering to for this, AR or DR ?
+                                                                     // or something else entirely
+
+            var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction); //gets opposong factions warfaction info
+
+            //this looks like a filter check to catch anything that should not have gotten through, or is currently immune to war.
+            if (system.owner == warFaction.faction || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
+            {
+                attackTargets.Remove(target);
+                return;
+            }
+
+            //Find most valuable target for attacking for later. Used in HotSpots.
+            if (hatred >= Globals.Settings.PriorityHatred &&
+                system.DifficultyRating <= maxContracts &&
+                system.DifficultyRating >= maxContracts - 4)
+            {
+                system.PriorityAttack = true; //another item i'm not so sure on, have to dig some to find out.
+
+
+                if (!system.CurrentlyAttackedBy.Contains(warFaction.faction)) //does a check to see if the opposing system is currently beiing attacked
+                {                                                             //by this faction
+                    system.CurrentlyAttackedBy.Add(warFaction.faction);
+                }
+
+                if (!Globals.WarStatusTracker.PrioritySystems.Contains(system.starSystem.Name))
+                {
+                    Globals.WarStatusTracker.PrioritySystems.Add(system.starSystem.Name);
+                }
+            }
+
+            //Distribute attacking resources to systems.
+            //TODO find out what triggers/flags the Contended status
+            if (system.Contended || Globals.WarStatusTracker.HotBox.Contains(system.name))
+            {
+                attackTargets.Remove(system.starSystem.Name);
+                if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
+                {
+                    break;
+                }
+                continue;
+            }
+
+            //--------end------------Attack resources block----Ignores all code to do with influence----------------------------------
+            //---------Start---AllocateDefensiveResources---------------block---------------------------------------------------------
+            if (warFaction.defenseTargets.Count == 0)                  // not going to change it, but systems defending would be easier to understand
+                                                                       // or defendingSystems. just checks if the current faction is defending itself from
+                                                                       // another faction or not.
+                return;
+
+            var faction = warFaction.faction;
+
+            var map = new Dictionary<string, SystemStatus>();
+
+            // makes a dictionary of SystemStatus of this factions defending systems.
+            foreach (var defenseTarget in warFaction.defenseTargets.Distinct())
+            {
+                map.Add(defenseTarget, Globals.WarStatusTracker.systems.Find(x => x.name == defenseTarget));
+            }
+
+            if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
+            {
+                warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
+                if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
+                {
+                    break;
+                }
+
+                continue;
+            }
+            //----end-----------AllocateDefensiveResources-------Block---------Ignores all code to do with influence---------------------
+            //---Basic core of what I want to test. The Code will obviously not work in it's current state, its just the blocks i will be
+            //---working from, with changes. probably some stuff in the influence area that needs to be untangled more will worry about that later
+            //---if required.
+        }*/
+
+
         // TODO go through this code.
         // putting in notes, there are somethings that i don't quiet understand in it
         // Will repurpose modify/take parts that are needed
@@ -265,6 +385,7 @@ namespace GalaxyatWar
 
             warFaction.DR_Against_Pirates = 0;              // not sure why this gets set to 0, the resources have already been applied to the factions
                                                             // total defence resources. Maybe i made that change last year ?
+                                                            // gets set in the pirates class that is disabled for now.
                                        
             if (Globals.Settings.AggressiveToggle && Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
                 defensiveResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;   // gonna take a stab in the dark and assume that is adding
