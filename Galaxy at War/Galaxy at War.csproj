@@ -111,6 +111,7 @@
     <Compile Include="WarFaction.cs" />
     <Compile Include="WarStatus.cs" />
     <Compile Include="WarTick.cs" />
+    <Compile Include="Combat.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\mod.json" />

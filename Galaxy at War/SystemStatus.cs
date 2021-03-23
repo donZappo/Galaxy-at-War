@@ -93,7 +93,8 @@ namespace GalaxyatWar
         **************************************************************************************************/
         public void DistributeResources()
         {
-            this.systemResources.DistributeResources(nSystems, inRangeOfEnemy);
+            if(!(Contended && Globals.WarStatusTracker.FlashpointSystems.Contains(this.name)))
+                this.systemResources.DistributeResources(nSystems, inRangeOfEnemy, owner);
         }
 
         /*************************************************************************************************
@@ -148,7 +149,7 @@ namespace GalaxyatWar
                     //test line
                     this.AddNeigborsToList(neighborSystem);
 
-                    if (this.owner != neighborSystem.OwnerValue.Name)
+                    if (owner != neighborSystem.OwnerValue.Name)
                         inRangeOfEnemy = true;
 
                     if (neighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
@@ -166,7 +167,10 @@ namespace GalaxyatWar
         // determine starting influence based on neighboring systems
         // TODO Determin What was broken when I started changing code
         // assuming it was to do with neighborSystems Variable
-        // Need to check WarStatus, WarTick and OnDayPassed.
+        // Need to check WarStatus, WarTick and OnDayPassed. 
+        //--
+        // Disabling the old resource code in resource, broke Influence.
+        // Currently fixing
         public void CalculateSystemInfluence()
         {
             influenceTracker.Clear();

@@ -51,9 +51,10 @@ namespace GalaxyatWar
         //basic initial implimentation
         //does a check if it is withen range of an enemy, if it is holds
         //onto its resources.
-        //TODO decide wether this belongs here or in the Resource Class.
-        public void DistributeResources(List<SystemStatus> nSystems, bool inRangeOfEnemy)
+        //TODO decide wether this belongs here or in the Resource Class. In Resource Class
+        public void DistributeResources(List<SystemStatus> nSystems, bool inRangeOfEnemy, string myFaction)
         {
+            WarFaction warFaction = new WarFaction(myFaction);
             if (!inRangeOfEnemy)
             {
                 PushResourcesToLocalFactionSystems(nSystems);
@@ -116,7 +117,7 @@ namespace GalaxyatWar
             int divisor = nSystems.Count();
             foreach (SystemStatus system in nSystems)
             {
-                if (system.systemResources.hasDoneDistrobution)
+                if (system.systemResources.hasDoneDistrobution || system.Contended || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
                     divisor -= 1;
             }
             //determines amount of resources to give to each same faction system
@@ -127,7 +128,7 @@ namespace GalaxyatWar
                 //distributes resources to neighbor faction systems
                 foreach (SystemStatus system in nSystems)
                 {
-                    if (!system.systemResources.hasDoneDistrobution)
+                    if (!(system.systemResources.hasDoneDistrobution && system.Contended && Globals.WarStatusTracker.FlashpointSystems.Contains(system.name)))
                     {
                         int indexOfSystem = 0;
                         try
