@@ -25,7 +25,9 @@ namespace GalaxyatWar
         internal string sysName;
         internal string sysFaction;
         internal WarFaction warFaction;
-        readonly Resource sysResource;
+        internal Resource sysResource;    //did some reading sinse this is a reference type the changes made here should just go down the chain.
+                                          //guess I should do some tests just in case. Technically less memory will be used as well.
+                                          //Will at some point go through the old code and tidy it up, if my understanding is correct.
 
         public Combat()
         {
@@ -118,20 +120,12 @@ namespace GalaxyatWar
             {
                 foreach (SystemStatus system in nSystemsThatCanBeAttacked)
                 {
-                    SpendAttackResources(system, nSystemsThatCanBeAttacked.Count);
+                    SpendAttackResources(system, aRToHitEachNSystemWith);
                 }
             }
         }
 
         /*
-         * wasn't sure how resource information should be passed through
-         * so currently as a read only field.
-         * 
-         * There are people who would change it, but if you do beware, it may cause
-         * you problems if your no good at tracking issues (know I definantly do).
-         * May just end up changing it purely because of the already stated reason.
-         * But for now, it is what it is.
-         * 
          * Thinking may just let systems do a full swing (everything they have atk
          * wise) above their base attack.
          * 
@@ -156,12 +150,13 @@ namespace GalaxyatWar
             float excess = system.systemResources.AttackResources - aRToAttackNeighborWith;
             if (excess >= 0f)
             {
-                 //remove attack from neighbor systems attack.
+                 //remove attack from neighbor systems attack and total resources.
             }
             else if (excess < 0 && system.systemResources.DefenceResources >= Math.Abs(excess))
             {
                 // set neighbors atk to 0
-                // subtract excess from neighbors defence resources
+                // subtract excess from neighbors defence resources 
+                // subtract aRToAttackNeighborWith from neighbors total resources
             }
             else
             {
@@ -169,7 +164,7 @@ namespace GalaxyatWar
                 // pretty sure im missing something here, need to have a break for a bit.
 
                 //----------------Potential--------------influence-----idea-------will-not-be-coded-here----
-                // potential excess to mess with not sure if this will be used.
+                // potential excess (invasion/occupying forces) to mess with. Not sure if this will be used.
                 // maybe excess from factions gets compaired to each other (if there is more then one faction with excess)
                 // the faction that has excess remaining gets an influence boost (remaining opposing factions in system duke it out)
                 //-------------end------potential-----influence-----idea-------------------------------------

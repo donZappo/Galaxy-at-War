@@ -83,25 +83,18 @@ namespace GalaxyatWar
          * returning that value.
          * Otherwise will return value of zero, meaning it has no available resource of that type to give.        
          *******************************************************************************************************************/
-        internal float CalculateRersourcesToPushToLocalFactionMembers(ref float sysRes, float sysBaseRes, ref float sysTotalRes, int divisor)
+        internal float CalculateRersourcesToPushToLocalFactionMembers(ref float sysRes, float sysBaseRes, int divisor)
         {
             float currentResource = 0;
+            currentResource = (sysRes - sysBaseRes) / divisor;
 
-            try
+            if (currentResource >= 0)
             {
-                currentResource = (sysRes - sysBaseRes) / divisor;
-                if (currentResource >= 0)
-                {
-                    float diff = Math.Abs(sysRes - sysBaseRes);
-                    sysRes -= diff;
-                    sysTotalRes -= diff;
-                }
+                float diff = Math.Abs(sysRes - sysBaseRes);
+                sysRes -= diff;
+                TotalResources -= diff;
             }
-            catch (Exception e)
-            {
-                Logger.Log(e.Message);
-                return currentResource;
-            }
+            currentResource = currentResource < 0 ? 0 : currentResource;
 
             return currentResource;
         }
@@ -123,25 +116,16 @@ namespace GalaxyatWar
             //determines amount of resources to give to each same faction system
             if (divisor > 0)
             {
-                float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref AttackResources, BaseSystemAttackResources, ref TotalResources, divisor);
-                float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref DefenceResources, BaseSystemDefenceResources, ref TotalResources, divisor);
+                float ARPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref AttackResources, BaseSystemAttackResources, divisor);
+                float DRPerSystem = CalculateRersourcesToPushToLocalFactionMembers(ref DefenceResources, BaseSystemDefenceResources, divisor);
                 //distributes resources to neighbor faction systems
                 foreach (SystemStatus system in nSystems)
                 {
                     if (!(system.systemResources.hasDoneDistrobution && system.Contended && Globals.WarStatusTracker.FlashpointSystems.Contains(system.name)))
                     {
-                        int indexOfSystem = 0;
-                        try
-                        {
-                            indexOfSystem = Globals.WarStatusTracker.systems.IndexOf(system);
-                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.AttackResources += ARPerSystem;
-                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.DefenceResources += DRPerSystem;
-                            Globals.WarStatusTracker.systems[indexOfSystem].systemResources.TotalResources += ARPerSystem + DRPerSystem;
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Log(e.Message + "\n" + "Index Does Not Exist");
-                        }
+                        system.systemResources.AttackResources += ARPerSystem;
+                        system.systemResources.DefenceResources += DRPerSystem;
+                        system.systemResources.TotalResources += ARPerSystem + DRPerSystem;
                     }
                 }
             }
