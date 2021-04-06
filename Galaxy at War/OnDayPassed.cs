@@ -136,7 +136,7 @@ namespace GalaxyatWar
                     }
 
                     Globals.Sim.StopPlayMode();
-                    return;
+                    //return;
                 }
 
                 //Remove systems from the protected pool.
@@ -171,6 +171,16 @@ namespace GalaxyatWar
 
                     LogDebug(">>> DONE PROC");
                 }
+
+                // Variable daily testing zone.
+                //foreach (var x in Globals.WarStatusTracker.systems)
+                //{
+                //    Logger.Log("=========================");
+                //    Logger.Log(x.CoreSystemID);
+                //    Logger.Log(x.PirateActivity.ToString());
+                //    if (x.PirateActivity > 100f)
+                //        Logger.Log("EXCESS PIRATE ACTIVITY");
+                //}
             }
         }
     }

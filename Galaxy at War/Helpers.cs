@@ -299,8 +299,9 @@ namespace GalaxyatWar
                     continue;
 
                 var totalInfluence = system.influenceTracker.Values.Sum();
-                if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
-                {
+                //if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
+                    if ((totalInfluence - 100) > 0)
+                    {
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
                     warFaction.defenseTargets.Add(system.name);
                 }
