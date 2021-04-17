@@ -1,15 +1,18 @@
-Focussed a bit of time recently, to look at how the old resource code works.
-To keep the code in line with as much of the old code as possible, so that a lot of the helper code doesn't break.
-Need to make sure, the correct trackers are being used in the new code base.
-Only realy at the stage, where correct trackers need to be applied and testing of resource distrobution, both adding and removing is working at least resonably well.
-Without using influence.
+A pretty big snag was hit so it wasn't pushed to this fork.
 
-Edit:
-Will be overhauling resource distrobution and if necessary influence processing as well.
-Influence should more then likely have a class of it's own so it is easier to track, as it seems to be tied into many things.
-In it's current state, it is not easy to trace problems. If required will be stripping things back and re-doing them in a modular fasion.
-To make sure each facet works properly before re-adding the next one.
-end edit:
+Whenever removing resources happened, resources went up, there was no reason for it to be doing that.
+
+Adding resources before removal being added, was working perfectly fine.
+
+Figured, either my removal code was bad (possible), something that I havent touched changes it again (possible), or there is something wrong with serialization (no idea, also possible?).
+
+Serialization being the toughest one to do anything with, figured will focus on that for a while.
+
+After doing some reading on how some mobile app devs deal with saving and loading using sqlight, I believe sqlight could be a better alternative to save and load mod data for Battletech.
+
+So for now, this will be dorment.
+Another repo will be made, to do with adding save/load features with sqlight(if possible).
+Would rather try and possibly fail, then not try at all.
 
 # Galaxy At War
 
