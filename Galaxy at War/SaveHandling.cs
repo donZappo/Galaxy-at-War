@@ -80,7 +80,7 @@ namespace GalaxyatWar
 
                     // try to recover from negative DR
                     // temporary code
-                    foreach (var systemStatus in Globals.WarStatusTracker.systems)
+                    /*foreach (var systemStatus in Globals.WarStatusTracker.systems)
                     {
                         if (systemStatus.DefenseResources <= 0)
                         {
@@ -88,7 +88,7 @@ namespace GalaxyatWar
                             systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.starSystem);
                             systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
                         }
-                    }
+                    }*/
 
                     if (Globals.WarStatusTracker.systems.Count == 0)
                     {
@@ -192,7 +192,7 @@ namespace GalaxyatWar
                 LogDebug("New global state created.");
                 // TODO is this value unchanging?  this is wrong if not
                 Globals.WarStatusTracker.systemsByResources =
-                    Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
+                    Globals.WarStatusTracker.systems.OrderBy(x => x.systemResources.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
                     LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem}).");
@@ -273,7 +273,7 @@ namespace GalaxyatWar
             HotSpots.HomeContendedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
             Globals.WarStatusTracker.systemsByResources =
-                Globals.WarStatusTracker.systems.OrderBy(x => x.TotalResources).ToList();
+                Globals.WarStatusTracker.systems.OrderBy(x => x.systemResources.TotalResources).ToList();
             SystemDifficulty();
 
             try

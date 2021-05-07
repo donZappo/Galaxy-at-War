@@ -59,7 +59,7 @@ namespace GalaxyatWar
                     if (systemStatus.PriorityDefense)
                     {
                         if (systemStatus.owner == dominantFaction)
-                            FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
+                            FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.systemResources.TotalResources);
                         else
                             ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                     }
@@ -71,7 +71,7 @@ namespace GalaxyatWar
                             if (attacker == dominantFaction)
                             {
                                 if (!FullHomeContendedSystems.Keys.Contains(systemStatus.starSystem))
-                                    FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
+                                    FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.systemResources.TotalResources);
                             }
                             else
                             {

@@ -43,5 +43,8 @@ namespace GalaxyatWar
         public static bool FirstDehydrate = true;
         internal static bool ModInitialized;
         internal static List<StarSystem> GaWSystems = new List<StarSystem>();
+        //extras for setting max values for the clamp
+        public static float PAMaxValue = 100f;
+        public static float ResourceGenericMax = 100000f;
     }
 }

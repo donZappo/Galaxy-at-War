@@ -149,6 +149,7 @@ namespace GalaxyatWar
                     }
                 }
 
+                WarTick.Tick(true, true);
                 if (Globals.Sim.DayRemainingInQuarter % Globals.Settings.WarFrequency == 0)
                 {
                     //LogDebug(">>> PROC");

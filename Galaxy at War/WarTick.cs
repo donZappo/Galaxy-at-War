@@ -29,14 +29,14 @@ namespace GalaxyatWar
             {
                 systemStatuses = Globals.WarStatusTracker.systems;
             }
-
+            /*
             if (checkForSystemChange && Globals.Settings.GaW_PoliceSupport)
                 CalculateComstarSupport();
 
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
-                var lowestAR = 5000f;
-                var lowestDr = 5000f;
+                //AddBaseWarTickResourcesPerSystem();
+
                 var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.faction)).ToList();
                 foreach (var faction in sequence)
@@ -46,21 +46,14 @@ namespace GalaxyatWar
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
-                        if (faction.AR_PerPlanet < lowestAR)
-                            lowestAR = faction.AR_PerPlanet;
-                        if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;
                     }
                     else if (systemCount != 0)
                     {
                         faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
                         faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
-                        if (faction.AR_PerPlanet < lowestAR)
-                            lowestAR = faction.AR_PerPlanet;
-                        if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;
                     }
                 }
+                ///-------------
 
                 foreach (var faction in sequence)
                 {
@@ -72,20 +65,23 @@ namespace GalaxyatWar
                 {
                     //Spread out bonus resources and make them fair game for the taking.
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
-                    systemStatus.AttackResources += warFaction.AR_PerPlanet;
-                    systemStatus.TotalResources += warFaction.AR_PerPlanet;
-                    systemStatus.DefenseResources += warFaction.DR_PerPlanet;
-                    systemStatus.TotalResources += warFaction.DR_PerPlanet;
+                    systemStatus.AttackResources += warFaction.AR_PerPlanet + GetTotalAttackResources(systemStatus.starSystem);          //probably doesn't need to be += as it should be 0        
+                    systemStatus.TotalResources += warFaction.AR_PerPlanet + GetTotalAttackResources(systemStatus.starSystem);           //may remove will leave in place for now       
+                    systemStatus.DefenseResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);      //probably doesn't need to be += as it should be 0              
+                    systemStatus.TotalResources += warFaction.DR_PerPlanet + GetTotalDefensiveResources(systemStatus.starSystem);        //may remove will leave in place for now       
                 }
             }
+            */
 
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
-            PiratesAndLocals.CorrectResources();
-            PiratesAndLocals.PiratesStealResources();
-            PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
-            PiratesAndLocals.DistributePirateResources();
-            PiratesAndLocals.DefendAgainstPirates();
+            /*
+            //PiratesAndLocals.CorrectResources();            
+            //PiratesAndLocals.PiratesStealResources();
+            //PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
+            //PiratesAndLocals.DistributePirateResources();
+            //PiratesAndLocals.DefendAgainstPirates();    
+
 
             if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
                 && Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Count != 0)
@@ -100,7 +96,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
                     Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
                 }
-            }
+            }*/
 
             LogDebug("Processing systems' influence.");
             foreach (var systemStatus in systemStatuses)
@@ -131,8 +127,19 @@ namespace GalaxyatWar
                         if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
                             !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
-                            var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
-                            systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
+                            if (neighbor == systemStatus.owner)
+                            {
+                                var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
+                                systemStatus.influenceTracker[neighbor] += systemStatus.influenceTracker[neighbor]/100 + pushFactor;
+                            }
+                            else 
+                            {
+                                //int a = 0;
+                                //int b = 0;
+                                systemStatus.neighborSystems.TryGetValue(neighbor, out int a);
+                                systemStatus.neighborSystems.TryGetValue(neighbor, out int b);
+                                var diffeence = Math.Abs(a - b);
+                            }
                         }
                     }
                 }
@@ -141,13 +148,19 @@ namespace GalaxyatWar
                 if (systemStatus.owner != systemStatus.OriginalOwner)
                     systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
 
-                var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
+                //TODO remember to return to this pirate code.
+                /* var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
 
                 if (Globals.Settings.ISMCompatibility)
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
-                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                var totalPirates = systemStatus.PirateActivity;
 
+                //var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+
+                ValueLog("System Name: " + systemStatus.name + "\n" + "Current PA: " + systemStatus.PirateActivity+ "\n" + "current AR: " + systemStatus.AttackResources + "\n" + "CurrentDR: " 
+                    + systemStatus.DefenseResources + "\n" + "Current TotalResources: " + systemStatus.TotalResources + "\n" + "totalPirates: " + totalPirates + "\n");
+                totalPirates = Helpers.Clamp(totalPirates, Globals.ResourceGenericMax);
                 if (totalPirates >= pirateSystemFlagValue)
                 {
                     if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
@@ -157,24 +170,61 @@ namespace GalaxyatWar
                 {
                     if (Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
                         Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
-                }
+                }*/
             }
 
-            Globals.WarStatusTracker.FirstTickInitialization = false;
+            //TODO remember to check the commented line of code under this.
+            //Globals.WarStatusTracker.FirstTickInitialization = false;
+
+            /*--------start-next------------
+             Intention is to make it so that each system will retain at least it's base min resources and only push out any resources that exceed that base value.
+             A system that is requesting resources, will pull the maximum available resource from faction systems withen range that are not in conflict with another system.
+             Instead of a global pool of resources that all faction systems pull from systems can only get reources from systems that are near them and the resources they generate
+             themselves if neccessary.
+             Any system that has excess resources and is not in conflict with another system will divide it's excess reources by the amount of faction systems within range and push those resources out
+             */
             LogDebug("Processing resource spending.");
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+
+            foreach(SystemStatus system in Globals.WarStatusTracker.systems)
             {
-                DivideAttackResources(warFaction, useFullSet);
+                system.FindNeighbors();
+                system.systemResources.hasDoneDistrobution = false;
+                system.systemResources.AddBaseWarTickResourcesForSystem();
             }
 
-            CalculateDefensiveSystems();
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            //Testing wether it is easier/better to let there be a single tick of resources
+            //before starting distrobution (Tick 2)
+            //TODO check DistrobuteResourcesToLocalFactionSystems for bugs. Cureently looks fine.
+            //Have noticed that to bug check, Total resources should be wired up properly, or i just shouldn't use it for testing output till it is wired up.
+            //Have a feeling systems with local faction stopped getting resources will run a few tests first before diving back in.
+            //Want to make sure that it is working correctly before moving on otherwise the problems will pile up.
+            if (!Globals.WarStatusTracker.FirstTickInitialization)
             {
-                AllocateDefensiveResources(warFaction, useFullSet);
-                AllocateAttackResources(warFaction);
-            }
+                foreach (SystemStatus system in Globals.WarStatusTracker.systems)
+                {
+                    system.DistributeResources();
+                }
+            }else
+                Globals.WarStatusTracker.FirstTickInitialization = false;
+            //--end----new----block-------------------------------------------------------------------------------------------- 
 
-            LogDebug("Processing influence changes.");
+
+             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+             {
+                //TODO follow the method 
+                //DivideAttackResources(warFaction, useFullSet);
+             }
+
+             CalculateDefensiveSystems();
+             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+             {
+                 //TODO follow the methods
+                 //AllocateDefensiveResources(warFaction, useFullSet);
+                 //AllocateAttackResources(warFaction);
+             }
+
+             LogDebug("Processing influence changes.");
+            // TODO follow the method
             UpdateInfluenceFromAttacks(checkForSystemChange);
 
             //Increase War Escalation or decay defenses.
@@ -201,6 +251,7 @@ namespace GalaxyatWar
             foreach (var system in Globals.WarStatusTracker.systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
+                // TODO follow the method
                 CalculateAttackAndDefenseTargets(system.starSystem);
                 RefreshContractsEmployersAndTargets(system);
             }

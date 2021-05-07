@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
@@ -90,15 +91,15 @@ namespace GalaxyatWar
                 if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                     AbandonedSystems.Add(system.Name);
                 var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
-                if (Globals.Settings.DefensiveFactions.Contains(warFaction.faction) && Globals.Settings.DefendersUseARforDR)
+                /*if (Globals.Settings.DefensiveFactions.Contains(warFaction.faction) && Globals.Settings.DefendersUseARforDR)
                     warFaction.DefensiveResources += GetTotalAttackResources(system);
-                else
-                    warFaction.AttackResources += GetTotalAttackResources(system);
+                else*/
+                warFaction.AttackResources += GetTotalAttackResources(system);
                 warFaction.DefensiveResources += GetTotalDefensiveResources(system);
             }
 
             Logger.LogDebug("WarFaction AR/DR set.");
-            var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
+            /*var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
             var maxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
 
             foreach (var faction in Globals.Settings.IncludedFactions)
@@ -128,16 +129,16 @@ namespace GalaxyatWar
                         warFaction.DefensiveResources = maxDR + Globals.Settings.BonusDefensiveResources_ISM[faction];
                     }
                 }
-            }
+            }*/
 
             Logger.LogDebug("WarFaction bonus AR/DR set.");
-            if (!Globals.Settings.ISMCompatibility)
+            /*if (!Globals.Settings.ISMCompatibility)
                 PirateResources = maxAR * Globals.Settings.FractionPirateResources + Globals.Settings.BonusPirateResources;
             else
                 PirateResources = maxAR * Globals.Settings.FractionPirateResources_ISM + Globals.Settings.BonusPirateResources_ISM;
 
             MinimumPirateResources = PirateResources;
-            StartingPirateResources = PirateResources;
+            StartingPirateResources = PirateResources;*/
             Logger.LogDebug("SystemStatus mass creation...");
             systems = new List<SystemStatus>(Globals.GaWSystems.Count);
             for (var index = 0; index < Globals.Sim.StarSystems.Count; index++)
@@ -148,8 +149,20 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+                SystemStatus systemStatus = new SystemStatus(system, system.OwnerValue.Name);
+
+                //--new-block------------------------
+                systemStatus.absPosX = Math.Abs(0 - system.Position.x);
+                systemStatus.absPosY = Math.Abs(0 - system.Position.y);
+                systemStatus.systemsDistanceFromZero = (float)Math.Sqrt((systemStatus.absPosX * systemStatus.absPosX) + (systemStatus.absPosY * systemStatus.absPosY));
                 systems.Add(systemStatus);
+
+                foreach (SystemStatus curSystem in systems)
+                {
+                    curSystem.InitializeContracts();
+                }
+                //---end-new-block-------------------
+
                 if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {
                     FullPirateSystems.Add(system.Name);
@@ -163,8 +176,19 @@ namespace GalaxyatWar
 
             Logger.LogDebug("Full pirate systems created.");
             systems = systems.OrderBy(x => x.name).ToList();
-            systemsByResources = systems.OrderBy(x => x.TotalResources).ToList();
+            systemsByResources = systems.OrderBy(x => x.systemResources.TotalResources).ToList();
             PrioritySystems = new List<string>(systems.Count);
+
+            /*
+             * an attempt at sorting the systems in a way that is good for resource distrobution.
+             * Sort by faction, then by systems distance from 0 (zero), decending.
+             */
+            systems.Sort((f1, f2) =>
+            {
+                int result = string.Compare(f1.owner, f2.owner, StringComparison.Ordinal);
+                return result == 0 ? f2.systemsDistanceFromZero.CompareTo(f1.systemsDistanceFromZero) : result;
+            });
+
             Logger.LogDebug("SystemStatus ordered lists created.");
         }
 
