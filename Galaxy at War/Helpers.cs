@@ -783,7 +783,7 @@ namespace GalaxyatWar
                 !Globals.Settings.ImmuneToWar.Contains(loser))
                 return true;
             return false;
-        }
+    }
 
         internal static int CalculateFlipMissions(string attacker, StarSystem system)
         {

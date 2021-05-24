@@ -96,6 +96,7 @@ namespace GalaxyatWar
         public bool ChangeDifficulty = true;
         public bool ResetMap = false;
         public bool LongWarTesting = false;
+        public int LongWarMonths = 100;
         public int DeploymentMinDays = 2;
         public int DeploymentMaxDays = 6;
         public float DeploymentContracts = 2.0f;

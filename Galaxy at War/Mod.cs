@@ -261,8 +261,12 @@ namespace GalaxyatWar
                         }
                         else if (Globals.EnemyFaction == "AuriganPirates")
                         {
+                            //Logger.Log("Fought against Pirates");
                             deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, true);
+                            //Logger.Log(warSystem.PirateActivity.ToString());
+                            //Logger.Log(deltaInfluence.ToString());
                             warSystem.PirateActivity -= (float) deltaInfluence;
+                            //Logger.Log(warSystem.PirateActivity.ToString());
                             if (Globals.WarStatusTracker.Deployment)
                                 Globals.WarStatusTracker.PirateDeployment = true;
                         }
