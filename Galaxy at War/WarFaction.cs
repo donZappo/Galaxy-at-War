@@ -27,7 +27,6 @@ namespace GalaxyatWar
         public float AR_PerPlanet = 0;
         // deprecated
         public float DR_PerPlanet = 0;
-        // TODO perhaps
 
         public float AttackResources
         {
@@ -36,8 +35,8 @@ namespace GalaxyatWar
             {
                 if (value < -50000 || value > 50000)
                 {
-                    Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug($"{faction}: {value}");
+                    Logger.LogDebug(new StackTrace().ToString());
                 }
                 attackResources = value;
             }
@@ -50,8 +49,8 @@ namespace GalaxyatWar
             {
                 if (value < -50000 || value > 50000)
                 {
-                    Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug($"{faction}: {value}");
+                    Logger.LogDebug(new StackTrace().ToString());
                 }
                 defensiveResources = value;
             }

@@ -117,7 +117,6 @@ namespace GalaxyatWar
                 if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
                     continue;
 
-                // this is auto-clamped.  the values get normalized to 100%.
                 if (!systemStatus.owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                 {
@@ -149,8 +148,8 @@ namespace GalaxyatWar
                 if (Globals.Settings.ISMCompatibility)
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
+                // LogDebug($"{systemStatus.starSystem.Name} total resources: {systemStatus.TotalResources}.  Pirate activity {systemStatus.PirateActivity}");
                 var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
-
                 if (totalPirates >= pirateSystemFlagValue)
                 {
                     if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
@@ -217,7 +216,7 @@ namespace GalaxyatWar
             {
                 LogDebug($"Changed on {Globals.Sim.CurrentDate.ToShortDateString()}: {Globals.WarStatusTracker.SystemChangedOwners.Count} systems:");
                 Globals.WarStatusTracker.SystemChangedOwners.OrderBy(x => x).Do(x =>
-                    LogDebug($"  {x}"));
+                LogDebug($"  {x}"));
                 Globals.WarStatusTracker.SystemChangedOwners.Clear();
                 if (StarmapMod.eventPanel != null)
                 {

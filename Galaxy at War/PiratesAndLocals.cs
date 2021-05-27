@@ -31,7 +31,6 @@ namespace GalaxyatWar
                 if (WarStatusTracker.MinimumPirateResources < WarStatusTracker.StartingPirateResources)
                     WarStatusTracker.MinimumPirateResources = WarStatusTracker.StartingPirateResources;
                 Logger.LogDebug($"MinimumPirateResources lowered: {WarStatusTracker.MinimumPirateResources}");
-                
             }
 
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
@@ -152,19 +151,20 @@ namespace GalaxyatWar
                     continue;
                 }
 
+                const int maxDifficulty = 11;
                 var currentPA = systemStatus.PirateActivity;
-                float basicPA = 11 - systemStatus.DifficultyRating;
+                float basicPA = maxDifficulty - systemStatus.DifficultyRating;
 
                 var bonusPA = currentPA / 50;
+                // How much they are going to spend to attack
                 var totalPA = basicPA + bonusPA;
 
                 var pirateSystemsContainsSystemStatus = WarStatusTracker.FullPirateSystems.Contains(systemStatus.name);
-                //Log(systemStatus.name);
                 if (currentPA + totalPA <= 100)
                 {
                     if (totalPA <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += Math.Min(totalPA * SpendFactor, 100 - systemStatus.PirateActivity);
+                        systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity);
                         CurrentPAResources -= Math.Min(totalPA * SpendFactor, 100 - systemStatus.PirateActivity);
                         i = 0;
                         if (!pirateSystemsContainsSystemStatus)
@@ -188,7 +188,7 @@ namespace GalaxyatWar
                 {
                     if (100 - systemStatus.PirateActivity <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += Math.Min(100, (100 - systemStatus.PirateActivity) * SpendFactor);
+                        systemStatus.PirateActivity += Math.Min(100, 100 - systemStatus.PirateActivity);
                         CurrentPAResources -= (100 - systemStatus.PirateActivity) * SpendFactor;
                         i++;
                         if (!pirateSystemsContainsSystemStatus)

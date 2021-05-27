@@ -173,20 +173,29 @@ namespace GalaxyatWar
                           (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)
             {
-                const int loops = 100;
-                Logger.LogDebug($"Running {loops} full ticks.");
-                for (var i = 0; i < loops; i++)
+                //const int loops = 100;
+                //Logger.LogDebug($"Running {loops} full ticks.");
+                //for (var i = 0; i < loops; i++)
+                //{
+                //    Logger.LogDebug("Tick " + $"{i,3}...");
+                //    try
+                //    {
+                //        WarTick.Tick(true, true);
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        Logger.Error(ex);
+                //    }
+                //}
+                LogDebug("LongWarTesting underway...");
+                for (var i = 0; i < Globals.Settings.LongWarMonths; i++)
                 {
-                    Logger.LogDebug("Tick " + $"{i,3}...");
-                    try
-                    {
-                        WarTick.Tick(true, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex);
-                    }
+                    WarTick.Tick(true, false);
+                    WarTick.Tick(true, false);
+                    WarTick.Tick(true, false);
+                    WarTick.Tick(true, true);
                 }
+                Globals.Sim.StopPlayMode();
             }
         }
     }

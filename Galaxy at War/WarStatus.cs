@@ -54,7 +54,12 @@ namespace GalaxyatWar
         public List<string> NeverControl = new List<string>();
         public int ComstarCycle = 0;
         public string ComstarAlly = "";
-
+        
+        // 1) All systems are set with a base value based upon the tags.
+        // 2) Each empire is totalled to see how many resources are within their sphere of influence.
+        // 3) All factions have their total resources elevated to be identical to each other.
+        // 4) Bonus resources are added to this pool.
+        // 5) All resources added to the empire from #3 and #4 are averaged out over all the systems in their sphere of influence.
         public WarStatus()
         {
             Logger.LogDebug("WarStatus ctor");

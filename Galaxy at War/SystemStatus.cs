@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using BattleTech.BinkMedia;
+using BattleTech.Rendering;
+using Harmony;
 using Newtonsoft.Json;
 
 namespace GalaxyatWar
@@ -39,12 +41,28 @@ namespace GalaxyatWar
         public bool BonusCBills;
         private float attackResources;
         private float defenseResources;
-        public float PirateActivity;
+        public float pirateActivity;
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
 
+        public float PirateActivity
+        {
+            get => pirateActivity;
+            set
+            {
+                if (value >= 25)
+                {
+                    Logger.LogDebug($"{name}: {value}");
+                    Logger.LogDebug(new StackTrace().ToString());
+                }
+
+                pirateActivity = value;
+            }
+            
+        }
+        
         public float AttackResources
         {
             get => attackResources;
@@ -53,7 +71,7 @@ namespace GalaxyatWar
                 if (value < -50000 || value > 50000)
                 {
                     Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug(new StackTrace().ToString());
                 }
 
                 attackResources = value;
