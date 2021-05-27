@@ -171,7 +171,8 @@ namespace GalaxyatWar
                 var highest = 0f;
                 var highestFaction = faction;
                 var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
-                var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
+                var spendDr = 1.0f;
+                //var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
                 spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
 
                 var systemStatus = map.GetRandomElement().Value;
