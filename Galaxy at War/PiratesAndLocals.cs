@@ -16,7 +16,7 @@ namespace GalaxyatWar
         public static void CorrectResources()
         {
             WarStatusTracker.PirateResources -= WarStatusTracker.TempPRGain;
-            if (WarStatusTracker.LastPRGain > WarStatusTracker.TempPRGain || WarStatusTracker.PirateResources < 0)
+            if (WarStatusTracker.LastPRGain > WarStatusTracker.TempPRGain || WarStatusTracker.PirateResources <= 0)
             {
                 WarStatusTracker.PirateResources = WarStatusTracker.MinimumPirateResources;
                 WarStatusTracker.MinimumPirateResources *= 1.1f;
