@@ -121,9 +121,9 @@ namespace GalaxyatWar
                 if (!systemStatus.owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                 {
-                    systemStatus.InfluenceTracker["Locals"] = Math.Max(systemStatus.InfluenceTracker["Locals"] * 1.1f, 100);
+                    systemStatus.InfluenceTracker["Locals"] = Math.Min(systemStatus.InfluenceTracker["Locals"] * 1.1f, 100);
                 }
-
+                
                 //Add resources from neighboring systems.
                 if (systemStatus.neighborSystems.Count != 0)
                 {
