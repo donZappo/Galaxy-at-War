@@ -280,7 +280,7 @@ namespace GalaxyatWar
             factionString.AppendLine(SubString);
 
             var tracker = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
-            foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
+            foreach (var influence in tracker.InfluenceTracker.OrderByDescending(x => x.Value))
             {
                 string number;
                 if (influence.Value < 1)

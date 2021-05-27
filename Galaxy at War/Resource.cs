@@ -113,12 +113,12 @@ namespace GalaxyatWar
                     var arFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                     var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
                     spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor);
-                    var maxValueList = system.influenceTracker.Values.OrderByDescending(x => x).ToList();
+                    var maxValueList = system.InfluenceTracker.Values.OrderByDescending(x => x).ToList();
                     var pMaxValue = 200.0f;
                     if (maxValueList.Count > 1)
                         pMaxValue = maxValueList[1];
 
-                    var itValue = system.influenceTracker[warFaction.faction];
+                    var itValue = system.InfluenceTracker[warFaction.faction];
                     var basicAR = (float) (11 - system.DifficultyRating) / 2;
                     var bonusAR = 0f;
                     if (itValue > pMaxValue)
@@ -127,13 +127,13 @@ namespace GalaxyatWar
                     var totalAR = basicAR + bonusAR + spendAR;
                     if (targetFar > totalAR)
                     {
-                        system.influenceTracker[warFaction.faction] += totalAR;
+                        system.InfluenceTracker[warFaction.faction] += totalAR;
                         targetFar -= totalAR;
                         targetWarFaction.defenseTargets.Add(system.name);
                     }
                     else
                     {
-                        system.influenceTracker[warFaction.faction] += targetFar;
+                        system.InfluenceTracker[warFaction.faction] += targetFar;
                         targetFar = 0;
                     }
                 }
@@ -191,15 +191,15 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var total = systemStatus.influenceTracker.Values.Sum();
-                var sequence = systemStatus.influenceTracker
+                var total = systemStatus.InfluenceTracker.Values.Sum();
+                var sequence = systemStatus.InfluenceTracker
                     .Where(x => x.Value != 0)
                     .Select(x => x.Key);
                 foreach (var factionStr in sequence)
                 {
-                    if (systemStatus.influenceTracker[factionStr] > highest)
+                    if (systemStatus.InfluenceTracker[factionStr] > highest)
                     {
-                        highest = systemStatus.influenceTracker[factionStr];
+                        highest = systemStatus.InfluenceTracker[factionStr];
                         highestFaction = factionStr;
                     }
 
@@ -211,34 +211,34 @@ namespace GalaxyatWar
                 {
                     if (defensiveResources > 0)
                     {
-                        systemStatus.influenceTracker[faction] += spendDr;
+                        systemStatus.InfluenceTracker[faction] += spendDr;
                         defensiveResources -= spendDr;
                     }
                     else
                     {
-                        systemStatus.influenceTracker[faction] += defensiveResources;
+                        systemStatus.InfluenceTracker[faction] += defensiveResources;
                         defensiveResources = 0;
                     }
                 }
                 else
                 {
-                    var diffRes = systemStatus.influenceTracker[highestFaction] / total - systemStatus.influenceTracker[faction] / total;
+                    var diffRes = systemStatus.InfluenceTracker[highestFaction] / total - systemStatus.InfluenceTracker[faction] / total;
                     var bonusDefense = spendDr + (diffRes * total - Globals.Settings.TakeoverThreshold / 100 * total) / (Globals.Settings.TakeoverThreshold / 100 + 1);
                     //LogDebug(bonusDefense);
                     if (100 * diffRes > Globals.Settings.TakeoverThreshold)
                         if (defensiveResources >= bonusDefense)
                         {
-                            systemStatus.influenceTracker[faction] += bonusDefense;
+                            systemStatus.InfluenceTracker[faction] += bonusDefense;
                             defensiveResources -= bonusDefense;
                         }
                         else
                         {
-                            systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 50);
+                            systemStatus.InfluenceTracker[faction] += Math.Min(defensiveResources, 50);
                             defensiveResources -= Math.Min(defensiveResources, 50);
                         }
                     else
                     {
-                        systemStatus.influenceTracker[faction] += Math.Min(defensiveResources, 50);
+                        systemStatus.InfluenceTracker[faction] += Math.Min(defensiveResources, 50);
                         defensiveResources -= Math.Min(defensiveResources, 50);
                     }
                 }

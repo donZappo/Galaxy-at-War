@@ -307,10 +307,10 @@ namespace GalaxyatWar
                     systemDef.OwnerValue = ownerValue;
                     systemDef.factionShopOwnerID = system.owner;
                     RefreshContractsEmployersAndTargets(system);
-                    if (system.influenceTracker.Keys.Contains("AuriganPirates") && !system.influenceTracker.Keys.Contains("NoFaction"))
+                    if (system.InfluenceTracker.Keys.Contains("AuriganPirates") && !system.InfluenceTracker.Keys.Contains("NoFaction"))
                     {
-                        system.influenceTracker.Add("NoFaction", system.influenceTracker["AuriganPirates"]);
-                        system.influenceTracker.Remove("AuriganPirates");
+                        system.InfluenceTracker.Add("NoFaction", system.InfluenceTracker["AuriganPirates"]);
+                        system.InfluenceTracker.Remove("AuriganPirates");
                     }
                     //if (!system.influenceTracker.Keys.Contains("NoFaction"))
                     //    system.influenceTracker.Add("NoFaction", 0);

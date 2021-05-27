@@ -346,7 +346,7 @@ namespace GalaxyatWar
                 starSystem.Def.contractEmployerIDs.Add(Globals.Settings.GaW_Police);
 
 
-            foreach (var influence in tracker.influenceTracker.OrderByDescending(x => x.Value))
+            foreach (var influence in tracker.InfluenceTracker.OrderByDescending(x => x.Value))
             {
                 if (Globals.WarStatusTracker.PirateDeployment)
                     break;

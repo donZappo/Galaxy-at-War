@@ -35,7 +35,7 @@ namespace GalaxyatWar
                     contractTargets.Do(x => LogDebug($"  {x}"));
                     Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
                     var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
-                    var employers = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).Take(2);
+                    var employers = systemStatus.InfluenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).Take(2);
                     foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
                     {
                         LogDebug($"{faction} Enemies:");
@@ -77,7 +77,7 @@ namespace GalaxyatWar
                     Globals.Sim.CurSystem.activeSystemContracts.Clear();
                     var system = Globals.Sim.CurSystem;
                     var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
-                    var influenceTracker = systemStatus.influenceTracker;
+                    var influenceTracker = systemStatus.InfluenceTracker;
                     var owner = influenceTracker.First().Key;
                     var second = influenceTracker.Skip(1).First().Key;
                     Logger.LogDebug(0);
