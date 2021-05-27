@@ -135,6 +135,7 @@ namespace GalaxyatWar
                     {
                         system.InfluenceTracker[warFaction.faction] += targetFar;
                         targetFar = 0;
+                        targetWarFaction.defenseTargets.Add(system.name);
                     }
                 }
             }
