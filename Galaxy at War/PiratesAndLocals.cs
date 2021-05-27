@@ -11,7 +11,6 @@ namespace GalaxyatWar
 {
     internal class PiratesAndLocals
     {
-        public static float CurrentPAResources;
         internal static readonly List<SystemStatus> FullPirateListSystems = new List<SystemStatus>();
 
         public static void CorrectResources()
@@ -130,7 +129,7 @@ namespace GalaxyatWar
             }
         }
 
-        public static void DistributePirateResources()
+        public static void DistributePirateResources(float CurrentPAResources)
         {
             var i = 0;
             while (CurrentPAResources > 0 && i != 1000)

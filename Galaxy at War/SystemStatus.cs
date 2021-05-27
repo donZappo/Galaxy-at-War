@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BattleTech;
+using BattleTech.BinkMedia;
 using Newtonsoft.Json;
 
 namespace GalaxyatWar
@@ -12,20 +14,20 @@ namespace GalaxyatWar
         public string owner;
 
         public Dictionary<string, int> neighborSystems = new Dictionary<string, int>();
-        internal Dictionary<string, float> influenceTrackerBf = new Dictionary<string, float>();
+        internal Dictionary<string, float> influenceTracker = new Dictionary<string, float>();
 
-        public Dictionary<string, float> influenceTracker
+        public Dictionary<string, float> InfluenceTracker
         {
-            get => influenceTrackerBf;
+            get => influenceTracker;
             set
             {
-                influenceTrackerBf = value;
-                influenceTrackerDescendingValue = influenceTrackerBf.Values.OrderByDescending(x => x).ToList();
+                influenceTracker = value;
+                InfluenceTrackerDescendingValue = influenceTracker.Values.OrderByDescending(x => x).ToList();
             }
         }
 
         // TODO wire this up
-        internal List<float> influenceTrackerDescendingValue;
+        internal List<float> InfluenceTrackerDescendingValue;
         public float TotalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
@@ -35,13 +37,43 @@ namespace GalaxyatWar
         public bool BonusSalvage;
         public bool BonusXP;
         public bool BonusCBills;
-        public float AttackResources;
-        public float DefenseResources;
+        private float attackResources;
+        private float defenseResources;
         public float PirateActivity;
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
+
+        public float AttackResources
+        {
+            get => attackResources;
+            set
+            {
+                if (value < -50000 || value > 50000)
+                {
+                    Logger.LogDebug(value);
+                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                }
+
+                attackResources = value;
+            }
+        }
+
+        public float DefenseResources
+        {
+            get => defenseResources;
+            set
+            {
+                if (value < -50000 || value > 50000)
+                {
+                    Logger.LogDebug(value);
+                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                }
+
+                defenseResources = value;
+            }
+        }
 
         internal StarSystem starSystem
         {
@@ -104,17 +136,17 @@ namespace GalaxyatWar
         // determine starting influence based on neighboring systems
         public void CalculateSystemInfluence()
         {
-            influenceTracker.Clear();
+            InfluenceTracker.Clear();
             if (!Globals.Settings.HyadesRimCompatible)
             {
                 if (owner == "NoFaction")
-                    influenceTracker.Add("NoFaction", 100);
+                    InfluenceTracker.Add("NoFaction", 100);
                 if (owner == "Locals")
-                    influenceTracker.Add("Locals", 100);
+                    InfluenceTracker.Add("Locals", 100);
 
                 if (owner != "NoFaction" && owner != "Locals")
                 {
-                    influenceTracker.Add(owner, Globals.Settings.DominantInfluence);
+                    InfluenceTracker.Add(owner, Globals.Settings.DominantInfluence);
                     var remainingInfluence = Globals.Settings.MinorInfluencePool;
 
                     if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
@@ -129,10 +161,10 @@ namespace GalaxyatWar
                                     remainingInfluence -= influenceDelta;
                                     if (Globals.Settings.DefensiveFactions.Contains(faction))
                                         continue;
-                                    if (influenceTracker.ContainsKey(faction))
-                                        influenceTracker[faction] += influenceDelta;
+                                    if (InfluenceTracker.ContainsKey(faction))
+                                        InfluenceTracker[faction] += influenceDelta;
                                     else
-                                        influenceTracker.Add(faction, influenceDelta);
+                                        InfluenceTracker.Add(faction, influenceDelta);
                                 }
                             }
                         }
@@ -141,26 +173,26 @@ namespace GalaxyatWar
 
                 foreach (var faction in Globals.IncludedFactions)
                 {
-                    if (!influenceTracker.Keys.Contains(faction))
-                        influenceTracker.Add(faction, 0);
+                    if (!InfluenceTracker.Keys.Contains(faction))
+                        InfluenceTracker.Add(faction, 0);
                 }
 
                 // need percentages from InfluenceTracker data 
-                var totalInfluence = influenceTracker.Values.Sum();
+                var totalInfluence = InfluenceTracker.Values.Sum();
                 var tempDict = new Dictionary<string, float>();
-                foreach (var kvp in influenceTracker)
+                foreach (var kvp in InfluenceTracker)
                 {
                     tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
                 }
 
-                influenceTracker = tempDict;
+                InfluenceTracker = tempDict;
             }
             else
             {
                 if (owner == "NoFaction" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
-                    influenceTracker.Add("NoFaction", 100);
+                    InfluenceTracker.Add("NoFaction", 100);
                 if (owner == "Locals" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
-                    influenceTracker.Add("Locals", 100);
+                    InfluenceTracker.Add("Locals", 100);
                 if ((owner == "NoFaction" || owner == "Locals") && starSystem.Tags.Contains("planet_region_hyadesrim"))
                 {
                     foreach (var pirateFaction in starSystem.Def.ContractEmployerIDList)
@@ -168,8 +200,8 @@ namespace GalaxyatWar
                         if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
                             continue;
 
-                        if (!influenceTracker.Keys.Contains(pirateFaction))
-                            influenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
+                        if (!InfluenceTracker.Keys.Contains(pirateFaction))
+                            InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
                     }
 
                     foreach (var pirateFaction in starSystem.Def.ContractTargetIDList)
@@ -177,15 +209,15 @@ namespace GalaxyatWar
                         if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
                             continue;
 
-                        if (!influenceTracker.Keys.Contains(pirateFaction))
-                            influenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
+                        if (!InfluenceTracker.Keys.Contains(pirateFaction))
+                            InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
                     }
                 }
 
 
                 if (owner != "NoFaction" && owner != "Locals")
                 {
-                    influenceTracker.Add(owner, Globals.Settings.DominantInfluence);
+                    InfluenceTracker.Add(owner, Globals.Settings.DominantInfluence);
                     var remainingInfluence = Globals.Settings.MinorInfluencePool;
 
                     if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
@@ -200,10 +232,10 @@ namespace GalaxyatWar
                                     remainingInfluence -= influenceDelta;
                                     if (Globals.Settings.DefensiveFactions.Contains(faction))
                                         continue;
-                                    if (influenceTracker.ContainsKey(faction))
-                                        influenceTracker[faction] += influenceDelta;
+                                    if (InfluenceTracker.ContainsKey(faction))
+                                        InfluenceTracker[faction] += influenceDelta;
                                     else
-                                        influenceTracker.Add(faction, influenceDelta);
+                                        InfluenceTracker.Add(faction, influenceDelta);
                                 }
                             }
                         }
@@ -212,19 +244,19 @@ namespace GalaxyatWar
 
                 foreach (var faction in Globals.IncludedFactions)
                 {
-                    if (!influenceTracker.Keys.Contains(faction))
-                        influenceTracker.Add(faction, 0);
+                    if (!InfluenceTracker.Keys.Contains(faction))
+                        InfluenceTracker.Add(faction, 0);
                 }
 
                 // need percentages from InfluenceTracker data 
-                var totalInfluence = influenceTracker.Values.Sum();
+                var totalInfluence = InfluenceTracker.Values.Sum();
                 var tempDict = new Dictionary<string, float>();
-                foreach (var kvp in influenceTracker)
+                foreach (var kvp in InfluenceTracker)
                 {
                     tempDict[kvp.Key] = kvp.Value / totalInfluence * 100;
                 }
 
-                influenceTracker = tempDict;
+                InfluenceTracker = tempDict;
             }
         }
 

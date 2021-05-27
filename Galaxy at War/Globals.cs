@@ -34,7 +34,6 @@ namespace GalaxyatWar
         internal static SimGameInterruptManager SimGameInterruptManager;
         internal static TaskTimelineWidget TaskTimelineWidget;
         internal static TMP_FontAsset Font;
-        // todo don't remove any fields from this class or it will break deserialization. probably.
         public static bool IsGoodFaithEffort;
         public static Dictionary<string, List<StarSystem>> AttackTargets = new Dictionary<string, List<StarSystem>>();
         public static List<StarSystem> DefenseTargets = new List<StarSystem>();
@@ -43,5 +42,6 @@ namespace GalaxyatWar
         public static bool FirstDehydrate = true;
         internal static bool ModInitialized;
         internal static List<StarSystem> GaWSystems = new List<StarSystem>();
+        internal static List<Battle> Battles = new();
     }
 }

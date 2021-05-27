@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
@@ -12,8 +14,8 @@ namespace GalaxyatWar
         public bool LostSystem;
         public float DaysSinceSystemAttacked;
         public float DaysSinceSystemLost;
-        public float AttackResources;
-        public float DefensiveResources;
+        private float attackResources;
+        private float defensiveResources;
         public int MonthlySystemsChanged;
         public int TotalSystemsChanged;
         public float PirateARLoss;
@@ -21,8 +23,39 @@ namespace GalaxyatWar
         public float AR_Against_Pirates = 0;
         public float DR_Against_Pirates = 0;
         public bool ComstarSupported = false;
+        // deprecated
         public float AR_PerPlanet = 0;
+        // deprecated
         public float DR_PerPlanet = 0;
+        // TODO perhaps
+        internal List<Battle> Battles = new();
+        public float AttackResources
+        {
+            get => attackResources;
+            set
+            {
+                if (value < -50000 || value > 50000)
+                {
+                    Logger.LogDebug(value);
+                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                }
+                attackResources = value;
+            }
+        }
+
+        public float DefensiveResources
+        {
+            get => defensiveResources;
+            set
+            {
+                if (value < -50000 || value > 50000)
+                {
+                    Logger.LogDebug(value);
+                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                }
+                defensiveResources = value;
+            }
+        }
 
         // removing this will break saves 
         public int NumberOfSystems
