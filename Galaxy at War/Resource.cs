@@ -173,7 +173,7 @@ namespace GalaxyatWar
                 var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                 var spendDr = 1.0f;
                 //var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
-                spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
+                //spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
 
                 var systemStatus = map.GetRandomElement().Value;
                 if (systemStatus == null)
