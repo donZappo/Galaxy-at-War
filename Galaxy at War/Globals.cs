@@ -42,6 +42,5 @@ namespace GalaxyatWar
         public static bool FirstDehydrate = true;
         internal static bool ModInitialized;
         internal static List<StarSystem> GaWSystems = new List<StarSystem>();
-        internal static List<Battle> Battles = new();
     }
 }

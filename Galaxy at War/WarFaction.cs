@@ -28,7 +28,7 @@ namespace GalaxyatWar
         // deprecated
         public float DR_PerPlanet = 0;
         // TODO perhaps
-        internal List<Battle> Battles = new();
+
         public float AttackResources
         {
             get => attackResources;
