@@ -6,6 +6,7 @@ using UnityEngine;
 using static GalaxyatWar.Helpers;
 using static GalaxyatWar.Resource;
 using static GalaxyatWar.Logger;
+
 // ReSharper disable InconsistentNaming
 
 // ReSharper disable ClassNeverInstantiated.Global
@@ -81,7 +82,7 @@ namespace GalaxyatWar
 
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
-            PiratesAndLocals.CorrectResources();
+            PiratesAndLocals.AdjustPirateResources();
             PiratesAndLocals.PiratesStealResources();
             PiratesAndLocals.DistributePirateResources(Globals.WarStatusTracker.PirateResources);
             PiratesAndLocals.DefendAgainstPirates();
@@ -116,10 +117,11 @@ namespace GalaxyatWar
                 if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
                     continue;
 
+                // this is auto-clamped.  the values get normalized to 100%.
                 if (!systemStatus.owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                 {
-                    systemStatus.InfluenceTracker["Locals"] *= 1.1f;
+                    systemStatus.InfluenceTracker["Locals"] = Math.Max(systemStatus.InfluenceTracker["Locals"] * 1.1f, 100);
                 }
 
                 //Add resources from neighboring systems.
@@ -137,8 +139,10 @@ namespace GalaxyatWar
                 }
 
                 //Revolt on previously taken systems.
+                // that represents is the previous faction essentially "revolting" against the new faction.
+                // So, if they have any influence in the system it gets bigger every turn. The only way to make it stop is to completely wipe them out.
                 if (systemStatus.owner != systemStatus.OriginalOwner)
-                    systemStatus.InfluenceTracker[systemStatus.OriginalOwner] *= 0.10f;
+                    systemStatus.InfluenceTracker[systemStatus.OriginalOwner] *= 1.10f;
 
                 var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
 
