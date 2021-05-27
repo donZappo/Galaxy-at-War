@@ -20,6 +20,21 @@ namespace GalaxyatWar
 {
     public static class Mod
     {
+        // this belongs in a different mod
+        [HarmonyPatch(typeof(Shop), "OnItemCollectionRetrieved")]
+        public class ShopOnItemCollectionRetrievedHackFixPatch
+        {
+            public static bool Prefix(Shop __instance, ItemCollectionDef def)
+            {
+                if (def == null)
+                {
+                    Log(__instance.system.Name);
+                }
+
+                return def != null;
+            }
+        }
+        
         //Remove duplicates in the ContractEmployerIDList
         [HarmonyPatch(typeof(SimGameState), "GetValidParticipants")]
         public static class SimGameStateGetValidParticipantsPatch
@@ -31,7 +46,7 @@ namespace GalaxyatWar
                 system.Def.contractEmployerIDs.Do(x => LogDebug($"  {x}"));
             }
         }
-
+        
         [HarmonyPatch(typeof(SimGameState), "GenerateContractParticipants")]
         public static class SimGameStateGenerateContractParticipantsPatch
         {
@@ -275,13 +290,13 @@ namespace GalaxyatWar
                             deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, false);
                             if (!Globals.InfluenceMaxed)
                             {
-                                warSystem.influenceTracker[Globals.TeamFaction] += (float) deltaInfluence;
-                                warSystem.influenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
+                                warSystem.InfluenceTracker[Globals.TeamFaction] += (float) deltaInfluence;
+                                warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
                             }
                             else
                             {
-                                warSystem.influenceTracker[Globals.TeamFaction] += (float) Math.Min(Globals.AttackerInfluenceHolder, 100 - warSystem.influenceTracker[Globals.TeamFaction]);
-                                warSystem.influenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
+                                warSystem.InfluenceTracker[Globals.TeamFaction] += (float) Math.Min(Globals.AttackerInfluenceHolder, 100 - warSystem.InfluenceTracker[Globals.TeamFaction]);
+                                warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
                             }
                         }
 

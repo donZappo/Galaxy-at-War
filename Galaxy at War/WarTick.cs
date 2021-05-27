@@ -6,6 +6,9 @@ using UnityEngine;
 using static GalaxyatWar.Helpers;
 using static GalaxyatWar.Resource;
 using static GalaxyatWar.Logger;
+
+// ReSharper disable InconsistentNaming
+
 // ReSharper disable ClassNeverInstantiated.Global
 
 namespace GalaxyatWar
@@ -36,7 +39,9 @@ namespace GalaxyatWar
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
                 var lowestAR = 5000f;
-                var lowestDr = 5000f;
+                var lowestDR = 5000f;
+                var perPlanetAR = 0f;
+                var perPlanetDR = 0f;
                 var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.faction)).ToList();
                 foreach (var faction in sequence)
@@ -44,47 +49,42 @@ namespace GalaxyatWar
                     var systemCount = Globals.WarStatusTracker.systems.Count(x => x.owner == faction.faction);
                     if (!Globals.Settings.ISMCompatibility && systemCount != 0)
                     {
-                        faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
-                        faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
-                        if (faction.AR_PerPlanet < lowestAR)
-                            lowestAR = faction.AR_PerPlanet;
-                        if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;
+                        perPlanetAR = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
+                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
+                        if (perPlanetAR < lowestAR)
+                            lowestAR = perPlanetAR;
+                        if (perPlanetDR < lowestDR)
+                            lowestDR = perPlanetDR;
                     }
                     else if (systemCount != 0)
                     {
-                        faction.AR_PerPlanet = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
-                        faction.DR_PerPlanet = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
-                        if (faction.AR_PerPlanet < lowestAR)
-                            lowestAR = faction.AR_PerPlanet;
-                        if (faction.DR_PerPlanet < lowestDr)
-                            lowestDr = faction.DR_PerPlanet;
+                        perPlanetAR = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
+                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
+                        if (perPlanetAR < lowestAR)
+                            lowestAR = perPlanetDR;
+                        if (perPlanetDR < lowestDR)
+                            lowestDR = perPlanetDR;
                     }
-                }
 
-                foreach (var faction in sequence)
-                {
-                    faction.AR_PerPlanet = Mathf.Min(faction.AR_PerPlanet, 2 * lowestAR);
-                    faction.DR_PerPlanet = Mathf.Min(faction.DR_PerPlanet, 2 * lowestDr);
+                    perPlanetAR = Mathf.Min(perPlanetAR, 2 * lowestAR);
+                    perPlanetDR = Mathf.Min(perPlanetDR, 2 * lowestDR);
                 }
 
                 foreach (var systemStatus in systemStatuses)
                 {
                     //Spread out bonus resources and make them fair game for the taking.
-                    var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == systemStatus.owner);
-                    systemStatus.AttackResources += warFaction.AR_PerPlanet;
-                    systemStatus.TotalResources += warFaction.AR_PerPlanet;
-                    systemStatus.DefenseResources += warFaction.DR_PerPlanet;
-                    systemStatus.TotalResources += warFaction.DR_PerPlanet;
+                    systemStatus.AttackResources += perPlanetAR;
+                    systemStatus.TotalResources += perPlanetAR;
+                    systemStatus.DefenseResources += perPlanetDR;
+                    systemStatus.TotalResources += perPlanetDR;
                 }
             }
 
             //Distribute Pirate Influence throughout the StarSystems
             LogDebug("Processing pirates.");
-            PiratesAndLocals.CorrectResources();
+            PiratesAndLocals.AdjustPirateResources();
             PiratesAndLocals.PiratesStealResources();
-            PiratesAndLocals.CurrentPAResources = Globals.WarStatusTracker.PirateResources;
-            PiratesAndLocals.DistributePirateResources();
+            PiratesAndLocals.DistributePirateResources(Globals.WarStatusTracker.PirateResources);
             PiratesAndLocals.DefendAgainstPirates();
 
             if (checkForSystemChange && Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Count != 0
@@ -117,12 +117,13 @@ namespace GalaxyatWar
                 if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
                     continue;
 
-                if (!systemStatus.owner.Equals("Locals") && systemStatus.influenceTracker.Keys.Contains("Locals") &&
+                // this is auto-clamped.  the values get normalized to 100%.
+                if (!systemStatus.owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                 {
-                    systemStatus.influenceTracker["Locals"] *= 1.1f;
+                    systemStatus.InfluenceTracker["Locals"] = Math.Min(systemStatus.InfluenceTracker["Locals"] * 1.1f, 100);
                 }
-
+                
                 //Add resources from neighboring systems.
                 if (systemStatus.neighborSystems.Count != 0)
                 {
@@ -132,14 +133,16 @@ namespace GalaxyatWar
                             !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
                             var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
-                            systemStatus.influenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
+                            systemStatus.InfluenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
                         }
                     }
                 }
 
                 //Revolt on previously taken systems.
+                // that represents is the previous faction essentially "revolting" against the new faction.
+                // So, if they have any influence in the system it gets bigger every turn. The only way to make it stop is to completely wipe them out.
                 if (systemStatus.owner != systemStatus.OriginalOwner)
-                    systemStatus.influenceTracker[systemStatus.OriginalOwner] *= 0.10f;
+                    systemStatus.InfluenceTracker[systemStatus.OriginalOwner] *= 1.10f;
 
                 var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
 

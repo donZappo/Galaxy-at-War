@@ -298,7 +298,7 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
                     continue;
 
-                var totalInfluence = system.influenceTracker.Values.Sum();
+                var totalInfluence = system.InfluenceTracker.Values.Sum();
                 //if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
                     if ((totalInfluence - 100) > 0)
                     {
@@ -530,10 +530,10 @@ namespace GalaxyatWar
             foreach (var systemStatus in Globals.WarStatusTracker.systems)
             {
                 var tempDict = new Dictionary<string, float>();
-                var totalInfluence = systemStatus.influenceTracker.Values.Sum();
+                var totalInfluence = systemStatus.InfluenceTracker.Values.Sum();
                 var highest = 0f;
                 var highestFaction = systemStatus.owner;
-                foreach (var kvp in systemStatus.influenceTracker)
+                foreach (var kvp in systemStatus.InfluenceTracker)
                 {
                     tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
                     if (kvp.Value > highest)
@@ -543,8 +543,8 @@ namespace GalaxyatWar
                     }
                 }
 
-                systemStatus.influenceTracker = tempDict;
-                var diffStatus = systemStatus.influenceTracker[highestFaction] - systemStatus.influenceTracker[systemStatus.owner];
+                systemStatus.InfluenceTracker = tempDict;
+                var diffStatus = systemStatus.InfluenceTracker[highestFaction] - systemStatus.InfluenceTracker[systemStatus.owner];
                 var starSystem = systemStatus.starSystem;
 
                 if (highestFaction != systemStatus.owner &&
@@ -569,7 +569,7 @@ namespace GalaxyatWar
 
                 //Local Government can take a system.
                 if (systemStatus.owner != "Locals" && systemStatus.OriginalOwner == "Locals" &&
-                    (highestFaction == "Locals" && systemStatus.influenceTracker[highestFaction] >= 75))
+                    (highestFaction == "Locals" && systemStatus.InfluenceTracker[highestFaction] >= 75))
                 {
                     ChangeSystemOwnership(starSystem, "Locals", true);
                     systemStatus.Contended = false;
@@ -706,7 +706,7 @@ namespace GalaxyatWar
             else if (piratesInvolved)
                 maximumInfluence = 100 - targetSystem.PirateActivity;
             else
-                maximumInfluence = targetSystem.influenceTracker[defenseFaction];
+                maximumInfluence = targetSystem.InfluenceTracker[defenseFaction];
 
             double influenceChange;
             contractDifficulty = Mathf.Max((int) contractDifficulty, targetSystem.DifficultyRating);
@@ -757,7 +757,7 @@ namespace GalaxyatWar
                 LogDebug($"null systemStatus {system.Name} at WillSystemFlip");
             }
 
-            var tempIt = new Dictionary<string, float>(warSystem.influenceTracker);
+            var tempIt = new Dictionary<string, float>(warSystem.InfluenceTracker);
 
             if (preBattle && !Globals.InfluenceMaxed)
             {
@@ -788,7 +788,7 @@ namespace GalaxyatWar
         internal static int CalculateFlipMissions(string attacker, StarSystem system)
         {
             var warSystem = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
-            var tempIt = new Dictionary<string, float>(warSystem.influenceTracker);
+            var tempIt = new Dictionary<string, float>(warSystem.InfluenceTracker);
             var missionCounter = 0;
             var influenceDifference = 0.0f;
             double contractDifficulty = warSystem.DifficultyRating;
@@ -821,14 +821,14 @@ namespace GalaxyatWar
 
         public static void RecalculateSystemInfluence(SystemStatus systemStatus, string newOwner, string oldOwner)
         {
-            systemStatus.influenceTracker.Clear();
-            systemStatus.influenceTracker.Add(newOwner, Globals.Settings.DominantInfluence);
-            systemStatus.influenceTracker.Add(oldOwner, Globals.Settings.MinorInfluencePool);
+            systemStatus.InfluenceTracker.Clear();
+            systemStatus.InfluenceTracker.Add(newOwner, Globals.Settings.DominantInfluence);
+            systemStatus.InfluenceTracker.Add(oldOwner, Globals.Settings.MinorInfluencePool);
 
             foreach (var faction in Globals.IncludedFactions)
             {
-                if (!systemStatus.influenceTracker.Keys.Contains(faction))
-                    systemStatus.influenceTracker.Add(faction, 0);
+                if (!systemStatus.InfluenceTracker.Keys.Contains(faction))
+                    systemStatus.InfluenceTracker.Add(faction, 0);
             }
         }
 
@@ -1054,7 +1054,7 @@ namespace GalaxyatWar
             var contracts = new List<Contract>();
             var system = Globals.Sim.CurSystem;
             var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
-            var influenceTracker = systemStatus.influenceTracker;
+            var influenceTracker = systemStatus.InfluenceTracker;
             var owner = influenceTracker.First().Key;
             var second = influenceTracker.Skip(1).First().Key;
             LogDebug(0);
@@ -1090,8 +1090,8 @@ namespace GalaxyatWar
                 var isPriority = Globals.Rng.Next(0, 11) == 0;
                 var system = isTravel ? Globals.GaWSystems.Where(x => x.JumpDistance < 10).GetRandomElement() : Globals.Sim.CurSystem;
                 var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
-                var owner = systemStatus.influenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).First();
-                var second = systemStatus.influenceTracker.OrderByDescending(x =>
+                var owner = systemStatus.InfluenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).First();
+                var second = systemStatus.InfluenceTracker.OrderByDescending(x =>
                     x.Value).Select(x => x.Key).Skip(1).Take(1).First();
                 var currentOwnerContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == owner);
                 var currentSecondContracts = Globals.Sim.GetAllCurrentlySelectableContracts().Count(x => x.Override.employerTeam.faction == second);
@@ -1109,7 +1109,7 @@ namespace GalaxyatWar
                 else if (currentOtherContracts < otherContracts)
                 {
                     variedDifficulty = Variance(system);
-                    AddContract(system, variedDifficulty, systemStatus.influenceTracker.Select(x => x.Key).GetRandomElement(), isTravel, isPriority);
+                    AddContract(system, variedDifficulty, systemStatus.InfluenceTracker.Select(x => x.Key).GetRandomElement(), isTravel, isPriority);
                 }
             }
         }

@@ -11,22 +11,27 @@ namespace GalaxyatWar
 {
     internal class PiratesAndLocals
     {
-        public static float CurrentPAResources;
         internal static readonly List<SystemStatus> FullPirateListSystems = new List<SystemStatus>();
 
-        public static void CorrectResources()
+        // if the pirates are getting a lot of resources it lowers the min.
+        // So it gives the pirates a continual boost if they need it, and then stops boosting them when they don't.
+        // It ensures there will also be some moderate amount of pirate activity going on
+        public static void AdjustPirateResources()
         {
             WarStatusTracker.PirateResources -= WarStatusTracker.TempPRGain;
-            if (WarStatusTracker.LastPRGain > WarStatusTracker.TempPRGain || WarStatusTracker.PirateResources < 0)
+            if (WarStatusTracker.LastPRGain >= WarStatusTracker.TempPRGain || WarStatusTracker.PirateResources <= 0)
             {
                 WarStatusTracker.PirateResources = WarStatusTracker.MinimumPirateResources;
                 WarStatusTracker.MinimumPirateResources *= 1.1f;
+                Logger.LogDebug($"MinimumPirateResources raised: {WarStatusTracker.MinimumPirateResources}");
             }
             else
             {
                 WarStatusTracker.MinimumPirateResources /= 1.1f;
                 if (WarStatusTracker.MinimumPirateResources < WarStatusTracker.StartingPirateResources)
                     WarStatusTracker.MinimumPirateResources = WarStatusTracker.StartingPirateResources;
+                Logger.LogDebug($"MinimumPirateResources lowered: {WarStatusTracker.MinimumPirateResources}");
+                
             }
 
             foreach (var warFaction in WarStatusTracker.warFactionTracker)
@@ -130,7 +135,7 @@ namespace GalaxyatWar
             }
         }
 
-        public static void DistributePirateResources()
+        public static void DistributePirateResources(float CurrentPAResources)
         {
             var i = 0;
             while (CurrentPAResources > 0 && i != 1000)
