@@ -36,7 +36,7 @@ namespace GalaxyatWar
                     FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
                     LogDebug($"{faction} Allies:");
                     FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
-                    Log("");
+                    //Log("");
                 }
                 LogDebug("Player allies:");
                 foreach (var faction in Globals.Sim.AlliedFactions)
@@ -127,7 +127,7 @@ namespace GalaxyatWar
                 if (Globals.Settings.LongWarTesting)
                 {
                     LogDebug("LongWarTesting underway...");
-                    for (var i = 0; i < 100; i++)
+                    for (var i = 0; i < Globals.Settings.LongWarMonths; i++)
                     {
                         WarTick.Tick(true, false);
                         WarTick.Tick(true, false);
@@ -136,7 +136,7 @@ namespace GalaxyatWar
                     }
 
                     Globals.Sim.StopPlayMode();
-                    return;
+                    //return;
                 }
 
                 //Remove systems from the protected pool.
@@ -171,6 +171,16 @@ namespace GalaxyatWar
 
                     LogDebug(">>> DONE PROC");
                 }
+
+                ////Variable daily testing zone.
+                //foreach (var x in Globals.WarStatusTracker.systems)
+                //{
+                //    Logger.Log("=========================");
+                //    Logger.Log(x.CoreSystemID);
+                //    Logger.Log(x.PirateActivity.ToString());
+                //    if (x.PirateActivity > 100f)
+                //        Logger.Log("EXCESS PIRATE ACTIVITY");
+                //}
             }
         }
     }

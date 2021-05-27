@@ -299,8 +299,9 @@ namespace GalaxyatWar
                     continue;
 
                 var totalInfluence = system.influenceTracker.Values.Sum();
-                if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
-                {
+                //if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
+                    if ((totalInfluence - 100) > 0)
+                    {
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
                     warFaction.defenseTargets.Add(system.name);
                 }
@@ -782,7 +783,7 @@ namespace GalaxyatWar
                 !Globals.Settings.ImmuneToWar.Contains(loser))
                 return true;
             return false;
-        }
+    }
 
         internal static int CalculateFlipMissions(string attacker, StarSystem system)
         {

@@ -82,11 +82,12 @@ namespace GalaxyatWar
                     // temporary code
                     foreach (var systemStatus in Globals.WarStatusTracker.systems)
                     {
-                        if (systemStatus.DefenseResources <= 0)
+                        if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
                         {
                             systemStatus.AttackResources = GetTotalAttackResources(systemStatus.starSystem);
                             systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.starSystem);
                             systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
+                            systemStatus.PirateActivity = 0;
                         }
                     }
 

@@ -84,6 +84,14 @@ namespace GalaxyatWar
                     newFactionEnemies.Remove(Globals.WarStatusTracker.ComstarAlly);
                 }
 
+                if (Globals.Settings.GaW_PoliceSupport &&
+                    employer.Name == Globals.WarStatusTracker.ComstarAlly &&
+                    newFactionEnemies.Contains(Globals.Settings.GaW_Police))
+                {
+                    //LogDebug($"Removing enemy (Comstar ally): {Globals.WarStatusTracker.ComstarAlly}");
+                    newFactionEnemies.RemoveAll(x => x == Globals.Settings.GaW_Police);
+                }
+
                 var array = newFactionEnemies.ToArray();
                 if (employer.Enemies == array)
                 {
@@ -253,8 +261,12 @@ namespace GalaxyatWar
                         }
                         else if (Globals.EnemyFaction == "AuriganPirates")
                         {
+                            //Logger.Log("Fought against Pirates");
                             deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, true);
+                            //Logger.Log(warSystem.PirateActivity.ToString());
+                            //Logger.Log(deltaInfluence.ToString());
                             warSystem.PirateActivity -= (float) deltaInfluence;
+                            //Logger.Log(warSystem.PirateActivity.ToString());
                             if (Globals.WarStatusTracker.Deployment)
                                 Globals.WarStatusTracker.PirateDeployment = true;
                         }

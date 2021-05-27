@@ -96,6 +96,7 @@ namespace GalaxyatWar
         public bool ChangeDifficulty = true;
         public bool ResetMap = false;
         public bool LongWarTesting = false;
+        public int LongWarMonths = 100;
         public int DeploymentMinDays = 2;
         public int DeploymentMaxDays = 6;
         public float DeploymentContracts = 2.0f;
@@ -114,8 +115,9 @@ namespace GalaxyatWar
         public int GaW_Police_DRBonus = 200;
         public int GaW_Police_SupportTime = 3;
 
-        public float MinimumResourceFactor = 0.001f;
-        public float MaximumResourceFactor = 0.003f;
+
+        public float MinimumResourceFactor = 0.0001f;
+        public float MaximumResourceFactor = 0.001f;
         public double SystemDefenseCutoff = 0.05;
         public bool CleanUpCompanyTag = false;
 

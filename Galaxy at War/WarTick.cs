@@ -167,11 +167,16 @@ namespace GalaxyatWar
                 DivideAttackResources(warFaction, useFullSet);
             }
 
+            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            {
+                AllocateAttackResources(warFaction);
+            }
+
             CalculateDefensiveSystems();
+
             foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
             {
                 AllocateDefensiveResources(warFaction, useFullSet);
-                AllocateAttackResources(warFaction);
             }
 
             LogDebug("Processing influence changes.");

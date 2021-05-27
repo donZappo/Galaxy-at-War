@@ -42,7 +42,7 @@ namespace GalaxyatWar
                         FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
                         LogDebug($"{faction} Allies:");
                         FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
-                        Log("");
+                        //Log("");
                     }
 
                     LogDebug("Player allies:");

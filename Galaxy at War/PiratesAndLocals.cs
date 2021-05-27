@@ -17,7 +17,7 @@ namespace GalaxyatWar
         public static void CorrectResources()
         {
             WarStatusTracker.PirateResources -= WarStatusTracker.TempPRGain;
-            if (WarStatusTracker.LastPRGain > WarStatusTracker.TempPRGain)
+            if (WarStatusTracker.LastPRGain > WarStatusTracker.TempPRGain || WarStatusTracker.PirateResources < 0)
             {
                 WarStatusTracker.PirateResources = WarStatusTracker.MinimumPirateResources;
                 WarStatusTracker.MinimumPirateResources *= 1.1f;
@@ -159,8 +159,8 @@ namespace GalaxyatWar
                 {
                     if (totalPA <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity) * SpendFactor;
-                        CurrentPAResources -= Math.Min(totalPA, 100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += Math.Min(totalPA * SpendFactor, 100 - systemStatus.PirateActivity);
+                        CurrentPAResources -= Math.Min(totalPA * SpendFactor, 100 - systemStatus.PirateActivity);
                         i = 0;
                         if (!pirateSystemsContainsSystemStatus)
                         {
@@ -183,7 +183,7 @@ namespace GalaxyatWar
                 {
                     if (100 - systemStatus.PirateActivity <= CurrentPAResources)
                     {
-                        systemStatus.PirateActivity += (100 - systemStatus.PirateActivity) * SpendFactor;
+                        systemStatus.PirateActivity += Math.Min(100, (100 - systemStatus.PirateActivity) * SpendFactor);
                         CurrentPAResources -= (100 - systemStatus.PirateActivity) * SpendFactor;
                         i++;
                         if (!pirateSystemsContainsSystemStatus)
