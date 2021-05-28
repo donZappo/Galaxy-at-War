@@ -12,9 +12,9 @@ namespace GalaxyatWar
         private static string logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
         private static StreamWriter writer = new(logFilePath, true);
 
-        public static async void Error(Exception ex)
+        public static void Error(Exception ex)
         {
-            await writer.WriteLineAsync($"{GetFormattedStartupTime()}  {ex}");
+            writer.WriteLine($"{GetFormattedStartupTime()}  {ex}");
         }
 
         // this beauty is from BetterLog from CptMoore's MechEngineer - thanks!
@@ -31,12 +31,12 @@ namespace GalaxyatWar
             return formatted;
         }
 
-        public static async void LogDebug(object line)
+        public static void LogDebug(object line)
         {
             try
             {
                 if (!Settings.Debug) return;
-                await writer.WriteLineAsync($"{GetFormattedStartupTime()}  {line}");
+                writer.WriteLine($"{GetFormattedStartupTime()}  {line}");
             }
             catch (Exception ex)
             {
@@ -44,15 +44,15 @@ namespace GalaxyatWar
             }
         }
 
-        public static async void Log(string line)
+        public static void Log(string line)
         {
-            await writer.WriteLineAsync(line);
+            writer.WriteLine(line);
         }
 
-        public static async void Clear()
+        public static void Clear()
         {
             if (!Settings.Debug) return;
-            await writer.WriteLineAsync($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
+            writer.WriteLine($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
         }
     }
 }
