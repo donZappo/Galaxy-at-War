@@ -20,21 +20,7 @@ namespace GalaxyatWar
 {
     public static class Mod
     {
-        // this belongs in a different mod
-        [HarmonyPatch(typeof(Shop), "OnItemCollectionRetrieved")]
-        public class ShopOnItemCollectionRetrievedHackFixPatch
-        {
-            public static bool Prefix(Shop __instance, ItemCollectionDef def)
-            {
-                if (def == null)
-                {
-                    Log(__instance.system.Name);
-                }
-
-                return def != null;
-            }
-        }
-        
+       
         //Remove duplicates in the ContractEmployerIDList
         [HarmonyPatch(typeof(SimGameState), "GetValidParticipants")]
         public static class SimGameStateGetValidParticipantsPatch
@@ -246,7 +232,7 @@ namespace GalaxyatWar
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.ToString());
+                    Error(ex);
                 }
             }
 
@@ -570,49 +556,6 @@ namespace GalaxyatWar
                     return;
 
                 contract.Override.shortDescription = __state;
-            }
-        }
-
-        [HarmonyPatch(typeof(ListElementController_InventoryWeapon_NotListView), "RefreshQuantity")]
-        public static class Bug_Tracing_Fix
-        {
-            static bool Prefix(ListElementController_InventoryWeapon_NotListView __instance, InventoryItemElement_NotListView theWidget)
-            {
-                try
-                {
-                    if (__instance.quantity == -2147483648)
-                    {
-                        theWidget.qtyElement.SetActive(false);
-                        return false;
-                    }
-
-                    theWidget.qtyElement.SetActive(true);
-                    theWidget.quantityValue.SetText("{0}", __instance.quantity);
-                    theWidget.quantityValueColor.SetUIColor((__instance.quantity > 0 || __instance.quantity == int.MinValue) ? UIColor.White : UIColor.Red);
-                    return false;
-                }
-                catch (Exception e)
-                {
-                    Log("*****Exception thrown with ListElementController_InventoryWeapon_NotListView");
-                    Log($"theWidget null: {theWidget == null}");
-                    Log($"theWidget.qtyElement null: {theWidget.qtyElement == null}");
-                    Log($"theWidget.quantityValue null: {theWidget.quantityValue == null}");
-                    Log($"theWidget.quantityValueColor null: {theWidget.quantityValueColor == null}");
-                    if (theWidget.itemName != null)
-                    {
-                        Log("theWidget.itemName");
-                        Log(theWidget.itemName.ToString());
-                    }
-
-                    if (__instance.GetName() != null)
-                    {
-                        Log("__instance.GetName");
-                        Log(__instance.GetName());
-                    }
-
-                    Error(e);
-                    return false;
-                }
             }
         }
 
