@@ -8,7 +8,6 @@ using static GalaxyatWar.Resource;
 using static GalaxyatWar.Logger;
 
 // ReSharper disable InconsistentNaming
-
 // ReSharper disable ClassNeverInstantiated.Global
 
 namespace GalaxyatWar

@@ -165,7 +165,7 @@ namespace GalaxyatWar
                     if (totalPA <= CurrentPAResources)
                     {
                         systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity);
-                        CurrentPAResources -= Math.Min(totalPA * SpendFactor, 100 - systemStatus.PirateActivity);
+                        CurrentPAResources -= Math.Min(totalPA, 100 - systemStatus.PirateActivity);
                         i = 0;
                         if (!pirateSystemsContainsSystemStatus)
                         {
@@ -189,7 +189,7 @@ namespace GalaxyatWar
                     if (100 - systemStatus.PirateActivity <= CurrentPAResources)
                     {
                         systemStatus.PirateActivity += Math.Min(100, 100 - systemStatus.PirateActivity);
-                        CurrentPAResources -= (100 - systemStatus.PirateActivity) * SpendFactor;
+                        CurrentPAResources -= 100 - systemStatus.PirateActivity;
                         i++;
                         if (!pirateSystemsContainsSystemStatus)
                         {

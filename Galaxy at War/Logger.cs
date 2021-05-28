@@ -10,16 +10,14 @@ namespace GalaxyatWar
     public static class Logger
     {
         private static string logFilePath;
+        private static StreamWriter writer = new(LogFilePath, true);
 
         private static string LogFilePath =>
-            logFilePath ?? (logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log");
+            logFilePath ??= Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
 
-        public static void Error(Exception ex)
+        public static async void Error(Exception ex)
         {
-            using (var writer = new StreamWriter(LogFilePath, true))
-            {
-                writer.WriteLine($"{GetFormattedStartupTime()}  {ex}");
-            }
+            await writer.WriteLineAsync($"{GetFormattedStartupTime()}  {ex}");
         }
 
         // this beauty is from BetterLog from CptMoore's MechEngineer - thanks!
@@ -41,10 +39,7 @@ namespace GalaxyatWar
             try
             {
                 if (!Settings.Debug) return;
-                using (var writer = new StreamWriter(LogFilePath, true))
-                {
-                    await writer.WriteLineAsync($"{GetFormattedStartupTime()}  {line}");
-                }
+                await writer.WriteLineAsync($"{GetFormattedStartupTime()}  {line}");
             }
             catch (Exception ex)
             {
@@ -52,21 +47,15 @@ namespace GalaxyatWar
             }
         }
 
-        public static void Log(string line)
+        public static async void Log(string line)
         {
-            using (var writer = new StreamWriter(LogFilePath, true))
-            {
-                writer.WriteLine(line);
-            }
+            await writer.WriteLineAsync(line);
         }
 
-        public static void Clear()
+        public static async void Clear()
         {
             if (!Settings.Debug) return;
-            using (var writer = new StreamWriter(LogFilePath, false))
-            {
-                writer.WriteLine($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
-            }
+            await writer.WriteLineAsync($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
         }
     }
 }

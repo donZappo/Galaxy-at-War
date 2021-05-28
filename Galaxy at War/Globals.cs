@@ -30,7 +30,7 @@ namespace GalaxyatWar
         internal static List<string> IncludedFactions;
         internal static List<string> OffensiveFactions;
         internal static List<FactionValue> FactionValues => FactionEnumeration.FactionList;
-        internal const float SpendFactor = 1;
+        internal const float SpendFactor = 5;
         internal static SimGameInterruptManager SimGameInterruptManager;
         internal static TaskTimelineWidget TaskTimelineWidget;
         internal static TMP_FontAsset Font;

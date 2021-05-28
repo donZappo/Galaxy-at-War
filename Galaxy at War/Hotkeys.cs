@@ -169,6 +169,16 @@ namespace GalaxyatWar
                 }
             }
 
+            var hotkeyM = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
+                          (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
+            if (hotkeyM)
+            {
+                WarTick.Tick(true, false);
+                WarTick.Tick(true, false);
+                WarTick.Tick(true, false);
+                WarTick.Tick(true, true);
+            }
+
             var hotkeyT = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
                           (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)

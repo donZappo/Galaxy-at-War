@@ -39,44 +39,14 @@ namespace GalaxyatWar
         public bool BonusSalvage;
         public bool BonusXP;
         public bool BonusCBills;
-        private float attackResources;
         private float defenseResources;
-        public float pirateActivity;
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
 
-        public float PirateActivity
-        {
-            get => pirateActivity;
-            set
-            {
-                if (value >= 25)
-                {
-                    Logger.LogDebug($"{name}: {value}");
-                    Logger.LogDebug(new StackTrace().ToString());
-                }
-
-                pirateActivity = value;
-            }
-            
-        }
-        
-        public float AttackResources
-        {
-            get => attackResources;
-            set
-            {
-                if (value < -50000 || value > 50000)
-                {
-                    Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().ToString());
-                }
-
-                attackResources = value;
-            }
-        }
+        public float PirateActivity { get; set; }
+        public float AttackResources { get; set; }
 
         public float DefenseResources
         {
@@ -86,7 +56,7 @@ namespace GalaxyatWar
                 if (value < -50000 || value > 50000)
                 {
                     Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug(new StackTrace());
                 }
 
                 defenseResources = value;
