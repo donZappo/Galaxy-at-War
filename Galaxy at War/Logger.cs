@@ -9,11 +9,8 @@ namespace GalaxyatWar
 {
     public static class Logger
     {
-        private static string logFilePath;
-        private static StreamWriter writer = new(LogFilePath, true);
-
-        private static string LogFilePath =>
-            logFilePath ??= Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
+        private static string logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
+        private static StreamWriter writer = new(logFilePath, true);
 
         public static async void Error(Exception ex)
         {
