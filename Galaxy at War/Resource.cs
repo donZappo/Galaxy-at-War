@@ -235,13 +235,13 @@ namespace GalaxyatWar
                         }
                         else
                         {
-                            systemStatus.InfluenceTracker[faction] += Math.Min(defensiveResources, 50);
-                            defensiveResources -= Math.Min(defensiveResources, spendDr);
+                            systemStatus.InfluenceTracker[faction] += Math.Min(defensiveResources, 10 * spendDr);
+                            defensiveResources -= Math.Min(defensiveResources, 10 * spendDr);
                         }
                     else
                     {
-                        systemStatus.InfluenceTracker[faction] += Math.Min(defensiveResources, 50);
-                        defensiveResources -= Math.Min(defensiveResources, spendDr);
+                        systemStatus.InfluenceTracker[faction] += Math.Min(defensiveResources, 10 * spendDr);
+                        defensiveResources -= Math.Min(defensiveResources, 10 * spendDr);
                     }
                 }
             }
