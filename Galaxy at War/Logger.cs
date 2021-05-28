@@ -52,7 +52,11 @@ namespace GalaxyatWar
         public static void Clear()
         {
             if (!Settings.Debug) return;
-            writer.WriteLine($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
+            using (var clear = new StreamWriter(logFilePath, false))
+            {
+                clear.WriteLine();
+                clear.WriteLine($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
+            }
         }
     }
 }
