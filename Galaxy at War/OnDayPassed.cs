@@ -19,30 +19,30 @@ namespace GalaxyatWar
             {
                 LogDebug("OnDayPassed");
                 var starSystem = Globals.Sim.CurSystem;
-                var contractEmployers = starSystem.Def.contractEmployerIDs;
-                var contractTargets = starSystem.Def.contractTargetIDs;
-                var owner = starSystem.OwnerValue;
-                LogDebug($"{starSystem.Name} owned by {owner.Name}");
-                LogDebug($"Employers in {starSystem.Name}");
-                contractEmployers.Do(x => LogDebug($"  {x}"));
-                LogDebug($"Targets in {starSystem.Name}");
-                contractTargets.Do(x => LogDebug($"  {x}"));
-                Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
-                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
-                var employers = systemStatus.InfluenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
-                foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
-                {
-                    LogDebug($"{faction} Enemies:");
-                    FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
-                    LogDebug($"{faction} Allies:");
-                    FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
+                //var contractEmployers = starSystem.Def.contractEmployerIDs;
+                //var contractTargets = starSystem.Def.contractTargetIDs;
+                //var owner = starSystem.OwnerValue;
+                //LogDebug($"{starSystem.Name} owned by {owner.Name}");
+                //LogDebug($"Employers in {starSystem.Name}");
+                //contractEmployers.Do(x => LogDebug($"  {x}"));
+                //LogDebug($"Targets in {starSystem.Name}");
+                //contractTargets.Do(x => LogDebug($"  {x}"));
+                //Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
+                //var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
+                //var employers = systemStatus.InfluenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
+                //foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
+                //{
+                    //LogDebug($"{faction} Enemies:");
+                    //FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
+                    //LogDebug($"{faction} Allies:");
+                    //FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
                     //Log("");
-                }
-                LogDebug("Player allies:");
-                foreach (var faction in Globals.Sim.AlliedFactions)
-                {
-                    LogDebug($"  {faction}");
-                }
+                //}
+                //LogDebug("Player allies:");
+                //foreach (var faction in Globals.Sim.AlliedFactions)
+                //{
+                //    LogDebug($"  {faction}");
+                //}
                 
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
@@ -123,7 +123,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.GaW_Event_PopUp = true;
                 }
 
-                //TEST: run 100 WarTicks and stop
+                //TEST: run X WarTicks and stop
                 if (Globals.Settings.LongWarTesting)
                 {
                     LogDebug("LongWarTesting underway...");
