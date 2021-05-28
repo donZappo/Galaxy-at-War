@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Globals;
 
@@ -11,7 +13,7 @@ namespace GalaxyatWar
 {
     internal class PiratesAndLocals
     {
-        internal static readonly List<SystemStatus> FullPirateListSystems = new List<SystemStatus>();
+        internal static readonly HashSet<SystemStatus> FullPirateListSystems = new HashSet<SystemStatus>();
 
         // if the pirates are getting a lot of resources it lowers the min.
         // So it gives the pirates a continual boost if they need it, and then stops boosting them when they don't.
@@ -110,9 +112,10 @@ namespace GalaxyatWar
                 warFaction.PirateDRLoss = 0;
             }
 
+            var pirateSystems = FullPirateListSystems.ToList();
             for (var i = 0; i < FullPirateListSystems.Count; i++)
             {
-                var system = FullPirateListSystems[i];
+                var system = pirateSystems[i];
                 WarStatusTracker.PirateResources += system.TotalResources * system.PirateActivity / 100;
                 WarStatusTracker.TempPRGain += system.TotalResources * system.PirateActivity / 100;
 
@@ -137,20 +140,21 @@ namespace GalaxyatWar
         public static void DistributePirateResources(float CurrentPAResources)
         {
             var i = 0;
+            var noPiracySystemsStrings = Settings.ImmuneToWar.Concat(
+                WarStatusTracker.HotBox.Concat(
+                    WarStatusTracker.FlashpointSystems.Concat(
+                        WarStatusTracker.HyadesRimGeneralPirateSystems.Concat(
+                            Settings.HyadesPirates))));
+            var noPiracySystems = new List<SystemStatus>();
+            foreach (var systemsString in noPiracySystemsStrings)
+            {
+                noPiracySystems.Add(WarStatusTracker.systems.FirstOrDefault(system => system.name == systemsString));
+            }
+
+            var candidateSystems = WarStatusTracker.systems.Except(noPiracySystems).Where(system => system.owner != "NoFaction").ToList();
             while (CurrentPAResources > 0 && i != 1000)
             {
-                var systemStatus = WarStatusTracker.systems.GetRandomElement();
-                if (systemStatus.owner == "NoFaction" ||
-                    Settings.ImmuneToWar.Contains(systemStatus.owner) ||
-                    WarStatusTracker.HotBox.Contains(systemStatus.name) ||
-                    WarStatusTracker.FlashpointSystems.Contains(systemStatus.name) ||
-                    WarStatusTracker.HyadesRimGeneralPirateSystems.Contains(systemStatus.name) ||
-                    Settings.HyadesPirates.Contains(systemStatus.owner))
-                {
-                    systemStatus.PirateActivity = 0;
-                    continue;
-                }
-
+                var systemStatus = candidateSystems.GetRandomElement();
                 const int maxDifficulty = 11;
                 var currentPA = systemStatus.PirateActivity;
                 float basicPA = maxDifficulty - systemStatus.DifficultyRating;
@@ -159,7 +163,7 @@ namespace GalaxyatWar
                 // How much they are going to spend to attack
                 var totalPA = basicPA + bonusPA;
 
-                var pirateSystemsContainsSystemStatus = WarStatusTracker.FullPirateSystems.Contains(systemStatus.name);
+                //var pirateSystemsContainsSystemStatus = WarStatusTracker.FullPirateSystems.Contains(systemStatus.name);
                 if (currentPA + totalPA <= 100)
                 {
                     if (totalPA <= CurrentPAResources)
@@ -167,21 +171,21 @@ namespace GalaxyatWar
                         systemStatus.PirateActivity += Math.Min(totalPA, 100 - systemStatus.PirateActivity);
                         CurrentPAResources -= Math.Min(totalPA, 100 - systemStatus.PirateActivity);
                         i = 0;
-                        if (!pirateSystemsContainsSystemStatus)
-                        {
+                        //if (!pirateSystemsContainsSystemStatus)
+                        //{
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
-                        }
+                        //}
                     }
                     else
                     {
                         systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
                         CurrentPAResources = 0;
-                        if (!pirateSystemsContainsSystemStatus)
-                        {
+                        //if (!pirateSystemsContainsSystemStatus)
+                        //{
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
-                        }
+                        //}
                     }
                 }
                 else
@@ -191,23 +195,28 @@ namespace GalaxyatWar
                         systemStatus.PirateActivity += Math.Min(100, 100 - systemStatus.PirateActivity);
                         CurrentPAResources -= 100 - systemStatus.PirateActivity;
                         i++;
-                        if (!pirateSystemsContainsSystemStatus)
-                        {
+                        //if (!pirateSystemsContainsSystemStatus)
+                        //{
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
-                        }
+                        //}
                     }
                     else
                     {
                         systemStatus.PirateActivity += Math.Min(CurrentPAResources, 100 - systemStatus.PirateActivity);
                         CurrentPAResources = 0;
-                        if (!pirateSystemsContainsSystemStatus)
-                        {
+                        //if (!pirateSystemsContainsSystemStatus)
+                        //{
                             WarStatusTracker.FullPirateSystems.Add(systemStatus.name);
                             FullPirateListSystems.Add(systemStatus);
-                        }
+                        //}
                     }
                 }
+            }
+
+            foreach (var system in noPiracySystems.Where(system => system is not null))
+            {
+                system.PirateActivity = 0;
             }
         }
     }

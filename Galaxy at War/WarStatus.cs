@@ -40,7 +40,7 @@ namespace GalaxyatWar
         public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
         public List<string> HomeContendedSystems = new List<string>();
         public Dictionary<string, List<string>> ExternalPriorityTargets = new Dictionary<string, List<string>>();
-        public List<string> FullPirateSystems = new List<string>();
+        public HashSet<string> FullPirateSystems = new HashSet<string>();
         public List<string> PirateHighlight = new List<string>();
         public float PirateResources;
         public float TempPRGain;
