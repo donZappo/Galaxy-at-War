@@ -123,7 +123,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.GaW_Event_PopUp = true;
                 }
 
-                //TEST: run X WarTicks and stop
+                //TEST: run 100 WarTicks and stop
                 if (Globals.Settings.LongWarTesting)
                 {
                     LogDebug("LongWarTesting underway...");
