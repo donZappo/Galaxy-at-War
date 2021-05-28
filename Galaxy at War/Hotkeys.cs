@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using Harmony;
-using Newtonsoft.Json;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 
@@ -183,20 +181,6 @@ namespace GalaxyatWar
                           (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)
             {
-                //const int loops = 100;
-                //Logger.LogDebug($"Running {loops} full ticks.");
-                //for (var i = 0; i < loops; i++)
-                //{
-                //    Logger.LogDebug("Tick " + $"{i,3}...");
-                //    try
-                //    {
-                //        WarTick.Tick(true, true);
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        Logger.Error(ex);
-                //    }
-                //}
                 LogDebug("LongWarTesting underway...");
                 for (var i = 0; i < Globals.Settings.LongWarMonths; i++)
                 {
