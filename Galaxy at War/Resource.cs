@@ -71,7 +71,7 @@ namespace GalaxyatWar
 
                     if (system == null)
                     {
-                        Log("CRITICAL:  No system found at AllocateAttackResources, aborting processing.");
+                        LogDebug("CRITICAL:  No system found at AllocateAttackResources, aborting processing.");
                         return;
                     }
 
