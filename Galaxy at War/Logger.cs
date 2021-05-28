@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Globals;
@@ -9,12 +10,41 @@ namespace GalaxyatWar
 {
     public static class Logger
     {
-        private static string logFilePath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName + "/Galaxy-at-War.log";
-        private static StreamWriter writer = new(logFilePath, true);
+        private static readonly string LogFilename = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.FullName + "/log.txt";
 
-        public static void Error(Exception ex)
+        internal static void Error(Exception ex)
         {
-            writer.WriteLine($"{GetFormattedStartupTime()}  {ex}");
+            using (var sw = new StreamWriter(LogFilename, true))
+            {
+                sw.AutoFlush = true;
+                sw.WriteLine($"{GetFormattedStartupTime()}  {ex}");
+            }
+        }
+
+        public static void LogDebug(object line)
+        {
+            if (!Settings.Debug) return;
+            Log(line);
+        }
+
+        private static void Log(object line)
+        {
+            using (var sw = new StreamWriter(LogFilename, true))
+            {
+                sw.AutoFlush = true;
+                sw.WriteLine($"{GetFormattedStartupTime()}  {line ?? "null value logged"}");
+            }
+        }
+
+        internal static void Clear()
+        {
+            if (!Settings.Debug) return;
+            File.Delete(LogFilename);
+            using (var sw = new StreamWriter(LogFilename, false))
+            {
+                sw.AutoFlush = true;
+                sw.WriteLine($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
+            }
         }
 
         // this beauty is from BetterLog from CptMoore's MechEngineer - thanks!
@@ -29,34 +59,6 @@ namespace GalaxyatWar
                 value.Seconds,
                 value.Milliseconds);
             return formatted;
-        }
-
-        public static void LogDebug(object line)
-        {
-            try
-            {
-                if (!Settings.Debug) return;
-                writer.WriteLine($"{GetFormattedStartupTime()}  {line}");
-            }
-            catch (Exception ex)
-            {
-                FileLog.Log(ex.ToString());
-            }
-        }
-
-        public static void Log(string line)
-        {
-            writer.WriteLine(line);
-        }
-
-        public static void Clear()
-        {
-            if (!Settings.Debug) return;
-            using (var clear = new StreamWriter(logFilePath, false))
-            {
-                clear.WriteLine();
-                clear.WriteLine($"{DateTime.Now.ToLongTimeString()} Galaxy-at-War Init");
-            }
         }
     }
 }
