@@ -5,16 +5,15 @@ using Newtonsoft.Json;
 using static GalaxyatWar.Helpers;
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable InconsistentNaming
 
 namespace GalaxyatWar
 {
     public class WarStatus
     {
-        public List<SystemStatus> systems = new();
-        internal List<SystemStatus> systemsByResources = new();
-        public List<DeathListTracker> deathListTracker = new();
-        public List<WarFaction> warFactionTracker = new();
+        public List<SystemStatus> Systems = new();
+        internal List<SystemStatus> SystemsByResources = new();
+        public List<DeathListTracker> DeathListTracker = new();
+        public List<WarFaction> WarFactionTracker = new();
         public bool JustArrived = true;
         public bool Escalation = false;
         public bool Deployment = false;
@@ -28,7 +27,7 @@ namespace GalaxyatWar
         public List<string> SystemChangedOwners = new();
         public List<string> HotBox = new();
         public List<string> LostSystems = new();
-        public bool GaW_Event_PopUp = false;
+        public bool GaWEventPopUp = false;
 
         public List<string> HomeContendedStrings = new();
         public List<string> AbandonedSystems = new();
@@ -86,15 +85,15 @@ namespace GalaxyatWar
                     WarFaction = warFaction
                 };
                 warFaction.DeathListTracker = d;
-                warFactionTracker.Add(warFaction);
-                deathListTracker.Add(d);
+                WarFactionTracker.Add(warFaction);
+                DeathListTracker.Add(d);
             }
 
             foreach (var system in Globals.GaWSystems)
             {
                 if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                     AbandonedSystems.Add(system.Name);
-                var warFaction = warFactionTracker.Find(x => x.FactionName == system.OwnerValue.Name);
+                var warFaction = WarFactionTracker.Find(x => x.FactionName == system.OwnerValue.Name);
                 if (Globals.Settings.DefensiveFactions.Contains(warFaction.FactionName) && Globals.Settings.DefendersUseARforDR)
                     warFaction.DefensiveResources += GetTotalAttackResources(system);
                 else
@@ -103,12 +102,12 @@ namespace GalaxyatWar
             }
 
             Logger.LogDebug("WarFaction AR/DR set.");
-            var maxAR = warFactionTracker.Select(x => x.AttackResources).Max();
-            var maxDR = warFactionTracker.Select(x => x.DefensiveResources).Max();
+            var maxAR = WarFactionTracker.Select(x => x.AttackResources).Max();
+            var maxDR = WarFactionTracker.Select(x => x.DefensiveResources).Max();
 
             foreach (var faction in Globals.Settings.IncludedFactions)
             {
-                var warFaction = warFactionTracker.Find(x => x.FactionName == faction);
+                var warFaction = WarFactionTracker.Find(x => x.FactionName == faction);
                 if (Globals.Settings.DefensiveFactions.Contains(faction) && Globals.Settings.DefendersUseARforDR)
                 {
                     if (!Globals.Settings.ISMCompatibility)
@@ -144,7 +143,7 @@ namespace GalaxyatWar
             MinimumPirateResources = PirateResources;
             StartingPirateResources = PirateResources;
             Logger.LogDebug("SystemStatus mass creation...");
-            systems = new List<SystemStatus>(Globals.GaWSystems.Count);
+            Systems = new List<SystemStatus>(Globals.GaWSystems.Count);
             for (var index = 0; index < Globals.Sim.StarSystems.Count; index++)
             {
                 var system = Globals.Sim.StarSystems[index];
@@ -154,7 +153,7 @@ namespace GalaxyatWar
                 }
 
                 var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
-                systems.Add(systemStatus);
+                Systems.Add(systemStatus);
                 if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
                 {
                     FullPirateSystems.Add(system.Name);
@@ -167,9 +166,9 @@ namespace GalaxyatWar
             }
 
             Logger.LogDebug("Full pirate systems created.");
-            systems = systems.OrderBy(x => x.name).ToList();
-            systemsByResources = systems.OrderBy(x => x.TotalResources).ToList();
-            PrioritySystems = new List<string>(systems.Count);
+            Systems = Systems.OrderBy(x => x.name).ToList();
+            SystemsByResources = Systems.OrderBy(x => x.TotalResources).ToList();
+            PrioritySystems = new List<string>(Systems.Count);
             Logger.LogDebug("SystemStatus ordered lists created.");
         }
 

@@ -146,18 +146,18 @@ namespace GalaxyatWar
         {
             var sb = new StringBuilder();
             sb.AppendLine("<line-height=125%>");
-            foreach (var tracker in Globals.WarStatusTracker.deathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.faction)))
+            foreach (var tracker in Globals.WarStatusTracker.DeathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.Faction)))
             {
-                if (!Globals.Settings.FactionNames.ContainsKey(tracker.faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.faction)
-                                                                                || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.faction))
+                if (!Globals.Settings.FactionNames.ContainsKey(tracker.Faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.Faction)
+                                                                                || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.Faction))
                 {
-                    LogDebug($"faction {tracker.faction} doesn't exist in Mod.Globals.Settings.FactionNames, skipping...");
+                    LogDebug($"faction {tracker.Faction} doesn't exist in Mod.Globals.Settings.FactionNames, skipping...");
                     continue;
                 }
 
-                var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == tracker.faction);
-                sb.AppendLine($"<b><u>{Globals.Settings.FactionNames[tracker.faction]}</b></u>\n");
-                if (tracker.faction == Globals.WarStatusTracker.ComstarAlly)
+                var warFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == tracker.Faction);
+                sb.AppendLine($"<b><u>{Globals.Settings.FactionNames[tracker.Faction]}</b></u>\n");
+                if (tracker.Faction == Globals.WarStatusTracker.ComstarAlly)
                 {
                     sb.AppendLine("<b>***" + Globals.Settings.GaW_Police + " Supported Faction***</b>");
                     sb.AppendLine("Attack Resources: " + (warFaction.AttackResources + Globals.Settings.GaW_Police_ARBonus).ToString("0") +
@@ -288,7 +288,7 @@ namespace GalaxyatWar
                 SubString = "";
             factionString.AppendLine(SubString);
 
-            var tracker = Globals.WarStatusTracker.systems.FirstOrDefault(x => x.starSystem == starSystem);
+            var tracker = Globals.WarStatusTracker.Systems.FirstOrDefault(x => x.starSystem == starSystem);
             if (tracker is null)
             {
                 LogDebug($"{starSystem} is not in Globals.WarStatusTracker.systems");

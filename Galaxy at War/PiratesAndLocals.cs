@@ -35,7 +35,7 @@ namespace GalaxyatWar
                 Logger.LogDebug($"MinimumPirateResources lowered: {WarStatusTracker.MinimumPirateResources}");
             }
 
-            foreach (var warFaction in WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in WarStatusTracker.WarFactionTracker)
             {
                 warFaction.AttackResources += warFaction.PirateARLoss;
                 warFaction.DefensiveResources += warFaction.PirateDRLoss;
@@ -47,7 +47,7 @@ namespace GalaxyatWar
         public static void DefendAgainstPirates()
         {
             var factionEscalateDefense = new Dictionary<WarFaction, bool>();
-            foreach (var warFaction in WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in WarStatusTracker.WarFactionTracker)
             {
                 var defenseValue = 100 * (warFaction.PirateARLoss + warFaction.PirateDRLoss) /
                                    (warFaction.AttackResources + warFaction.DefensiveResources + warFaction.PirateARLoss + warFaction.PirateDRLoss);
@@ -60,7 +60,7 @@ namespace GalaxyatWar
             var tempFullPirateListSystems = new List<SystemStatus>(FullPirateListSystems);
             foreach (var system in tempFullPirateListSystems)
             {
-                var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.FactionName == system.owner);
+                var warFaction = WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == system.owner);
                 float PAChange;
                 if (factionEscalateDefense[warFaction])
                     PAChange = (float) (Rng.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
@@ -106,7 +106,7 @@ namespace GalaxyatWar
         public static void PiratesStealResources()
         {
             WarStatusTracker.TempPRGain = 0;
-            foreach (var warFaction in WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in WarStatusTracker.WarFactionTracker)
             {
                 warFaction.PirateARLoss = 0;
                 warFaction.PirateDRLoss = 0;
@@ -119,7 +119,7 @@ namespace GalaxyatWar
                 WarStatusTracker.PirateResources += system.TotalResources * system.PirateActivity / 100;
                 WarStatusTracker.TempPRGain += system.TotalResources * system.PirateActivity / 100;
 
-                var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.FactionName == system.owner);
+                var warFaction = WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == system.owner);
                 var warFARChange = system.AttackResources * system.PirateActivity / 100;
                 if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                     warFaction.PirateDRLoss += warFARChange;
@@ -148,10 +148,10 @@ namespace GalaxyatWar
             var noPiracySystems = new List<SystemStatus>();
             foreach (var systemsString in noPiracySystemsStrings)
             {
-                noPiracySystems.Add(WarStatusTracker.systems.FirstOrDefault(system => system.name == systemsString));
+                noPiracySystems.Add(WarStatusTracker.Systems.FirstOrDefault(system => system.name == systemsString));
             }
 
-            var candidateSystems = WarStatusTracker.systems.Except(noPiracySystems).Where(system => system.owner != "NoFaction").ToList();
+            var candidateSystems = WarStatusTracker.Systems.Except(noPiracySystems).Where(system => system.owner != "NoFaction").ToList();
             while (CurrentPAResources > 0 && i != 1000)
             {
                 var systemStatus = candidateSystems.GetRandomElement();

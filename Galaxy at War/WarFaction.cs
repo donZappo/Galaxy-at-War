@@ -9,7 +9,7 @@ namespace GalaxyatWar
 {
     public class WarFaction
     {
-        public readonly string FactionName;
+        public string FactionName;
         internal readonly FactionValue Faction;
         public bool GainedSystem;
         public bool LostSystem;
@@ -55,16 +55,16 @@ namespace GalaxyatWar
             }
         }
 
-        public Dictionary<string, float> warFactionAttackResources = new();
-        public Dictionary<string, List<SystemStatus>> attackTargets = new();
-        public List<SystemStatus> defenseTargets = new();
-        public Dictionary<string, bool> IncreaseAggression = new();
-        public List<string> adjacentFactions = new();
+        public readonly Dictionary<string, float> WarFactionAttackResources = new();
+        public readonly Dictionary<string, List<SystemStatus>> AttackTargets = new();
+        public readonly List<SystemStatus> DefenseTargets = new();
+        public readonly Dictionary<string, bool> IncreaseAggression = new();
+        public readonly List<string> AdjacentFactions = new();
         private DeathListTracker deathListTracker;
 
         internal DeathListTracker DeathListTracker
         {
-            get => deathListTracker ??= Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == FactionName);
+            get => deathListTracker ??= Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == FactionName);
             set => deathListTracker = value;
         }
 

@@ -117,10 +117,10 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (!Globals.WarStatusTracker.GaW_Event_PopUp)
+                if (!Globals.WarStatusTracker.GaWEventPopUp)
                 {
                     GaW_Notification();
-                    Globals.WarStatusTracker.GaW_Event_PopUp = true;
+                    Globals.WarStatusTracker.GaWEventPopUp = true;
                 }
 
                 //TEST: run 100 WarTicks and stop

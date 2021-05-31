@@ -17,19 +17,19 @@ namespace GalaxyatWar
         internal static void Tick(bool useFullSet, bool checkForSystemChange)
         {
             Globals.WarStatusTracker.PrioritySystems.Clear();
-            var systemSubsetSize = Globals.WarStatusTracker.systems.Count;
+            var systemSubsetSize = Globals.WarStatusTracker.Systems.Count;
             List<SystemStatus> systemStatuses;
 
             if (Globals.Settings.UseSubsetOfSystems && !useFullSet)
             {
                 systemSubsetSize = (int) (systemSubsetSize * Globals.Settings.SubSetFraction);
-                systemStatuses = Globals.WarStatusTracker.systems
+                systemStatuses = Globals.WarStatusTracker.Systems
                     .OrderBy(x => Guid.NewGuid()).Take(systemSubsetSize)
                     .ToList();
             }
             else
             {
-                systemStatuses = Globals.WarStatusTracker.systems;
+                systemStatuses = Globals.WarStatusTracker.Systems;
             }
 
             if (checkForSystemChange && Globals.Settings.GaW_PoliceSupport)
@@ -41,11 +41,11 @@ namespace GalaxyatWar
                 var lowestDR = 5000f;
                 var perPlanetAR = 0f;
                 var perPlanetDR = 0f;
-                var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
+                var sequence = Globals.WarStatusTracker.WarFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.FactionName)).ToList();
                 foreach (var faction in sequence)
                 {
-                    var systemCount = Globals.WarStatusTracker.systems.Count(x => x.owner == faction.FactionName);
+                    var systemCount = Globals.WarStatusTracker.Systems.Count(x => x.owner == faction.FactionName);
                     if (!Globals.Settings.ISMCompatibility && systemCount != 0)
                     {
                         perPlanetAR = (float) Globals.Settings.BonusAttackResources[faction.FactionName] / systemCount;
@@ -93,7 +93,7 @@ namespace GalaxyatWar
                 if (rand < Globals.WarStatusTracker.HyadesRimsSystemsTaken)
                 {
                     var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                    var flipSystem = Globals.WarStatusTracker.systems.Find(x => x.name == hyadesSystem).starSystem;
+                    var flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).starSystem;
                     var inactiveFaction = Globals.WarStatusTracker.InactiveTHRFactions.GetRandomElement();
                     ChangeSystemOwnership(flipSystem, inactiveFaction, true);
                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
@@ -163,19 +163,19 @@ namespace GalaxyatWar
 
             Globals.WarStatusTracker.FirstTickInitialization = false;
             LogDebug("Processing resource spending.");
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.WarFactionTracker)
             {
                 DivideAttackResources(warFaction, useFullSet);
             }
 
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.WarFactionTracker)
             {
                 AllocateAttackResources(warFaction);
             }
 
             CalculateDefensiveSystems();
 
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.WarFactionTracker)
             {
                 AllocateDefensiveResources(warFaction, useFullSet);
             }
@@ -184,7 +184,7 @@ namespace GalaxyatWar
             UpdateInfluenceFromAttacks(checkForSystemChange);
 
             //Increase War Escalation or decay defenses.
-            foreach (var warFaction in Globals.WarStatusTracker.warFactionTracker)
+            foreach (var warFaction in Globals.WarStatusTracker.WarFactionTracker)
             {
                 if (!warFaction.GainedSystem)
                     warFaction.DaysSinceSystemAttacked += 1;
@@ -204,7 +204,7 @@ namespace GalaxyatWar
             }
 
             LogDebug("Processing flipped systems.");
-            foreach (var system in Globals.WarStatusTracker.systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
+            foreach (var system in Globals.WarStatusTracker.Systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.starSystem);
