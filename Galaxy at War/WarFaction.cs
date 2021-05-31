@@ -70,12 +70,11 @@ namespace GalaxyatWar
         public List<SystemStatus> defenseTargets = new();
         public Dictionary<string, bool> IncreaseAggression = new();
         public List<string> adjacentFactions = new();
-        private DeathListTracker deathListTrackerBackingField;
-
+        private DeathListTracker deathListTracker;
         internal DeathListTracker DeathListTracker
         {
-            get => deathListTrackerBackingField ?? (deathListTrackerBackingField = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction));
-            set => deathListTrackerBackingField = value;
+            get => deathListTracker ??= Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction);
+            set => deathListTracker = value;
         }
 
         [JsonConstructor]
