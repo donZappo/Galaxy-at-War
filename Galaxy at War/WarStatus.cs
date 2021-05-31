@@ -25,7 +25,7 @@ namespace GalaxyatWar
         public bool StartGameInitialized = false;
         public bool FirstTickInitialization = true;
         public List<string> SystemChangedOwners = new();
-        public List<string> HotBox = new();
+        public List<SystemStatus> HotBox = new();
         public List<string> LostSystems = new();
         public bool GaWEventPopUp = false;
 
@@ -89,7 +89,7 @@ namespace GalaxyatWar
             CurSystem = Globals.Sim.CurSystem.Name;
             TempPRGain = 0;
             HotBoxTravelling = false;
-            HotBox = new List<string>();
+            HotBox = new List<SystemStatus>();
             if (Globals.Settings.HyadesRimCompatible)
             {
                 InactiveTHRFactions = Globals.Settings.HyadesAppearingPirates;

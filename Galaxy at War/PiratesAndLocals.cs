@@ -141,17 +141,19 @@ namespace GalaxyatWar
         {
             var i = 0;
             var noPiracySystemsStrings = Settings.ImmuneToWar.Concat(
-                WarStatusTracker.HotBox.Concat(
                     WarStatusTracker.FlashpointSystems.Concat(
                         WarStatusTracker.HyadesRimGeneralPirateSystems.Concat(
-                            Settings.HyadesPirates))));
+                            Settings.HyadesPirates)));
             var noPiracySystems = new List<SystemStatus>();
             foreach (var systemsString in noPiracySystemsStrings)
             {
                 noPiracySystems.Add(WarStatusTracker.Systems.FirstOrDefault(system => system.name == systemsString));
             }
 
-            var candidateSystems = WarStatusTracker.Systems.Except(noPiracySystems).Where(system => system.owner != "NoFaction").ToList();
+            var candidateSystems = WarStatusTracker.Systems
+                .Except(noPiracySystems)
+                .Except(WarStatusTracker.HotBox)
+                .Where(system => system.owner != "NoFaction").ToList();
             while (CurrentPAResources > 0 && i != 1000)
             {
                 var systemStatus = candidateSystems.GetRandomElement();

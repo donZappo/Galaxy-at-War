@@ -52,12 +52,7 @@ namespace GalaxyatWar
         private static string GetFormattedStartupTime()
         {
             var value = TimeSpan.FromSeconds(Time.realtimeSinceStartup);
-            var formatted = string.Format(
-                "[{0:D2}:{1:D2}:{2:D2}.{3:D3}]",
-                value.Hours,
-                value.Minutes,
-                value.Seconds,
-                value.Milliseconds);
+            var formatted = $"[{value.Hours:D2}:{value.Minutes:D2}:{value.Seconds:D2}.{value.Milliseconds:D3}]";
             return formatted;
         }
     }

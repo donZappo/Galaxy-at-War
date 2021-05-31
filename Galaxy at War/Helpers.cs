@@ -14,7 +14,7 @@ using static GalaxyatWar.Logger;
 
 namespace GalaxyatWar
 {
-    public class Helpers
+    public static class Helpers
     {
         internal static void CopySettingsToState()
         {
@@ -556,7 +556,7 @@ namespace GalaxyatWar
                 if (highestFaction != systemStatus.owner &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name) &&
                     diffStatus > Globals.Settings.TakeoverThreshold &&
-                    !Globals.WarStatusTracker.HotBox.Contains(systemStatus.name) &&
+                    !Globals.WarStatusTracker.HotBox.Contains(systemStatus) &&
                     (!Globals.Settings.DefensiveFactions.Contains(highestFaction) || highestFaction == "Locals") &&
                     !Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
                 {
@@ -611,7 +611,7 @@ namespace GalaxyatWar
         {
             var starSystem = systemStatus.starSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
-            if (Globals.WarStatusTracker.HotBox.Contains(starSystem.Name) || starSystem.Tags.Contains("planet_region_hyadesrim") &&
+            if (Globals.WarStatusTracker.HotBox.Contains(systemStatus) || starSystem.Tags.Contains("planet_region_hyadesrim") &&
                 (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction"))
             {
                 LogDebug("Skipping HotBox or THR Neutrals");
@@ -1144,5 +1144,8 @@ namespace GalaxyatWar
             const int variance = 2;
             return starSystem.Def.GetDifficulty(SimGameState.SimGameType.CAREER) + Globals.Rng.Next(-variance, variance + 1);
         }
+
+        internal static SystemStatus FindSystemStatus(this StarSystem starSystem)
+            => Globals.WarStatusTracker.Systems.Find(system => system.starSystem == starSystem);
     }
 }

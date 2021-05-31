@@ -113,7 +113,7 @@ namespace GalaxyatWar
                     RefreshContractsEmployersAndTargets(systemStatus);
                 }
 
-                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
+                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                     continue;
 
                 if (!systemStatus.owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&

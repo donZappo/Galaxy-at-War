@@ -48,7 +48,7 @@ namespace GalaxyatWar
                     return;
 
                 Globals.WarStatusTracker.CurSystem = Globals.Sim.CurSystem.Name;
-                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !Globals.WarStatusTracker.HotBoxTravelling)
+                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) && !Globals.WarStatusTracker.HotBoxTravelling)
                 {
                     Globals.WarStatusTracker.EscalationDays--;
 
@@ -161,7 +161,7 @@ namespace GalaxyatWar
                         //GenerateMonthlyContracts();
                         WarTick.Tick(true, true);
                         var hasFlashPoint = Globals.Sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
-                        if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && !hasFlashPoint)
+                        if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) && !hasFlashPoint)
                         {
                             LogDebug("Regenerating contracts because month-end.");
                             var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;

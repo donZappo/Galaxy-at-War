@@ -209,7 +209,7 @@ namespace GalaxyatWar
                         return;
 
                     var system = Globals.WarStatusTracker.Systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
-                    if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                    if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                     {
                         HotSpots.BonusMoney = (int) (__instance.MoneyResults * Globals.Settings.BonusCbillsFactor);
                         var newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + HotSpots.BonusMoney);
@@ -329,7 +329,7 @@ namespace GalaxyatWar
                                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(Globals.TeamFaction);
                             }
 
-                            if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                            if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                             {
                                 LogDebug($"HotSpot: {Globals.Sim.CurSystem.Name}");
                                 if (Globals.WarStatusTracker.Deployment)

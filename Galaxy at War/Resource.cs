@@ -58,34 +58,34 @@ namespace GalaxyatWar
                 var targetWarFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == targetFaction);
                 while (targetFar > 0 && attackTargets.Count > 0)
                 {
-                    var system = attackTargets.GetRandomElement();
-                    if (system.owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
+                    var systemStatus = attackTargets.GetRandomElement();
+                    if (systemStatus.owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                     {
-                        attackTargets.Remove(system);
+                        attackTargets.Remove(systemStatus);
                         return;
                     }
 
                     //Find most valuable target for attacking for later. Used in HotSpots.
                     if (hatred >= Globals.Settings.PriorityHatred &&
-                        system.DifficultyRating <= maxContracts &&
-                        system.DifficultyRating >= maxContracts - 4)
+                        systemStatus.DifficultyRating <= maxContracts &&
+                        systemStatus.DifficultyRating >= maxContracts - 4)
                     {
-                        system.PriorityAttack = true;
-                        if (!system.CurrentlyAttackedBy.Contains(warFaction.FactionName))
+                        systemStatus.PriorityAttack = true;
+                        if (!systemStatus.CurrentlyAttackedBy.Contains(warFaction.FactionName))
                         {
-                            system.CurrentlyAttackedBy.Add(warFaction.FactionName);
+                            systemStatus.CurrentlyAttackedBy.Add(warFaction.FactionName);
                         }
 
-                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(system.starSystem.Name))
+                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(systemStatus.starSystem.Name))
                         {
-                            Globals.WarStatusTracker.PrioritySystems.Add(system.starSystem.Name);
+                            Globals.WarStatusTracker.PrioritySystems.Add(systemStatus.starSystem.Name);
                         }
                     }
 
                     //Distribute attacking resources to systems.
-                    if (system.Contested || Globals.WarStatusTracker.HotBox.Contains(system.name))
+                    if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                     {
-                        attackTargets.Remove(system);
+                        attackTargets.Remove(systemStatus);
                         if (warFaction.AttackTargets[targetFaction].Count == 0 || !warFaction.AttackTargets.Keys.Contains(targetFaction))
                         {
                             break;
@@ -97,13 +97,13 @@ namespace GalaxyatWar
                     var arFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
                     var spendAR = Mathf.Min(startingTargetFar * arFactor, targetFar);
                     spendAR = spendAR < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendAR * Globals.SpendFactor);
-                    var maxValueList = system.InfluenceTracker.Values.OrderByDescending(x => x).ToList();
+                    var maxValueList = systemStatus.InfluenceTracker.Values.OrderByDescending(x => x).ToList();
                     var pMaxValue = 200.0f;
                     if (maxValueList.Count > 1)
                         pMaxValue = maxValueList[1];
 
-                    var itValue = system.InfluenceTracker[warFaction.FactionName];
-                    var basicAR = (float) (11 - system.DifficultyRating) / 2;
+                    var itValue = systemStatus.InfluenceTracker[warFaction.FactionName];
+                    var basicAR = (float) (11 - systemStatus.DifficultyRating) / 2;
                     var bonusAR = 0f;
                     if (itValue > pMaxValue)
                         bonusAR = (itValue - pMaxValue) * 0.15f;
@@ -111,15 +111,15 @@ namespace GalaxyatWar
                     var totalAR = basicAR + bonusAR + spendAR;
                     if (targetFar > totalAR)
                     {
-                        system.InfluenceTracker[warFaction.FactionName] += totalAR;
+                        systemStatus.InfluenceTracker[warFaction.FactionName] += totalAR;
                         targetFar -= totalAR;
-                        targetWarFaction.DefenseTargets.Add(system);
+                        targetWarFaction.DefenseTargets.Add(systemStatus);
                     }
                     else
                     {
-                        system.InfluenceTracker[warFaction.FactionName] += targetFar;
+                        systemStatus.InfluenceTracker[warFaction.FactionName] += targetFar;
                         targetFar = 0;
-                        targetWarFaction.DefenseTargets.Add(system);
+                        targetWarFaction.DefenseTargets.Add(systemStatus);
                     }
                 }
             }
@@ -161,7 +161,7 @@ namespace GalaxyatWar
                     return;
                 }
 
-                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
+                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                 {
                     warFaction.DefenseTargets.Remove(systemStatus);
                     if (warFaction.DefenseTargets.Count == 0 || warFaction.DefenseTargets == null)

@@ -46,7 +46,7 @@ namespace GalaxyatWar
                 //Populate lists with planets that are in danger of flipping
                 foreach (var systemStatus in Globals.WarStatusTracker.Systems)
                 {
-                    if (!Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
+                    if (!Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                     {
                         systemStatus.BonusCBills = false;
                         systemStatus.BonusSalvage = false;
@@ -397,8 +397,9 @@ namespace GalaxyatWar
                 if (!__instance.CurSystem.Def.Description.Id.StartsWith(contract.TargetSystem))
                 {
                     LogDebug("Preparing the Breadcrumbs");
+                    // todo why is this like the only place GaWSystems is used?
                     var starSystem = Globals.GaWSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
-                    Globals.WarStatusTracker.HotBox.Add(starSystem.Name);
+                    Globals.WarStatusTracker.HotBox.Add(starSystem.FindSystemStatus());
                     Globals.WarStatusTracker.HotBoxTravelling = true;
 
                     if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
@@ -415,9 +416,9 @@ namespace GalaxyatWar
                     }
 
                     TemporaryFlip(starSystem, contract.Override.employerTeam.FactionValue.Name);
-                    if (Globals.WarStatusTracker.HotBox.Contains(__instance.CurSystem.Name))
+                    if (Globals.WarStatusTracker.HotBox.Contains(__instance.CurSystem.FindSystemStatus()))
                     {
-                        Globals.WarStatusTracker.HotBox.Remove(__instance.CurSystem.Name);
+                        Globals.WarStatusTracker.HotBox.Remove(__instance.CurSystem.FindSystemStatus());
                         Globals.WarStatusTracker.EscalationDays = 0;
                         Globals.WarStatusTracker.Escalation = false;
                     }
@@ -521,14 +522,14 @@ namespace GalaxyatWar
                     return;
 
                 var system = UnityGameInstance.BattleTechGame.Simulation.CurSystem;
-                if (Globals.WarStatusTracker.HotBox.Contains(system.Name))
+                var systemStatus = system.FindSystemStatus();
+                if (Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                 {
-                    Globals.WarStatusTracker.HotBox.Remove(system.Name);
+                    Globals.WarStatusTracker.HotBox.Remove(systemStatus);
                 }
 
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
-                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == system.Name);
                 RefreshContractsEmployersAndTargets(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
@@ -632,14 +633,14 @@ namespace GalaxyatWar
                     return;
 
                 var system = Globals.Sim.CurSystem;
-                if (Globals.WarStatusTracker.HotBox.Contains(system.Name))
+                var systemStatus = system.FindSystemStatus();
+                if (Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                 {
-                    Globals.WarStatusTracker.HotBox.Remove(system.Name);
+                    Globals.WarStatusTracker.HotBox.Remove(systemStatus);
                 }
 
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
-                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == system.Name);
                 RefreshContractsEmployersAndTargets(systemStatus);
                 if (Globals.WarStatusTracker.HotBox.Count == 0)
                     Globals.WarStatusTracker.HotBoxTravelling = false;
@@ -694,7 +695,7 @@ namespace GalaxyatWar
                 }
 
                 if (!Globals.WarStatusTracker.HotBoxTravelling &&
-                    !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) &&
+                    !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) &&
                     !HasFlashpoint && !Globals.HoldContracts)
                 {
                     LogDebug("Regenerating contracts because entering system.");
@@ -911,9 +912,9 @@ namespace GalaxyatWar
                     }
 
                     if (Globals.WarStatusTracker.HotBox == null)
-                        Globals.WarStatusTracker.HotBox = new List<string>();
+                        Globals.WarStatusTracker.HotBox = new List<SystemStatus>();
 
-                    if (system.BonusSalvage && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                    if (system.BonusSalvage && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                     {
                         var NewSalvageCount = __instance.FinalSalvageCount + 1;
                         Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(NewSalvageCount);
@@ -942,11 +943,11 @@ namespace GalaxyatWar
 
                 var system = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == Globals.Sim.CurSystem);
 
-                if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                 {
-                    var missionObjectiveResultString = $"BONUS FROM ESCALATION: ¢{String.Format("{0:n0}", BonusMoney)}";
+                    var missionObjectiveResultString = $"BONUS FROM ESCALATION: ¢{$"{BonusMoney:n0}"}";
                     if (Globals.WarStatusTracker.Deployment)
-                        missionObjectiveResultString = $"BONUS FROM DEPLOYMENT: ¢{String.Format("{0:n0}", BonusMoney)}";
+                        missionObjectiveResultString = $"BONUS FROM DEPLOYMENT: ¢{$"{BonusMoney:n0}"}";
                     var missionObjectiveResult = new MissionObjectiveResult(missionObjectiveResultString, "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0", false, true, ObjectiveStatus.Succeeded, false);
                     Traverse.Create(__instance).Method("AddObjective", missionObjectiveResult).GetValue();
                 }
@@ -961,8 +962,8 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var system = Globals.WarStatusTracker.Systems.Find(x => x.name == Globals.WarStatusTracker.CurSystem);
-                if (system.BonusXP && Globals.WarStatusTracker.HotBox.Contains(system.name))
+                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == Globals.WarStatusTracker.CurSystem);
+                if (systemStatus.BonusXP && Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                 {
                     xpEarned = xpEarned + (int) (xpEarned * Globals.Settings.BonusXPFactor);
                     var unspentXP = ___UnitData.pilot.UnspentXP;
@@ -981,7 +982,7 @@ namespace GalaxyatWar
             else
                 systemDifficulty = systemStatus.DifficultyRating + (int) Globals.Sim.GlobalDifficulty;
 
-            if (!Globals.WarStatusTracker.HotBox.Contains(starSystem.Name))
+            if (!Globals.WarStatusTracker.HotBox.Contains(systemStatus))
             {
                 systemStatus.BonusCBills = false;
                 systemStatus.BonusSalvage = false;
@@ -1030,7 +1031,7 @@ namespace GalaxyatWar
             Globals.WarStatusTracker.Deployment = false;
             Globals.WarStatusTracker.PirateDeployment = false;
             Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
-            Globals.WarStatusTracker.HotBox.Remove(systemStatus.name);
+            Globals.WarStatusTracker.HotBox.Remove(systemStatus);
             RefreshContractsEmployersAndTargets(systemStatus);
             var hasFlashpoint = false;
             foreach (var contract in Globals.Sim.CurSystem.SystemContracts)
@@ -1207,7 +1208,7 @@ namespace GalaxyatWar
                         HasFlashpoint = true;
                 }
 
-                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment)
+                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) && Globals.WarStatusTracker.Deployment)
                 {
                     Globals.Sim.Constants.Story.ContractSuccessReduction = 100;
                     Globals.WarStatusTracker.DeploymentInfluenceIncrease *= Globals.Settings.DeploymentEscalationFactor;
