@@ -184,7 +184,7 @@ namespace GalaxyatWar
             if (hotkeyT)
             {
                 LogDebug("LongWarTesting underway...");
-                for (var i = 0; i < Globals.Settings.LongWarMonths; i++)
+                for (var i = 0; i < 100; i++)
                 {
                     WarTick.Tick(true, false);
                     WarTick.Tick(true, false);
