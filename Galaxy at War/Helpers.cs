@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using BattleTech;
@@ -559,15 +560,15 @@ namespace GalaxyatWar
                     (!Globals.Settings.DefensiveFactions.Contains(highestFaction) || highestFaction == "Locals") &&
                     !Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
                 {
-                    if (!systemStatus.Contended)
+                    if (!systemStatus.Contested)
                     {
-                        systemStatus.Contended = true;
+                        systemStatus.Contested = true;
                         ChangeDeathListFromAggression(starSystem, highestFaction, starSystem.OwnerValue.Name);
                     }
                     else if (checkForSystemChange)
                     {
                         ChangeSystemOwnership(starSystem, highestFaction, false);
-                        systemStatus.Contended = false;
+                        systemStatus.Contested = false;
                         Globals.WarStatusTracker.LostSystems.Add(starSystem.Name);
                     }
                 }
@@ -577,7 +578,7 @@ namespace GalaxyatWar
                     (highestFaction == "Locals" && systemStatus.InfluenceTracker[highestFaction] >= 75))
                 {
                     ChangeSystemOwnership(starSystem, "Locals", true);
-                    systemStatus.Contended = false;
+                    systemStatus.Contested = false;
                     Globals.WarStatusTracker.LostSystems.Add(starSystem.Name);
                 }
             }
@@ -839,8 +840,8 @@ namespace GalaxyatWar
 
         public static void AdjustDeathList(DeathListTracker deathListTracker, bool reloadFromSave)
         {
-            //LogDebug($"deathListTracker: {deathListTracker?.faction}.");
-            var trackerDeathList = deathListTracker?.DeathList;
+            LogDebug($"AdjustDeathList: {deathListTracker.Faction}.");
+            var trackerDeathList = deathListTracker.DeathList;
             var trackerFaction = deathListTracker.Faction;
             var trackerFactionDef = Globals.Sim.GetFactionDef(trackerFaction);
             var trackerFactionEnemies = new List<string>(trackerFactionDef.Enemies);

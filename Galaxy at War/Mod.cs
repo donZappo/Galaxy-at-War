@@ -164,16 +164,16 @@ namespace GalaxyatWar
                         continue;
 
                     var deathListTracker = Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == faction);
-                    LogDebug($"{deathListTracker.Faction}'s deathListTracker:");
+                    //LogDebug($"{deathListTracker.Faction}'s deathListTracker:");
                     //LogDebug("Allies currently:");
-                    deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
                     //LogDebug("Enemies currently:");
-                    deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                     AdjustDeathList(deathListTracker, true);
                     //LogDebug("Allies after:");
-                    deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
                     //LogDebug("Enemies after:");
-                    deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 }
             }
         }

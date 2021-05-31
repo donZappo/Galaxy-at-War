@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
@@ -144,7 +145,7 @@ namespace GalaxyatWar
                 }
 
                 var _ = new Dictionary<string, float>();
-                foreach (var kvp in Globals.WarStatusTracker.FullHomeContendedSystems)
+                foreach (var kvp in Globals.WarStatusTracker.FullHomeContestedSystems)
                 {
                     if (!Globals.Settings.ImmuneToWar.Contains(kvp.Key))
                     {
@@ -152,11 +153,11 @@ namespace GalaxyatWar
                     }
                     else
                     {
-                        LogDebug($"Removing {kvp.Key} from FullHomeContendedSystems, as they are immune to war.");
+                        LogDebug($"Removing {kvp.Key} from FullHomeContestedSystems, as they are immune to war.");
                     }
                 }
 
-                Globals.WarStatusTracker.FullHomeContendedSystems = _;
+                Globals.WarStatusTracker.FullHomeContestedSystems = _;
             }
 
             private static void AddNewStarSystems()
@@ -220,8 +221,9 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(tag);
                 LogDebug($">>> Deserialization complete (Size after load: {tag.Length / 1024}kb)");
             }
-            catch
+            catch (Exception ex)
             {
+                Error(ex);
                 LogDebug("Error deserializing tag, generating new state.");
                 StarmapPopulateMapPatch.Spawn();
             }
@@ -281,8 +283,8 @@ namespace GalaxyatWar
         {
             LogDebug("RebuildState");
             HotSpots.ExternalPriorityTargets.Clear();
-            HotSpots.FullHomeContendedSystems.Clear();
-            HotSpots.HomeContendedSystems.Clear();
+            HotSpots.FullHomeContestedSystems.Clear();
+            HotSpots.HomeContestedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
             Globals.WarStatusTracker.SystemsByResources =
                 Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
@@ -356,14 +358,14 @@ namespace GalaxyatWar
                         HotSpots.ExternalPriorityTargets[faction].Add(starSystemDictionary[system]);
                 }
 
-                foreach (var system in Globals.WarStatusTracker.FullHomeContendedSystems)
+                foreach (var system in Globals.WarStatusTracker.FullHomeContestedSystems)
                 {
-                    HotSpots.FullHomeContendedSystems.Add(new KeyValuePair<StarSystem, float>(starSystemDictionary[system.Key], system.Value));
+                    HotSpots.FullHomeContestedSystems.Add(new KeyValuePair<StarSystem, float>(starSystemDictionary[system.Key], system.Value));
                 }
 
-                foreach (var system in Globals.WarStatusTracker.HomeContendedSystems)
+                foreach (var system in Globals.WarStatusTracker.HomeContestedSystems)
                 {
-                    HotSpots.HomeContendedSystems.Add(starSystemDictionary[system]);
+                    HotSpots.HomeContestedSystems.Add(starSystemDictionary[system]);
                 }
 
                 foreach (var starSystem in Globals.WarStatusTracker.FullPirateSystems)
@@ -373,8 +375,17 @@ namespace GalaxyatWar
 
                 foreach (var deathListTracker in Globals.WarStatusTracker.DeathListTracker)
                 {
+                    // I swear this was needed then the error went away....
+                    //if (deathListTracker.Faction is null)
+                    //{
+                    //    LogDebug("Bad entry for " + deathListTracker.WarFaction.FactionName);
+                    //    deathListTracker.Faction = deathListTracker.WarFaction.FactionName;
+                    //    continue;
+                    //}
+
                     AdjustDeathList(deathListTracker, true);
                 }
+
 
                 foreach (var defensiveFaction in Globals.Settings.DefensiveFactions)
                 {
@@ -406,8 +417,8 @@ namespace GalaxyatWar
         {
             LogDebug("ConvertToSave");
             Globals.WarStatusTracker.ExternalPriorityTargets.Clear();
-            Globals.WarStatusTracker.FullHomeContendedSystems.Clear();
-            Globals.WarStatusTracker.HomeContendedSystems.Clear();
+            Globals.WarStatusTracker.FullHomeContestedSystems.Clear();
+            Globals.WarStatusTracker.HomeContestedSystems.Clear();
             Globals.WarStatusTracker.FullPirateSystems.Clear();
 
             foreach (var faction in HotSpots.ExternalPriorityTargets.Keys)
@@ -417,10 +428,10 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.ExternalPriorityTargets[faction].Add(system.Def.CoreSystemID);
             }
 
-            foreach (var system in HotSpots.FullHomeContendedSystems)
-                Globals.WarStatusTracker.FullHomeContendedSystems.Add(system.Key.Def.CoreSystemID, system.Value);
-            foreach (var system in HotSpots.HomeContendedSystems)
-                Globals.WarStatusTracker.HomeContendedSystems.Add(system.Def.CoreSystemID);
+            foreach (var system in HotSpots.FullHomeContestedSystems)
+                Globals.WarStatusTracker.FullHomeContestedSystems.Add(system.Key.Def.CoreSystemID, system.Value);
+            foreach (var system in HotSpots.HomeContestedSystems)
+                Globals.WarStatusTracker.HomeContestedSystems.Add(system.Def.CoreSystemID);
         }
     }
 }

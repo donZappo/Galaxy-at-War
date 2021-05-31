@@ -274,7 +274,7 @@ namespace GalaxyatWar
                 factionString.AppendLine("<b>" + starSystem.Name + "</b>");
 
             var SubString = "(";
-            if (Globals.WarStatusTracker.HomeContendedStrings.Contains(starSystem.Name))
+            if (Globals.WarStatusTracker.HomeContestedStrings.Contains(starSystem.Name))
                 SubString += "*Valuable Target*";
             if (Globals.WarStatusTracker.LostSystems.Contains(starSystem.Name))
                 SubString += " *Owner Changed*";
@@ -347,7 +347,7 @@ namespace GalaxyatWar
                         var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
                         var wasVisited = VisitedStarSystems.Contains(__result.name);
 
-                        if (Globals.WarStatusTracker.HomeContendedStrings.Contains(__result.name))
+                        if (Globals.WarStatusTracker.HomeContestedStrings.Contains(__result.name))
                             HighlightSystem(__result, wasVisited, Color.magenta, true);
                         else if (Globals.WarStatusTracker.LostSystems.Contains(__result.name))
                             HighlightSystem(__result, wasVisited, Color.yellow, false);

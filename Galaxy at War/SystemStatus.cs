@@ -34,7 +34,7 @@ namespace GalaxyatWar
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
         public List<string> CurrentlyAttackedBy = new();
-        public bool Contended = false;
+        public bool Contested = false;
         public int DifficultyRating;
         public bool BonusSalvage;
         public bool BonusXP;

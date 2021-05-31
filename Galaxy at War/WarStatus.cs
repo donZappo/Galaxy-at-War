@@ -29,15 +29,15 @@ namespace GalaxyatWar
         public List<string> LostSystems = new();
         public bool GaWEventPopUp = false;
 
-        public List<string> HomeContendedStrings = new();
+        public List<string> HomeContestedStrings = new();
         public List<string> AbandonedSystems = new();
         public List<string> DeploymentContracts = new();
         public string DeploymentEmployer = "Marik";
         public double DeploymentInfluenceIncrease = 1.0;
         public bool PirateDeployment = false;
 
-        public Dictionary<string, float> FullHomeContendedSystems = new();
-        public List<string> HomeContendedSystems = new();
+        public Dictionary<string, float> FullHomeContestedSystems = new();
+        public List<string> HomeContestedSystems = new();
         public Dictionary<string, List<string>> ExternalPriorityTargets = new();
         public HashSet<string> FullPirateSystems = new();
         public List<string> PirateHighlight = new();

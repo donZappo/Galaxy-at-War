@@ -23,18 +23,18 @@ namespace GalaxyatWar
         public static int BonusMoney = 0;
 
         public static Dictionary<string, List<StarSystem>> ExternalPriorityTargets = new();
-        public static readonly List<StarSystem> HomeContendedSystems = new();
-        public static readonly Dictionary<StarSystem, float> FullHomeContendedSystems = new();
+        public static readonly List<StarSystem> HomeContestedSystems = new();
+        public static readonly Dictionary<StarSystem, float> FullHomeContestedSystems = new();
 
         public static void ProcessHotSpots()
         {
             try
             {
                 var dominantFaction = Globals.WarStatusTracker.Systems.Find(x => x.name == Globals.WarStatusTracker.CurSystem).owner;
-                FullHomeContendedSystems.Clear();
-                HomeContendedSystems.Clear();
+                FullHomeContestedSystems.Clear();
+                HomeContestedSystems.Clear();
                 ExternalPriorityTargets.Clear();
-                Globals.WarStatusTracker.HomeContendedStrings.Clear();
+                Globals.WarStatusTracker.HomeContestedStrings.Clear();
                 var factRepDict = new Dictionary<string, int>();
                 foreach (var faction in Globals.IncludedFactions)
                 {
@@ -53,13 +53,13 @@ namespace GalaxyatWar
                         systemStatus.BonusXP = false;
                     }
 
-                    if (systemStatus.Contended && systemStatus.DifficultyRating <= factRepDict[systemStatus.owner]
+                    if (systemStatus.Contested && systemStatus.DifficultyRating <= factRepDict[systemStatus.owner]
                                                && systemStatus.DifficultyRating >= factRepDict[systemStatus.owner] - 4)
                         systemStatus.PriorityDefense = true;
                     if (systemStatus.PriorityDefense)
                     {
                         if (systemStatus.owner == dominantFaction)
-                            FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
+                            FullHomeContestedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
                         else
                             ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
                     }
@@ -70,8 +70,8 @@ namespace GalaxyatWar
                         {
                             if (attacker == dominantFaction)
                             {
-                                if (!FullHomeContendedSystems.Keys.Contains(systemStatus.starSystem))
-                                    FullHomeContendedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
+                                if (!FullHomeContestedSystems.Keys.Contains(systemStatus.starSystem))
+                                    FullHomeContestedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
                             }
                             else
                             {
@@ -83,14 +83,14 @@ namespace GalaxyatWar
                 }
 
                 var i = 0;
-                foreach (var system in FullHomeContendedSystems.OrderByDescending(x => x.Value))
+                foreach (var system in FullHomeContestedSystems.OrderByDescending(x => x.Value))
                 {
-                    if (i < FullHomeContendedSystems.Count)
+                    if (i < FullHomeContestedSystems.Count)
                     {
-                        Globals.WarStatusTracker.HomeContendedStrings.Add(system.Key.Name);
+                        Globals.WarStatusTracker.HomeContestedStrings.Add(system.Key.Name);
                     }
 
-                    HomeContendedSystems.Add(system.Key);
+                    HomeContestedSystems.Add(system.Key);
                     i++;
                 }
             }
@@ -150,30 +150,30 @@ namespace GalaxyatWar
                 Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
                 Globals.WarStatusTracker.DeploymentContracts.Clear();
 
-                if (HomeContendedSystems.Count != 0 && !Globals.Settings.DefensiveFactions.Contains(Globals.Sim.CurSystem.OwnerValue.Name) && !Globals.WarStatusTracker.Deployment)
+                if (HomeContestedSystems.Count != 0 && !Globals.Settings.DefensiveFactions.Contains(Globals.Sim.CurSystem.OwnerValue.Name) && !Globals.WarStatusTracker.Deployment)
                 {
                     var i = 0;
                     var twiddle = 0;
                     var RandomSystem = 0;
-                    Globals.WarStatusTracker.HomeContendedStrings.Clear();
-                    while (HomeContendedSystems.Count != 0)
+                    Globals.WarStatusTracker.HomeContestedStrings.Clear();
+                    while (HomeContestedSystems.Count != 0)
                     {
                         Traverse.Create(Globals.Sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
                         if (twiddle == 0)
                             twiddle = -1;
                         else if (twiddle == 1)
-                            RandomSystem = Globals.Rng.Next(0, 3 * HomeContendedSystems.Count / 4);
+                            RandomSystem = Globals.Rng.Next(0, 3 * HomeContestedSystems.Count / 4);
                         else if (twiddle == -1)
-                            RandomSystem = Globals.Rng.Next(HomeContendedSystems.Count / 4, 3 * HomeContendedSystems.Count / 4);
+                            RandomSystem = Globals.Rng.Next(HomeContestedSystems.Count / 4, 3 * HomeContestedSystems.Count / 4);
 
-                        var MainBCTarget = HomeContendedSystems[RandomSystem];
+                        var MainBCTarget = HomeContestedSystems[RandomSystem];
 
                         if (MainBCTarget == Globals.Sim.CurSystem || (Globals.Sim.CurSystem.OwnerValue.Name == "Locals" && MainBCTarget.OwnerValue.Name != "Locals") ||
                             !Globals.IncludedFactions.Contains(MainBCTarget.OwnerValue.Name))
                         {
-                            HomeContendedSystems.Remove(MainBCTarget);
-                            Globals.WarStatusTracker.HomeContendedStrings.Remove(MainBCTarget.Name);
+                            HomeContestedSystems.Remove(MainBCTarget);
+                            Globals.WarStatusTracker.HomeContestedStrings.Remove(MainBCTarget.Name);
                             continue;
                         }
 
@@ -204,8 +204,8 @@ namespace GalaxyatWar
 
                         var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == MainBCTarget.Name);
                         RefreshContractsEmployersAndTargets(systemStatus);
-                        HomeContendedSystems.Remove(MainBCTarget);
-                        Globals.WarStatusTracker.HomeContendedStrings.Add(MainBCTarget.Name);
+                        HomeContestedSystems.Remove(MainBCTarget);
+                        Globals.WarStatusTracker.HomeContestedStrings.Add(MainBCTarget.Name);
                         if (Globals.Sim.CurSystem.SystemBreadcrumbs.Count == Globals.Settings.InternalHotSpots)
                             break;
 

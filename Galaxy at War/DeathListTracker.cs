@@ -10,16 +10,7 @@ namespace GalaxyatWar
         public readonly Dictionary<string, float> DeathList = new();
         public List<string> Enemies => DeathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
         public List<string> Allies => DeathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
-        private WarFaction warFaction;
-
-        internal WarFaction WarFaction
-        {
-            get
-            {
-                return warFaction ??= Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == Faction);
-            }
-            set => warFaction = value;
-        }
+        public WarFaction WarFaction;
 
         [JsonConstructor]
         public DeathListTracker()

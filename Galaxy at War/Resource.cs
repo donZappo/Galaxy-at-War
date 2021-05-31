@@ -83,7 +83,7 @@ namespace GalaxyatWar
                     }
 
                     //Distribute attacking resources to systems.
-                    if (system.Contended || Globals.WarStatusTracker.HotBox.Contains(system.name))
+                    if (system.Contested || Globals.WarStatusTracker.HotBox.Contains(system.name))
                     {
                         attackTargets.Remove(system);
                         if (warFaction.AttackTargets[targetFaction].Count == 0 || !warFaction.AttackTargets.Keys.Contains(targetFaction))
@@ -161,7 +161,7 @@ namespace GalaxyatWar
                     return;
                 }
 
-                if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
+                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
                 {
                     warFaction.DefenseTargets.Remove(systemStatus);
                     if (warFaction.DefenseTargets.Count == 0 || warFaction.DefenseTargets == null)

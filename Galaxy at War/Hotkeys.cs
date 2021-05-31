@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using Harmony;
+using Newtonsoft.Json;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 
@@ -190,6 +192,13 @@ namespace GalaxyatWar
                     WarTick.Tick(true, true);
                 }
                 Globals.Sim.StopPlayMode();
+            }
+            
+            var hotkeyD = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
+                (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
+            if (hotkeyD)
+            {
+               File.WriteAllText($"{Globals.Settings.modDirectory}/dump.json", JsonConvert.SerializeObject(Globals.WarStatusTracker));
             }
         }
     }
