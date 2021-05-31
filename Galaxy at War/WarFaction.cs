@@ -67,8 +67,7 @@ namespace GalaxyatWar
 
         public Dictionary<string, float> warFactionAttackResources = new();
         public Dictionary<string, List<string>> attackTargets= new();
-        internal Dictionary<string, List<StarSystem>> systemTargets = new();
-        public List<string> defenseTargets = new();
+        public List<SystemStatus> defenseTargets = new();
         public Dictionary<string, bool> IncreaseAggression = new();
         public List<string> adjacentFactions = new();
         private DeathListTracker deathListTrackerBackingField;

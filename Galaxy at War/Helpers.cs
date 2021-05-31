@@ -303,7 +303,7 @@ namespace GalaxyatWar
                     if ((totalInfluence - 100) > 0)
                     {
                     var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
-                    warFaction.defenseTargets.Add(system.name);
+                    warFaction.defenseTargets.Add(system);
                 }
             }
 

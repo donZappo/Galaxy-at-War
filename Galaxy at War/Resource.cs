@@ -129,13 +129,13 @@ namespace GalaxyatWar
                     {
                         system.InfluenceTracker[warFaction.faction] += totalAR;
                         targetFar -= totalAR;
-                        targetWarFaction.defenseTargets.Add(system.name);
+                        targetWarFaction.defenseTargets.Add(system);
                     }
                     else
                     {
                         system.InfluenceTracker[warFaction.faction] += targetFar;
                         targetFar = 0;
-                        targetWarFaction.defenseTargets.Add(system.name);
+                        targetWarFaction.defenseTargets.Add(system);
                     }
                 }
             }
@@ -159,13 +159,7 @@ namespace GalaxyatWar
             defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
-            var map = new Dictionary<string, SystemStatus>();
-            var defenseTargets = warFaction.defenseTargets.Distinct();
-            foreach (var defenseTarget in defenseTargets)
-            {
-                map.Add(defenseTarget, Globals.WarStatusTracker.systems.Find(x => x.name == defenseTarget));
-            }
-
+            var defenseTargets = warFaction.defenseTargets.Distinct().ToList();
             // spend and decrement defensiveResources
             while (defensiveResources > float.Epsilon)
             {
@@ -176,7 +170,7 @@ namespace GalaxyatWar
                 //var spendDr = Mathf.Min(startingDefensiveResources * drFactor, defensiveResources);
                 //spendDr = spendDr < 1 ? 1 : Math.Max(1 * Globals.SpendFactor, spendDr * Globals.SpendFactor);
 
-                var systemStatus = map.GetRandomElement().Value;
+                var systemStatus = defenseTargets.GetRandomElement();
                 if (systemStatus == null)
                 {
                     LogDebug("NULL SystemStatus at AllocateDefensiveResources");
@@ -185,7 +179,7 @@ namespace GalaxyatWar
 
                 if (systemStatus.Contended || Globals.WarStatusTracker.HotBox.Contains(systemStatus.name))
                 {
-                    warFaction.defenseTargets.Remove(systemStatus.starSystem.Name);
+                    warFaction.defenseTargets.Remove(systemStatus);
                     if (warFaction.defenseTargets.Count == 0 || warFaction.defenseTargets == null)
                     {
                         break;
