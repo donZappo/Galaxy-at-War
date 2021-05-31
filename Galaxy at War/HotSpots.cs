@@ -22,9 +22,9 @@ namespace GalaxyatWar
         private static bool isBreadcrumb;
         public static int BonusMoney = 0;
 
-        public static Dictionary<string, List<StarSystem>> ExternalPriorityTargets = new Dictionary<string, List<StarSystem>>();
-        public static readonly List<StarSystem> HomeContendedSystems = new List<StarSystem>();
-        public static readonly Dictionary<StarSystem, float> FullHomeContendedSystems = new Dictionary<StarSystem, float>();
+        public static Dictionary<string, List<StarSystem>> ExternalPriorityTargets = new();
+        public static readonly List<StarSystem> HomeContendedSystems = new();
+        public static readonly Dictionary<StarSystem, float> FullHomeContendedSystems = new();
 
         public static void ProcessHotSpots()
         {

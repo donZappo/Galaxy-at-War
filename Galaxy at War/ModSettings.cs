@@ -32,21 +32,21 @@ namespace GalaxyatWar
         public int MaxContracts = 4;
         public bool SetMaxContracts = true;
 
-        public List<string> ImmuneToWar = new List<string>();
+        public List<string> ImmuneToWar = new();
 
-        public Dictionary<string, int> BonusAttackResources = new Dictionary<string, int>();
+        public Dictionary<string, int> BonusAttackResources = new();
 
-        public Dictionary<string, int> BonusDefensiveResources = new Dictionary<string, int>();
+        public Dictionary<string, int> BonusDefensiveResources = new();
 
-        public Dictionary<string, int> BonusAttackResources_ISM = new Dictionary<string, int>();
+        public Dictionary<string, int> BonusAttackResources_ISM = new();
 
-        public Dictionary<string, int> BonusDefensiveResources_ISM = new Dictionary<string, int>();
+        public Dictionary<string, int> BonusDefensiveResources_ISM = new();
 
-        public Dictionary<string, string> FactionTags = new Dictionary<string, string>();
+        public Dictionary<string, string> FactionTags = new();
 
-        public Dictionary<string, string> FactionShops = new Dictionary<string, string>();
+        public Dictionary<string, string> FactionShops = new();
 
-        public Dictionary<string, string> FactionShopItems = new Dictionary<string, string>();
+        public Dictionary<string, string> FactionShopItems = new();
 
         public int WarFrequency = 10;
         public bool Debug = false;
@@ -121,27 +121,27 @@ namespace GalaxyatWar
         public double SystemDefenseCutoff = 0.05;
         public bool CleanUpCompanyTag = false;
 
-        public List<string> DefensiveFactions = new List<string>();
+        public List<string> DefensiveFactions = new();
 
-        public List<string> IncludedFactions = new List<string>();
-        public List<string> IncludedFactions_ISM = new List<string>();
+        public List<string> IncludedFactions = new();
+        public List<string> IncludedFactions_ISM = new();
 
-        public Dictionary<string, string> FactionNames = new Dictionary<string, string>();
-        public Dictionary<string, int> LimitSystemContracts = new Dictionary<string, int>();
+        public Dictionary<string, string> FactionNames = new();
+        public Dictionary<string, int> LimitSystemContracts = new();
 
-        public Dictionary<string, string> LogoNames = new Dictionary<string, string>();
+        public Dictionary<string, string> LogoNames = new();
 
-        public Dictionary<string, double> ContractImpact = new Dictionary<string, double>();
-        public List<string> NoOffensiveContracts = new List<string>();
+        public Dictionary<string, double> ContractImpact = new();
+        public List<string> NoOffensiveContracts = new();
 
         public bool HyadesRimCompatible = false;
-        public List<string> HyadesPirates = new List<string>();
-        public List<string> HyadesFlashpointSystems = new List<string>();
-        public List<string> HyadesAppearingPirates = new List<string>();
-        public Dictionary<string, List<string>> FactionsAlwaysAllies = new Dictionary<string, List<string>>();
-        public List<string> HyadesEmployersOnly = new List<string>();
-        public List<string> HyadesTargetsOnly = new List<string>();
-        public List<string> HyadesNeverControl = new List<string>();
-        public Dictionary<string, string> FlashpointReleaseSystems = new Dictionary<string, string>();
+        public List<string> HyadesPirates = new();
+        public List<string> HyadesFlashpointSystems = new();
+        public List<string> HyadesAppearingPirates = new();
+        public Dictionary<string, List<string>> FactionsAlwaysAllies = new();
+        public List<string> HyadesEmployersOnly = new();
+        public List<string> HyadesTargetsOnly = new();
+        public List<string> HyadesNeverControl = new();
+        public Dictionary<string, string> FlashpointReleaseSystems = new();
     }
 }

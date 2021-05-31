@@ -160,7 +160,8 @@ namespace GalaxyatWar
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
             var map = new Dictionary<string, SystemStatus>();
-            foreach (var defenseTarget in warFaction.defenseTargets.Distinct())
+            var defenseTargets = warFaction.defenseTargets.Distinct();
+            foreach (var defenseTarget in defenseTargets)
             {
                 map.Add(defenseTarget, Globals.WarStatusTracker.systems.Find(x => x.name == defenseTarget));
             }
@@ -194,10 +195,10 @@ namespace GalaxyatWar
                 }
 
                 var total = systemStatus.InfluenceTracker.Values.Sum();
-                var sequence = systemStatus.InfluenceTracker
+                var factionTrackers = systemStatus.InfluenceTracker
                     .Where(x => x.Value != 0)
                     .Select(x => x.Key);
-                foreach (var factionStr in sequence)
+                foreach (var factionStr in factionTrackers)
                 {
                     if (systemStatus.InfluenceTracker[factionStr] > highest)
                     {

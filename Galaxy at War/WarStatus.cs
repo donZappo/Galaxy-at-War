@@ -11,47 +11,47 @@ namespace GalaxyatWar
 {
     public class WarStatus
     {
-        public List<SystemStatus> systems = new List<SystemStatus>();
-        internal List<SystemStatus> systemsByResources = new List<SystemStatus>();
-        public List<DeathListTracker> deathListTracker = new List<DeathListTracker>();
-        public List<WarFaction> warFactionTracker = new List<WarFaction>();
+        public List<SystemStatus> systems = new();
+        internal List<SystemStatus> systemsByResources = new();
+        public List<DeathListTracker> deathListTracker = new();
+        public List<WarFaction> warFactionTracker = new();
         public bool JustArrived = true;
         public bool Escalation = false;
         public bool Deployment = false;
         public WorkOrderEntry_Notification EscalationOrder;
         public int EscalationDays = 0;
-        public List<string> PrioritySystems = new List<string>();
+        public List<string> PrioritySystems = new();
         public string CurSystem;
         public bool HotBoxTravelling;
         public bool StartGameInitialized = false;
         public bool FirstTickInitialization = true;
-        public List<string> SystemChangedOwners = new List<string>();
-        public List<string> HotBox = new List<string>();
-        public List<string> LostSystems = new List<string>();
+        public List<string> SystemChangedOwners = new();
+        public List<string> HotBox = new();
+        public List<string> LostSystems = new();
         public bool GaW_Event_PopUp = false;
 
-        public List<string> HomeContendedStrings = new List<string>();
-        public List<string> AbandonedSystems = new List<string>();
-        public List<string> DeploymentContracts = new List<string>();
+        public List<string> HomeContendedStrings = new();
+        public List<string> AbandonedSystems = new();
+        public List<string> DeploymentContracts = new();
         public string DeploymentEmployer = "Marik";
         public double DeploymentInfluenceIncrease = 1.0;
         public bool PirateDeployment = false;
 
-        public Dictionary<string, float> FullHomeContendedSystems = new Dictionary<string, float>();
-        public List<string> HomeContendedSystems = new List<string>();
-        public Dictionary<string, List<string>> ExternalPriorityTargets = new Dictionary<string, List<string>>();
-        public HashSet<string> FullPirateSystems = new HashSet<string>();
-        public List<string> PirateHighlight = new List<string>();
+        public Dictionary<string, float> FullHomeContendedSystems = new();
+        public List<string> HomeContendedSystems = new();
+        public Dictionary<string, List<string>> ExternalPriorityTargets = new();
+        public HashSet<string> FullPirateSystems = new();
+        public List<string> PirateHighlight = new();
         public float PirateResources;
         public float TempPRGain;
         public float MinimumPirateResources;
         public float StartingPirateResources;
         public float LastPRGain;
-        public List<string> HyadesRimGeneralPirateSystems = new List<string>();
+        public List<string> HyadesRimGeneralPirateSystems = new();
         public int HyadesRimsSystemsTaken = 0;
-        public List<string> InactiveTHRFactions = new List<string>();
-        public List<string> FlashpointSystems = new List<string>();
-        public List<string> NeverControl = new List<string>();
+        public List<string> InactiveTHRFactions = new();
+        public List<string> FlashpointSystems = new();
+        public List<string> NeverControl = new();
         public int ComstarCycle = 0;
         public string ComstarAlly = "";
         

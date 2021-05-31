@@ -13,14 +13,14 @@ namespace GalaxyatWar
     {
         internal static ModSettings Settings;
         public static WarStatus WarStatusTracker;
-        internal static readonly Random Rng = new Random();
-        internal static readonly Stopwatch T = new Stopwatch();
+        internal static readonly Random Rng = new();
+        internal static readonly Stopwatch T = new();
         internal static SimGameState Sim;
         public static string TeamFaction;
         public static string EnemyFaction;
         public static double Difficulty;
         public static MissionResult MissionResult;
-        public static List<string> FactionEnemyHolder = new List<string>();
+        public static List<string> FactionEnemyHolder = new();
         public static string ContractType;
         public static bool BorkedSave;
         public static bool IsFlashpointContract;
@@ -35,12 +35,12 @@ namespace GalaxyatWar
         internal static TaskTimelineWidget TaskTimelineWidget;
         internal static TMP_FontAsset Font;
         public static bool IsGoodFaithEffort;
-        public static Dictionary<string, List<StarSystem>> AttackTargets = new Dictionary<string, List<StarSystem>>();
-        public static List<StarSystem> DefenseTargets = new List<StarSystem>();
+        public static Dictionary<string, List<StarSystem>> AttackTargets = new();
+        public static List<StarSystem> DefenseTargets = new();
         public static int LoopCounter;
         public static Contract LoopContract;
         public static bool FirstDehydrate = true;
         internal static bool ModInitialized;
-        internal static List<StarSystem> GaWSystems = new List<StarSystem>();
+        internal static List<StarSystem> GaWSystems = new();
     }
 }

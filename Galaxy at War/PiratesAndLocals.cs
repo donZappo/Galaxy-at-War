@@ -13,7 +13,7 @@ namespace GalaxyatWar
 {
     internal class PiratesAndLocals
     {
-        internal static readonly HashSet<SystemStatus> FullPirateListSystems = new HashSet<SystemStatus>();
+        internal static readonly HashSet<SystemStatus> FullPirateListSystems = new();
 
         // if the pirates are getting a lot of resources it lowers the min.
         // So it gives the pirates a continual boost if they need it, and then stops boosting them when they don't.

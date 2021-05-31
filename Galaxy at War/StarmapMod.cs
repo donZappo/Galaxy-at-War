@@ -24,6 +24,15 @@ namespace GalaxyatWar
         internal static SGEventPanel eventPanel;
         private static TMP_Text descriptionText;
 
+        [HarmonyPatch(typeof(SGRoomController_Navigation), "EnterRoom")]
+        public class flkasjf
+        {
+            private static void Postfix()
+            {
+                LogDebug("PING");
+            }
+        }
+
         [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
         public static class TooltipPrefab_PlanetSetDataPatch
         {
@@ -279,7 +288,13 @@ namespace GalaxyatWar
                 SubString = "";
             factionString.AppendLine(SubString);
 
-            var tracker = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
+            var tracker = Globals.WarStatusTracker.systems.FirstOrDefault(x => x.starSystem == starSystem);
+            if (tracker is null)
+            {
+                LogDebug($"{starSystem} is not in Globals.WarStatusTracker.systems");
+                factionString.AppendLine("Error finding SystemStatus.");
+                return factionString.ToString();
+            }
             foreach (var influence in tracker.InfluenceTracker.OrderByDescending(x => x.Value))
             {
                 string number;

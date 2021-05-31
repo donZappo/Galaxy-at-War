@@ -7,7 +7,7 @@ namespace GalaxyatWar
     public class DeathListTracker
     {
         public string faction;
-        public Dictionary<string, float> deathList = new Dictionary<string, float>();
+        public Dictionary<string, float> deathList = new();
         public List<string> Enemies => deathList.Where(x => x.Value >= 75).Select(x => x.Key).ToList();
         public List<string> Allies => deathList.Where(x => x.Value <= 25).Select(x => x.Key).ToList();
         private WarFaction warFactionBackingField;

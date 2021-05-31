@@ -15,8 +15,8 @@ namespace GalaxyatWar
         public string name;
         public string owner;
 
-        public Dictionary<string, int> neighborSystems = new Dictionary<string, int>();
-        internal Dictionary<string, float> influenceTracker = new Dictionary<string, float>();
+        public Dictionary<string, int> neighborSystems = new();
+        internal Dictionary<string, float> influenceTracker = new();
 
         public Dictionary<string, float> InfluenceTracker
         {
@@ -33,7 +33,7 @@ namespace GalaxyatWar
         public float TotalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
-        public List<string> CurrentlyAttackedBy = new List<string>();
+        public List<string> CurrentlyAttackedBy = new();
         public bool Contended = false;
         public int DifficultyRating;
         public bool BonusSalvage;
