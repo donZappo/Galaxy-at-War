@@ -38,7 +38,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(FactionDef employer, StarSystemDef system, ref string[] __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
@@ -108,7 +108,7 @@ namespace GalaxyatWar
 
             public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result, string[] __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 employer.Enemies = __state;
@@ -122,7 +122,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(FactionValue theFaction)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == theFaction.Name) == null)
@@ -183,7 +183,7 @@ namespace GalaxyatWar
         {
             public static void Prefix()
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 foreach (var faction in Globals.IncludedFactions)
@@ -552,7 +552,7 @@ namespace GalaxyatWar
 
             public static void Postfix(ref Contract contract, ref string __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 contract.Override.shortDescription = __state;

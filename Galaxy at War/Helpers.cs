@@ -305,7 +305,7 @@ namespace GalaxyatWar
 
                 var totalInfluence = system.InfluenceTracker.Values.Sum();
                 //if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
-                if ((totalInfluence - 100) > 0)
+                if (totalInfluence - 100 > 0)
                 {
                     var warFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == system.owner);
                     warFaction.DefenseTargets.Add(system);
@@ -574,8 +574,7 @@ namespace GalaxyatWar
                 }
 
                 //Local Government can take a system.
-                if (systemStatus.owner != "Locals" && systemStatus.OriginalOwner == "Locals" &&
-                    (highestFaction == "Locals" && systemStatus.InfluenceTracker[highestFaction] >= 75))
+                if (systemStatus.owner != "Locals" && systemStatus.OriginalOwner == "Locals" && highestFaction == "Locals" && systemStatus.InfluenceTracker[highestFaction] >= 75)
                 {
                     ChangeSystemOwnership(starSystem, "Locals", true);
                     systemStatus.Contested = false;
@@ -612,8 +611,8 @@ namespace GalaxyatWar
         {
             var starSystem = systemStatus.starSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
-            if (Globals.WarStatusTracker.HotBox.Contains(starSystem.Name) || (starSystem.Tags.Contains("planet_region_hyadesrim") &&
-                                                                              (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction")))
+            if (Globals.WarStatusTracker.HotBox.Contains(starSystem.Name) || starSystem.Tags.Contains("planet_region_hyadesrim") &&
+                (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction"))
             {
                 LogDebug("Skipping HotBox or THR Neutrals");
                 return;

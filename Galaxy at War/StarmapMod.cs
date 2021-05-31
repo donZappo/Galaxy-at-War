@@ -38,7 +38,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(object data, ref string __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 var starSystem = (StarSystem) data;
@@ -372,7 +372,7 @@ namespace GalaxyatWar
             public static void Prefix(StarmapRenderer __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                if (Globals.WarStatusTracker == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
@@ -390,7 +390,7 @@ namespace GalaxyatWar
         {
             public static void Postfix(StarmapRenderer __instance)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (!Globals.Settings.ExpandedMap)
@@ -417,7 +417,7 @@ namespace GalaxyatWar
                     mesh.SetLayoutDirty();
                 }
 
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 SetFont(___LabelField, Globals.Font);

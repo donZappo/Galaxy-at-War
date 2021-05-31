@@ -39,7 +39,7 @@ namespace GalaxyatWar
 
                     theWidget.qtyElement.SetActive(true);
                     theWidget.quantityValue.SetText("{0}", __instance.quantity);
-                    theWidget.quantityValueColor.SetUIColor((__instance.quantity > 0 || __instance.quantity == int.MinValue) ? UIColor.White : UIColor.Red);
+                    theWidget.quantityValueColor.SetUIColor(__instance.quantity > 0 || __instance.quantity == int.MinValue ? UIColor.White : UIColor.Red);
                     return false;
                 }
                 catch (Exception e)
