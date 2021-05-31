@@ -28,7 +28,7 @@ namespace GalaxyatWar
             if (warFaction.ComstarSupported)
                 attackResources += Globals.Settings.GaW_Police_ARBonus;
             warFaction.AR_Against_Pirates = 0;
-            if (Globals.Settings.AggressiveToggle && !Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
+            if (Globals.Settings.AggressiveToggle && !Globals.Settings.DefensiveFactions.Contains(warFaction.FactionName))
                 attackResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
 
             attackResources = attackResources * (1 + warFaction.DaysSinceSystemAttacked * Globals.Settings.AResourceAdjustmentPerCycle / 100);
@@ -41,43 +41,27 @@ namespace GalaxyatWar
 
         public static void AllocateAttackResources(WarFaction warFaction)
         {
-            var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => x.Name == warFaction.faction));
+            var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => Equals(x, warFaction.Faction)));
             var maxContracts = HotSpots.ProcessReputation(factionRep);
             if (warFaction.warFactionAttackResources.Count == 0)
                 return;
             var warFactionAR = warFaction.warFactionAttackResources;
             //Go through the different resources allocated from attacking faction to spend against each targetFaction
             var deathListTracker = warFaction.DeathListTracker;
-            foreach (var targetFaction in warFactionAR.Keys.Intersect(warFaction.attackTargets.Keys))
+            var attackFactions = warFactionAR.Keys.Intersect(warFaction.attackTargets.Keys);
+            foreach (var targetFaction in attackFactions)
             {
                 var targetFar = warFactionAR[targetFaction];
                 var startingTargetFar = targetFar;
                 var attackTargets = warFaction.attackTargets[targetFaction];
-                var map = new Dictionary<string, SystemStatus>();
-                foreach (var targetName in attackTargets)
-                {
-                    map.Add(targetName, Globals.WarStatusTracker.systems.Find(x => x.name == targetName));
-                }
-
                 var hatred = deathListTracker.deathList[targetFaction];
-                var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == targetFaction);
+                var targetWarFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == targetFaction);
                 while (targetFar > 0 && attackTargets.Count > 0)
                 {
-                    // DE-CONSTRUCTOR
-                    var foo = map.GetRandomElement();
-                    var target = foo.Key;
-                    var system = foo.Value;
-                    //var (target, system) = map.GetRandomElement<KeyValuePair<string, SystemStatus>>();
-
-                    if (system == null)
+                    var system = attackTargets.GetRandomElement();
+                    if (system.owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
                     {
-                        LogDebug("CRITICAL:  No system found at AllocateAttackResources, aborting processing.");
-                        return;
-                    }
-
-                    if (system.owner == warFaction.faction || Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
-                    {
-                        attackTargets.Remove(target);
+                        attackTargets.Remove(system);
                         return;
                     }
 
@@ -87,9 +71,9 @@ namespace GalaxyatWar
                         system.DifficultyRating >= maxContracts - 4)
                     {
                         system.PriorityAttack = true;
-                        if (!system.CurrentlyAttackedBy.Contains(warFaction.faction))
+                        if (!system.CurrentlyAttackedBy.Contains(warFaction.FactionName))
                         {
-                            system.CurrentlyAttackedBy.Add(warFaction.faction);
+                            system.CurrentlyAttackedBy.Add(warFaction.FactionName);
                         }
 
                         if (!Globals.WarStatusTracker.PrioritySystems.Contains(system.starSystem.Name))
@@ -101,7 +85,7 @@ namespace GalaxyatWar
                     //Distribute attacking resources to systems.
                     if (system.Contended || Globals.WarStatusTracker.HotBox.Contains(system.name))
                     {
-                        attackTargets.Remove(system.starSystem.Name);
+                        attackTargets.Remove(system);
                         if (warFaction.attackTargets[targetFaction].Count == 0 || !warFaction.attackTargets.Keys.Contains(targetFaction))
                         {
                             break;
@@ -118,7 +102,7 @@ namespace GalaxyatWar
                     if (maxValueList.Count > 1)
                         pMaxValue = maxValueList[1];
 
-                    var itValue = system.InfluenceTracker[warFaction.faction];
+                    var itValue = system.InfluenceTracker[warFaction.FactionName];
                     var basicAR = (float) (11 - system.DifficultyRating) / 2;
                     var bonusAR = 0f;
                     if (itValue > pMaxValue)
@@ -127,13 +111,13 @@ namespace GalaxyatWar
                     var totalAR = basicAR + bonusAR + spendAR;
                     if (targetFar > totalAR)
                     {
-                        system.InfluenceTracker[warFaction.faction] += totalAR;
+                        system.InfluenceTracker[warFaction.FactionName] += totalAR;
                         targetFar -= totalAR;
                         targetWarFaction.defenseTargets.Add(system);
                     }
                     else
                     {
-                        system.InfluenceTracker[warFaction.faction] += targetFar;
+                        system.InfluenceTracker[warFaction.FactionName] += targetFar;
                         targetFar = 0;
                         targetWarFaction.defenseTargets.Add(system);
                     }
@@ -147,12 +131,12 @@ namespace GalaxyatWar
             if (warFaction.defenseTargets.Count == 0)
                 return;
 
-            var faction = warFaction.faction;
+            var faction = warFaction.FactionName;
             var defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
             if (warFaction.ComstarSupported)
                 defensiveResources += Globals.Settings.GaW_Police_DRBonus;
             warFaction.DR_Against_Pirates = 0;
-            if (Globals.Settings.AggressiveToggle && Globals.Settings.DefensiveFactions.Contains(warFaction.faction))
+            if (Globals.Settings.AggressiveToggle && Globals.Settings.DefensiveFactions.Contains(warFaction.FactionName))
                 defensiveResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
             var defensiveCorrection = defensiveResources * (100 * Globals.Settings.GlobalDefenseFactor -
                                                             Globals.Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;

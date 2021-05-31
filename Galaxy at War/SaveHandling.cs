@@ -367,10 +367,10 @@ namespace GalaxyatWar
 
                 foreach (var defensiveFaction in Globals.Settings.DefensiveFactions)
                 {
-                    if (Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == defensiveFaction) == null)
+                    if (Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == defensiveFaction) == null)
                         continue;
 
-                    var targetFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == defensiveFaction);
+                    var targetFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == defensiveFaction);
 
                     if (targetFaction.AttackResources != 0)
                     {

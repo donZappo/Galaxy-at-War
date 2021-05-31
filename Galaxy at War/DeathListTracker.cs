@@ -16,7 +16,7 @@ namespace GalaxyatWar
         {
             get
             {
-                return warFactionBackingField ?? (warFactionBackingField = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == faction));
+                return warFactionBackingField ?? (warFactionBackingField = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == faction));
             }
             set => warFactionBackingField = value;
         }

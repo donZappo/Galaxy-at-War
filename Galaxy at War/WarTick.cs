@@ -42,14 +42,14 @@ namespace GalaxyatWar
                 var perPlanetAR = 0f;
                 var perPlanetDR = 0f;
                 var sequence = Globals.WarStatusTracker.warFactionTracker.Where(x =>
-                    Globals.IncludedFactions.Contains(x.faction)).ToList();
+                    Globals.IncludedFactions.Contains(x.FactionName)).ToList();
                 foreach (var faction in sequence)
                 {
-                    var systemCount = Globals.WarStatusTracker.systems.Count(x => x.owner == faction.faction);
+                    var systemCount = Globals.WarStatusTracker.systems.Count(x => x.owner == faction.FactionName);
                     if (!Globals.Settings.ISMCompatibility && systemCount != 0)
                     {
-                        perPlanetAR = (float) Globals.Settings.BonusAttackResources[faction.faction] / systemCount;
-                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources[faction.faction] / systemCount;
+                        perPlanetAR = (float) Globals.Settings.BonusAttackResources[faction.FactionName] / systemCount;
+                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources[faction.FactionName] / systemCount;
                         if (perPlanetAR < lowestAR)
                             lowestAR = perPlanetAR;
                         if (perPlanetDR < lowestDR)
@@ -57,8 +57,8 @@ namespace GalaxyatWar
                     }
                     else if (systemCount != 0)
                     {
-                        perPlanetAR = (float) Globals.Settings.BonusAttackResources_ISM[faction.faction] / systemCount;
-                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.faction] / systemCount;
+                        perPlanetAR = (float) Globals.Settings.BonusAttackResources_ISM[faction.FactionName] / systemCount;
+                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.FactionName] / systemCount;
                         if (perPlanetAR < lowestAR)
                             lowestAR = perPlanetDR;
                         if (perPlanetDR < lowestDR)

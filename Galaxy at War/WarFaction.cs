@@ -9,7 +9,8 @@ namespace GalaxyatWar
 {
     public class WarFaction
     {
-        public string faction;
+        public readonly string FactionName;
+        internal readonly FactionValue Faction;
         public bool GainedSystem;
         public bool LostSystem;
         public float DaysSinceSystemAttacked;
@@ -23,10 +24,6 @@ namespace GalaxyatWar
         public float AR_Against_Pirates = 0;
         public float DR_Against_Pirates = 0;
         public bool ComstarSupported = false;
-        // deprecated
-        public float AR_PerPlanet = 0;
-        // deprecated
-        public float DR_PerPlanet = 0;
 
         public float AttackResources
         {
@@ -35,9 +32,10 @@ namespace GalaxyatWar
             {
                 if (value < -50000 || value > 50000)
                 {
-                    Logger.LogDebug($"{faction}: {value}");
+                    Logger.LogDebug($"{FactionName}: {value}");
                     Logger.LogDebug(new StackTrace().ToString());
                 }
+
                 attackResources = value;
             }
         }
@@ -49,31 +47,24 @@ namespace GalaxyatWar
             {
                 if (value < -50000 || value > 50000)
                 {
-                    Logger.LogDebug($"{faction}: {value}");
+                    Logger.LogDebug($"{FactionName}: {value}");
                     Logger.LogDebug(new StackTrace().ToString());
                 }
+
                 defensiveResources = value;
             }
         }
 
-        // removing this will break saves 
-        public int NumberOfSystems
-        {
-            get
-            {
-                return Globals.GaWSystems.Count(system => system.OwnerDef == Globals.Sim.factions[faction]);
-            }
-        }
-
         public Dictionary<string, float> warFactionAttackResources = new();
-        public Dictionary<string, List<string>> attackTargets= new();
+        public Dictionary<string, List<SystemStatus>> attackTargets = new();
         public List<SystemStatus> defenseTargets = new();
         public Dictionary<string, bool> IncreaseAggression = new();
         public List<string> adjacentFactions = new();
         private DeathListTracker deathListTracker;
+
         internal DeathListTracker DeathListTracker
         {
-            get => deathListTracker ??= Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction);
+            get => deathListTracker ??= Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == FactionName);
             set => deathListTracker = value;
         }
 
@@ -83,10 +74,11 @@ namespace GalaxyatWar
             // deser ctor
         }
 
-        public WarFaction(string faction)
+        public WarFaction(string factionName)
         {
-            Logger.LogDebug("WarFaction ctor: " + faction);
-            this.faction = faction;
+            Logger.LogDebug("WarFaction ctor: " + factionName);
+            FactionName = factionName;
+            Faction = Globals.FactionValues.Find(fv => fv.Name == factionName);
             GainedSystem = false;
             LostSystem = false;
             DaysSinceSystemAttacked = 0;
@@ -99,5 +91,4 @@ namespace GalaxyatWar
                 IncreaseAggression.Add(startFaction, false);
         }
     }
-
 }

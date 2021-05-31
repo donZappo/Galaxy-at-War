@@ -155,7 +155,7 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == tracker.faction);
+                var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == tracker.faction);
                 sb.AppendLine($"<b><u>{Globals.Settings.FactionNames[tracker.faction]}</b></u>\n");
                 if (tracker.faction == Globals.WarStatusTracker.ComstarAlly)
                 {

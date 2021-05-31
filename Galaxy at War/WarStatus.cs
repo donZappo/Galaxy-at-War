@@ -94,8 +94,8 @@ namespace GalaxyatWar
             {
                 if (system.OwnerValue.Name == "NoFaction" || system.OwnerValue.Name == "AuriganPirates")
                     AbandonedSystems.Add(system.Name);
-                var warFaction = warFactionTracker.Find(x => x.faction == system.OwnerValue.Name);
-                if (Globals.Settings.DefensiveFactions.Contains(warFaction.faction) && Globals.Settings.DefendersUseARforDR)
+                var warFaction = warFactionTracker.Find(x => x.FactionName == system.OwnerValue.Name);
+                if (Globals.Settings.DefensiveFactions.Contains(warFaction.FactionName) && Globals.Settings.DefendersUseARforDR)
                     warFaction.DefensiveResources += GetTotalAttackResources(system);
                 else
                     warFaction.AttackResources += GetTotalAttackResources(system);
@@ -108,7 +108,7 @@ namespace GalaxyatWar
 
             foreach (var faction in Globals.Settings.IncludedFactions)
             {
-                var warFaction = warFactionTracker.Find(x => x.faction == faction);
+                var warFaction = warFactionTracker.Find(x => x.FactionName == faction);
                 if (Globals.Settings.DefensiveFactions.Contains(faction) && Globals.Settings.DefendersUseARforDR)
                 {
                     if (!Globals.Settings.ISMCompatibility)

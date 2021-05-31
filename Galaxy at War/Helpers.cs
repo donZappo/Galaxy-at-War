@@ -188,7 +188,7 @@ namespace GalaxyatWar
             foreach (var warFarTemp in Globals.WarStatusTracker.warFactionTracker)
             {
                 warFarTemp.ComstarSupported = false;
-                if (omit.Contains(warFarTemp.faction))
+                if (omit.Contains(warFarTemp.FactionName))
                     continue;
                 warFactionList.Add(warFarTemp);
             }
@@ -196,10 +196,10 @@ namespace GalaxyatWar
             var warFactionHolder = warFactionList.OrderBy(x => x.TotalSystemsChanged).ElementAt(0);
             var warFactionListTrimmed = warFactionList.FindAll(x => x.TotalSystemsChanged == warFactionHolder.TotalSystemsChanged);
             warFactionListTrimmed.Shuffle();
-            var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == warFactionListTrimmed.ElementAt(0).faction);
+            var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == warFactionListTrimmed.ElementAt(0).FactionName);
             warFaction.ComstarSupported = true;
-            Globals.WarStatusTracker.ComstarAlly = warFaction.faction;
-            var factionDef = Globals.Sim.GetFactionDef(warFaction.faction);
+            Globals.WarStatusTracker.ComstarAlly = warFaction.FactionName;
+            var factionDef = Globals.Sim.GetFactionDef(warFaction.FactionName);
             if (Globals.Settings.GaW_PoliceSupport && !factionDef.Allies.Contains(Globals.Settings.GaW_Police))
             {
                 var tempList = factionDef.Allies.ToList();
@@ -217,7 +217,7 @@ namespace GalaxyatWar
 
         public static void CalculateAttackAndDefenseTargets(StarSystem starSystem)
         {
-            var warFac = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == starSystem.OwnerValue.Name);
+            var warFac = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == starSystem.OwnerValue.Name);
             if (warFac == null)
                 return;
             var isFlashpointSystem = Globals.WarStatusTracker.FlashpointSystems.Contains(starSystem.Name);
@@ -226,23 +226,27 @@ namespace GalaxyatWar
             ownerNeighborSystems.Clear();
             if (Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
                 return;
-
-            foreach (var neighborSystem in Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem).Where(x => !Globals.Settings.ImmuneToWar.Contains(x.OwnerValue.Name)))
+            var availableNeighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem)
+                .Where(x => !Globals.Settings.ImmuneToWar.Contains(x.OwnerValue.Name));
+            foreach (var neighborSystem in availableNeighbors)
             {
                 if (neighborSystem.OwnerValue.Name != starSystem.OwnerValue.Name &&
                     !isFlashpointSystem)
                 {
+                    var neighborSystemStatus = Globals.WarStatusTracker.systems.Find(s => s.starSystem == neighborSystem);
                     if (!warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                     {
-                        var tempList = new List<string> {neighborSystem.Name};
-                        //var tempList = new List<string>(warFac.attackTargets[neighborSystem.OwnerValue.Name]);
+                        var tempList = new List<SystemStatus>
+                        {
+                            neighborSystemStatus
+                        };
                         warFac.attackTargets.Add(neighborSystem.OwnerValue.Name, tempList);
                     }
                     else if (warFac.attackTargets.ContainsKey(neighborSystem.OwnerValue.Name)
-                             && !warFac.attackTargets[neighborSystem.OwnerValue.Name].Contains(neighborSystem.Name))
+                             && !warFac.attackTargets[neighborSystem.OwnerValue.Name].Contains(neighborSystemStatus))
                     {
                         // bug should Locals be here?
-                        warFac.attackTargets[neighborSystem.OwnerValue.Name].Add(neighborSystem.Name);
+                        warFac.attackTargets[neighborSystem.OwnerValue.Name].Add(neighborSystemStatus);
                     }
 
                     //if (!warFac.defenseTargets.Contains(starSystem.Name))
@@ -302,7 +306,7 @@ namespace GalaxyatWar
                 //if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
                     if ((totalInfluence - 100) > 0)
                     {
-                    var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
+                    var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == system.owner);
                     warFaction.defenseTargets.Add(system);
                 }
             }
@@ -370,11 +374,11 @@ namespace GalaxyatWar
                 var totalAR = GetTotalAttackResources(system);
                 var totalDr = GetTotalDefensiveResources(system);
 
-                var wfWinner = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == faction);
+                var wfWinner = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == faction);
                 wfWinner.GainedSystem = true;
                 wfWinner.MonthlySystemsChanged += 1;
                 wfWinner.TotalSystemsChanged += 1;
-                if (Globals.Settings.DefendersUseARforDR && Globals.Settings.DefensiveFactions.Contains(wfWinner.faction))
+                if (Globals.Settings.DefendersUseARforDR && Globals.Settings.DefensiveFactions.Contains(wfWinner.FactionName))
                 {
                     wfWinner.DefensiveResources += totalAR;
                     wfWinner.DefensiveResources += totalDr;
@@ -385,12 +389,12 @@ namespace GalaxyatWar
                     wfWinner.DefensiveResources += totalDr;
                 }
 
-                var wfLoser = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == oldFaction.Name);
+                var wfLoser = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == oldFaction.Name);
                 wfLoser.LostSystem = true;
                 wfLoser.MonthlySystemsChanged -= 1;
                 wfLoser.TotalSystemsChanged -= 1;
                 RemoveAndFlagSystems(wfLoser, system);
-                if (Globals.Settings.DefendersUseARforDR && Globals.Settings.DefensiveFactions.Contains(wfWinner.faction))
+                if (Globals.Settings.DefendersUseARforDR && Globals.Settings.DefensiveFactions.Contains(wfWinner.FactionName))
                 {
                     wfLoser.DefensiveResources -= totalAR;
                     wfLoser.DefensiveResources -= totalDr;
@@ -498,11 +502,11 @@ namespace GalaxyatWar
                 var topHalf = attackCount.Count / 2;
                 foreach (var attackTarget in attackCount.OrderByDescending(x => x.Value))
                 {
-                    var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == attackTarget.Key);
+                    var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == attackTarget.Key);
                     if (i < topHalf)
-                        warFaction.IncreaseAggression[warFaction.faction] = true;
+                        warFaction.IncreaseAggression[warFaction.FactionName] = true;
                     else
-                        warFaction.IncreaseAggression[warFaction.faction] = false;
+                        warFaction.IncreaseAggression[warFaction.FactionName] = false;
                     i++;
                 }
             }
@@ -515,9 +519,10 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.SystemChangedOwners.Add(system.Name);
             foreach (var neighborSystem in Globals.Sim.Starmap.GetAvailableNeighborSystem(system))
             {
-                var wfat = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == neighborSystem.OwnerValue.Name).attackTargets;
-                if (wfat.Keys.Contains(oldOwner.faction) && wfat[oldOwner.faction].Contains(system.Name))
-                    wfat[oldOwner.faction].Remove(system.Name);
+                var systemStatus = Globals.WarStatusTracker.systems.Find(s => s.starSystem == neighborSystem);
+                var attackTargets = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == neighborSystem.OwnerValue.Name).attackTargets;
+                if (attackTargets.Keys.Contains(oldOwner.FactionName) && attackTargets[oldOwner.FactionName].Contains(systemStatus))
+                    attackTargets[oldOwner.FactionName].Remove(systemStatus);
             }
         }
 
@@ -589,7 +594,7 @@ namespace GalaxyatWar
             var combinedString = "";
             foreach (var faction in Globals.IncludedFactions)
             {
-                var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == faction);
+                var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.FactionName == faction);
                 combinedString = combinedString + "<b><u>" + Globals.Settings.FactionNames[faction] + "</b></u>\n";
                 var summaryString = "Monthly Change in Systems: " + warFaction.MonthlySystemsChanged + "\n";
                 var summaryString2 = "Overall Change in Systems: " + warFaction.TotalSystemsChanged + "\n\n";
@@ -874,7 +879,7 @@ namespace GalaxyatWar
                     continue;
 
                 //Check to see if factions are always allied with each other.
-                if (Globals.Settings.FactionsAlwaysAllies.Keys.Contains(warFaction.faction) && Globals.Settings.FactionsAlwaysAllies[warFaction.faction].Contains(offensiveFaction))
+                if (Globals.Settings.FactionsAlwaysAllies.Keys.Contains(warFaction.FactionName) && Globals.Settings.FactionsAlwaysAllies[warFaction.FactionName].Contains(offensiveFaction))
                 {
                     trackerDeathList[offensiveFaction] = 99;
                     continue;

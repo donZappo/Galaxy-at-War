@@ -60,7 +60,7 @@ namespace GalaxyatWar
             var tempFullPirateListSystems = new List<SystemStatus>(FullPirateListSystems);
             foreach (var system in tempFullPirateListSystems)
             {
-                var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
+                var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.FactionName == system.owner);
                 float PAChange;
                 if (factionEscalateDefense[warFaction])
                     PAChange = (float) (Rng.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
@@ -69,7 +69,7 @@ namespace GalaxyatWar
 
                 var attackResources = warFaction.AttackResources;
 
-                if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
+                if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                     attackResources = warFaction.DefensiveResources;
 
                 var defenseCost = Mathf.Min(PAChange * system.TotalResources / 100, warFaction.AttackResources * 0.01f);
@@ -78,7 +78,7 @@ namespace GalaxyatWar
                 {
                     PAChange = Math.Min(PAChange, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
+                    if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                         warFaction.DR_Against_Pirates += defenseCost;
                     else
                         warFaction.AR_Against_Pirates += defenseCost;
@@ -88,7 +88,7 @@ namespace GalaxyatWar
                 {
                     PAChange = Math.Min(attackResources, system.PirateActivity);
                     system.PirateActivity -= PAChange;
-                    if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
+                    if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                         warFaction.DR_Against_Pirates += defenseCost;
                     else
                         warFaction.AR_Against_Pirates += defenseCost;
@@ -119,14 +119,14 @@ namespace GalaxyatWar
                 WarStatusTracker.PirateResources += system.TotalResources * system.PirateActivity / 100;
                 WarStatusTracker.TempPRGain += system.TotalResources * system.PirateActivity / 100;
 
-                var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.faction == system.owner);
+                var warFaction = WarStatusTracker.warFactionTracker.Find(x => x.FactionName == system.owner);
                 var warFARChange = system.AttackResources * system.PirateActivity / 100;
-                if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
+                if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                     warFaction.PirateDRLoss += warFARChange;
                 else
                     warFaction.PirateARLoss += warFARChange;
 
-                if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.faction))
+                if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                     warFaction.DefensiveResources -= warFARChange;
                 else
                     warFaction.AttackResources -= warFARChange;
