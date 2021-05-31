@@ -186,7 +186,8 @@ namespace GalaxyatWar
                 }
             }
 
-            private static void Spawn()
+
+            internal static void Spawn()
             {
                 LogDebug("Spawning new instance.");
                 Globals.WarStatusTracker = new WarStatus();
@@ -212,8 +213,17 @@ namespace GalaxyatWar
         {
             LogDebug("DeserializeWar");
             var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15);
-            Globals.WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(tag);
-            LogDebug($">>> Deserialization complete (Size after load: {tag.Length / 1024}kb)");
+            try
+            {
+                Globals.WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(tag);
+                LogDebug($">>> Deserialization complete (Size after load: {tag.Length / 1024}kb)");
+            }
+            catch
+            {
+                LogDebug("Error deserializing tag, generating new state.");
+                //Error(ex);
+                StarmapPopulateMapPatch.Spawn();
+            }
         }
 
         [HarmonyPatch(typeof(SimGameState), "Dehydrate")]
