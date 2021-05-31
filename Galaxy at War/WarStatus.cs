@@ -62,6 +62,27 @@ namespace GalaxyatWar
         public WarStatus()
         {
             Logger.LogDebug("WarStatus ctor");
+            Systems.Clear();
+            SystemsByResources.Clear();
+            DeathListTracker.Clear();
+            WarFactionTracker.Clear();
+            PrioritySystems.Clear();
+            SystemChangedOwners.Clear();
+            HotBox.Clear();
+            LostSystems.Clear();
+            HomeContestedStrings.Clear();
+            AbandonedSystems.Clear();
+            DeploymentContracts.Clear();
+            FullHomeContestedSystems.Clear();
+            HomeContestedSystems.Clear();
+            ExternalPriorityTargets.Clear();
+            FullPirateSystems.Clear();
+            PirateHighlight.Clear();
+            HyadesRimGeneralPirateSystems.Clear();
+            InactiveTHRFactions.Clear();
+            FlashpointSystems.Clear();
+            NeverControl.Clear();
+            
             if (Globals.Settings.ISMCompatibility)
                 Globals.Settings.IncludedFactions = new List<string>(Globals.Settings.IncludedFactions_ISM);
 

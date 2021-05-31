@@ -870,7 +870,7 @@ namespace GalaxyatWar
             var warFaction = deathListTracker.WarFaction;
             if (warFaction is null)
             {
-                LogDebug($"ROOFIE CIRCLE!! {deathListTracker.Faction} has a null WarFaction.  Respawning new state.");
+                LogDebug($"{deathListTracker.Faction} has a null WarFaction.");
                 SaveHandling.StarmapPopulateMapPatch.Spawn();
                 return;
             }

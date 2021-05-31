@@ -375,17 +375,14 @@ namespace GalaxyatWar
 
                 foreach (var deathListTracker in Globals.WarStatusTracker.DeathListTracker)
                 {
-                    // I swear this was needed then the error went away....
-                    //if (deathListTracker.Faction is null)
-                    //{
-                    //    LogDebug("Bad entry for " + deathListTracker.WarFaction.FactionName);
-                    //    deathListTracker.Faction = deathListTracker.WarFaction.FactionName;
-                    //    continue;
-                    //}
-
+                    if (deathListTracker.WarFaction is null)
+                    {
+                        LogDebug($"{deathListTracker.Faction} has a null WarFaction, resetting state.");
+                        StarmapPopulateMapPatch.Spawn();
+                        break;
+                    }
                     AdjustDeathList(deathListTracker, true);
                 }
-
 
                 foreach (var defensiveFaction in Globals.Settings.DefensiveFactions)
                 {
