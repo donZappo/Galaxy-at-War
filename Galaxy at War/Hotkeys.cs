@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
@@ -34,7 +34,7 @@ namespace GalaxyatWar
                     LogDebug($"Targets in {starSystem.Name}");
                     contractTargets.Do(x => LogDebug($"  {x}"));
                     Globals.Sim.GetAllCurrentlySelectableContracts().Do(x => LogDebug($"{x.Name,-25} {x.Difficulty} ({x.Override.GetUIDifficulty()})"));
-                    var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
+                    var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == starSystem);
                     var employers = systemStatus.InfluenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).Take(2);
                     foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
                     {
@@ -76,7 +76,7 @@ namespace GalaxyatWar
                     var contracts = new List<Contract>();
                     Globals.Sim.CurSystem.activeSystemContracts.Clear();
                     var system = Globals.Sim.CurSystem;
-                    var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.starSystem == system);
+                    var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
                     var influenceTracker = systemStatus.InfluenceTracker;
                     var owner = influenceTracker.First().Key;
                     var second = influenceTracker.Skip(1).First().Key;
@@ -169,24 +169,36 @@ namespace GalaxyatWar
                 }
             }
 
+            var hotkeyM = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
+                          (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
+            if (hotkeyM)
+            {
+                WarTick.Tick(true, false);
+                WarTick.Tick(true, false);
+                WarTick.Tick(true, false);
+                WarTick.Tick(true, true);
+            }
+
             var hotkeyT = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
                           (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.T);
             if (hotkeyT)
             {
-                const int loops = 100;
-                Logger.LogDebug($"Running {loops} full ticks.");
-                for (var i = 0; i < loops; i++)
+                LogDebug("LongWarTesting underway...");
+                for (var i = 0; i < 100; i++)
                 {
-                    Logger.LogDebug("Tick " + $"{i,3}...");
-                    try
-                    {
-                        WarTick.Tick(true, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex);
-                    }
+                    WarTick.Tick(true, false);
+                    WarTick.Tick(true, false);
+                    WarTick.Tick(true, false);
+                    WarTick.Tick(true, true);
                 }
+                Globals.Sim.StopPlayMode();
+            }
+            
+            var hotkeyD = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
+                (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
+            if (hotkeyD)
+            {
+               File.WriteAllText($"{Globals.Settings.modDirectory}/dump.json", JsonConvert.SerializeObject(Globals.WarStatusTracker));
             }
         }
     }

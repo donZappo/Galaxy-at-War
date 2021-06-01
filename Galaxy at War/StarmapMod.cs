@@ -24,12 +24,21 @@ namespace GalaxyatWar
         internal static SGEventPanel eventPanel;
         private static TMP_Text descriptionText;
 
+        [HarmonyPatch(typeof(SGRoomController_Navigation), "EnterRoom")]
+        public class flkasjf
+        {
+            private static void Postfix()
+            {
+                LogDebug("PING");
+            }
+        }
+
         [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
         public static class TooltipPrefab_PlanetSetDataPatch
         {
             public static void Prefix(object data, ref string __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 var starSystem = (StarSystem) data;
@@ -137,18 +146,18 @@ namespace GalaxyatWar
         {
             var sb = new StringBuilder();
             sb.AppendLine("<line-height=125%>");
-            foreach (var tracker in Globals.WarStatusTracker.deathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.faction)))
+            foreach (var tracker in Globals.WarStatusTracker.DeathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.Faction)))
             {
-                if (!Globals.Settings.FactionNames.ContainsKey(tracker.faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.faction)
-                                                                                || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.faction))
+                if (!Globals.Settings.FactionNames.ContainsKey(tracker.Faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.Faction)
+                                                                                || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.Faction))
                 {
-                    LogDebug($"faction {tracker.faction} doesn't exist in Mod.Globals.Settings.FactionNames, skipping...");
+                    LogDebug($"faction {tracker.Faction} doesn't exist in Mod.Globals.Settings.FactionNames, skipping...");
                     continue;
                 }
 
-                var warFaction = Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == tracker.faction);
-                sb.AppendLine($"<b><u>{Globals.Settings.FactionNames[tracker.faction]}</b></u>\n");
-                if (tracker.faction == Globals.WarStatusTracker.ComstarAlly)
+                var warFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == tracker.Faction);
+                sb.AppendLine($"<b><u>{Globals.Settings.FactionNames[tracker.Faction]}</b></u>\n");
+                if (tracker.Faction == Globals.WarStatusTracker.ComstarAlly)
                 {
                     sb.AppendLine("<b>***" + Globals.Settings.GaW_Police + " Supported Faction***</b>");
                     sb.AppendLine("Attack Resources: " + (warFaction.AttackResources + Globals.Settings.GaW_Police_ARBonus).ToString("0") +
@@ -265,7 +274,7 @@ namespace GalaxyatWar
                 factionString.AppendLine("<b>" + starSystem.Name + "</b>");
 
             var SubString = "(";
-            if (Globals.WarStatusTracker.HomeContendedStrings.Contains(starSystem.Name))
+            if (Globals.WarStatusTracker.HomeContestedStrings.Contains(starSystem.Name))
                 SubString += "*Valuable Target*";
             if (Globals.WarStatusTracker.LostSystems.Contains(starSystem.Name))
                 SubString += " *Owner Changed*";
@@ -279,7 +288,13 @@ namespace GalaxyatWar
                 SubString = "";
             factionString.AppendLine(SubString);
 
-            var tracker = Globals.WarStatusTracker.systems.Find(x => x.starSystem == starSystem);
+            var tracker = Globals.WarStatusTracker.Systems.FirstOrDefault(x => x.starSystem == starSystem);
+            if (tracker is null)
+            {
+                LogDebug($"{starSystem} is not in Globals.WarStatusTracker.systems");
+                factionString.AppendLine("Error finding SystemStatus.");
+                return factionString.ToString();
+            }
             foreach (var influence in tracker.InfluenceTracker.OrderByDescending(x => x.Value))
             {
                 string number;
@@ -332,7 +347,7 @@ namespace GalaxyatWar
                         var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
                         var wasVisited = VisitedStarSystems.Contains(__result.name);
 
-                        if (Globals.WarStatusTracker.HomeContendedStrings.Contains(__result.name))
+                        if (Globals.WarStatusTracker.HomeContestedStrings.Contains(__result.name))
                             HighlightSystem(__result, wasVisited, Color.magenta, true);
                         else if (Globals.WarStatusTracker.LostSystems.Contains(__result.name))
                             HighlightSystem(__result, wasVisited, Color.yellow, false);
@@ -357,7 +372,7 @@ namespace GalaxyatWar
             public static void Prefix(StarmapRenderer __instance)
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
-                if (Globals.WarStatusTracker == null || (sim.IsCampaign && !sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
@@ -375,7 +390,7 @@ namespace GalaxyatWar
         {
             public static void Postfix(StarmapRenderer __instance)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (!Globals.Settings.ExpandedMap)
@@ -402,7 +417,7 @@ namespace GalaxyatWar
                     mesh.SetLayoutDirty();
                 }
 
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 SetFont(___LabelField, Globals.Font);

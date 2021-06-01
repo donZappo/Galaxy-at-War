@@ -20,21 +20,7 @@ namespace GalaxyatWar
 {
     public static class Mod
     {
-        // this belongs in a different mod
-        [HarmonyPatch(typeof(Shop), "OnItemCollectionRetrieved")]
-        public class ShopOnItemCollectionRetrievedHackFixPatch
-        {
-            public static bool Prefix(Shop __instance, ItemCollectionDef def)
-            {
-                if (def == null)
-                {
-                    Log(__instance.system.Name);
-                }
-
-                return def != null;
-            }
-        }
-        
+       
         //Remove duplicates in the ContractEmployerIDList
         [HarmonyPatch(typeof(SimGameState), "GetValidParticipants")]
         public static class SimGameStateGetValidParticipantsPatch
@@ -52,7 +38,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(FactionDef employer, StarSystemDef system, ref string[] __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
@@ -122,7 +108,7 @@ namespace GalaxyatWar
 
             public static void Postfix(FactionDef employer, ref WeightedList<SimGameState.ContractParticipants> __result, string[] __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 employer.Enemies = __state;
@@ -136,13 +122,13 @@ namespace GalaxyatWar
         {
             public static void Prefix(FactionValue theFaction)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name) == null)
+                if (Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == theFaction.Name) == null)
                     return;
 
-                var deathListTracker = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFaction.Name);
+                var deathListTracker = Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == theFaction.Name);
                 AdjustDeathList(deathListTracker, true);
             }
         }
@@ -156,10 +142,10 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID) == null)
+                if (Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == theFactionID) == null)
                     return;
 
-                var deathListTracker = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == theFactionID);
+                var deathListTracker = Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == theFactionID);
                 AdjustDeathList(deathListTracker, true);
             }
         }
@@ -174,20 +160,20 @@ namespace GalaxyatWar
 
                 foreach (var faction in Globals.IncludedFactions)
                 {
-                    if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction) == null)
+                    if (Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == faction) == null)
                         continue;
 
-                    var deathListTracker = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction);
-                    LogDebug($"{deathListTracker.faction}'s deathListTracker:");
+                    var deathListTracker = Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == faction);
+                    //LogDebug($"{deathListTracker.Faction}'s deathListTracker:");
                     //LogDebug("Allies currently:");
-                    deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
                     //LogDebug("Enemies currently:");
-                    deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                     AdjustDeathList(deathListTracker, true);
                     //LogDebug("Allies after:");
-                    deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Allies.Do(x => LogDebug($"  {x}"));
                     //LogDebug("Enemies after:");
-                    deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
+                    //deathListTracker.Enemies.Do(x => LogDebug($"  {x}"));
                 }
             }
         }
@@ -197,15 +183,15 @@ namespace GalaxyatWar
         {
             public static void Prefix()
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 foreach (var faction in Globals.IncludedFactions)
                 {
-                    if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction) == null)
+                    if (Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == faction) == null)
                         continue;
 
-                    var deathListTracker = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction);
+                    var deathListTracker = Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == faction);
                     AdjustDeathList(deathListTracker, true);
                 }
             }
@@ -222,8 +208,8 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                         return;
 
-                    var system = Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
-                    if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                    var system = Globals.WarStatusTracker.Systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
+                    if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                     {
                         HotSpots.BonusMoney = (int) (__instance.MoneyResults * Globals.Settings.BonusCbillsFactor);
                         var newMoneyResults = Mathf.FloorToInt(__instance.MoneyResults + HotSpots.BonusMoney);
@@ -246,7 +232,7 @@ namespace GalaxyatWar
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.ToString());
+                    Error(ex);
                 }
             }
 
@@ -261,7 +247,7 @@ namespace GalaxyatWar
                     if (Globals.IsFlashpointContract)
                         return;
 
-                    var warSystem = Globals.WarStatusTracker.systems.Find(x => x.name == __instance.CurSystem.Name);
+                    var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == __instance.CurSystem.Name);
 
                     if (Globals.WarStatusTracker.FlashpointSystems.Contains(warSystem.name))
                         return;
@@ -343,7 +329,7 @@ namespace GalaxyatWar
                                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(Globals.TeamFaction);
                             }
 
-                            if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.Name))
+                            if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                             {
                                 LogDebug($"HotSpot: {Globals.Sim.CurSystem.Name}");
                                 if (Globals.WarStatusTracker.Deployment)
@@ -390,7 +376,7 @@ namespace GalaxyatWar
 
                             foreach (var system in Globals.WarStatusTracker.SystemChangedOwners)
                             {
-                                var systemStatus = Globals.WarStatusTracker.systems.Find(x => x.name == system);
+                                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == system);
                                 systemStatus.CurrentlyAttackedBy.Clear();
                                 CalculateAttackAndDefenseTargets(systemStatus.starSystem);
                                 RefreshContractsEmployersAndTargets(systemStatus);
@@ -510,7 +496,7 @@ namespace GalaxyatWar
                     else if (defenseFaction == "AuriganPirates")
                         stringHolder = "<b>Impact on Pirate Activity:</b>\n   " + defenderString;
 
-                    var system = Globals.WarStatusTracker.systems.Find(x => x.starSystem == systemName);
+                    var system = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == systemName);
                     if (system == null)
                     {
                         LogDebug($"CRITICAL:  System {systemName.Name} not found");
@@ -566,53 +552,10 @@ namespace GalaxyatWar
 
             public static void Postfix(ref Contract contract, ref string __state)
             {
-                if (Globals.WarStatusTracker == null || (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete")))
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
                 contract.Override.shortDescription = __state;
-            }
-        }
-
-        [HarmonyPatch(typeof(ListElementController_InventoryWeapon_NotListView), "RefreshQuantity")]
-        public static class Bug_Tracing_Fix
-        {
-            static bool Prefix(ListElementController_InventoryWeapon_NotListView __instance, InventoryItemElement_NotListView theWidget)
-            {
-                try
-                {
-                    if (__instance.quantity == -2147483648)
-                    {
-                        theWidget.qtyElement.SetActive(false);
-                        return false;
-                    }
-
-                    theWidget.qtyElement.SetActive(true);
-                    theWidget.quantityValue.SetText("{0}", __instance.quantity);
-                    theWidget.quantityValueColor.SetUIColor((__instance.quantity > 0 || __instance.quantity == int.MinValue) ? UIColor.White : UIColor.Red);
-                    return false;
-                }
-                catch (Exception e)
-                {
-                    Log("*****Exception thrown with ListElementController_InventoryWeapon_NotListView");
-                    Log($"theWidget null: {theWidget == null}");
-                    Log($"theWidget.qtyElement null: {theWidget.qtyElement == null}");
-                    Log($"theWidget.quantityValue null: {theWidget.quantityValue == null}");
-                    Log($"theWidget.quantityValueColor null: {theWidget.quantityValueColor == null}");
-                    if (theWidget.itemName != null)
-                    {
-                        Log("theWidget.itemName");
-                        Log(theWidget.itemName.ToString());
-                    }
-
-                    if (__instance.GetName() != null)
-                    {
-                        Log("__instance.GetName");
-                        Log(__instance.GetName());
-                    }
-
-                    Error(e);
-                    return false;
-                }
             }
         }
 

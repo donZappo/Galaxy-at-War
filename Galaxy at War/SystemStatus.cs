@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using BattleTech.BinkMedia;
+using BattleTech.Rendering;
+using Harmony;
 using Newtonsoft.Json;
 
 namespace GalaxyatWar
@@ -13,8 +15,8 @@ namespace GalaxyatWar
         public string name;
         public string owner;
 
-        public Dictionary<string, int> neighborSystems = new Dictionary<string, int>();
-        internal Dictionary<string, float> influenceTracker = new Dictionary<string, float>();
+        public Dictionary<string, int> neighborSystems = new();
+        internal Dictionary<string, float> influenceTracker = new();
 
         public Dictionary<string, float> InfluenceTracker
         {
@@ -31,34 +33,20 @@ namespace GalaxyatWar
         public float TotalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
-        public List<string> CurrentlyAttackedBy = new List<string>();
-        public bool Contended = false;
+        public List<string> CurrentlyAttackedBy = new();
+        public bool Contested = false;
         public int DifficultyRating;
         public bool BonusSalvage;
         public bool BonusXP;
         public bool BonusCBills;
-        private float attackResources;
         private float defenseResources;
-        public float PirateActivity;
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
         private StarSystem starSystemBackingField;
 
-        public float AttackResources
-        {
-            get => attackResources;
-            set
-            {
-                if (value < -50000 || value > 50000)
-                {
-                    Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
-                }
-
-                attackResources = value;
-            }
-        }
+        public float PirateActivity { get; set; }
+        public float AttackResources { get; set; }
 
         public float DefenseResources
         {
@@ -68,7 +56,7 @@ namespace GalaxyatWar
                 if (value < -50000 || value > 50000)
                 {
                     Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug(new StackTrace());
                 }
 
                 defenseResources = value;

@@ -9,7 +9,8 @@ namespace GalaxyatWar
 {
     public class WarFaction
     {
-        public string faction;
+        public string FactionName;
+        internal readonly FactionValue Faction;
         public bool GainedSystem;
         public bool LostSystem;
         public float DaysSinceSystemAttacked;
@@ -23,11 +24,6 @@ namespace GalaxyatWar
         public float AR_Against_Pirates = 0;
         public float DR_Against_Pirates = 0;
         public bool ComstarSupported = false;
-        // deprecated
-        public float AR_PerPlanet = 0;
-        // deprecated
-        public float DR_PerPlanet = 0;
-        // TODO perhaps
 
         public float AttackResources
         {
@@ -36,9 +32,10 @@ namespace GalaxyatWar
             {
                 if (value < -50000 || value > 50000)
                 {
-                    Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug($"{FactionName}: {value}");
+                    Logger.LogDebug(new StackTrace().ToString());
                 }
+
                 attackResources = value;
             }
         }
@@ -50,34 +47,25 @@ namespace GalaxyatWar
             {
                 if (value < -50000 || value > 50000)
                 {
-                    Logger.LogDebug(value);
-                    Logger.LogDebug(new StackTrace().GetFrames().Take(3));
+                    Logger.LogDebug($"{FactionName}: {value}");
+                    Logger.LogDebug(new StackTrace().ToString());
                 }
+
                 defensiveResources = value;
             }
         }
 
-        // removing this will break saves 
-        public int NumberOfSystems
-        {
-            get
-            {
-                return Globals.GaWSystems.Count(system => system.OwnerDef == Globals.Sim.factions[faction]);
-            }
-        }
-
-        public Dictionary<string, float> warFactionAttackResources = new Dictionary<string, float>();
-        public Dictionary<string, List<string>> attackTargets= new Dictionary<string, List<string>>();
-        internal Dictionary<string, List<StarSystem>> systemTargets = new Dictionary<string, List<StarSystem>>();
-        public List<string> defenseTargets = new List<string>();
-        public Dictionary<string, bool> IncreaseAggression = new Dictionary<string, bool>();
-        public List<string> adjacentFactions = new List<string>();
-        private DeathListTracker deathListTrackerBackingField;
+        public readonly Dictionary<string, float> WarFactionAttackResources = new();
+        public readonly Dictionary<string, List<SystemStatus>> AttackTargets = new();
+        public readonly List<SystemStatus> DefenseTargets = new();
+        public readonly Dictionary<string, bool> IncreaseAggression = new();
+        public readonly List<string> AdjacentFactions = new();
+        private DeathListTracker deathListTracker;
 
         internal DeathListTracker DeathListTracker
         {
-            get => deathListTrackerBackingField ?? (deathListTrackerBackingField = Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == faction));
-            set => deathListTrackerBackingField = value;
+            get => deathListTracker ??= Globals.WarStatusTracker.DeathListTracker.Find(x => x.Faction == FactionName);
+            set => deathListTracker = value;
         }
 
         [JsonConstructor]
@@ -86,10 +74,11 @@ namespace GalaxyatWar
             // deser ctor
         }
 
-        public WarFaction(string faction)
+        public WarFaction(string factionName)
         {
-            Logger.LogDebug("WarFaction ctor: " + faction);
-            this.faction = faction;
+            Logger.LogDebug("WarFaction ctor: " + factionName);
+            FactionName = factionName;
+            Faction = Globals.FactionValues.Find(fv => fv.Name == factionName);
             GainedSystem = false;
             LostSystem = false;
             DaysSinceSystemAttacked = 0;
@@ -102,5 +91,4 @@ namespace GalaxyatWar
                 IncreaseAggression.Add(startFaction, false);
         }
     }
-
 }
