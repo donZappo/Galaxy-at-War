@@ -143,5 +143,6 @@ namespace GalaxyatWar
         public List<string> HyadesTargetsOnly = new();
         public List<string> HyadesNeverControl = new();
         public Dictionary<string, string> FlashpointReleaseSystems = new();
+        public Dictionary<string, List<string>> HyadesAppearingPiratesFlipSystems = new(); 
     }
 }

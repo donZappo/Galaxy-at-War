@@ -92,12 +92,26 @@ namespace GalaxyatWar
                 var rand = Globals.Rng.Next(0, 100);
                 if (rand < Globals.WarStatusTracker.HyadesRimsSystemsTaken)
                 {
-                    var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                    var flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).starSystem;
                     var inactiveFaction = Globals.WarStatusTracker.InactiveTHRFactions.GetRandomElement();
-                    ChangeSystemOwnership(flipSystem, inactiveFaction, true);
+                    BattleTech.StarSystem flipSystem = new();
+                    if (Globals.Settings.HyadesAppearingPiratesFlipSystems.ContainsKey(inactiveFaction))
+                    {
+                        foreach (var changeSystem in Globals.Settings.HyadesAppearingPiratesFlipSystems[inactiveFaction])
+                        {
+                            flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == changeSystem).starSystem;
+                            ChangeSystemOwnership(flipSystem, inactiveFaction, true);
+                            if (Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Contains(changeSystem))
+                                Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(changeSystem);
+                        }
+                    }
+                    else
+                    {
+                        var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
+                        flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).starSystem;
+                        ChangeSystemOwnership(flipSystem, inactiveFaction, true);
+                        Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
+                    }
                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
-                    Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
                 }
             }
 
