@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using BattleTech;
 using BattleTech.Framework;
 using BattleTech.Save.SaveGameStructure;
-using BestHTTP.Extensions;
 using Harmony;
 using Newtonsoft.Json;
-using TB.ComponentModel;
 using TMPro;
 using UnityEngine;
 using static GalaxyatWar.Logger;
@@ -311,16 +307,16 @@ namespace GalaxyatWar
                     }
                     else
                     {
-                        LogDebug($"BOMB {system.name} not in StarSystemDictionary, removing it from WarStatus.systems");
+                        LogDebug($"BOMB {system.Name} not in StarSystemDictionary, removing it from WarStatus.systems");
                         Globals.WarStatusTracker.Systems.Remove(system);
                         continue;
                     }
 
                     var systemOwner = systemDef.OwnerValue.Name;
                     // needs to be refreshed since original declaration in Mod
-                    var ownerValue = Globals.FactionValues.Find(x => x.Name == system.owner);
+                    var ownerValue = Globals.FactionValues.Find(x => x.Name == system.Owner);
                     systemDef.OwnerValue = ownerValue;
-                    systemDef.factionShopOwnerID = system.owner;
+                    systemDef.factionShopOwnerID = system.Owner;
                     RefreshContractsEmployersAndTargets(system);
                     if (system.InfluenceTracker.Keys.Contains("AuriganPirates") && !system.InfluenceTracker.Keys.Contains("NoFaction"))
                     {
@@ -335,19 +331,19 @@ namespace GalaxyatWar
                         if (systemDef.SystemShopItems.Count != 0)
                         {
                             var tempList = systemDef.SystemShopItems;
-                            tempList.Add(Globals.Settings.FactionShops[system.owner]);
+                            tempList.Add(Globals.Settings.FactionShops[system.Owner]);
 
                             Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
                         }
 
                         if (systemDef.FactionShopItems != null)
                         {
-                            systemDef.FactionShopOwnerValue = Globals.FactionValues.Find(x => x.Name == system.owner);
-                            systemDef.factionShopOwnerID = system.owner;
+                            systemDef.FactionShopOwnerValue = Globals.FactionValues.Find(x => x.Name == system.Owner);
+                            systemDef.factionShopOwnerID = system.Owner;
                             var factionShopItems = systemDef.FactionShopItems;
                             if (factionShopItems.Contains(Globals.Settings.FactionShopItems[systemOwner]))
                                 factionShopItems.Remove(Globals.Settings.FactionShopItems[systemOwner]);
-                            factionShopItems.Add(Globals.Settings.FactionShopItems[system.owner]);
+                            factionShopItems.Add(Globals.Settings.FactionShopItems[system.Owner]);
                             systemDef.FactionShopItems = factionShopItems;
                         }
                     }
@@ -372,7 +368,7 @@ namespace GalaxyatWar
 
                 foreach (var starSystem in Globals.WarStatusTracker.FullPirateSystems)
                 {
-                    PiratesAndLocals.FullPirateListSystems.Add(Globals.WarStatusTracker.Systems.Find(x => x.name == starSystem));
+                    PiratesAndLocals.FullPirateListSystems.Add(Globals.WarStatusTracker.Systems.Find(x => x.Name == starSystem));
                 }
 
                 foreach (var deathListTracker in Globals.WarStatusTracker.DeathListTracker)

@@ -1,18 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using BattleTech;
 using Harmony;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
-using Newtonsoft.Json;
 
 
 // ReSharper disable UnusedMember.Local

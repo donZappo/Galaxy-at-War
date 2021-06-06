@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using Harmony;
-using Newtonsoft.Json;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 

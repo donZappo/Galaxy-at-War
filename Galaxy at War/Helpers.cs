@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Text;
 using BattleTech;
 using BattleTech.Framework;
@@ -42,7 +40,7 @@ namespace GalaxyatWar
                 {
                     //Define the original owner of the system for revolt purposes.
                     if (systemStatus.OriginalOwner == null)
-                        systemStatus.OriginalOwner = systemStatus.owner;
+                        systemStatus.OriginalOwner = systemStatus.Owner;
 
                     if (Globals.Settings.ChangeDifficulty && !systemStatus.StarSystem.Tags.Contains("planet_start_world"))
                     {
@@ -304,14 +302,14 @@ namespace GalaxyatWar
 
             foreach (var system in Globals.WarStatusTracker.Systems)
             {
-                if (Globals.WarStatusTracker.FlashpointSystems.Contains(system.name))
+                if (Globals.WarStatusTracker.FlashpointSystems.Contains(system.Name))
                     continue;
 
                 var totalInfluence = system.InfluenceTracker.Values.Sum();
                 //if ((totalInfluence - 100) / 100 > Globals.Settings.SystemDefenseCutoff)
                 if (totalInfluence - 100 > 0)
                 {
-                    var warFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == system.owner);
+                    var warFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == system.Owner);
                     warFaction.DefenseTargets.Add(system);
                 }
             }
@@ -370,8 +368,8 @@ namespace GalaxyatWar
                 }
 
                 var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
-                var oldOwner = systemStatus.owner;
-                systemStatus.owner = faction;
+                var oldOwner = systemStatus.Owner;
+                systemStatus.Owner = faction;
                 system.Def.factionShopOwnerID = faction;
                 system.Def.OwnerValue = Globals.FactionValues.Find(x => x.Name == faction);
 
@@ -542,7 +540,7 @@ namespace GalaxyatWar
                 var tempDict = new Dictionary<string, float>();
                 var totalInfluence = systemStatus.InfluenceTracker.Values.Sum();
                 var highest = 0f;
-                var highestFaction = systemStatus.owner;
+                var highestFaction = systemStatus.Owner;
                 foreach (var kvp in systemStatus.InfluenceTracker)
                 {
                     tempDict.Add(kvp.Key, kvp.Value / totalInfluence * 100);
@@ -554,11 +552,11 @@ namespace GalaxyatWar
                 }
 
                 systemStatus.InfluenceTracker = tempDict;
-                var diffStatus = systemStatus.InfluenceTracker[highestFaction] - systemStatus.InfluenceTracker[systemStatus.owner];
+                var diffStatus = systemStatus.InfluenceTracker[highestFaction] - systemStatus.InfluenceTracker[systemStatus.Owner];
                 var starSystem = systemStatus.StarSystem;
 
-                if (highestFaction != systemStatus.owner &&
-                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name) &&
+                if (highestFaction != systemStatus.Owner &&
+                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.Name) &&
                     diffStatus > Globals.Settings.TakeoverThreshold &&
                     !Globals.WarStatusTracker.HotBox.Contains(systemStatus) &&
                     (!Globals.Settings.DefensiveFactions.Contains(highestFaction) || highestFaction == "Locals") &&
@@ -578,7 +576,7 @@ namespace GalaxyatWar
                 }
 
                 //Local Government can take a system.
-                if (systemStatus.owner != "Locals" && systemStatus.OriginalOwner == "Locals" && highestFaction == "Locals" && systemStatus.InfluenceTracker[highestFaction] >= 75)
+                if (systemStatus.Owner != "Locals" && systemStatus.OriginalOwner == "Locals" && highestFaction == "Locals" && systemStatus.InfluenceTracker[highestFaction] >= 75)
                 {
                     ChangeSystemOwnership(starSystem, "Locals", true);
                     systemStatus.Contested = false;
@@ -784,7 +782,7 @@ namespace GalaxyatWar
             tempIt.Remove(highKey);
             var secondValue = tempIt.OrderByDescending(x => x.Value).Select(x => x.Value).First();
 
-            if (highKey != warSystem.owner &&
+            if (highKey != warSystem.Owner &&
                 highKey == winner &&
                 highValue - secondValue > Globals.Settings.TakeoverThreshold &&
                 !Globals.WarStatusTracker.FlashpointSystems.Contains(system.Name) &&
@@ -1183,7 +1181,7 @@ namespace GalaxyatWar
             foreach (var system in Globals.WarStatusTracker.Systems)
             {
                 //LogDebug("Building table row for " + system.name);
-                table.Rows.Add($"{date:MM-yyyy}", system.name, system.owner, system.OriginalOwner, system.TotalResources, system.PriorityDefense, system.PriorityAttack,
+                table.Rows.Add($"{date:MM-yyyy}", system.Name, system.Owner, system.OriginalOwner, system.TotalResources, system.PriorityDefense, system.PriorityAttack,
                     system.DefenseResources, system.AttackResources, system.PirateActivity);
             }
 

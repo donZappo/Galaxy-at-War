@@ -208,7 +208,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                         return;
 
-                    var system = Globals.WarStatusTracker.Systems.Find(x => x.name == Globals.Sim.CurSystem.Name);
+                    var system = Globals.WarStatusTracker.Systems.Find(x => x.Name == Globals.Sim.CurSystem.Name);
                     if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                     {
                         HotSpots.BonusMoney = (int) (__instance.MoneyResults * Globals.Settings.BonusCbillsFactor);
@@ -247,9 +247,9 @@ namespace GalaxyatWar
                     if (Globals.IsFlashpointContract)
                         return;
 
-                    var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == __instance.CurSystem.Name);
+                    var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.Name == __instance.CurSystem.Name);
 
-                    if (Globals.WarStatusTracker.FlashpointSystems.Contains(warSystem.name))
+                    if (Globals.WarStatusTracker.FlashpointSystems.Contains(warSystem.Name))
                         return;
 
                     if (Globals.MissionResult == MissionResult.Victory)
@@ -376,7 +376,7 @@ namespace GalaxyatWar
 
                             foreach (var system in Globals.WarStatusTracker.SystemChangedOwners)
                             {
-                                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == system);
+                                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.Name == system);
                                 systemStatus.CurrentlyAttackedBy.Clear();
                                 CalculateAttackAndDefenseTargets(systemStatus.StarSystem);
                                 RefreshContractsEmployersAndTargets(systemStatus);

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BattleTech;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
@@ -71,7 +70,7 @@ namespace GalaxyatWar
                 while (targetFar > 0 && attackTargets.Count > 0)
                 {
                     var systemStatus = attackTargets.GetRandomElement();
-                    if (systemStatus.owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                    if (systemStatus.Owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.Name))
                     {
                         attackTargets.Remove(systemStatus);
                         return;

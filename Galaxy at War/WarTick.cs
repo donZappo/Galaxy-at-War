@@ -45,7 +45,7 @@ namespace GalaxyatWar
                     Globals.IncludedFactions.Contains(x.FactionName)).ToList();
                 foreach (var faction in sequence)
                 {
-                    var systemCount = Globals.WarStatusTracker.Systems.Count(x => x.owner == faction.FactionName);
+                    var systemCount = Globals.WarStatusTracker.Systems.Count(x => x.Owner == faction.FactionName);
                     if (!Globals.Settings.ISMCompatibility && systemCount != 0)
                     {
                         perPlanetAR = (float) Globals.Settings.BonusAttackResources[faction.FactionName] / systemCount;
@@ -93,7 +93,7 @@ namespace GalaxyatWar
                 if (rand < Globals.WarStatusTracker.HyadesRimsSystemsTaken)
                 {
                     var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                    var flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).StarSystem;
+                    var flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.Name == hyadesSystem).StarSystem;
                     var inactiveFaction = Globals.WarStatusTracker.InactiveTHRFactions.GetRandomElement();
                     ChangeSystemOwnership(flipSystem, inactiveFaction, true);
                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
@@ -116,8 +116,8 @@ namespace GalaxyatWar
                 if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
                     continue;
 
-                if (!systemStatus.owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&
-                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                if (!systemStatus.Owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&
+                    !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.Name))
                 {
                     systemStatus.InfluenceTracker["Locals"] = Math.Min(systemStatus.InfluenceTracker["Locals"] * 1.1f, 100);
                 }
@@ -128,7 +128,7 @@ namespace GalaxyatWar
                     foreach (var neighbor in systemStatus.NeighborSystems.Keys)
                     {
                         if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
-                            !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                            !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.Name))
                         {
                             var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
                             systemStatus.InfluenceTracker[neighbor] += systemStatus.NeighborSystems[neighbor] * pushFactor;
@@ -139,7 +139,7 @@ namespace GalaxyatWar
                 //Revolt on previously taken systems.
                 // that represents is the previous faction essentially "revolting" against the new faction.
                 // So, if they have any influence in the system it gets bigger every turn. The only way to make it stop is to completely wipe them out.
-                if (systemStatus.owner != systemStatus.OriginalOwner)
+                if (systemStatus.Owner != systemStatus.OriginalOwner)
                     systemStatus.InfluenceTracker[systemStatus.OriginalOwner] *= 1.10f;
 
                 var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
@@ -151,13 +151,13 @@ namespace GalaxyatWar
                 var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
                 if (totalPirates >= pirateSystemFlagValue)
                 {
-                    if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                        Globals.WarStatusTracker.PirateHighlight.Add(systemStatus.name);
+                    if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.Name))
+                        Globals.WarStatusTracker.PirateHighlight.Add(systemStatus.Name);
                 }
                 else
                 {
-                    if (Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.name))
-                        Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.name);
+                    if (Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.Name))
+                        Globals.WarStatusTracker.PirateHighlight.Remove(systemStatus.Name);
                 }
             }
 
@@ -204,7 +204,7 @@ namespace GalaxyatWar
             }
 
             LogDebug("Processing flipped systems.");
-            foreach (var system in Globals.WarStatusTracker.Systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
+            foreach (var system in Globals.WarStatusTracker.Systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.Name)))
             {
                 system.CurrentlyAttackedBy.Clear();
                 CalculateAttackAndDefenseTargets(system.StarSystem);

@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Text;
-using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Globals;
 
