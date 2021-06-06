@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using BattleTech;
 using BattleTech.Framework;
 using BattleTech.Save.SaveGameStructure;
+using BestHTTP.Extensions;
 using Harmony;
 using Newtonsoft.Json;
+using TB.ComponentModel;
 using TMPro;
 using UnityEngine;
 using static GalaxyatWar.Logger;
@@ -193,7 +196,6 @@ namespace GalaxyatWar
                 LogDebug("Spawning new instance.");
                 Globals.WarStatusTracker = new WarStatus();
                 LogDebug("New global state created.");
-                // TODO is this value unchanging?  this is wrong if not
                 Globals.WarStatusTracker.SystemsByResources =
                     Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
                 if (!Globals.WarStatusTracker.StartGameInitialized)
@@ -215,10 +217,10 @@ namespace GalaxyatWar
         private static void DeserializeWar()
         {
             LogDebug("DeserializeWar");
-            var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave{")).Substring(15);
+            var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15);
             try
             {
-                Globals.WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(tag);
+                Globals.WarStatusTracker = JsonConvert.DeserializeObject<WarStatus>(Unzip(Convert.FromBase64String(tag)));
                 LogDebug($">>> Deserialization complete (Size after load: {tag.Length / 1024}kb)");
             }
             catch (Exception ex)
@@ -274,7 +276,7 @@ namespace GalaxyatWar
             LogDebug("SerializeWar");
             var gawTag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWar"));
             Globals.Sim.CompanyTags.Remove(gawTag);
-            gawTag = "GalaxyAtWarSave" + JsonConvert.SerializeObject(Globals.WarStatusTracker);
+            gawTag = $"GalaxyAtWarSave{Convert.ToBase64String(Zip(JsonConvert.SerializeObject(Globals.WarStatusTracker)))}";
             Globals.Sim.CompanyTags.Add(gawTag);
             LogDebug($">>> Serialization complete (object size: {gawTag.Length / 1024}kb)");
         }

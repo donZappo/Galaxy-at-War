@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using BattleTech;
 using BattleTech.Framework;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
+using CompressionLevel = UnityEngine.CompressionLevel;
 
 // ReSharper disable StringLiteralTypo
 // ReSharper disable ClassNeverInstantiated.Global
@@ -1194,6 +1197,46 @@ namespace GalaxyatWar
                              $",{table.Rows[row][col + 4]},{table.Rows[row][col + 5]},{table.Rows[row][col + 6]},{table.Rows[row][col + 7]}" +
                              $",{table.Rows[row][col + 8]},{table.Rows[row][col + 9]}");
             }
+        }
+
+        // https://stackoverflow.com/questions/7343465/compression-decompression-string-with-c-sharp
+        private static void CopyTo(Stream src, Stream dest)
+        {
+            var bytes = new byte[4096];
+            int cnt;
+
+            while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
+            {
+                dest.Write(bytes, 0, cnt);
+            }
+        }
+
+        internal static byte[] Zip(string str)
+        {
+            var bytes = Encoding.UTF8.GetBytes(str);
+
+            using var msi = new MemoryStream(bytes);
+            using var mso = new MemoryStream();
+            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            {
+                //msi.CopyTo(gs);
+                CopyTo(msi, gs);
+            }
+
+            return mso.ToArray();
+        }
+
+        internal static string Unzip(byte[] bytes)
+        {
+            using var msi = new MemoryStream(bytes);
+            using var mso = new MemoryStream();
+            using (var gs = new GZipStream(msi, CompressionMode.Decompress))
+            {
+                //gs.CopyTo(mso);
+                CopyTo(gs, mso);
+            }
+
+            return Encoding.UTF8.GetString(mso.ToArray());
         }
     }
 }
