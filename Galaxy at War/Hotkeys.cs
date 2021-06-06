@@ -192,6 +192,7 @@ namespace GalaxyatWar
                     WarTick.Tick(true, true);
                 }
                 //OnDayPassed.DumpCSV();
+                SaveHandling.SerializeWar();
                 Globals.Sim.StopPlayMode();
             }
             

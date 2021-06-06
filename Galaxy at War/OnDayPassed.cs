@@ -1,8 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using BattleTech;
 using Harmony;
 using static GalaxyatWar.Logger;
 using static GalaxyatWar.Helpers;
+using Newtonsoft.Json;
+
+
 // ReSharper disable UnusedMember.Local
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
@@ -32,18 +44,18 @@ namespace GalaxyatWar
                 //var employers = systemStatus.InfluenceTracker.OrderByDescending(x=> x.Value).Select(x => x.Key).Take(2); 
                 //foreach (var faction in Globals.Settings.IncludedFactions.Intersect(employers))
                 //{
-                    //LogDebug($"{faction} Enemies:");
-                    //FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
-                    //LogDebug($"{faction} Allies:");
-                    //FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
-                    //Log("");
+                //LogDebug($"{faction} Enemies:");
+                //FactionEnumeration.GetFactionByName(faction).factionDef?.Enemies.Distinct().Do(x => LogDebug($"  {x}"));
+                //LogDebug($"{faction} Allies:");
+                //FactionEnumeration.GetFactionByName(faction).factionDef?.Allies.Do(x => LogDebug($"  {x}"));
+                //Log("");
                 //}
                 //LogDebug("Player allies:");
                 //foreach (var faction in Globals.Sim.AlliedFactions)
                 //{
                 //    LogDebug($"  {faction}");
                 //}
-                
+
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
@@ -123,6 +135,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.GaWEventPopUp = true;
                 }
 
+                //DumpCSV();
                 //TEST: run 100 WarTicks and stop
                 if (Globals.Settings.LongWarTesting)
                 {

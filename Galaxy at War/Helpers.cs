@@ -12,7 +12,6 @@ using BattleTech.Framework;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
-using CompressionLevel = UnityEngine.CompressionLevel;
 
 // ReSharper disable StringLiteralTypo
 // ReSharper disable ClassNeverInstantiated.Global
