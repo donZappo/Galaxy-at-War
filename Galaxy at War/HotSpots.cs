@@ -887,42 +887,27 @@ namespace GalaxyatWar
         {
             private static void Postfix(Contract __instance)
             {
-                //Log("****Generate Salvage****");
-                //Log("Sim Null? " + (Sim == null).ToString());
-                //Log("CurSystem Null? " + (Globals.Sim.CurSystem == null).ToString());
-                //Log("CurSystem: " + Globals.Sim.CurSystem.Name);
-                //Log("WarStatus Null? " + (Globals.WarStatusTracker == null).ToString());
-                //Log("WarStatus System Null? " + (null ==Globals.WarStatusTracker.systems.Find(x => x.name == Globals.Sim.CurSystem.Name)).ToString());
-                //foreach (SystemStatus systemstatus in Globals.WarStatusTracker.systems)
-                //{
-                //    Log(systemstatus.name);
-                //    Log(systemstatus.starSystem.Name);
-                //}
-
                 try
                 {
                     if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                         return;
 
-                    var system = Globals.WarStatusTracker.Systems.Find(systemStatus => systemStatus.Name == __instance.TargetSystem);
+                    var system = Globals.WarStatusTracker.Systems.Find(systemStatus => systemStatus.StarSystem.SystemID == __instance.TargetSystem);
                     if (system is null)
                     {
-                        LogDebug($"system is null {Globals.Sim.CurSystem}");
+                        LogDebug($"system is null {Globals.Sim.CurSystem.Name}");
                         return;
                     }
-
-                    if (Globals.WarStatusTracker.HotBox == null)
-                        Globals.WarStatusTracker.HotBox = new List<SystemStatus>();
 
                     if (system.BonusSalvage && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                     {
                         var NewSalvageCount = __instance.FinalSalvageCount + 1;
-                        Traverse.Create(__instance).Property("FinalSalvageCount").SetValue(NewSalvageCount);
+                        __instance.FinalSalvageCount = NewSalvageCount;
 
                         if (__instance.FinalPrioritySalvageCount < 7)
                         {
                             var NewPrioritySalvage = __instance.FinalPrioritySalvageCount + 1;
-                            Traverse.Create(__instance).Property("FinalPrioritySalvageCount").SetValue(NewPrioritySalvage);
+                            __instance.FinalPrioritySalvageCount = NewPrioritySalvage;
                         }
                     }
                 }
