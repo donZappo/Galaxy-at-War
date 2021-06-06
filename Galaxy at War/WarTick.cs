@@ -123,15 +123,15 @@ namespace GalaxyatWar
                 }
                 
                 //Add resources from neighboring systems.
-                if (systemStatus.neighborSystems.Count != 0)
+                if (systemStatus.NeighborSystems.Count != 0)
                 {
-                    foreach (var neighbor in systemStatus.neighborSystems.Keys)
+                    foreach (var neighbor in systemStatus.NeighborSystems.Keys)
                     {
                         if (!Globals.Settings.ImmuneToWar.Contains(neighbor) && !Globals.Settings.DefensiveFactions.Contains(neighbor) &&
                             !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
                         {
                             var pushFactor = Globals.Settings.APRPush * Globals.Rng.Next(1, Globals.Settings.APRPushRandomizer + 1);
-                            systemStatus.InfluenceTracker[neighbor] += systemStatus.neighborSystems[neighbor] * pushFactor;
+                            systemStatus.InfluenceTracker[neighbor] += systemStatus.NeighborSystems[neighbor] * pushFactor;
                         }
                     }
                 }

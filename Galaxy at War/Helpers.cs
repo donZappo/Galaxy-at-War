@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using BattleTech;
 using BattleTech.Framework;
@@ -223,7 +225,7 @@ namespace GalaxyatWar
                 return;
             var isFlashpointSystem = Globals.WarStatusTracker.FlashpointSystems.Contains(starSystem.Name);
             var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == starSystem);
-            var ownerNeighborSystems = warSystem.neighborSystems;
+            var ownerNeighborSystems = warSystem.NeighborSystems;
             ownerNeighborSystems.Clear();
             if (Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
                 return;
@@ -646,7 +648,7 @@ namespace GalaxyatWar
                 contractTargets.Add(Globals.Settings.GaW_Police);
             }
 
-            var neighborSystems = systemStatus.neighborSystems;
+            var neighborSystems = systemStatus.NeighborSystems;
             foreach (var systemNeighbor in neighborSystems.Keys)
             {
                 if (Globals.Settings.ImmuneToWar.Contains(systemNeighbor) || Globals.Settings.DefensiveFactions.Contains(systemNeighbor))
@@ -1147,5 +1149,51 @@ namespace GalaxyatWar
 
         internal static SystemStatus FindSystemStatus(this StarSystem starSystem)
             => Globals.WarStatusTracker.Systems.Find(system => system.starSystem == starSystem);
+
+        internal static void DumpCSV()
+        {
+            var date = UnityGameInstance.BattleTechGame.Simulation.CurrentDate;
+            var filename = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.FullName + $"/dump-{date:MM-yyyy}.csv";
+            var table = new System.Data.DataTable();
+            table.Columns.Add("DayMonthYear");
+            table.Columns.Add("name");
+            table.Columns.Add("owner");
+            table.Columns.Add("OriginalOwner");
+            table.Columns.Add("TotalResources");
+            table.Columns.Add("PriorityDefense");
+            table.Columns.Add("PriorityAttack");
+            table.Columns.Add("DefenseResources");
+            table.Columns.Add("AttackResources");
+            table.Columns.Add("PirateActivity");
+
+            table.Rows.Add(
+                "DayMonthYear",
+                "name",
+                "owner",
+                "OriginalOwner",
+                "TotalResources",
+                "PriorityDefense",
+                "PriorityAttack",
+                "DefenseResources",
+                "AttackResources",
+                "PirateActivity");
+
+            foreach (var system in Globals.WarStatusTracker.Systems)
+            {
+                //LogDebug("Building table row for " + system.name);
+                table.Rows.Add($"{date:MM-yyyy}", system.name, system.owner, system.OriginalOwner, system.TotalResources, system.PriorityDefense, system.PriorityAttack,
+                    system.DefenseResources, system.AttackResources, system.PirateActivity);
+            }
+
+            const int col = 0;
+            using var sw = new StreamWriter(filename, true);
+            for (var row = 0; row < table.Rows.Count; row++)
+            {
+                //LogDebug($"Adding row {row}");
+                sw.WriteLine($"{table.Rows[row][col]},{table.Rows[row][col + 1]},{table.Rows[row][col + 2]},{table.Rows[row][col + 3]}" +
+                             $",{table.Rows[row][col + 4]},{table.Rows[row][col + 5]},{table.Rows[row][col + 6]},{table.Rows[row][col + 7]}" +
+                             $",{table.Rows[row][col + 8]},{table.Rows[row][col + 9]}");
+            }
+        }
     }
 }

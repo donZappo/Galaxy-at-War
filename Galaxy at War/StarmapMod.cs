@@ -24,15 +24,6 @@ namespace GalaxyatWar
         internal static SGEventPanel eventPanel;
         private static TMP_Text descriptionText;
 
-        [HarmonyPatch(typeof(SGRoomController_Navigation), "EnterRoom")]
-        public class flkasjf
-        {
-            private static void Postfix()
-            {
-                LogDebug("PING");
-            }
-        }
-
         [HarmonyPatch(typeof(TooltipPrefab_Planet), "SetData")]
         public static class TooltipPrefab_PlanetSetDataPatch
         {

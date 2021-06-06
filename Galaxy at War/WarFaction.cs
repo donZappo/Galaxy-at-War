@@ -10,7 +10,6 @@ namespace GalaxyatWar
     public class WarFaction
     {
         public string FactionName;
-        internal readonly FactionValue Faction;
         public bool GainedSystem;
         public bool LostSystem;
         public float DaysSinceSystemAttacked;
@@ -78,7 +77,6 @@ namespace GalaxyatWar
         {
             Logger.LogDebug("WarFaction ctor: " + factionName);
             FactionName = factionName;
-            Faction = Globals.FactionValues.Find(fv => fv.Name == factionName);
             GainedSystem = false;
             LostSystem = false;
             DaysSinceSystemAttacked = 0;

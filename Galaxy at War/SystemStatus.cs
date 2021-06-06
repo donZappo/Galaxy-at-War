@@ -15,21 +15,27 @@ namespace GalaxyatWar
         public string name;
         public string owner;
 
-        public Dictionary<string, int> neighborSystems = new();
-        internal Dictionary<string, float> influenceTracker = new();
+        public Dictionary<string, int> NeighborSystems = new();
+        public Dictionary<string, float> InfluenceTracker = new();
+        private float trackerSum = -1;
+        private int trackerSumHash;
 
-        public Dictionary<string, float> InfluenceTracker
+        internal float TrackerSum
         {
-            get => influenceTracker;
-            set
+            get
             {
-                influenceTracker = value;
-                InfluenceTrackerDescendingValue = influenceTracker.Values.OrderByDescending(x => x).ToList();
+                var hash = trackerSum.GetHashCode();
+                if (trackerSumHash == hash)
+                {
+                    return trackerSum;
+                }
+
+                trackerSum = InfluenceTracker.Values.Sum();
+                trackerSumHash = hash;
+                return trackerSum;
             }
         }
 
-        // TODO wire this up
-        internal List<float> InfluenceTrackerDescendingValue;
         public float TotalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
@@ -105,14 +111,14 @@ namespace GalaxyatWar
         {
             try
             {
-                neighborSystems.Clear();
+                NeighborSystems.Clear();
                 var neighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem);
                 foreach (var neighborSystem in neighbors)
                 {
-                    if (neighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
-                        neighborSystems[neighborSystem.OwnerValue.Name] += 1;
+                    if (NeighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
+                        NeighborSystems[neighborSystem.OwnerValue.Name] += 1;
                     else
-                        neighborSystems.Add(neighborSystem.OwnerValue.Name, 1);
+                        NeighborSystems.Add(neighborSystem.OwnerValue.Name, 1);
                 }
             }
             catch (Exception ex)
@@ -137,15 +143,15 @@ namespace GalaxyatWar
                     InfluenceTracker.Add(owner, Globals.Settings.DominantInfluence);
                     var remainingInfluence = Globals.Settings.MinorInfluencePool;
 
-                    if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
+                    if (!(NeighborSystems.Keys.Count == 1 && NeighborSystems.Keys.Contains(owner)) && NeighborSystems.Keys.Count != 0)
                     {
                         while (remainingInfluence > 0)
                         {
-                            foreach (var faction in neighborSystems.Keys)
+                            foreach (var faction in NeighborSystems.Keys)
                             {
                                 if (faction != owner)
                                 {
-                                    var influenceDelta = neighborSystems[faction];
+                                    var influenceDelta = NeighborSystems[faction];
                                     remainingInfluence -= influenceDelta;
                                     if (Globals.Settings.DefensiveFactions.Contains(faction))
                                         continue;
@@ -208,15 +214,15 @@ namespace GalaxyatWar
                     InfluenceTracker.Add(owner, Globals.Settings.DominantInfluence);
                     var remainingInfluence = Globals.Settings.MinorInfluencePool;
 
-                    if (!(neighborSystems.Keys.Count == 1 && neighborSystems.Keys.Contains(owner)) && neighborSystems.Keys.Count != 0)
+                    if (!(NeighborSystems.Keys.Count == 1 && NeighborSystems.Keys.Contains(owner)) && NeighborSystems.Keys.Count != 0)
                     {
                         while (remainingInfluence > 0)
                         {
-                            foreach (var faction in neighborSystems.Keys)
+                            foreach (var faction in NeighborSystems.Keys)
                             {
                                 if (faction != owner)
                                 {
-                                    var influenceDelta = neighborSystems[faction];
+                                    var influenceDelta = NeighborSystems[faction];
                                     remainingInfluence -= influenceDelta;
                                     if (Globals.Settings.DefensiveFactions.Contains(faction))
                                         continue;
@@ -270,7 +276,7 @@ namespace GalaxyatWar
             if (!ContractTargets.Contains(owner))
                 ContractTargets.Add(owner);
 
-            foreach (var systemNeighbor in neighborSystems.Keys)
+            foreach (var systemNeighbor in NeighborSystems.Keys)
             {
                 if (Globals.Settings.ImmuneToWar.Contains(systemNeighbor))
                     continue;

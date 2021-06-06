@@ -191,6 +191,7 @@ namespace GalaxyatWar
                     WarTick.Tick(true, false);
                     WarTick.Tick(true, true);
                 }
+                //OnDayPassed.DumpCSV();
                 Globals.Sim.StopPlayMode();
             }
             
@@ -198,7 +199,8 @@ namespace GalaxyatWar
                 (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.D);
             if (hotkeyD)
             {
-               File.WriteAllText($"{Globals.Settings.modDirectory}/dump.json", JsonConvert.SerializeObject(Globals.WarStatusTracker));
+                Globals.Settings.Debug = !Globals.Settings.Debug;
+                //File.WriteAllText($"{Globals.Settings.modDirectory}/dump.json", JsonConvert.SerializeObject(Globals.WarStatusTracker));
             }
         }
     }

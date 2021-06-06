@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BattleTech;
+using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 using Random = UnityEngine.Random;
@@ -41,7 +43,17 @@ namespace GalaxyatWar
 
         public static void AllocateAttackResources(WarFaction warFaction)
         {
-            var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => Equals(x, warFaction.Faction)));
+            int factionRep = -1;
+            try
+            {
+                factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(value => value.Name == warFaction.FactionName));
+            }
+            catch (Exception ex)
+            {
+                LogDebug("warFaction.FactionName: " + warFaction.FactionName);
+                Error(ex);
+            }
+
             var maxContracts = HotSpots.ProcessReputation(factionRep);
             if (warFaction.WarFactionAttackResources.Count == 0)
                 return;
@@ -172,15 +184,14 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var total = systemStatus.InfluenceTracker.Values.Sum();
-                var factionTrackers = systemStatus.InfluenceTracker
-                    .Where(x => x.Value != 0);
-                foreach (var factionStr in ((Dictionary<string, float>) factionTrackers).Keys)
+                var total = systemStatus.TrackerSum;
+                var factionTrackers = systemStatus.InfluenceTracker.Where(x => x.Value != 0);
+                foreach (var kvp in factionTrackers)
                 {
-                    if (systemStatus.InfluenceTracker[factionStr] > highest)
+                    if (systemStatus.InfluenceTracker[kvp.Key] > highest)
                     {
-                        highest = systemStatus.InfluenceTracker[factionStr];
-                        highestFaction = factionStr;
+                        highest = systemStatus.InfluenceTracker[kvp.Key];
+                        highestFaction = kvp.Key;
                     }
 
                     if (highest / total >= 0.5)
