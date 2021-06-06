@@ -156,8 +156,10 @@ namespace GalaxyatWar
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
             var defenseTargets = warFaction.DefenseTargets.Distinct().ToList();
+            // reset the cached state for the next tick
+            Globals.WarStatusTracker.Systems.Do(systemStatus => systemStatus.TrackerSum = -1);
             // spend and decrement defensiveResources
-            while (defensiveResources > float.Epsilon)
+            while (defensiveResources > 0)
             {
                 var highest = 0f;
                 var highestFaction = faction;

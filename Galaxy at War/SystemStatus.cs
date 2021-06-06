@@ -17,7 +17,7 @@ namespace GalaxyatWar
 
         public Dictionary<string, int> NeighborSystems = new();
         public Dictionary<string, float> InfluenceTracker = new();
-        private float trackerSum = 42;
+        private float trackerSum = -1;
         private int trackerSumHash;
 
         // [00:08:06.050]  CACHE HIT 
@@ -43,6 +43,7 @@ namespace GalaxyatWar
                 trackerSumHash = trackerSum.GetHashCode();
                 return trackerSum;
             }
+            set => trackerSum = value;
         }
 
         public float TotalResources;
