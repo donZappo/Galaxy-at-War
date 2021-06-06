@@ -29,7 +29,6 @@ namespace GalaxyatWar
         public float AttackResources;
         public float DefenseResources;
         private float trackerSum = -1;
-        private float defenseResources;
         private StarSystem starSystem;
 
         internal StarSystem StarSystem

@@ -11,8 +11,6 @@ namespace GalaxyatWar
         public bool LostSystem;
         public float DaysSinceSystemAttacked;
         public float DaysSinceSystemLost;
-        private float attackResources;
-        private float defensiveResources;
         public int MonthlySystemsChanged;
         public int TotalSystemsChanged;
         public float PirateARLoss;
