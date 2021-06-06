@@ -18,29 +18,17 @@ namespace GalaxyatWar
         public Dictionary<string, int> NeighborSystems = new();
         public Dictionary<string, float> InfluenceTracker = new();
         private float trackerSum = -1;
-        private int trackerSumHash;
 
-        // [00:08:06.050]  CACHE HIT 
-        // [00:08:06.051]  CACHE MISS
-        // [00:08:06.051]  CACHE MISS
-        // [00:08:06.051]  CACHE MISS
-        // [00:08:06.051]  CACHE HIT 
-        // [00:08:06.051]  CACHE MISS
-        // [00:08:06.052]  CACHE MISS
-        // [00:08:06.052]  CACHE MISS
-        // [00:08:06.052]  CACHE HIT 
-        // [00:08:06.052]  CACHE MISS
         internal float TrackerSum
         {
             get
             {
-                if (trackerSumHash == trackerSum.GetHashCode())
+                if (trackerSum > -1)
                 {
                     return trackerSum;
                 }
 
                 trackerSum = InfluenceTracker.Values.Sum();
-                trackerSumHash = trackerSum.GetHashCode();
                 return trackerSum;
             }
             set => trackerSum = value;
