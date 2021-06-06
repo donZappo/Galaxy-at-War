@@ -59,9 +59,9 @@ namespace GalaxyatWar
                     if (systemStatus.PriorityDefense)
                     {
                         if (systemStatus.owner == dominantFaction)
-                            FullHomeContestedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
+                            FullHomeContestedSystems.Add(systemStatus.StarSystem, systemStatus.TotalResources);
                         else
-                            ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.starSystem);
+                            ExternalPriorityTargets[systemStatus.owner].Add(systemStatus.StarSystem);
                     }
 
                     if (systemStatus.PriorityAttack)
@@ -70,13 +70,13 @@ namespace GalaxyatWar
                         {
                             if (attacker == dominantFaction)
                             {
-                                if (!FullHomeContestedSystems.Keys.Contains(systemStatus.starSystem))
-                                    FullHomeContestedSystems.Add(systemStatus.starSystem, systemStatus.TotalResources);
+                                if (!FullHomeContestedSystems.Keys.Contains(systemStatus.StarSystem))
+                                    FullHomeContestedSystems.Add(systemStatus.StarSystem, systemStatus.TotalResources);
                             }
                             else
                             {
-                                if (!ExternalPriorityTargets[attacker].Contains(systemStatus.starSystem))
-                                    ExternalPriorityTargets[attacker].Add(systemStatus.starSystem);
+                                if (!ExternalPriorityTargets[attacker].Contains(systemStatus.StarSystem))
+                                    ExternalPriorityTargets[attacker].Add(systemStatus.StarSystem);
                             }
                         }
                     }
@@ -941,7 +941,7 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var system = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == Globals.Sim.CurSystem);
+                var system = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == Globals.Sim.CurSystem);
 
                 if (system.BonusCBills && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
                 {
@@ -975,7 +975,7 @@ namespace GalaxyatWar
 
         public static void SystemBonuses(StarSystem starSystem)
         {
-            var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == starSystem);
+            var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == starSystem);
             int systemDifficulty;
             if (Globals.Settings.ChangeDifficulty)
                 systemDifficulty = systemStatus.DifficultyRating;
@@ -1024,7 +1024,7 @@ namespace GalaxyatWar
 
         public static void CompleteEscalation()
         {
-            var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == Globals.Sim.CurSystem);
+            var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == Globals.Sim.CurSystem);
             systemStatus.BonusCBills = false;
             systemStatus.BonusSalvage = false;
             systemStatus.BonusXP = false;

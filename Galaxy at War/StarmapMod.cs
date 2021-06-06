@@ -279,7 +279,7 @@ namespace GalaxyatWar
                 SubString = "";
             factionString.AppendLine(SubString);
 
-            var tracker = Globals.WarStatusTracker.Systems.FirstOrDefault(x => x.starSystem == starSystem);
+            var tracker = Globals.WarStatusTracker.Systems.FirstOrDefault(x => x.StarSystem == starSystem);
             if (tracker is null)
             {
                 LogDebug($"{starSystem} is not in Globals.WarStatusTracker.systems");

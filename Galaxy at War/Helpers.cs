@@ -44,7 +44,7 @@ namespace GalaxyatWar
                     if (systemStatus.OriginalOwner == null)
                         systemStatus.OriginalOwner = systemStatus.owner;
 
-                    if (Globals.Settings.ChangeDifficulty && !systemStatus.starSystem.Tags.Contains("planet_start_world"))
+                    if (Globals.Settings.ChangeDifficulty && !systemStatus.StarSystem.Tags.Contains("planet_start_world"))
                     {
                         Globals.Sim.Constants.Story.ContractDifficultyMod = 0;
                         Globals.Sim.CompanyStats.Set<float>("Difficulty", 0);
@@ -102,26 +102,26 @@ namespace GalaxyatWar
 
                         var amount = systemStatus.DifficultyRating;
                         var difficultyList = new List<int> {amount, amount};
-                        systemStatus.starSystem.Def.DifficultyList = difficultyList;
-                        systemStatus.starSystem.Def.DefaultDifficulty = amount;
+                        systemStatus.StarSystem.Def.DifficultyList = difficultyList;
+                        systemStatus.StarSystem.Def.DefaultDifficulty = amount;
                     }
                     else
                     {
-                        systemStatus.DifficultyRating = systemStatus.starSystem.Def.DefaultDifficulty;
+                        systemStatus.DifficultyRating = systemStatus.StarSystem.Def.DefaultDifficulty;
                         i++;
                     }
 
-                    if (systemStatus.starSystem.Def.OwnerValue.Name != "NoFaction" && systemStatus.starSystem.Def.SystemShopItems.Count == 0)
+                    if (systemStatus.StarSystem.Def.OwnerValue.Name != "NoFaction" && systemStatus.StarSystem.Def.SystemShopItems.Count == 0)
                     {
                         var tempList = new List<string>
                         {
                             "itemCollection_minor_Locals"
                         };
-                        systemStatus.starSystem.Def.SystemShopItems = tempList;
-                        if (Globals.Sim.CurSystem.Name == systemStatus.starSystem.Def.Description.Name)
+                        systemStatus.StarSystem.Def.SystemShopItems = tempList;
+                        if (Globals.Sim.CurSystem.Name == systemStatus.StarSystem.Def.Description.Name)
                         {
                             var refreshShop = Shop.RefreshType.RefreshIfEmpty;
-                            systemStatus.starSystem.SystemShop.Rehydrate(Globals.Sim, systemStatus.starSystem, systemStatus.starSystem.Def.SystemShopItems, refreshShop,
+                            systemStatus.StarSystem.SystemShop.Rehydrate(Globals.Sim, systemStatus.StarSystem, systemStatus.StarSystem.Def.SystemShopItems, refreshShop,
                                 Shop.ShopType.System);
                         }
                     }
@@ -226,7 +226,7 @@ namespace GalaxyatWar
             if (warFac == null)
                 return;
             var isFlashpointSystem = Globals.WarStatusTracker.FlashpointSystems.Contains(starSystem.Name);
-            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == starSystem);
+            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == starSystem);
             var ownerNeighborSystems = warSystem.NeighborSystems;
             ownerNeighborSystems.Clear();
             if (Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem).Count == 0)
@@ -238,7 +238,7 @@ namespace GalaxyatWar
                 if (neighborSystem.OwnerValue.Name != starSystem.OwnerValue.Name &&
                     !isFlashpointSystem)
                 {
-                    var neighborSystemStatus = Globals.WarStatusTracker.Systems.Find(s => s.starSystem == neighborSystem);
+                    var neighborSystemStatus = Globals.WarStatusTracker.Systems.Find(s => s.StarSystem == neighborSystem);
                     if (!warFac.AttackTargets.ContainsKey(neighborSystem.OwnerValue.Name))
                     {
                         var tempList = new List<SystemStatus>
@@ -369,7 +369,7 @@ namespace GalaxyatWar
                     }
                 }
 
-                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
+                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
                 var oldOwner = systemStatus.owner;
                 systemStatus.owner = faction;
                 system.Def.factionShopOwnerID = faction;
@@ -524,7 +524,7 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.SystemChangedOwners.Add(system.Name);
             foreach (var neighborSystem in Globals.Sim.Starmap.GetAvailableNeighborSystem(system))
             {
-                var systemStatus = Globals.WarStatusTracker.Systems.Find(s => s.starSystem == neighborSystem);
+                var systemStatus = Globals.WarStatusTracker.Systems.Find(s => s.StarSystem == neighborSystem);
                 var attackTargets = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == neighborSystem.OwnerValue.Name).AttackTargets;
                 if (attackTargets.Keys.Contains(oldOwner.FactionName) && attackTargets[oldOwner.FactionName].Contains(systemStatus))
                     attackTargets[oldOwner.FactionName].Remove(systemStatus);
@@ -555,7 +555,7 @@ namespace GalaxyatWar
 
                 systemStatus.InfluenceTracker = tempDict;
                 var diffStatus = systemStatus.InfluenceTracker[highestFaction] - systemStatus.InfluenceTracker[systemStatus.owner];
-                var starSystem = systemStatus.starSystem;
+                var starSystem = systemStatus.StarSystem;
 
                 if (highestFaction != systemStatus.owner &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name) &&
@@ -613,7 +613,7 @@ namespace GalaxyatWar
 
         public static void RefreshContractsEmployersAndTargets(SystemStatus systemStatus)
         {
-            var starSystem = systemStatus.starSystem;
+            var starSystem = systemStatus.StarSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
             if (Globals.WarStatusTracker.HotBox.Contains(systemStatus) || starSystem.Tags.Contains("planet_region_hyadesrim") &&
                 (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction"))
@@ -702,7 +702,7 @@ namespace GalaxyatWar
 
         internal static double DeltaInfluence(StarSystem system, double contractDifficulty, string contractTypeID, string defenseFaction, bool piratesInvolved)
         {
-            var targetSystem = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
+            var targetSystem = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
             if (targetSystem == null)
             {
                 LogDebug($"null systemStatus {system.Name} at DeltaInfluence");
@@ -760,7 +760,7 @@ namespace GalaxyatWar
 
         internal static bool WillSystemFlip(StarSystem system, string winner, string loser, double deltaInfluence, bool preBattle)
         {
-            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
+            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
             if (warSystem == null)
             {
                 LogDebug($"null systemStatus {system.Name} at WillSystemFlip");
@@ -796,7 +796,7 @@ namespace GalaxyatWar
 
         internal static int CalculateFlipMissions(string attacker, StarSystem system)
         {
-            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
+            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
             var tempIt = new Dictionary<string, float>(warSystem.InfluenceTracker);
             var missionCounter = 0;
             var influenceDifference = 0.0f;
@@ -1071,7 +1071,7 @@ namespace GalaxyatWar
         {
             var contracts = new List<Contract>();
             var system = Globals.Sim.CurSystem;
-            var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
+            var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
             var influenceTracker = systemStatus.InfluenceTracker;
             var owner = influenceTracker.First().Key;
             var second = influenceTracker.Skip(1).First().Key;
@@ -1107,7 +1107,7 @@ namespace GalaxyatWar
                 var isTravel = Globals.Rng.Next(0, 2) == 0;
                 var isPriority = Globals.Rng.Next(0, 11) == 0;
                 var system = isTravel ? Globals.GaWSystems.Where(x => x.JumpDistance < 10).GetRandomElement() : Globals.Sim.CurSystem;
-                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == system);
+                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == system);
                 var owner = systemStatus.InfluenceTracker.OrderByDescending(x => x.Value).Select(x => x.Key).First();
                 var second = systemStatus.InfluenceTracker.OrderByDescending(x =>
                     x.Value).Select(x => x.Key).Skip(1).Take(1).First();
@@ -1150,7 +1150,7 @@ namespace GalaxyatWar
         }
 
         internal static SystemStatus FindSystemStatus(this StarSystem starSystem)
-            => Globals.WarStatusTracker.Systems.Find(system => system.starSystem == starSystem);
+            => Globals.WarStatusTracker.Systems.Find(system => system.StarSystem == starSystem);
 
         internal static void DumpCSV()
         {

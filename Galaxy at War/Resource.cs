@@ -88,9 +88,9 @@ namespace GalaxyatWar
                             systemStatus.CurrentlyAttackedBy.Add(warFaction.FactionName);
                         }
 
-                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(systemStatus.starSystem.Name))
+                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(systemStatus.StarSystem.Name))
                         {
-                            Globals.WarStatusTracker.PrioritySystems.Add(systemStatus.starSystem.Name);
+                            Globals.WarStatusTracker.PrioritySystems.Add(systemStatus.StarSystem.Name);
                         }
                     }
 

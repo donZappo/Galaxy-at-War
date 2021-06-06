@@ -47,7 +47,7 @@ namespace GalaxyatWar
         public string CoreSystemID;
         public int DeploymentTier = 0;
         public string OriginalOwner = null;
-        private StarSystem starSystemBackingField;
+        private StarSystem starSystem;
 
         public float PirateActivity { get; set; }
         public float AttackResources { get; set; }
@@ -67,13 +67,13 @@ namespace GalaxyatWar
             }
         }
 
-        internal StarSystem starSystem
+        internal StarSystem StarSystem
         {
             get
             {
-                return starSystemBackingField ?? (starSystemBackingField = Globals.Sim.StarSystems.Find(s => s.Name == name));
+                return starSystem ??= Globals.Sim.StarSystems.Find(s => s.Name == name);
             }
-            private set => starSystemBackingField = value;
+            private set => starSystem = value;
         }
 
         [JsonConstructor]
@@ -87,9 +87,9 @@ namespace GalaxyatWar
             //  LogDebug("SystemStatus ctor");
             name = system.Name;
             owner = faction;
-            starSystem = system;
-            AttackResources = Helpers.GetTotalAttackResources(starSystem);
-            DefenseResources = Helpers.GetTotalDefensiveResources(starSystem);
+            StarSystem = system;
+            AttackResources = Helpers.GetTotalAttackResources(StarSystem);
+            DefenseResources = Helpers.GetTotalDefensiveResources(StarSystem);
             TotalResources = AttackResources + DefenseResources;
             CoreSystemID = system.Def.CoreSystemID;
             BonusCBills = false;
@@ -110,7 +110,7 @@ namespace GalaxyatWar
             try
             {
                 NeighborSystems.Clear();
-                var neighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(starSystem);
+                var neighbors = Globals.Sim.Starmap.GetAvailableNeighborSystem(StarSystem);
                 foreach (var neighborSystem in neighbors)
                 {
                     if (NeighborSystems.ContainsKey(neighborSystem.OwnerValue.Name))
@@ -181,13 +181,13 @@ namespace GalaxyatWar
             }
             else
             {
-                if (owner == "NoFaction" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
+                if (owner == "NoFaction" && !StarSystem.Tags.Contains("planet_region_hyadesrim"))
                     InfluenceTracker.Add("NoFaction", 100);
-                if (owner == "Locals" && !starSystem.Tags.Contains("planet_region_hyadesrim"))
+                if (owner == "Locals" && !StarSystem.Tags.Contains("planet_region_hyadesrim"))
                     InfluenceTracker.Add("Locals", 100);
-                if ((owner == "NoFaction" || owner == "Locals") && starSystem.Tags.Contains("planet_region_hyadesrim"))
+                if ((owner == "NoFaction" || owner == "Locals") && StarSystem.Tags.Contains("planet_region_hyadesrim"))
                 {
-                    foreach (var pirateFaction in starSystem.Def.ContractEmployerIDList)
+                    foreach (var pirateFaction in StarSystem.Def.ContractEmployerIDList)
                     {
                         if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
                             continue;
@@ -196,7 +196,7 @@ namespace GalaxyatWar
                             InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
                     }
 
-                    foreach (var pirateFaction in starSystem.Def.ContractTargetIDList)
+                    foreach (var pirateFaction in StarSystem.Def.ContractTargetIDList)
                     {
                         if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
                             continue;
@@ -254,11 +254,11 @@ namespace GalaxyatWar
 
         public void InitializeContracts()
         {
-            if (Globals.Settings.HyadesRimCompatible && starSystem.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals" || Globals.Settings.HyadesFlashpointSystems.Contains(name)))
+            if (Globals.Settings.HyadesRimCompatible && StarSystem.Tags.Contains("planet_region_hyadesrim") && (owner == "NoFaction" || owner == "Locals" || Globals.Settings.HyadesFlashpointSystems.Contains(name)))
                 return;
 
-            var ContractEmployers = starSystem.Def.ContractEmployerIDList;
-            var ContractTargets = starSystem.Def.ContractTargetIDList;
+            var ContractEmployers = StarSystem.Def.ContractEmployerIDList;
+            var ContractTargets = StarSystem.Def.ContractTargetIDList;
 
             ContractEmployers.Clear();
             ContractTargets.Clear();

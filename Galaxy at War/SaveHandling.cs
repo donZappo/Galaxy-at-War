@@ -88,8 +88,8 @@ namespace GalaxyatWar
                     {
                         if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
                         {
-                            systemStatus.AttackResources = GetTotalAttackResources(systemStatus.starSystem);
-                            systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.starSystem);
+                            systemStatus.AttackResources = GetTotalAttackResources(systemStatus.StarSystem);
+                            systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.StarSystem);
                             systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
                             systemStatus.PirateActivity = 0;
                         }
@@ -124,7 +124,7 @@ namespace GalaxyatWar
                         var systemStatus = Globals.WarStatusTracker.Systems[index];
                         if (Globals.Settings.ImmuneToWar.Contains(systemStatus.OriginalOwner))
                         {
-                            LogDebug($"Removed: {systemStatus.starSystem.Name,-15} -> Immune to war, owned by {systemStatus.starSystem.OwnerValue.Name}.");
+                            LogDebug($"Removed: {systemStatus.StarSystem.Name,-15} -> Immune to war, owned by {systemStatus.StarSystem.OwnerValue.Name}.");
                             Globals.WarStatusTracker.Systems.Remove(systemStatus);
                         }
                     }
@@ -169,7 +169,7 @@ namespace GalaxyatWar
                 {
                     var system = Globals.Sim.StarSystems[index];
                     if (Globals.Settings.ImmuneToWar.Contains(Globals.Sim.StarSystems[index].OwnerValue.Name) ||
-                        Globals.WarStatusTracker.Systems.Any(x => x.starSystem == system))
+                        Globals.WarStatusTracker.Systems.Any(x => x.StarSystem == system))
                     {
                         continue;
                     }

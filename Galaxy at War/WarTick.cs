@@ -93,7 +93,7 @@ namespace GalaxyatWar
                 if (rand < Globals.WarStatusTracker.HyadesRimsSystemsTaken)
                 {
                     var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                    var flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).starSystem;
+                    var flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).StarSystem;
                     var inactiveFaction = Globals.WarStatusTracker.InactiveTHRFactions.GetRandomElement();
                     ChangeSystemOwnership(flipSystem, inactiveFaction, true);
                     Globals.WarStatusTracker.InactiveTHRFactions.Remove(inactiveFaction);
@@ -109,7 +109,7 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker.FirstTickInitialization)
                 {
                     systemStatus.CurrentlyAttackedBy.Clear();
-                    CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+                    CalculateAttackAndDefenseTargets(systemStatus.StarSystem);
                     RefreshContractsEmployersAndTargets(systemStatus);
                 }
 
@@ -207,7 +207,7 @@ namespace GalaxyatWar
             foreach (var system in Globals.WarStatusTracker.Systems.Where(x => Globals.WarStatusTracker.SystemChangedOwners.Contains(x.name)))
             {
                 system.CurrentlyAttackedBy.Clear();
-                CalculateAttackAndDefenseTargets(system.starSystem);
+                CalculateAttackAndDefenseTargets(system.StarSystem);
                 RefreshContractsEmployersAndTargets(system);
             }
 

@@ -322,7 +322,7 @@ namespace GalaxyatWar
                             else
                             {
                                 LogDebug($"ComStar Bulletin: Galaxy at War {__instance.CurSystem.Name} taken!  {Globals.Settings.FactionNames[Globals.TeamFaction]} conquered from {Globals.Settings.FactionNames[oldOwner]}");
-                                ChangeSystemOwnership(warSystem.starSystem, Globals.TeamFaction, false);
+                                ChangeSystemOwnership(warSystem.StarSystem, Globals.TeamFaction, false);
                                 Globals.SimGameInterruptManager.QueueGenericPopup_NonImmediate(
                                     $"ComStar Bulletin: Galaxy at War {__instance.CurSystem.Name} taken!", $"{Globals.Settings.FactionNames[Globals.TeamFaction]} conquered from {Globals.Settings.FactionNames[oldOwner]}", true, null);
                                 if (Globals.Settings.HyadesRimCompatible && Globals.WarStatusTracker.InactiveTHRFactions.Contains(Globals.TeamFaction))
@@ -378,7 +378,7 @@ namespace GalaxyatWar
                             {
                                 var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.name == system);
                                 systemStatus.CurrentlyAttackedBy.Clear();
-                                CalculateAttackAndDefenseTargets(systemStatus.starSystem);
+                                CalculateAttackAndDefenseTargets(systemStatus.StarSystem);
                                 RefreshContractsEmployersAndTargets(systemStatus);
                             }
 
@@ -496,7 +496,7 @@ namespace GalaxyatWar
                     else if (defenseFaction == "AuriganPirates")
                         stringHolder = "<b>Impact on Pirate Activity:</b>\n   " + defenderString;
 
-                    var system = Globals.WarStatusTracker.Systems.Find(x => x.starSystem == systemName);
+                    var system = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == systemName);
                     if (system == null)
                     {
                         LogDebug($"CRITICAL:  System {systemName.Name} not found");
