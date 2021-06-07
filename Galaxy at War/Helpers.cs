@@ -841,7 +841,7 @@ namespace GalaxyatWar
 
         public static void AdjustDeathList(DeathListTracker deathListTracker, bool reloadFromSave)
         {
-            LogDebug($"AdjustDeathList: {deathListTracker.Faction}.");
+            //LogDebug($"AdjustDeathList: {deathListTracker.Faction}.");
             var trackerDeathList = deathListTracker.DeathList;
             var trackerFaction = deathListTracker.Faction;
             var trackerFactionDef = Globals.Sim.GetFactionDef(trackerFaction);

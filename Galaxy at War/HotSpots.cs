@@ -1089,8 +1089,8 @@ namespace GalaxyatWar
                     LogDebug($"Refreshing contracts at StartContractScreen because !StartGameInitialized ({Globals.Sim.CurSystem.Name})");
                     var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                     Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
-                    Globals.WarStatusTracker.StartGameInitialized = true;             
-                    LogDebug("Contracts generated:");
+                    Globals.WarStatusTracker.StartGameInitialized = true;
+                    //LogDebug("Contracts generated:");
                     //foreach (var contract in Globals.Sim.GetAllCurrentlySelectableContracts())
                     //{
                     //    LogDebug($"{contract.Name,-25} ({contract.Override.employerTeam.FactionValue.Name} vs {contract.Override.targetTeam.FactionValue.Name}).  Difficulties: C:{contract.Difficulty} CO:{contract.Override.difficulty} CUI:{contract.Override.difficultyUIModifier} UI:{contract.Override.GetUIDifficulty()}");
