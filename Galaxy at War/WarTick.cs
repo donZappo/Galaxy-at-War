@@ -107,7 +107,7 @@ namespace GalaxyatWar
                     else
                     {
                         var hyadesSystem = Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.GetRandomElement();
-                        flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.name == hyadesSystem).starSystem;
+                        flipSystem = Globals.WarStatusTracker.Systems.Find(x => x.Name == hyadesSystem).StarSystem;
                         ChangeSystemOwnership(flipSystem, inactiveFaction, true);
                         Globals.WarStatusTracker.HyadesRimGeneralPirateSystems.Remove(hyadesSystem);
                     }
