@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using BattleTech;
@@ -286,6 +287,7 @@ namespace GalaxyatWar
                 factionString.AppendLine("Error finding SystemStatus.");
                 return factionString.ToString();
             }
+
             foreach (var influence in tracker.InfluenceTracker.OrderByDescending(x => x.Value))
             {
                 string number;
@@ -331,6 +333,11 @@ namespace GalaxyatWar
                     //Make sure that Flashpoint systems have priority display.
                     var flashpoints = Globals.Sim.AvailableFlashpoints;
                     var isFlashpoint = flashpoints.Any(x => x.CurSystem == __result.system.System);
+                    if (ReferenceEquals(FactionEnumeration.GetFactionByName("NoFaction"), __result.system.System.OwnerValue)
+                        || ReferenceEquals(FactionEnumeration.GetFactionByName("Locals"), __result.system.System.OwnerValue))
+                    {
+                        __result.Init(__result.system, Color.white, __result.CanTravel, Globals.Sim.VisitedStarSystems.Contains(__result.name));
+                    }
 
                     if (!isFlashpoint)
                     {
@@ -418,22 +425,26 @@ namespace GalaxyatWar
             var blackMarketIsActive = __result.blackMarketObj.gameObject.activeInHierarchy;
             var fpAvailableIsActive = __result.flashpointAvailableObj.gameObject.activeInHierarchy;
             var fpActiveIsActive = __result.flashpointActiveObj.gameObject.activeInHierarchy;
-            __result.Init(__result.system, color, __result.CanTravel, wasVisited);
-            if (fpAvailableIsActive)
-                __result.flashpointAvailableObj.SetActive(true);
-            if (fpActiveIsActive)
-                __result.flashpointActiveObj.SetActive(true);
-            if (blackMarketIsActive)
-                __result.blackMarketObj.gameObject.SetActive(true);
-            if (resize)
+
+
             {
-                __result.selectedScale = 10;
-                __result.deselectedScale = 8;
-            }
-            else
-            {
-                __result.selectedScale = 4;
-                __result.deselectedScale = 4;
+                __result.Init(__result.system, color, __result.CanTravel, wasVisited);
+                if (fpAvailableIsActive)
+                    __result.flashpointAvailableObj.SetActive(true);
+                if (fpActiveIsActive)
+                    __result.flashpointActiveObj.SetActive(true);
+                if (blackMarketIsActive)
+                    __result.blackMarketObj.gameObject.SetActive(true);
+                if (resize)
+                {
+                    __result.selectedScale = 10;
+                    __result.deselectedScale = 8;
+                }
+                else
+                {
+                    __result.selectedScale = 4;
+                    __result.deselectedScale = 4;
+                }
             }
         }
 
