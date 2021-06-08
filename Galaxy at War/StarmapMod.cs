@@ -330,10 +330,9 @@ namespace GalaxyatWar
 
                     //Make sure that Flashpoint systems have priority display.
                     var flashpoints = Globals.Sim.AvailableFlashpoints;
-                    var isFlashpoint = flashpoints.Any(x => x.CurSystem.Name == __result.name);
+                    var isFlashpoint = flashpoints.Any(x => x.CurSystem == __result.system.System);
 
-                    //Mod.timer.Restart();
-                    if (Globals.WarStatusTracker != null && !isFlashpoint)
+                    if (!isFlashpoint)
                     {
                         var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
                         var wasVisited = VisitedStarSystems.Contains(__result.name);
@@ -347,8 +346,6 @@ namespace GalaxyatWar
                         else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                             MakeSystemNormal(__result, wasVisited);
                     }
-
-                    //LogDebug(Mod.timer.ElapsedTicks);
                 }
                 catch (Exception ex)
                 {
@@ -360,7 +357,7 @@ namespace GalaxyatWar
         [HarmonyPatch(typeof(StarmapScreen), "RefreshStarmap")]
         public static class StarmapScreen_RefreshStarmap__Patch
         {
-            public static void Prefix(StarmapRenderer __instance)
+            public static void Prefix()
             {
                 var sim = UnityGameInstance.BattleTechGame.Simulation;
                 if (Globals.WarStatusTracker == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
