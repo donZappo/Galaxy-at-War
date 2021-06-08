@@ -28,6 +28,7 @@ namespace GalaxyatWar
             // TODO comment this
             foreach (var includedFaction in Globals.IncludedFactions)
             {
+                Logger.LogDebug($"Included Faction: {includedFaction}");
                 var def = Globals.Sim.GetFactionDef(includedFaction);
                 if (!Globals.IncludedFactions.Contains(def.FactionValue.Name))
                     continue;

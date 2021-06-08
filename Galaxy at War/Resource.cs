@@ -175,16 +175,18 @@ namespace GalaxyatWar
                 var total = systemStatus.InfluenceTracker.Values.Sum();
                 var factionTrackers = systemStatus.InfluenceTracker
                     .Where(x => x.Value != 0);
-                foreach (var factionStr in ((Dictionary<string, float>) factionTrackers).Keys)
+                //foreach (var factionStr in ((Dictionary<string, float>) factionTrackers).Keys)
+                foreach (var factionKVP in factionTrackers)
                 {
+                    var factionStr = factionKVP.Key;
                     if (systemStatus.InfluenceTracker[factionStr] > highest)
                     {
                         highest = systemStatus.InfluenceTracker[factionStr];
                         highestFaction = factionStr;
-                    }
+                }
 
-                    if (highest / total >= 0.5)
-                        break;
+                if (highest / total >= 0.5)
+                    break;
                 }
 
                 if (highestFaction == faction)
