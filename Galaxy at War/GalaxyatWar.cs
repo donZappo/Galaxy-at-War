@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Harmony;
 using Newtonsoft.Json;
@@ -28,23 +29,40 @@ namespace GalaxyatWar
 
             Logger.Clear();
             Logger.LogDebug("GaW Starting up...");
-            
+
             foreach (var value in Settings.GetType().GetFields())
             {
                 var v = value.GetValue(Settings);
                 Logger.LogDebug($"{value.Name}: {v}");
-                if (v is List<string> list)
+                if (v is IEnumerable<string> list)
                 {
+                    if (!list.Any())
+                    {
+                        Logger.LogDebug("Empty list");
+                        continue;
+                    }
                     foreach (var item in list)
                     {
                         Logger.LogDebug($"  {item}");
+                    }
+                }
+                else if (v is Dictionary<string, string> dict)
+                {
+                    if (!dict.Any())
+                    {
+                        Logger.LogDebug("Empty dictionary");
+                        continue;
+                    }
+                    foreach (var pair in dict)
+                    {
+                        Logger.LogDebug($"  {pair.Key} : {pair.Value}");
                     }
                 }
             }
 
             var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-           
+
             // blank the logfile
 
             CopySettingsToState();

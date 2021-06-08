@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using BattleTech;
 using Newtonsoft.Json;
 
 namespace GalaxyatWar
@@ -10,13 +7,10 @@ namespace GalaxyatWar
     public class WarFaction
     {
         public string FactionName;
-        internal readonly FactionValue Faction;
         public bool GainedSystem;
         public bool LostSystem;
         public float DaysSinceSystemAttacked;
         public float DaysSinceSystemLost;
-        private float attackResources;
-        private float defensiveResources;
         public int MonthlySystemsChanged;
         public int TotalSystemsChanged;
         public float PirateARLoss;
@@ -24,37 +18,8 @@ namespace GalaxyatWar
         public float AR_Against_Pirates = 0;
         public float DR_Against_Pirates = 0;
         public bool ComstarSupported = false;
-
-        public float AttackResources
-        {
-            get => attackResources;
-            set
-            {
-                if (value < -50000 || value > 50000)
-                {
-                    Logger.LogDebug($"{FactionName}: {value}");
-                    Logger.LogDebug(new StackTrace().ToString());
-                }
-
-                attackResources = value;
-            }
-        }
-
-        public float DefensiveResources
-        {
-            get => defensiveResources;
-            set
-            {
-                if (value < -50000 || value > 50000)
-                {
-                    Logger.LogDebug($"{FactionName}: {value}");
-                    Logger.LogDebug(new StackTrace().ToString());
-                }
-
-                defensiveResources = value;
-            }
-        }
-
+        public float AttackResources;
+        public float DefensiveResources;
         public readonly Dictionary<string, float> WarFactionAttackResources = new();
         public readonly Dictionary<string, List<SystemStatus>> AttackTargets = new();
         public readonly List<SystemStatus> DefenseTargets = new();
@@ -78,7 +43,6 @@ namespace GalaxyatWar
         {
             Logger.LogDebug("WarFaction ctor: " + factionName);
             FactionName = factionName;
-            Faction = Globals.FactionValues.Find(fv => fv.Name == factionName);
             GainedSystem = false;
             LostSystem = false;
             DaysSinceSystemAttacked = 0;

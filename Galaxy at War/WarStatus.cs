@@ -62,26 +62,6 @@ namespace GalaxyatWar
         public WarStatus()
         {
             Logger.LogDebug("WarStatus ctor");
-            Systems.Clear();
-            SystemsByResources.Clear();
-            DeathListTracker.Clear();
-            WarFactionTracker.Clear();
-            PrioritySystems.Clear();
-            SystemChangedOwners.Clear();
-            HotBox.Clear();
-            LostSystems.Clear();
-            HomeContestedStrings.Clear();
-            AbandonedSystems.Clear();
-            DeploymentContracts.Clear();
-            FullHomeContestedSystems.Clear();
-            HomeContestedSystems.Clear();
-            ExternalPriorityTargets.Clear();
-            FullPirateSystems.Clear();
-            PirateHighlight.Clear();
-            HyadesRimGeneralPirateSystems.Clear();
-            InactiveTHRFactions.Clear();
-            FlashpointSystems.Clear();
-            NeverControl.Clear();
             
             if (Globals.Settings.ISMCompatibility)
                 Globals.Settings.IncludedFactions = new List<string>(Globals.Settings.IncludedFactions_ISM);
@@ -187,7 +167,7 @@ namespace GalaxyatWar
             }
 
             Logger.LogDebug("Full pirate systems created.");
-            Systems = Systems.OrderBy(x => x.name).ToList();
+            Systems = Systems.OrderBy(x => x.Name).ToList();
             SystemsByResources = Systems.OrderBy(x => x.TotalResources).ToList();
             PrioritySystems = new List<string>(Systems.Count);
             Logger.LogDebug("SystemStatus ordered lists created.");

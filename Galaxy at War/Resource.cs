@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 using Random = UnityEngine.Random;
@@ -41,7 +42,17 @@ namespace GalaxyatWar
 
         public static void AllocateAttackResources(WarFaction warFaction)
         {
-            var factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(x => Equals(x, warFaction.Faction)));
+            int factionRep = -1;
+            try
+            {
+                factionRep = Globals.Sim.GetRawReputation(Globals.FactionValues.Find(value => value.Name == warFaction.FactionName));
+            }
+            catch (Exception ex)
+            {
+                LogDebug("warFaction.FactionName: " + warFaction.FactionName);
+                Error(ex);
+            }
+
             var maxContracts = HotSpots.ProcessReputation(factionRep);
             if (warFaction.WarFactionAttackResources.Count == 0)
                 return;
@@ -59,7 +70,7 @@ namespace GalaxyatWar
                 while (targetFar > 0 && attackTargets.Count > 0)
                 {
                     var systemStatus = attackTargets.GetRandomElement();
-                    if (systemStatus.owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.name))
+                    if (systemStatus.Owner == warFaction.FactionName || Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.Name))
                     {
                         attackTargets.Remove(systemStatus);
                         return;
@@ -76,9 +87,9 @@ namespace GalaxyatWar
                             systemStatus.CurrentlyAttackedBy.Add(warFaction.FactionName);
                         }
 
-                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(systemStatus.starSystem.Name))
+                        if (!Globals.WarStatusTracker.PrioritySystems.Contains(systemStatus.StarSystem.Name))
                         {
-                            Globals.WarStatusTracker.PrioritySystems.Add(systemStatus.starSystem.Name);
+                            Globals.WarStatusTracker.PrioritySystems.Add(systemStatus.StarSystem.Name);
                         }
                     }
 
@@ -144,8 +155,10 @@ namespace GalaxyatWar
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
             var startingDefensiveResources = defensiveResources;
             var defenseTargets = warFaction.DefenseTargets.Distinct().ToList();
+            // reset the cached state for the next tick
+            Globals.WarStatusTracker.Systems.Do(systemStatus => systemStatus.TrackerSum = -1);
             // spend and decrement defensiveResources
-            while (defensiveResources > float.Epsilon)
+            while (defensiveResources > 0)
             {
                 var highest = 0f;
                 var highestFaction = faction;
@@ -172,10 +185,8 @@ namespace GalaxyatWar
                     continue;
                 }
 
-                var total = systemStatus.InfluenceTracker.Values.Sum();
-                var factionTrackers = systemStatus.InfluenceTracker
-                    .Where(x => x.Value != 0);
-                //foreach (var factionStr in ((Dictionary<string, float>) factionTrackers).Keys)
+                var total = systemStatus.TrackerSum;
+                var factionTrackers = systemStatus.InfluenceTracker.Where(x => x.Value != 0);
                 foreach (var factionKVP in factionTrackers)
                 {
                     var factionStr = factionKVP.Key;
@@ -183,7 +194,7 @@ namespace GalaxyatWar
                     {
                         highest = systemStatus.InfluenceTracker[factionStr];
                         highestFaction = factionStr;
-                }
+                    }
 
                 if (highest / total >= 0.5)
                     break;

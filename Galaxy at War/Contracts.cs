@@ -313,48 +313,48 @@ namespace GalaxyatWar
             return weightedList1;
         }
 
-        [HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
-        public class SimGameStateFillMapEncounterContractDataPatch
-        {
-            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> ins)
-            {
-                var from = AccessTools.Method(typeof(SimGameState), nameof(SimGameState.CreatePotentialContract));
-                var to = AccessTools.Method(typeof(SimGameStateFillMapEncounterContractDataPatch), nameof(CreatePotentialContract));
-                return ins.MethodReplacer(from, to);
-            }
-
-            private static bool CreatePotentialContract(
-                StarSystem system,
-                SimGameState.ContractDifficultyRange diffRange,
-                ContractOverride contractOvr,
-                Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets,
-                MapAndEncounters level,
-                int encounterContractTypeID,
-                out SimGameState.PotentialContract returnContract)
-            {
-                returnContract = new SimGameState.PotentialContract();
-                if (Globals.Sim.GetValidFaction(system, validTargets, contractOvr.requirementList, out var chosenContractParticipants))
-                {
-                    system.SetCurrentContractFactions(chosenContractParticipants.Employer, chosenContractParticipants.Target);
-                    if (Globals.Sim.DoesContractMeetRequirements(system, level, contractOvr))
-                    {
-                        returnContract = new SimGameState.PotentialContract
-                        {
-                            contractOverride = contractOvr,
-                            difficulty = actualDifficulty,
-                            employer = chosenContractParticipants.Employer,
-                            target = chosenContractParticipants.Target,
-                            employerAlly = chosenContractParticipants.EmployersAlly,
-                            targetAlly = chosenContractParticipants.TargetsAlly,
-                            NeutralToAll = chosenContractParticipants.NeutralToAll,
-                            HostileToAll = chosenContractParticipants.HostileToAll
-                        };
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-        }
+        //[HarmonyPatch(typeof(SimGameState), "FillMapEncounterContractData")]
+        //public class SimGameStateFillMapEncounterContractDataPatch
+        //{
+        //    private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> ins)
+        //    {
+        //        var from = AccessTools.Method(typeof(SimGameState), nameof(SimGameState.CreatePotentialContract));
+        //        var to = AccessTools.Method(typeof(SimGameStateFillMapEncounterContractDataPatch), nameof(CreatePotentialContract));
+        //        return ins.MethodReplacer(from, to);
+        //    }
+        //
+        //    private static bool CreatePotentialContract(
+        //        StarSystem system,
+        //        SimGameState.ContractDifficultyRange diffRange,
+        //        ContractOverride contractOvr,
+        //        Dictionary<string, WeightedList<SimGameState.ContractParticipants>> validTargets,
+        //        MapAndEncounters level,
+        //        int encounterContractTypeID,
+        //        out SimGameState.PotentialContract returnContract)
+        //    {
+        //        returnContract = new SimGameState.PotentialContract();
+        //        if (Globals.Sim.GetValidFaction(system, validTargets, contractOvr.requirementList, out var chosenContractParticipants))
+        //        {
+        //            system.SetCurrentContractFactions(chosenContractParticipants.Employer, chosenContractParticipants.Target);
+        //            if (Globals.Sim.DoesContractMeetRequirements(system, level, contractOvr))
+        //            {
+        //                returnContract = new SimGameState.PotentialContract
+        //                {
+        //                    contractOverride = contractOvr,
+        //                    difficulty = actualDifficulty,
+        //                    employer = chosenContractParticipants.Employer,
+        //                    target = chosenContractParticipants.Target,
+        //                    employerAlly = chosenContractParticipants.EmployersAlly,
+        //                    targetAlly = chosenContractParticipants.TargetsAlly,
+        //                    NeutralToAll = chosenContractParticipants.NeutralToAll,
+        //                    HostileToAll = chosenContractParticipants.HostileToAll
+        //                };
+        //                return true;
+        //            }
+        //        }
+        //
+        //        return false;
+        //    }
+        //}
     }
 }
