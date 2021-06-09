@@ -189,24 +189,31 @@ namespace GalaxyatWar
 
             internal static void Spawn()
             {
-                LogDebug("Spawning new instance.");
-                Globals.WarStatusTracker = new WarStatus();
-                LogDebug("New global state created.");
-                Globals.WarStatusTracker.SystemsByResources =
-                    Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
-                if (!Globals.WarStatusTracker.StartGameInitialized)
+                try
                 {
-                    // bug loading a bad/older tag logs this but leaves 5 basic contracts
-                    // or maybe it's loading any existing game?  that would suck
-                    LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem.Name}).");
-                    var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
-                    Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
-                    Globals.WarStatusTracker.StartGameInitialized = true;
-                }
+                    LogDebug("Spawning new instance.");
+                    Globals.WarStatusTracker = new WarStatus();
+                    LogDebug("New global state created.");
+                    Globals.WarStatusTracker.SystemsByResources =
+                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
+                    if (!Globals.WarStatusTracker.StartGameInitialized)
+                    {
+                        // bug loading a bad/older tag logs this but leaves 5 basic contracts
+                        // or maybe it's loading any existing game?  that would suck
+                        LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem.Name}).");
+                        var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                        Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
+                        Globals.WarStatusTracker.StartGameInitialized = true;
+                    }
 
-                SystemDifficulty();
-                Globals.WarStatusTracker.FirstTickInitialization = true;
-                WarTick.Tick(true, true);
+                    SystemDifficulty();
+                    Globals.WarStatusTracker.FirstTickInitialization = true;
+                    WarTick.Tick(true, true);
+                }
+                catch (Exception ex)
+                {
+                    Error(ex);
+                }
             }
         }
 

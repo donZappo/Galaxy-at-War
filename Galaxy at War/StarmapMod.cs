@@ -425,26 +425,22 @@ namespace GalaxyatWar
             var blackMarketIsActive = __result.blackMarketObj.gameObject.activeInHierarchy;
             var fpAvailableIsActive = __result.flashpointAvailableObj.gameObject.activeInHierarchy;
             var fpActiveIsActive = __result.flashpointActiveObj.gameObject.activeInHierarchy;
-
-
+            __result.Init(__result.system, color, __result.CanTravel, wasVisited);
+            if (fpAvailableIsActive)
+                __result.flashpointAvailableObj.SetActive(true);
+            if (fpActiveIsActive)
+                __result.flashpointActiveObj.SetActive(true);
+            if (blackMarketIsActive)
+                __result.blackMarketObj.gameObject.SetActive(true);
+            if (resize)
             {
-                __result.Init(__result.system, color, __result.CanTravel, wasVisited);
-                if (fpAvailableIsActive)
-                    __result.flashpointAvailableObj.SetActive(true);
-                if (fpActiveIsActive)
-                    __result.flashpointActiveObj.SetActive(true);
-                if (blackMarketIsActive)
-                    __result.blackMarketObj.gameObject.SetActive(true);
-                if (resize)
-                {
-                    __result.selectedScale = 10;
-                    __result.deselectedScale = 8;
-                }
-                else
-                {
-                    __result.selectedScale = 4;
-                    __result.deselectedScale = 4;
-                }
+                __result.selectedScale = 10;
+                __result.deselectedScale = 8;
+            }
+            else
+            {
+                __result.selectedScale = 4;
+                __result.deselectedScale = 4;
             }
         }
 
