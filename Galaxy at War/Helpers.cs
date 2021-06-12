@@ -30,30 +30,30 @@ namespace GalaxyatWar
 
         public static void SystemDifficulty()
         {
-            var systemBuckets = new Dictionary<string, List<SystemStatus>>();
+            var factionSystems = new Dictionary<string, List<SystemStatus>>();
             foreach (var system in Globals.WarStatusTracker.Systems)
             {
                 //Define the original owner of the system for revolt purposes.
                 if (system.OriginalOwner == null)
                     system.OriginalOwner = system.Owner;
 
-                if (!systemBuckets.Keys.Contains(system.OriginalOwner))
+                if (!factionSystems.ContainsKey(system.OriginalOwner))
                 {
-                    var newSystemList = new List<SystemStatus>();
-                    newSystemList.Add(system);
-                    systemBuckets.Add(system.OriginalOwner, newSystemList);
+                    factionSystems.Add(system.OriginalOwner, new List<SystemStatus> { system });
                 }
                 else
-                    systemBuckets[system.OriginalOwner].Add(system);
+                {
+                    factionSystems[system.OriginalOwner].Add(system);
+                }
             }
 
-            foreach (var faction in systemBuckets.Keys)
+            foreach (var faction in factionSystems.Keys)
             {
                 {
-                    var systemCount = systemBuckets[faction].Count;
+                    var systemCount = factionSystems[faction].Count;
                     var difficultyCutoff = systemCount / 10;
                     var i = 0;
-                    var orderedSystems = systemBuckets[faction].OrderBy(v => v.TotalResources);
+                    var orderedSystems = factionSystems[faction].OrderBy(v => v.TotalResources);
                     foreach (var systemStatus in orderedSystems)
                     {
                         try
@@ -112,27 +112,25 @@ namespace GalaxyatWar
                                     systemStatus.DifficultyRating = 10;
                                 }
 
-                                i++;
-
-                                var amount = systemStatus.DifficultyRating;
-                                var difficultyList = new List<int> { amount, amount };
-                                systemStatus.StarSystem.Def.DifficultyList = difficultyList;
-                                systemStatus.StarSystem.Def.DefaultDifficulty = amount;
-                                Logger.LogDebug("System: " + systemStatus.Name + ", Faction: " + systemStatus.StarSystem.OwnerDef.Name +
-                                    ", Difficulty: " + systemStatus.StarSystem.Def.DefaultDifficulty);
                             }
                             else
                             {
                                 systemStatus.DifficultyRating = systemStatus.StarSystem.Def.DefaultDifficulty;
-                                i++;
                             }
+                            var amount = systemStatus.DifficultyRating;
+                            var difficultyList = new List<int> { amount, amount };
+                            systemStatus.StarSystem.Def.DifficultyList = difficultyList;
+                            systemStatus.StarSystem.Def.DefaultDifficulty = amount;
+                            i++;
+                            Logger.LogDebug("System: " + systemStatus.Name + ", Faction: " + systemStatus.StarSystem.OwnerDef.Name +
+                                ", Difficulty: " + systemStatus.StarSystem.Def.DefaultDifficulty);
 
                             if (systemStatus.StarSystem.Def.OwnerValue.Name != "NoFaction" && systemStatus.StarSystem.Def.SystemShopItems.Count == 0)
                             {
                                 var tempList = new List<string>
-                        {
-                            "itemCollection_minor_Locals"
-                        };
+                                {
+                                    "itemCollection_minor_Locals"
+                                };
                                 systemStatus.StarSystem.Def.SystemShopItems = tempList;
                                 if (Globals.Sim.CurSystem.Name == systemStatus.StarSystem.Def.Description.Name)
                                 {
