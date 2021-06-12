@@ -28,7 +28,7 @@ namespace GalaxyatWar
             }
 
             Logger.Clear();
-            Logger.LogDebug("GaW Starting up...");
+            Logger.LogDebug($"GaW {Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} Starting up...");
 
             foreach (var value in Settings.GetType().GetFields())
             {
@@ -53,7 +53,7 @@ namespace GalaxyatWar
                         Logger.LogDebug("Empty dictionary");
                         continue;
                     }
-                    foreach (var pair in dict)
+                    foreach (var pair in dict.Where(kvp => !string.IsNullOrEmpty(kvp.Key)))
                     {
                         Logger.LogDebug($"  {pair.Key} : {pair.Value}");
                     }

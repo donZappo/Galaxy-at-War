@@ -1,5 +1,8 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using BattleTech;
+using BattleTech.UI;
 using Harmony;
 
 // ReSharper disable InconsistentNaming

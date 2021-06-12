@@ -33,20 +33,17 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var starSystem = (StarSystem) data;
-                if (starSystem == null)
+                if (data is StarSystem starSystem)
                 {
-                    return;
-                }
+                    __state = starSystem.Def.Description.Details;
+                    if (Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
+                    {
+                        return;
+                    }
 
-                __state = starSystem.Def.Description.Details;
-                if (Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
-                {
-                    return;
+                    var factionString = BuildInfluenceString(starSystem);
+                    starSystem.Def.Description.Details = factionString;
                 }
-
-                var factionString = BuildInfluenceString(starSystem);
-                starSystem.Def.Description.Details = factionString;
             }
 
             public static void Postfix(object data, string __state)
@@ -54,13 +51,10 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var starSystem = (StarSystem) data;
-                if (starSystem == null)
+                if (data is StarSystem starSystem)
                 {
-                    return;
+                    starSystem.Def.Description.Details = __state;
                 }
-
-                starSystem.Def.Description.Details = __state;
             }
         }
 
@@ -136,7 +130,7 @@ namespace GalaxyatWar
 
         private static string BuildRelationString()
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.AppendLine("<line-height=125%>");
             foreach (var tracker in Globals.WarStatusTracker.DeathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.Faction)))
             {

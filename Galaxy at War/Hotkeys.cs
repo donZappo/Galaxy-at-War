@@ -200,6 +200,17 @@ namespace GalaxyatWar
                 var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15);
                 LogDebug(Helpers.Unzip(Convert.FromBase64String(tag)));
             }
+
+            var hotkeyC = modified && Input.GetKeyDown(KeyCode.C);
+            if (hotkeyC)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                Globals.CachedSaveTag = sim.CompanyTags.First(tag => tag.StartsWith("GalaxyAtWarSave"));
+                if (!sim.CompanyTags.Remove(Globals.CachedSaveTag))
+                {
+                    sim.CompanyTags.Add(Globals.CachedSaveTag);
+                }
+            }
         }
     }
 }
