@@ -138,15 +138,25 @@ namespace GalaxyatWar
         public static void DistributePirateResources(float CurrentPAResources)
         {
             var i = 0;
-            var noPiracySystemsStrings = Settings.ImmuneToWar.Concat(
-                    WarStatusTracker.FlashpointSystems.Concat(
-                        WarStatusTracker.HyadesRimGeneralPirateSystems.Concat(
-                            Settings.HyadesPirates)));
             var noPiracySystems = new List<SystemStatus>();
-            foreach (var systemsString in noPiracySystemsStrings)
+            foreach (var system in WarStatusTracker.Systems)
             {
-                noPiracySystems.Add(WarStatusTracker.Systems.FirstOrDefault(system => system.Name == systemsString));
+                if (Settings.ImmuneToWar.Contains(system.Owner) || WarStatusTracker.FlashpointSystems.Contains(system.Name) ||
+                    Settings.HyadesPirates.Contains(system.Owner))
+                {
+                    noPiracySystems.Add(system);
+                }
+
             }
+            //var noPiracySystemsStrings = Settings.ImmuneToWar.Concat(
+            //        WarStatusTracker.FlashpointSystems.Concat(
+            //            WarStatusTracker.HyadesRimGeneralPirateSystems.Concat(
+            //                Settings.HyadesPirates)));
+            
+            //foreach (var systemsString in noPiracySystemsStrings)
+            //{
+            //    noPiracySystems.Add(WarStatusTracker.Systems.FirstOrDefault(system => system.Name == systemsString));
+            //}
 
             var candidateSystems = WarStatusTracker.Systems
                 .Except(noPiracySystems)
