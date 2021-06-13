@@ -218,6 +218,7 @@ namespace GalaxyatWar
                     return;
                 }
 
+                Globals.DeploymentIndicator?.ShowDeploymentIndicator();
                 if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
                 {
                     try

@@ -237,6 +237,7 @@
     <Compile Include="AdvanceToTask.cs" />
     <Compile Include="Contracts.cs" />
     <Compile Include="DeathListTracker.cs" />
+    <Compile Include="DeploymentIndicator.cs" />
     <Compile Include="Fixes.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Helpers.cs" />

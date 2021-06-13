@@ -43,5 +43,6 @@ namespace GalaxyatWar
         internal static bool ModInitialized;
         internal static List<StarSystem> GaWSystems = new();
         internal static string CachedSaveTag;
+        internal static DeploymentIndicator DeploymentIndicator;
     }
 }
