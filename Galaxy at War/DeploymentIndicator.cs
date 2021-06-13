@@ -41,10 +41,6 @@ namespace GalaxyatWar
 
         private void RefreshIndicator()
         {
-            Logger.LogDebug($"EscalationDays " + Globals.WarStatusTracker.EscalationDays);
-            Logger.LogDebug($"Deployment " + Globals.WarStatusTracker.Deployment);
-            Logger.LogDebug($"EscalationOrder.GetRemainingCost() " + Globals.WarStatusTracker.EscalationOrder.Description + " " + Globals.WarStatusTracker.EscalationOrder.GetRemainingCost());
-           
             Globals.WarStatusTracker.HotBox.Do(h => Logger.LogDebug(h.Name));
             if (Globals.Sim.TravelState is SimGameTravelStatus.IN_SYSTEM
                 && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus())
