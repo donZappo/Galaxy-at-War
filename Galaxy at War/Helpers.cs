@@ -34,8 +34,6 @@ namespace GalaxyatWar
             var factionSystems = new Dictionary<string, List<SystemStatus>>();
             foreach (var system in Globals.WarStatusTracker.Systems)
             {
-
-
                 if (!factionSystems.ContainsKey(system.OriginalOwner))
                 {
                     factionSystems.Add(system.OriginalOwner, new List<SystemStatus>
@@ -578,7 +576,7 @@ namespace GalaxyatWar
                 if (highestFaction != systemStatus.Owner &&
                     !Globals.WarStatusTracker.FlashpointSystems.Contains(systemStatus.Name) &&
                     diffStatus > Globals.Settings.TakeoverThreshold &&
-                    !Globals.WarStatusTracker.HotBox.Contains(systemStatus) &&
+                    !Globals.WarStatusTracker.HotBox.IsHot(systemStatus.Name) &&
                     (!Globals.Settings.DefensiveFactions.Contains(highestFaction) || highestFaction == "Locals") &&
                     !Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
                 {
@@ -633,7 +631,7 @@ namespace GalaxyatWar
         {
             var starSystem = systemStatus.StarSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
-            if (Globals.WarStatusTracker.HotBox.Contains(systemStatus))
+            if (Globals.WarStatusTracker.HotBox.IsHot(systemStatus.Name))
             {
                 LogDebug("Skipping HotBoxes");
                 return;
@@ -1233,7 +1231,7 @@ namespace GalaxyatWar
 
             using var msi = new MemoryStream(bytes);
             using var mso = new MemoryStream();
-            using (var gs = new GZipStream(mso, System.IO.Compression.CompressionLevel.Optimal))
+            using (var gs = new GZipStream(mso, CompressionMode.Compress))
             {
                 //msi.CopyTo(gs);
                 CopyTo(msi, gs);
@@ -1254,17 +1252,23 @@ namespace GalaxyatWar
 
             return Encoding.UTF8.GetString(mso.ToArray());
         }
-        
+
         internal static void SetupEscalationOrder()
         {
             if (Globals.WarStatusTracker.EscalationOrder is null)
             {
                 Globals.WarStatusTracker.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Forced Deployment Mission");
             }
+
             Globals.WarStatusTracker.EscalationOrder.SetCost(Globals.WarStatusTracker.EscalationDays);
             Globals.Sim.RoomManager.AddWorkQueueEntry(Globals.WarStatusTracker.EscalationOrder);
             Globals.Sim.RoomManager.SortTimeline();
             Globals.Sim.RoomManager.RefreshTimeline(false);
+        }
+
+        internal static bool IsHot(this List<SystemStatus> systemStatus, string name)
+        {
+            return systemStatus.Any(sys => sys.Name == name);
         }
     }
 }

@@ -52,8 +52,8 @@ namespace GalaxyatWar
                     return;
                 }
 
-                var indicatorGameObject = new GameObject();
-                indicatorGameObject.AddComponent<DeploymentIndicator>();
+                //var indicatorGameObject = new GameObject();
+                //indicatorGameObject.AddComponent<DeploymentIndicator>();
 
                 // thanks to mpstark for this
                 var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));

@@ -2,6 +2,7 @@ using System;
 using BattleTech;
 using BattleTech.UI;
 using Harmony;
+using UnityEngine;
 using static GalaxyatWar.Logger;
 
 namespace GalaxyatWar
@@ -22,7 +23,7 @@ namespace GalaxyatWar
                 return def != null;
             }
         }
-        
+
         // TODO move to another mod
         [HarmonyPatch(typeof(ListElementController_InventoryWeapon_NotListView), "RefreshQuantity")]
         public static class Bug_Tracing_Fix
@@ -67,5 +68,23 @@ namespace GalaxyatWar
             }
         }
 
+
+        [HarmonyPatch(typeof(TaskTimelineWidget), "OnTaskDetailsClicked")]
+        public static class TaskTimelineWidgetOnTaskDetailsClickedPatch
+        {
+            public static bool Prefix(TaskManagementElement element)
+            {
+                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
+                    return true;
+
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                {
+                    AdvanceToTask.StartAdvancing(element.Entry);
+                    return false;
+                }
+
+                return true;
+            }
+        }
     }
 }
