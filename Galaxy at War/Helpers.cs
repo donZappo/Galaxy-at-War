@@ -122,8 +122,8 @@ namespace GalaxyatWar
                             systemStatus.StarSystem.Def.DifficultyList = difficultyList;
                             systemStatus.StarSystem.Def.DefaultDifficulty = amount;
                             i++;
-                            Logger.LogDebug("System: " + systemStatus.Name + ", Faction: " + systemStatus.StarSystem.OwnerDef.Name +
-                                ", Difficulty: " + systemStatus.StarSystem.Def.DefaultDifficulty);
+                            //Logger.LogDebug("System: " + systemStatus.Name + ", Faction: " + systemStatus.StarSystem.OwnerDef.Name +
+                            //    ", Difficulty: " + systemStatus.StarSystem.Def.DefaultDifficulty);
 
                             if (systemStatus.StarSystem.Def.OwnerValue.Name != "NoFaction" && systemStatus.StarSystem.Def.SystemShopItems.Count == 0)
                             {
