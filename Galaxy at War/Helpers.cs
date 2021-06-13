@@ -631,10 +631,9 @@ namespace GalaxyatWar
         {
             var starSystem = systemStatus.StarSystem;
             //LogDebug("RefreshContracts for " + starSystem.Name);
-            if (Globals.WarStatusTracker.HotBox.Contains(systemStatus) || starSystem.Tags.Contains("planet_region_hyadesrim") &&
-                (starSystem.OwnerDef.Name == "Locals" || starSystem.OwnerDef.Name == "NoFaction"))
+            if (Globals.WarStatusTracker.HotBox.Contains(systemStatus))
             {
-                LogDebug("Skipping HotBox or THR Neutrals");
+                LogDebug("Skipping HotBoxes");
                 return;
             }
 
@@ -693,20 +692,20 @@ namespace GalaxyatWar
                     contractTargets.Add(faction);
             }
 
-            if (starSystem.Tags.Contains("planet_region_hyadesrim") && Globals.Settings.HyadesRimCompatible)
-            {
-                foreach (var alliedFaction in owner.FactionDef.Allies)
-                {
-                    if (!contractEmployers.Contains(alliedFaction) && !Globals.Settings.HyadesTargetsOnly.Contains(alliedFaction))
-                        contractEmployers.Add(alliedFaction);
-                }
+            //if (starSystem.Tags.Contains("planet_region_hyadesrim") && Globals.Settings.HyadesRimCompatible)
+            //{
+            //    foreach (var alliedFaction in owner.FactionDef.Allies)
+            //    {
+            //        if (!contractEmployers.Contains(alliedFaction) && !Globals.Settings.HyadesTargetsOnly.Contains(alliedFaction))
+            //            contractEmployers.Add(alliedFaction);
+            //    }
 
-                foreach (var enemyFaction in owner.FactionDef.Enemies)
-                {
-                    if (!contractTargets.Contains(enemyFaction) && !Globals.Settings.HyadesEmployersOnly.Contains(enemyFaction))
-                        contractTargets.Add(enemyFaction);
-                }
-            }
+            //    foreach (var enemyFaction in owner.FactionDef.Enemies)
+            //    {
+            //        if (!contractTargets.Contains(enemyFaction) && !Globals.Settings.HyadesEmployersOnly.Contains(enemyFaction))
+            //            contractTargets.Add(enemyFaction);
+            //    }
+            //}
 
             var tempContractEmployers = new List<string>(contractEmployers);
             foreach (var tempEmployer in tempContractEmployers)

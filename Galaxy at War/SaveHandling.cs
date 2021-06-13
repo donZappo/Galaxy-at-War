@@ -173,7 +173,7 @@ namespace GalaxyatWar
                     LogDebug($"Trying to add {system.Name}, owner {system.OwnerValue.Name}.");
                     var systemStatus = new SystemStatus(system, system.OwnerValue.Name);
                     Globals.WarStatusTracker.Systems.Add(systemStatus);
-                    if (system.Tags.Contains("planet_other_pirate") && !system.Tags.Contains("planet_region_hyadesrim"))
+                    if (system.Tags.Contains("planet_other_pirate"))
                     {
                         Globals.WarStatusTracker.FullPirateSystems.Add(system.Name);
                         PiratesAndLocals.FullPirateListSystems.Add(systemStatus);
