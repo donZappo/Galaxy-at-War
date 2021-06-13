@@ -53,23 +53,8 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker.HotBox.Any(sys => sys.Name == Globals.Sim.CurSystem.Name)
                     && Globals.Sim.TravelState == SimGameTravelStatus.IN_SYSTEM)
                 {
-                    Globals.WarStatusTracker.EscalationDays--;
-
-                    if (!Globals.WarStatusTracker.Deployment
-                        && Globals.WarStatusTracker.EscalationDays == 0)
-                    {
-                        HotSpots.CompleteEscalation();
-                    }
-                    else if (Globals.WarStatusTracker.EscalationOrder != null)
-                    {
-                        Globals.WarStatusTracker.EscalationOrder.PayCost(1);
-                        var activeItems = Globals.TaskTimelineWidget.ActiveItems;
-                        if (activeItems.TryGetValue(Globals.WarStatusTracker.EscalationOrder, out var taskManagementElement))
-                        {
-                            taskManagementElement.UpdateItem(0);
-                        }
-                    }
-                    else if (Globals.WarStatusTracker.EscalationDays <= 0)
+                    if (Globals.WarStatusTracker.Deployment
+                        && Globals.WarStatusTracker.EscalationDays-- <= 0)
                     {
                         Globals.Sim.StopPlayMode();
                         Globals.Sim.CurSystem.activeSystemContracts.Clear();
@@ -110,6 +95,21 @@ namespace GalaxyatWar
 
                         Globals.SimGameInterruptManager.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation. Let's check out our contracts and get to it!", Globals.Sim.GetCrewPortrait(SimGameCrew.Crew_Darius),
                             string.Empty, null, "Proceed");
+                    }
+
+                    if (!Globals.WarStatusTracker.Deployment
+                        && Globals.WarStatusTracker.EscalationDays == 0)
+                    {
+                        HotSpots.CompleteEscalation();
+                    }
+                    else if (Globals.WarStatusTracker.EscalationOrder != null)
+                    {
+                        Globals.WarStatusTracker.EscalationOrder.PayCost(1);
+                        var activeItems = Globals.TaskTimelineWidget.ActiveItems;
+                        if (activeItems.TryGetValue(Globals.WarStatusTracker.EscalationOrder, out var taskManagementElement))
+                        {
+                            taskManagementElement.UpdateItem(0);
+                        }
                     }
                 }
                 else if (!Globals.WarStatusTracker.StartGameInitialized)

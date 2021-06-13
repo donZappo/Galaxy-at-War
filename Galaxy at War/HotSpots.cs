@@ -1162,7 +1162,7 @@ namespace GalaxyatWar
                         HasFlashpoint = true;
                 }
 
-                if (Globals.WarStatusTracker.HotBox.Any(sys => sys.Name == Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment)
+                if (Globals.WarStatusTracker.HotBox.IsHot(Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment)
                 {
                     Globals.Sim.Constants.Story.ContractSuccessReduction = 100;
                     Globals.WarStatusTracker.DeploymentInfluenceIncrease *= Globals.Settings.DeploymentEscalationFactor;
