@@ -196,8 +196,8 @@ namespace GalaxyatWar
                         highestFaction = factionStr;
                     }
 
-                if (highest / total >= 0.5)
-                    break;
+                    if (highest / total >= 0.5)
+                        break;
                 }
 
                 if (highestFaction == faction)

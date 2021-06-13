@@ -1,10 +1,4 @@
-using BattleTech;
-using BattleTech.UI;
-using BattleTech.UI.TMProWrapper;
-using Harmony;
-using HBS.Extensions;
-using UnityEngine;
-using UnityEngine.UI;
+
 
 // ReSharper disable InconsistentNaming
 // ReSharper disable UnusedType.Global 
