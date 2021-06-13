@@ -35,10 +35,12 @@ namespace GalaxyatWar
             private static void Postfix(Starmap __instance)
             {
                 LogDebug("PopulateMap");
+
                 if (Globals.ModInitialized)
                 {
                     return;
                 }
+
 
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
@@ -49,6 +51,9 @@ namespace GalaxyatWar
                     LogDebug("Aborting GaW loading.");
                     return;
                 }
+
+                var indicatorGameObject = new GameObject();
+                indicatorGameObject.AddComponent<DeploymentIndicator>();
 
                 // thanks to mpstark for this
                 var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
@@ -78,6 +83,11 @@ namespace GalaxyatWar
                     // copied from WarStatus - establish any systems that are new
                     AddNewStarSystems();
 
+                    if (Globals.WarStatusTracker.EscalationOrder is not null)
+                    {
+                        SetupEscalationOrder();
+                    }
+                    
                     // try to recover from negative DR
                     // temporary code
                     foreach (var systemStatus in Globals.WarStatusTracker.Systems)
@@ -386,6 +396,7 @@ namespace GalaxyatWar
                         StarmapPopulateMapPatch.Spawn();
                         break;
                     }
+
                     AdjustDeathList(deathListTracker, true);
                 }
 

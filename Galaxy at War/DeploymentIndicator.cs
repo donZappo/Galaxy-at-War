@@ -1,4 +1,3 @@
-using System.Linq;
 using BattleTech;
 using BattleTech.UI;
 using BattleTech.UI.TMProWrapper;
@@ -14,29 +13,21 @@ using UnityEngine.UI;
 
 namespace GalaxyatWar
 {
-    public class DeploymentIndicator
+    public class DeploymentIndicator : MonoBehaviour
     {
-        private long counter;
-        private readonly GameObject playPauseButton;
-        private readonly GameObject hitBox;
-        private readonly Image image;
-        private readonly LocalizableText text;
+        private GameObject playPauseButton;
+        private GameObject hitBox;
+        private Image image;
+        private LocalizableText text;
 
         internal DeploymentIndicator()
         {
-            // this makes it retry (if these are null during sim/combat transitions, I think)
+        }
+
+        private void OnEnable()
+        {
             var root = UIManager.Instance.gameObject;
-            if (root == null)
-            {
-                return;
-            }
-
             var cmdCenterButton = root.gameObject.FindFirstChildNamed("uixPrfBttn_SIM_navButton-prime");
-            if (cmdCenterButton == null)
-            {
-                return;
-            }
-
             var cmdCenterBgFill = cmdCenterButton.FindFirstChildNamed("bgFill");
             var parent = root.gameObject.FindFirstChildNamed("uixPrfBttn_SIM_timeButton-Element-MANAGED");
             var timeLineText = root.gameObject.FindFirstChildNamed("time_labelText");
@@ -44,34 +35,57 @@ namespace GalaxyatWar
             hitBox = parent.gameObject.FindFirstChildNamed("-HitboxOverlay-");
             image = cmdCenterBgFill.GetComponent<Image>();
             text = timeLineText.GetComponent<LocalizableText>();
-            FileLog.Log("Deployment Indicator constructed.");
+            Logger.LogDebug("Deployment Indicator constructed.");
+            InvokeRepeating(nameof(RefreshIndicator), 0, 3);
         }
 
-        internal void ShowDeploymentIndicator()
+        private void RefreshIndicator()
         {
-            if (Time.time > counter)
+            Logger.LogDebug($"EscalationDays " + Globals.WarStatusTracker.EscalationDays);
+            Logger.LogDebug($"Deployment " + Globals.WarStatusTracker.Deployment);
+            Logger.LogDebug($"EscalationOrder.GetRemainingCost() " + Globals.WarStatusTracker.EscalationOrder.Description + " " + Globals.WarStatusTracker.EscalationOrder.GetRemainingCost());
+           
+            Globals.WarStatusTracker.HotBox.Do(h => Logger.LogDebug(h.Name));
+            if (Globals.Sim.TravelState is SimGameTravelStatus.IN_SYSTEM
+                && Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus())
+                && Globals.Sim.starDict[Globals.Sim.ActiveTravelContract.TargetSystemID] == Globals.Sim.CurSystem
+                || Globals.WarStatusTracker.EscalationOrder.GetRemainingCost() == 0)
             {
-                counter++;
-                // avoiding expensive SetActive calls 
-                if (playPauseButton == null)
-                {
-                    Mod.DeploymentIndicator = new DeploymentIndicator();
-                }
-                else if (playPauseButton.activeSelf &&
-                         Mod.Globals.War.EscalationDays == 0)
-                {
-                    text.text = "Deployment Required";
-                    image.color = new Color(0.5f, 0, 0, 0.863f);
-                    playPauseButton.SetActive(false);
-                    hitBox.SetActive(false);
-                }
-                else if (!playPauseButton.activeSelf &&
-                         Mod.Globals.War.EscalationDays > 0)
-                {
-                    image.color = new Color(0, 0, 0, 0.863f);
-                    playPauseButton.SetActive(true);
-                    hitBox.SetActive(true);
-                }
+                text.text = "Deployment Required";
+                image.color = new Color(0.5f, 0, 0, 0.863f);
+                playPauseButton.SetActive(false);
+                hitBox.SetActive(false);
+            }
+            else
+            {
+                image.color = new Color(0, 0, 0, 0.863f);
+                playPauseButton.SetActive(true);
+                hitBox.SetActive(true);
+            }
+        }
+    }
+
+    internal static class Extensions
+    {
+        // surely SetActive checks this shit itself!?
+        static void SetActiveIfNeeded(this GameObject gameObject, bool enabled)
+        {
+            switch (enabled)
+            {
+                case true:
+                    if (!gameObject.activeInHierarchy)
+                    {
+                        gameObject.SetActive(true);
+                    }
+
+                    break;
+                case false:
+                    if (gameObject.activeInHierarchy)
+                    {
+                        gameObject.SetActive(false);
+                    }
+
+                    break;
             }
         }
     }

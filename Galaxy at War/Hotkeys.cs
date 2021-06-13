@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BattleTech;
-using BattleTech.Framework;
 using BattleTech.UI;
 using Harmony;
-using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.UI;
 using static GalaxyatWar.Logger;
 
 // ReSharper disable InconsistentNaming
@@ -201,7 +198,7 @@ namespace GalaxyatWar
             {
                 var tag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"))?.Substring(15);
                 if (tag is null) return;
-                LogDebug(Helpers.Unzip(Convert.FromBase64String(tag)));
+                File.WriteAllText("mods/GalaxyatWar/tag.json", Helpers.Unzip(Convert.FromBase64String(tag)));
             }
 
             var hotkeyC = modified && Input.GetKeyDown(KeyCode.C);
@@ -230,6 +227,12 @@ namespace GalaxyatWar
                             CloseOnPress = true
                         }));
                 }
+            }
+
+            var hotkeyU = modified && Input.GetKeyDown(KeyCode.U);
+            if (hotkeyU)
+            {
+                Globals.WarStatusTracker.Deployment = false;
             }
         }
     }

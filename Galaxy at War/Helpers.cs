@@ -10,6 +10,7 @@ using BattleTech.Framework;
 using Harmony;
 using UnityEngine;
 using static GalaxyatWar.Logger;
+using CompressionLevel = UnityEngine.CompressionLevel;
 
 // ReSharper disable StringLiteralTypo
 // ReSharper disable ClassNeverInstantiated.Global
@@ -33,14 +34,14 @@ namespace GalaxyatWar
             var factionSystems = new Dictionary<string, List<SystemStatus>>();
             foreach (var system in Globals.WarStatusTracker.Systems)
             {
-                //Define the original owner of the system for revolt purposes.
-                if (system.OriginalOwner == null)
-                    system.OriginalOwner = system.Owner;
+
 
                 if (!factionSystems.ContainsKey(system.OriginalOwner))
                 {
-                    factionSystems.Add(system.OriginalOwner, new List<SystemStatus>{ system });
-                    factionSystems.Add(system.OriginalOwner, new List<SystemStatus> { system });
+                    factionSystems.Add(system.OriginalOwner, new List<SystemStatus>
+                    {
+                        system
+                    });
                 }
                 else
                 {
@@ -112,14 +113,14 @@ namespace GalaxyatWar
                                 {
                                     systemStatus.DifficultyRating = 10;
                                 }
-
                             }
                             else
                             {
                                 systemStatus.DifficultyRating = systemStatus.StarSystem.Def.DefaultDifficulty;
                             }
+
                             var amount = systemStatus.DifficultyRating;
-                            var difficultyList = new List<int> { amount, amount };
+                            var difficultyList = new List<int> {amount, amount};
                             systemStatus.StarSystem.Def.DifficultyList = difficultyList;
                             systemStatus.StarSystem.Def.DefaultDifficulty = amount;
                             i++;
@@ -1232,7 +1233,7 @@ namespace GalaxyatWar
 
             using var msi = new MemoryStream(bytes);
             using var mso = new MemoryStream();
-            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            using (var gs = new GZipStream(mso, System.IO.Compression.CompressionLevel.Optimal))
             {
                 //msi.CopyTo(gs);
                 CopyTo(msi, gs);
@@ -1252,6 +1253,18 @@ namespace GalaxyatWar
             }
 
             return Encoding.UTF8.GetString(mso.ToArray());
+        }
+        
+        internal static void SetupEscalationOrder()
+        {
+            if (Globals.WarStatusTracker.EscalationOrder is null)
+            {
+                Globals.WarStatusTracker.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Forced Deployment Mission");
+            }
+            Globals.WarStatusTracker.EscalationOrder.SetCost(Globals.WarStatusTracker.EscalationDays);
+            Globals.Sim.RoomManager.AddWorkQueueEntry(Globals.WarStatusTracker.EscalationOrder);
+            Globals.Sim.RoomManager.SortTimeline();
+            Globals.Sim.RoomManager.RefreshTimeline(false);
         }
     }
 }

@@ -1,9 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using BattleTech;
 using BattleTech.UI;
 using TMPro;
+using UnityEngine;
+using Random = System.Random;
 
 // ReSharper disable ClassNeverInstantiated.Global
 
@@ -43,6 +44,5 @@ namespace GalaxyatWar
         internal static bool ModInitialized;
         internal static List<StarSystem> GaWSystems = new();
         internal static string CachedSaveTag;
-        internal static DeploymentIndicator DeploymentIndicator;
     }
 }

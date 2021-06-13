@@ -50,7 +50,8 @@ namespace GalaxyatWar
                     return;
 
                 Globals.WarStatusTracker.CurSystem = Globals.Sim.CurSystem.Name;
-                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) && !Globals.WarStatusTracker.HotBoxTravelling)
+                if (Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()))
+                    //&&  !Globals.WarStatusTracker.HotBoxTravelling)
                 {
                     Globals.WarStatusTracker.EscalationDays--;
 
@@ -94,9 +95,9 @@ namespace GalaxyatWar
                             var maxHolder = Globals.Sim.CurSystem.CurMaxBreadcrumbs;
                             var rand = Globals.Rng.Next(1, (int) Globals.Settings.DeploymentContracts);
 
-                            Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(rand);
+                            Globals.Sim.CurSystem.CurMaxBreadcrumbs = rand;
                             Globals.Sim.GeneratePotentialContracts(true, null, Globals.Sim.CurSystem);
-                            Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(maxHolder);
+                            Globals.Sim.CurSystem.CurMaxBreadcrumbs = maxHolder;
 
                             Globals.Sim.QueueCompleteBreadcrumbProcess(true);
                             Globals.SimGameInterruptManager.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation. Let's check out our contracts and get to it!", Globals.Sim.GetCrewPortrait(SimGameCrew.Crew_Darius),
@@ -164,7 +165,7 @@ namespace GalaxyatWar
                         //GenerateMonthlyContracts();
                         WarTick.Tick(true, true);
                         var hasFlashPoint = Globals.Sim.CurSystem.SystemContracts.Any(x => x.IsFlashpointContract || x.IsFlashpointCampaignContract);
-                        if (!Globals.WarStatusTracker.HotBoxTravelling && !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) && !hasFlashPoint)
+                        if (/*!Globals.WarStatusTracker.HotBoxTravelling &&*/ !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) && !hasFlashPoint)
                         {
                             LogDebug("Regenerating contracts because month-end.");
                             var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;

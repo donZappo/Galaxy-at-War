@@ -25,11 +25,12 @@ namespace GalaxyatWar
         [HarmonyPatch(typeof(SimGameState), "GetValidParticipants")]
         public static class SimGameStateGetValidParticipantsPatch
         {
-            public static void Prefix(ref StarSystem system)
+            // bug g.  removed ref on param, not needed I think
+            public static void Prefix(StarSystem system)
             {
                 system.Def.contractEmployerIDs = system.Def.contractEmployerIDs.Distinct().ToList();
-                LogDebug("Contract employers:");
-                system.Def.contractEmployerIDs.Do(x => LogDebug($"  {x}"));
+                //LogDebug("Contract employers:");
+                //system.Def.contractEmployerIDs.Do(x => LogDebug($"  {x}"));
             }
         }
         
@@ -351,8 +352,8 @@ namespace GalaxyatWar
                                 }
 
                                 Globals.WarStatusTracker.JustArrived = false;
-                                Globals.WarStatusTracker.HotBoxTravelling = false;
                                 Globals.WarStatusTracker.Escalation = false;
+                                // bug if we rely on the count elsewhere, maybe.  watch out!
                                 Globals.WarStatusTracker.HotBox.Clear();
                                 Globals.WarStatusTracker.EscalationDays = 0;
                                 warSystem.BonusCBills = false;

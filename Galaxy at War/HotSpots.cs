@@ -400,7 +400,6 @@ namespace GalaxyatWar
                     // todo why is this like the only place GaWSystems is used?
                     var starSystem = Globals.GaWSystems.Find(x => x.Def.Description.Id.StartsWith(contract.TargetSystem));
                     Globals.WarStatusTracker.HotBox.Add(starSystem.FindSystemStatus());
-                    Globals.WarStatusTracker.HotBoxTravelling = true;
 
                     if (contract.Override.contractDisplayStyle == ContractDisplayStyle.BaseCampaignStory)
                     {
@@ -486,8 +485,6 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.EscalationDays = 0;
                             var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.Name == Globals.Sim.CurSystem.Name);
                             RefreshContractsEmployersAndTargets(systemStatus);
-                            if (Globals.WarStatusTracker.HotBox.Count == 0)
-                                Globals.WarStatusTracker.HotBoxTravelling = false;
 
                             if (Globals.WarStatusTracker.EscalationOrder != null)
                             {
@@ -531,8 +528,6 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
                 RefreshContractsEmployersAndTargets(systemStatus);
-                if (Globals.WarStatusTracker.HotBox.Count == 0)
-                    Globals.WarStatusTracker.HotBoxTravelling = false;
             }
         }
 
@@ -597,8 +592,6 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.EscalationDays = 0;
                             var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.Name == Globals.Sim.CurSystem.Name);
                             RefreshContractsEmployersAndTargets(systemStatus);
-                            if (Globals.WarStatusTracker.HotBox.Count == 0)
-                                Globals.WarStatusTracker.HotBoxTravelling = false;
 
                             if (Globals.WarStatusTracker.EscalationOrder != null)
                             {
@@ -642,8 +635,6 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
                 RefreshContractsEmployersAndTargets(systemStatus);
-                if (Globals.WarStatusTracker.HotBox.Count == 0)
-                    Globals.WarStatusTracker.HotBoxTravelling = false;
             }
         }
 
@@ -694,7 +685,7 @@ namespace GalaxyatWar
                         HasFlashpoint = true;
                 }
 
-                if (!Globals.WarStatusTracker.HotBoxTravelling &&
+                if (//!Globals.WarStatusTracker.HotBoxTravelling &&
                     !Globals.WarStatusTracker.HotBox.Contains(Globals.Sim.CurSystem.FindSystemStatus()) &&
                     !HasFlashpoint && !Globals.HoldContracts)
                 {
@@ -719,7 +710,6 @@ namespace GalaxyatWar
 
                     LogDebug("AAR Salvage Screen Completed");
                     Globals.WarStatusTracker.JustArrived = false;
-                    Globals.WarStatusTracker.HotBoxTravelling = false;
                 }
                 catch (Exception e)
                 {
@@ -792,11 +782,7 @@ namespace GalaxyatWar
                         LogDebug("Is not a deployment.");
                         Globals.WarStatusTracker.Escalation = true;
                         Globals.WarStatusTracker.EscalationDays = Globals.Settings.EscalationDays;
-                        Globals.WarStatusTracker.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Escalation Days Remaining");
-                        Globals.WarStatusTracker.EscalationOrder.SetCost(Globals.WarStatusTracker.EscalationDays);
-                        __instance.RoomManager.AddWorkQueueEntry(Globals.WarStatusTracker.EscalationOrder);
-                        __instance.RoomManager.SortTimeline();
-                        __instance.RoomManager.RefreshTimeline(false);
+                        SetupEscalationOrder();
                     }
                     else
                     {
@@ -808,13 +794,11 @@ namespace GalaxyatWar
                             Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
 
                         Globals.WarStatusTracker.Escalation = true;
-                        Globals.WarStatusTracker.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Forced Deployment Mission");
-                        Globals.WarStatusTracker.EscalationOrder.SetCost(Globals.WarStatusTracker.EscalationDays);
-                        __instance.RoomManager.AddWorkQueueEntry(Globals.WarStatusTracker.EscalationOrder);
-                        __instance.RoomManager.SortTimeline();
-                        __instance.RoomManager.RefreshTimeline(false);
+                        SetupEscalationOrder();
                     }
                 }
+
+
             }
         }
 
@@ -874,10 +858,8 @@ namespace GalaxyatWar
                 Globals.WarStatusTracker.DeploymentInfluenceIncrease = 1.0;
                 Globals.WarStatusTracker.Escalation = false;
                 Globals.WarStatusTracker.EscalationDays = 0;
-                var systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.Name == system.Name);
+                var systemStatus = Globals.WarStatusTracker.Systems.Find(s => s.StarSystem == system);
                 RefreshContractsEmployersAndTargets(systemStatus);
-                if (Globals.WarStatusTracker.HotBox.Count == 0)
-                    Globals.WarStatusTracker.HotBoxTravelling = false;
             }
         }
 
@@ -906,8 +888,7 @@ namespace GalaxyatWar
 
                         if (__instance.FinalPrioritySalvageCount < 7)
                         {
-                            var NewPrioritySalvage = __instance.FinalPrioritySalvageCount + 1;
-                            __instance.FinalPrioritySalvageCount = NewPrioritySalvage;
+                            __instance.FinalPrioritySalvageCount++;
                         }
                     }
                 }
@@ -934,7 +915,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker.Deployment)
                         missionObjectiveResultString = $"BONUS FROM DEPLOYMENT: ¢{$"{BonusMoney:n0}"}";
                     var missionObjectiveResult = new MissionObjectiveResult(missionObjectiveResultString, "7facf07a-626d-4a3b-a1ec-b29a35ff1ac0", false, true, ObjectiveStatus.Succeeded, false);
-                    Traverse.Create(__instance).Method("AddObjective", missionObjectiveResult).GetValue();
+                    __instance.AddObjective(missionObjectiveResult);
                 }
             }
         }
@@ -1141,7 +1122,7 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                         return true;
 
-                    if (!Globals.Settings.ResetMap && Globals.WarStatusTracker.Deployment && !Globals.WarStatusTracker.HotBoxTravelling && Globals.WarStatusTracker.EscalationDays <= 0)
+                    if (!Globals.Settings.ResetMap && Globals.WarStatusTracker.Deployment /*&& !Globals.WarStatusTracker.HotBoxTravelling */&& Globals.WarStatusTracker.EscalationDays <= 0)
                     {
                         return false;
                     }
