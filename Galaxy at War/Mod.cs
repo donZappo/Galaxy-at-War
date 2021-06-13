@@ -41,8 +41,8 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
-                    return;
+                //if (system.Tags.Contains("planet_region_hyadesrim") && (system.ownerID == "NoFaction" || system.ownerID == "Locals"))
+                //    return;
 
                 LogDebug($"GenerateContractParticipants for {employer.Name} in {system.Description.Name}");
                 var contractTargetIDs = system.contractTargetIDs;

@@ -160,30 +160,30 @@ namespace GalaxyatWar
             }
             else
             {
-                if (Owner == "NoFaction" && !StarSystem.Tags.Contains("planet_region_hyadesrim"))
+                if (Owner == "NoFaction")
                     InfluenceTracker.Add("NoFaction", 100);
-                if (Owner == "Locals" && !StarSystem.Tags.Contains("planet_region_hyadesrim"))
+                if (Owner == "Locals")
                     InfluenceTracker.Add("Locals", 100);
-                if ((Owner == "NoFaction" || Owner == "Locals") && StarSystem.Tags.Contains("planet_region_hyadesrim"))
-                {
-                    foreach (var pirateFaction in StarSystem.Def.ContractEmployerIDList)
-                    {
-                        if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
-                            continue;
+                //if ((Owner == "NoFaction" || Owner == "Locals") && StarSystem.Tags.Contains("planet_region_hyadesrim"))
+                //{
+                //    foreach (var pirateFaction in StarSystem.Def.ContractEmployerIDList)
+                //    {
+                //        if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
+                //            continue;
 
-                        if (!InfluenceTracker.Keys.Contains(pirateFaction))
-                            InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
-                    }
+                //        if (!InfluenceTracker.Keys.Contains(pirateFaction))
+                //            InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
+                //    }
 
-                    foreach (var pirateFaction in StarSystem.Def.ContractTargetIDList)
-                    {
-                        if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
-                            continue;
+                //    foreach (var pirateFaction in StarSystem.Def.ContractTargetIDList)
+                //    {
+                //        if (Globals.Settings.HyadesNeverControl.Contains(pirateFaction))
+                //            continue;
 
-                        if (!InfluenceTracker.Keys.Contains(pirateFaction))
-                            InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
-                    }
-                }
+                //        if (!InfluenceTracker.Keys.Contains(pirateFaction))
+                //            InfluenceTracker.Add(pirateFaction, Globals.Settings.MinorInfluencePool);
+                //    }
+                //}
 
 
                 if (Owner != "NoFaction" && Owner != "Locals")
@@ -233,8 +233,8 @@ namespace GalaxyatWar
 
         public void InitializeContracts()
         {
-            if (Globals.Settings.HyadesRimCompatible && StarSystem.Tags.Contains("planet_region_hyadesrim") && (Owner == "NoFaction" || Owner == "Locals" || Globals.Settings.HyadesFlashpointSystems.Contains(Name)))
-                return;
+            //if (Globals.Settings.HyadesRimCompatible && StarSystem.Tags.Contains("planet_region_hyadesrim") && (Owner == "NoFaction" || Owner == "Locals" || Globals.Settings.HyadesFlashpointSystems.Contains(Name)))
+            //    return;
 
             var ContractEmployers = StarSystem.Def.ContractEmployerIDList;
             var ContractTargets = StarSystem.Def.ContractTargetIDList;
