@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BattleTech;
 using Harmony;
 using Newtonsoft.Json;
+using UnityEngine;
 using static GalaxyatWar.Globals;
 using static GalaxyatWar.Helpers;
 
@@ -58,13 +60,18 @@ namespace GalaxyatWar
                         Logger.LogDebug($"  {pair.Key} : {pair.Value}");
                     }
                 }
+
             }
 
+            Logger.LogDebug(new string('=', 80));
+            Logger.LogDebug("");
+
             var harmony = HarmonyInstance.Create("com.Same.BattleTech.GalaxyAtWar");
+
+            var original = AccessTools.Method(typeof(SimGameState), "ResolveCompleteContract");
+            var postfix = AccessTools.Method(typeof(HotSpots), "SimGameStateResolveCompleteContractPatch");
+            harmony.Patch(original, null, new HarmonyMethod(postfix));
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            // blank the logfile
-
             CopySettingsToState();
         }
     }

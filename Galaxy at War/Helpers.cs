@@ -778,6 +778,7 @@ namespace GalaxyatWar
             if (warSystem == null)
             {
                 LogDebug($"null systemStatus {system.Name} at WillSystemFlip");
+                return false;
             }
 
             var tempIt = new Dictionary<string, float>(warSystem.InfluenceTracker);

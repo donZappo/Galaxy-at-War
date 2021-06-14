@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using BattleTech;
 using Harmony;
@@ -49,7 +50,7 @@ namespace GalaxyatWar
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (Globals.WarStatusTracker.HotBox.Any(sys => sys.Name == Globals.Sim.CurSystem.Name)
+                if (Globals.WarStatusTracker.HotBox.IsHot(Globals.Sim.CurSystem.Name)
                     && Globals.Sim.TravelState == SimGameTravelStatus.IN_SYSTEM)
                 {
                     if (Globals.WarStatusTracker.Deployment
@@ -67,35 +68,10 @@ namespace GalaxyatWar
                         LogDebug("GeneratePotentialContracts because EscalationDays <= 0");
                         Globals.Sim.GeneratePotentialContracts(true, null, Globals.Sim.CurSystem);
                         Globals.Sim.CurSystem.CurMaxBreadcrumbs = maxTravelContracts;
-
-                        // blindly re-roll contracts, if we have only travel contracts
-                        // did not test well
-                        //var kludge = false;
-                        //var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
-                        //Globals.Sim.CurSystem.CurMaxBreadcrumbs = numDeployments;
-                        //var i = 0;
-                        //while (!kludge || i > 10)
-                        //{
-                        //    if (Globals.Sim.GlobalContracts.Count == Globals.Sim.GlobalContracts.Count(c => c.ContractType == ContractType.TravelOnly))
-                        //    {
-                        //        Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
-                        //        //Globals.Sim.GeneratePotentialContracts(true, null, Globals.Sim.CurSystem);
-                        //    }
-                        //    else
-                        //    {
-                        //        kludge = true;
-                        //    }
-                        //
-                        //    i++;
-                        //    Globals.Sim.CurSystem.CurMaxBreadcrumbs++;
-                        //    Globals.Sim.CurSystem.CurMaxContracts++;
-                        //}
-                        //Globals.Sim.CurSystem.CurMaxBreadcrumbs = maxTravelContracts;
-
                         Globals.SimGameInterruptManager.QueueTravelPauseNotification("New Mission", "Our Employer has launched an attack. We must take a mission to support their operation. Let's check out our contracts and get to it!", Globals.Sim.GetCrewPortrait(SimGameCrew.Crew_Darius),
                             string.Empty, null, "Proceed");
                     }
-                    else if (Globals.WarStatusTracker.EscalationOrder != null)
+                    if (Globals.WarStatusTracker.EscalationOrder != null)
                     {
                         Globals.WarStatusTracker.EscalationOrder.PayCost(1);
                         var activeItems = Globals.TaskTimelineWidget.ActiveItems;

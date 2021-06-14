@@ -4,6 +4,8 @@ using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using BattleTech.Save.SaveGameStructure;
+using BattleTech.UI;
+using ErosionBrushPlugin;
 using Harmony;
 using Newtonsoft.Json;
 using TMPro;
@@ -30,17 +32,19 @@ namespace GalaxyatWar
         }
 
         [HarmonyPatch(typeof(Starmap), "PopulateMap", typeof(SimGameState))]
-        public class StarmapPopulateMapPatch
+        public static class StarmapPopulateMapPatch
         {
             private static void Postfix(Starmap __instance)
             {
                 LogDebug("PopulateMap");
 
+                var go = new GameObject();
+                go.AddComponent<DeploymentIndicator>();
+
                 if (Globals.ModInitialized)
                 {
                     return;
                 }
-
 
                 Globals.Sim = __instance.sim;
                 Globals.SimGameInterruptManager = Globals.Sim.InterruptQueue;
@@ -51,9 +55,6 @@ namespace GalaxyatWar
                     LogDebug("Aborting GaW loading.");
                     return;
                 }
-
-                //var indicatorGameObject = new GameObject();
-                //indicatorGameObject.AddComponent<DeploymentIndicator>();
 
                 // thanks to mpstark for this
                 var fonts = Resources.FindObjectsOfTypeAll(typeof(TMP_FontAsset));
@@ -87,7 +88,7 @@ namespace GalaxyatWar
                     {
                         SetupEscalationOrder();
                     }
-                    
+
                     // try to recover from negative DR
                     // temporary code
                     foreach (var systemStatus in Globals.WarStatusTracker.Systems)
@@ -229,7 +230,7 @@ namespace GalaxyatWar
 
         private static void DeserializeWar()
         {
-            LogDebug("DeserializeWar");
+            //LogDebug("DeserializeWar");
             var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15);
             try
             {
@@ -249,7 +250,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(SimGameState __instance)
             {
-                LogDebug("Dehydrate");
+                //LogDebug("Dehydrate");
                 Globals.Sim = __instance;
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
@@ -286,7 +287,7 @@ namespace GalaxyatWar
 
         internal static void SerializeWar()
         {
-            LogDebug("SerializeWar");
+            //LogDebug("SerializeWar");
             var gawTag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWar"));
             Globals.Sim.CompanyTags.Remove(gawTag);
             gawTag = $"GalaxyAtWarSave{Convert.ToBase64String(Zip(JsonConvert.SerializeObject(Globals.WarStatusTracker)))}";
@@ -296,7 +297,7 @@ namespace GalaxyatWar
 
         public static void RebuildState()
         {
-            LogDebug("RebuildState");
+            //LogDebug("RebuildState");
             HotSpots.ExternalPriorityTargets.Clear();
             HotSpots.FullHomeContestedSystems.Clear();
             HotSpots.HomeContestedSystems.Clear();
@@ -349,7 +350,6 @@ namespace GalaxyatWar
                         {
                             var tempList = systemDef.SystemShopItems;
                             tempList.Add(Globals.Settings.FactionShops[system.Owner]);
-
                             Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
                         }
 
@@ -428,7 +428,7 @@ namespace GalaxyatWar
 
         public static void ConvertToSave()
         {
-            LogDebug("ConvertToSave");
+            //LogDebug("ConvertToSave");
             Globals.WarStatusTracker.ExternalPriorityTargets.Clear();
             Globals.WarStatusTracker.FullHomeContestedSystems.Clear();
             Globals.WarStatusTracker.HomeContestedSystems.Clear();

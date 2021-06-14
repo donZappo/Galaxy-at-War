@@ -776,34 +776,11 @@ namespace GalaxyatWar
                 LogDebug("OnBreadcrumbArrival");
                 if (__instance.ActiveTravelContract.IsPriorityContract)
                 {
-                    LogDebug("Is not a priority contract.");
-                    if (!Globals.WarStatusTracker.Deployment)
-                    {
-                        LogDebug("Is not a deployment.");
-                        Globals.WarStatusTracker.Escalation = true;
-                        Globals.WarStatusTracker.EscalationDays = Globals.Settings.EscalationDays;
-                        SetupEscalationOrder();
-                    }
-                    else if (Globals.WarStatusTracker.JustArrived)
-                    {
-                        Globals.WarStatusTracker.EscalationDays = 0;
-                        Globals.WarStatusTracker.Escalation = true;
-                        SetupEscalationOrder();
-                    }
-                    else
-                    {
-                        LogDebug("Is something else.");
-                        var rand = new Random();
-                        Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
-                        if (Globals.WarStatusTracker.EscalationDays < Globals.Settings.DeploymentRerollBound * Globals.WarStatusTracker.EscalationDays
-                            || Globals.WarStatusTracker.EscalationDays > (1 - Globals.Settings.DeploymentRerollBound) * Globals.WarStatusTracker.EscalationDays)
-                        {
-                            Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
-                        }
+                    LogDebug("Priority contract.");
 
-                        Globals.WarStatusTracker.Escalation = true;
-                        SetupEscalationOrder();
-                    }
+                    Globals.WarStatusTracker.EscalationDays = 0;
+                    Globals.WarStatusTracker.Escalation = true;
+                    SetupEscalationOrder();
                 }
             }
         }
@@ -1118,37 +1095,50 @@ namespace GalaxyatWar
             }
         }
 
-        [HarmonyPatch(typeof(SGTimePlayPause), "ToggleTime")]
-        public static class SGTimePlayPauseToggleTimePatch
+        //[HarmonyPatch(typeof(SGTimePlayPause), "ToggleTime")]
+        //public static class SGTimePlayPauseToggleTimePatch
+        //{
+        //    private static bool Prefix()
+        //    {
+        //        try
+        //        {
+        //            if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
+        //                return true;
+        //
+        //            if (!Globals.Settings.ResetMap && Globals.WarStatusTracker.Deployment && Globals.WarStatusTracker.EscalationDays <= 0)
+        //            {
+        //                return false;
+        //            }
+        //
+        //            return true;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Error(ex);
+        //            return true;
+        //        }
+        //    }
+        //}
+
+        // annotation patch FAILS ?suddenly?
+        // see GalaxyAtWar.cs for manual patching
+        //[HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
+        public static void SimGameStateResolveCompleteContractPatch(SimGameState __instance)
         {
-            private static bool Prefix()
+            LogDebug("ResolveCompleteContract " + new string('*', 50));
+            if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
+                return;
+
+            if (Globals.IsFlashpointContract)
+                return;
+
+            var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.StarSystem == __instance.CurSystem);
+
+            if (Globals.WarStatusTracker.FlashpointSystems.Contains(warSystem.Name))
+                return;
+
+            if (Globals.MissionResult == MissionResult.Victory)
             {
-                try
-                {
-                    if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
-                        return true;
-
-                    if (!Globals.Settings.ResetMap && Globals.WarStatusTracker.Deployment /*&& !Globals.WarStatusTracker.HotBoxTravelling */ && Globals.WarStatusTracker.EscalationDays <= 0)
-                    {
-                        return false;
-                    }
-
-                    return true;
-                }
-                catch (Exception e)
-                {
-                    Error(e);
-                    return true;
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
-        public static class SimGameStateResolveCompleteContractPatch
-        {
-            public static void Prefix(SimGameState __instance)
-            {
-                var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.Name == __instance.CurSystem.Name);
                 double deltaInfluence = CheckDeltaInfluence(warSystem);
                 if (!Globals.InfluenceMaxed)
                 {
@@ -1160,61 +1150,6 @@ namespace GalaxyatWar
                     warSystem.InfluenceTracker[Globals.TeamFaction] += (float) Math.Min(Globals.AttackerInfluenceHolder, 100 - warSystem.InfluenceTracker[Globals.TeamFaction]);
                     warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
                 }
-                
-                Globals.PriorDeltaInfluence = deltaInfluence;
-            }
-
-            public static void Postfix(SimGameState __instance)
-            {
-                LogDebug("ResolveCompleteContract");
-                if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
-                    return;
-
-                if (Globals.IsFlashpointContract)
-                    return;
-
-                var warSystem = Globals.WarStatusTracker.Systems.Find(x => x.Name == __instance.CurSystem.Name);
-
-                if (Globals.WarStatusTracker.FlashpointSystems.Contains(warSystem.Name))
-                    return;
-
-                //if (Globals.MissionResult == MissionResult.Victory)
-                //{
-                double deltaInfluence = CheckDeltaInfluence(warSystem);
-                if (!Globals.InfluenceMaxed)
-                {
-                    warSystem.InfluenceTracker[Globals.TeamFaction] += (float) deltaInfluence;
-                    warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
-                }
-                else
-                {
-                    warSystem.InfluenceTracker[Globals.TeamFaction] += (float) Math.Min(Globals.AttackerInfluenceHolder, 100 - warSystem.InfluenceTracker[Globals.TeamFaction]);
-                    warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
-                }
-
-                //if (contractType == ContractType.AttackDefend || contractType == ContractType.FireMission)
-                //{
-                //    if (Globals.Settings.Globals.IncludedFactions.Contains(teamfaction))
-                //    {
-                //        if (!Globals.Settings.DefensiveFactions.Contains(teamfaction))
-                //            Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == teamfaction).AttackResources += difficulty;
-                //        else
-                //            Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == teamfaction).DefensiveResources += difficulty;
-                //    }
-
-                //    if (Globals.Settings.Globals.IncludedFactions.Contains(enemyfaction))
-                //    {
-                //        Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources -= difficulty;
-                //        if (Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources < 0)
-                //            Globals.WarStatusTracker.warFactionTracker.Find(x => x.faction == enemyfaction).DefensiveResources = 0;
-                //    }
-                //    else if (enemyfaction == "AuriganPirates")
-                //    {
-                //        warsystem.PirateActivity -= difficulty;
-                //        if (warsystem.PirateActivity < 0)
-                //            warsystem.PirateActivity = 0;
-                //    }
-                //}
 
                 var oldOwner = Globals.Sim.CurSystem.OwnerValue.Name;
                 if (WillSystemFlip(__instance.CurSystem, Globals.TeamFaction, Globals.EnemyFaction, deltaInfluence, false)
@@ -1309,104 +1244,101 @@ namespace GalaxyatWar
 
                     __instance.StopPlayMode();
                 }
-                //}
             }
+        }
 
 
-            //Make contracts always available for escalations
-            [HarmonyPatch(typeof(StarSystem), "CompletedContract")]
-            public static class StarSystemCompletedContractPatch
+        //Make contracts always available for escalations
+        [HarmonyPatch(typeof(StarSystem), "CompletedContract")]
+        public static class StarSystemCompletedContractPatch
+        {
+            public static void Prefix(StarSystem __instance, ref float __state)
             {
-                public static void Prefix(StarSystem __instance, ref float __state)
-                {
-                    LogDebug("CompletedContract");
-                    if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
-                        return;
-
-                    __state = Globals.Sim.Constants.Story.ContractSuccessReduction;
-
-                    if (__instance.OwnerValue.ToString() != __instance.FindSystemStatus().Owner)
-                    {
-                        Globals.WarStatusTracker.Deployment = false;
-                        CompleteEscalation();
-                        return;
-                    }
-                    
-                    if (Globals.WarStatusTracker.HotBox.IsHot(Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment)
-                    {
-                        LogDebug("Globals.WarStatusTracker.HotBox.IsHot(Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment");
-                        Globals.Sim.Constants.Story.ContractSuccessReduction = 100;
-                        Globals.WarStatusTracker.DeploymentInfluenceIncrease *= Globals.Settings.DeploymentEscalationFactor;
-                        var hasFlashpoint = !Globals.Sim.AvailableFlashpoints.Select(f => f.ActiveContract).Intersect(Globals.Sim.CurSystem.SystemContracts).Any();
-                        if (!hasFlashpoint)
-                        {
-                            Globals.Sim.CurSystem.activeSystemContracts.Clear();
-                            Globals.Sim.CurSystem.activeSystemBreadcrumbs.Clear();
-                        }
-                         
-                        if (Globals.WarStatusTracker.EscalationOrder != null)
-                        {
-                            LogDebug("Globals.WarStatusTracker.EscalationOrder != null");
-                            Globals.WarStatusTracker.EscalationOrder.SetCost(0);
-                            var ActiveItems = Globals.TaskTimelineWidget.ActiveItems;
-                            if (ActiveItems.TryGetValue(Globals.WarStatusTracker.EscalationOrder, out var taskManagementElement))
-                            {
-                                taskManagementElement.UpdateItem(0);
-                            }
-                        }
-
-                        Globals.WarStatusTracker.Escalation = true;
-                        var rand = new Random();
-                        Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
-                        if (Globals.WarStatusTracker.EscalationDays < Globals.Settings.DeploymentRerollBound * Globals.WarStatusTracker.EscalationDays ||
-                            Globals.WarStatusTracker.EscalationDays > (1 - Globals.Settings.DeploymentRerollBound) * Globals.WarStatusTracker.EscalationDays)
-                            Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
-
-                        Globals.WarStatusTracker.EscalationOrder = new WorkOrderEntry_Notification(WorkOrderType.NotificationGeneric, "Escalation Days Remaining", "Forced Deployment Mission");
-                        Globals.WarStatusTracker.EscalationOrder.SetCost(Globals.WarStatusTracker.EscalationDays);
-                        Globals.Sim.RoomManager.AddWorkQueueEntry(Globals.WarStatusTracker.EscalationOrder);
-                        Globals.Sim.RoomManager.SortTimeline();
-                        Globals.Sim.RoomManager.RefreshTimeline(false);
-                    }
-                }
-            }
-
-            public static void Postfix(StarSystem __instance, ref float __state)
-            {
+                LogDebug("CompletedContract");
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                Globals.Sim.Constants.Story.ContractSuccessReduction = __state;
+                __state = Globals.Sim.Constants.Story.ContractSuccessReduction;
+
+                if (__instance.OwnerValue.ToString() != __instance.FindSystemStatus().Owner)
+                {
+                    Globals.WarStatusTracker.Deployment = false;
+                    CompleteEscalation();
+                    return;
+                }
+
+                if (Globals.WarStatusTracker.HotBox.IsHot(Globals.Sim.CurSystem.Name)
+                    && Globals.WarStatusTracker.Deployment)
+
+                {
+                    LogDebug("Globals.WarStatusTracker.HotBox.IsHot(Globals.Sim.CurSystem.Name) && Globals.WarStatusTracker.Deployment");
+                    Globals.Sim.Constants.Story.ContractSuccessReduction = 100;
+                    Globals.WarStatusTracker.DeploymentInfluenceIncrease *= Globals.Settings.DeploymentEscalationFactor;
+                    var hasFlashpoint = !Globals.Sim.AvailableFlashpoints.Select(f => f.ActiveContract).Intersect(Globals.Sim.CurSystem.SystemContracts).Any();
+                    if (!hasFlashpoint)
+                    {
+                        Globals.Sim.CurSystem.activeSystemContracts.Clear();
+                        Globals.Sim.CurSystem.activeSystemBreadcrumbs.Clear();
+                    }
+
+                    if (Globals.WarStatusTracker.EscalationOrder != null)
+                    {
+                        LogDebug("Globals.WarStatusTracker.EscalationOrder != null");
+                        Globals.WarStatusTracker.EscalationOrder.SetCost(0);
+                        var ActiveItems = Globals.TaskTimelineWidget.ActiveItems;
+                        if (ActiveItems.TryGetValue(Globals.WarStatusTracker.EscalationOrder, out var taskManagementElement))
+                        {
+                            taskManagementElement.UpdateItem(0);
+                        }
+                    }
+
+                    Globals.WarStatusTracker.Escalation = true;
+
+                    var rand = new Random();
+                    Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
+                    if (Globals.WarStatusTracker.EscalationDays < Globals.Settings.DeploymentRerollBound * Globals.WarStatusTracker.EscalationDays ||
+                        Globals.WarStatusTracker.EscalationDays > (1 - Globals.Settings.DeploymentRerollBound) * Globals.WarStatusTracker.EscalationDays)
+                        Globals.WarStatusTracker.EscalationDays = rand.Next(Globals.Settings.DeploymentMinDays, Globals.Settings.DeploymentMaxDays + 1);
+                    SetupEscalationOrder();
+                }
             }
+        }
+
+        public static void Postfix(StarSystem __instance, ref float __state)
+        {
+            if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
+                return;
+
+            Globals.Sim.Constants.Story.ContractSuccessReduction = __state;
+        }
 
 
-            internal static double CheckDeltaInfluence(SystemStatus warSystem)
+        internal static double CheckDeltaInfluence(SystemStatus warSystem)
+        {
+            var __instance = UnityGameInstance.BattleTechGame.Simulation;
+            double deltaInfluence;
+            if (Globals.TeamFaction == "AuriganPirates")
             {
-                var __instance = UnityGameInstance.BattleTechGame.Simulation;
-                double deltaInfluence;
-                if (Globals.TeamFaction == "AuriganPirates")
-                {
-                    deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, true);
-                    warSystem.PirateActivity += (float) deltaInfluence;
-                }
-                else if (Globals.EnemyFaction == "AuriganPirates")
-                {
-                    //Logger.Log("Fought against Pirates");
-                    deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, true);
-                    //Logger.Log(warSystem.PirateActivity.ToString());
-                    //Logger.Log(deltaInfluence.ToString());
-                    warSystem.PirateActivity -= (float) deltaInfluence;
-                    //Logger.Log(warSystem.PirateActivity.ToString());
-                    if (Globals.WarStatusTracker.Deployment)
-                        Globals.WarStatusTracker.PirateDeployment = true;
-                }
-                else
-                {
-                    deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, false);
-                }
-
-                return deltaInfluence;
+                deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, true);
+                warSystem.PirateActivity += (float) deltaInfluence;
             }
+            else if (Globals.EnemyFaction == "AuriganPirates")
+            {
+                //Logger.Log("Fought against Pirates");
+                deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, true);
+                //Logger.Log(warSystem.PirateActivity.ToString());
+                //Logger.Log(deltaInfluence.ToString());
+                warSystem.PirateActivity -= (float) deltaInfluence;
+                //Logger.Log(warSystem.PirateActivity.ToString());
+                if (Globals.WarStatusTracker.Deployment)
+                    Globals.WarStatusTracker.PirateDeployment = true;
+            }
+            else
+            {
+                deltaInfluence = DeltaInfluence(__instance.CurSystem, Globals.Difficulty, Globals.ContractType, Globals.EnemyFaction, false);
+            }
+
+            return deltaInfluence;
         }
     }
 }

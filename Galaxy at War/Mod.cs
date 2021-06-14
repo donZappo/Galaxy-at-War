@@ -283,7 +283,6 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                         return;
 
-                    LogDebug($"Contract: {contract.Name}.");
                     try
                     {
                         if (contract.IsFlashpointContract || contract.IsFlashpointCampaignContract)
@@ -308,8 +307,7 @@ namespace GalaxyatWar
                         var systemFlip = false;
                         if (employerFaction != "AuriganPirates" && defenseFaction != "AuriganPirates")
                         {
-                            Globals.SystemWillFlip = systemFlip = WillSystemFlip(systemName, employerFaction, defenseFaction, deltaInfluence, true);
-                            LogDebug($"System {systemName.Name} will flip.");
+                            systemFlip = WillSystemFlip(systemName, employerFaction, defenseFaction, deltaInfluence, true);
                         }
 
                         var attackerString = Globals.Settings.FactionNames[employerFaction] + ": +" + deltaInfluence;

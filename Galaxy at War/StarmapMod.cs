@@ -217,7 +217,7 @@ namespace GalaxyatWar
                     return;
                 }
 
-                if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) 
+                if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
                     && Input.GetKeyDown(KeyCode.R))
                 {
                     try
@@ -326,13 +326,7 @@ namespace GalaxyatWar
 
                     //Make sure that Flashpoint systems have priority display.
                     var flashpoints = Globals.Sim.AvailableFlashpoints;
-                    var isFlashpoint = flashpoints.Any(x => x.CurSystem == __result.system.System);
-                    if (ReferenceEquals(FactionEnumeration.GetFactionByName("NoFaction"), __result.system.System.OwnerValue)
-                        || ReferenceEquals(FactionEnumeration.GetFactionByName("Locals"), __result.system.System.OwnerValue))
-                    {
-                        __result.Init(__result.system, Color.white, __result.CanTravel, Globals.Sim.VisitedStarSystems.Contains(__result.name));
-                    }
-
+                    var isFlashpoint = flashpoints.Any(fp => fp.CurSystem == __result.system.System);
                     if (!isFlashpoint)
                     {
                         var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
@@ -346,6 +340,15 @@ namespace GalaxyatWar
                             HighlightSystem(__result, wasVisited, Color.red, false);
                         else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                             MakeSystemNormal(__result, wasVisited);
+                    }
+                    else
+                    {
+                        // force locals space to white
+                        if (ReferenceEquals(FactionEnumeration.GetFactionByName("NoFaction"), __result.system.System.OwnerValue)
+                            || ReferenceEquals(FactionEnumeration.GetFactionByName("Locals"), __result.system.System.OwnerValue))
+                        {
+                            __result.Init(__result.system, Color.white, __result.CanTravel, Globals.Sim.VisitedStarSystems.Contains(__result.name));
+                        }
                     }
                 }
                 catch (Exception ex)
