@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
 using static GalaxyatWar.Helpers;
+
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -21,7 +23,20 @@ namespace GalaxyatWar
         public int EscalationDays = 0;
         public List<string> PrioritySystems = new();
         public string CurSystem;
-        public bool StartGameInitialized = false;
+        public bool startGameInitialized;
+
+        public bool StartGameInitialized
+        {
+            get => startGameInitialized;
+            set
+            {
+                startGameInitialized = value;
+                Logger.LogDebug($"startGameInitialized {value}");
+                Logger.LogDebug(new StackTrace());
+            }
+        }
+
+
         public bool FirstTickInitialization = true;
         public List<string> SystemChangedOwners = new();
         public List<SystemStatus> HotBox = new();
@@ -52,7 +67,7 @@ namespace GalaxyatWar
         public List<string> NeverControl = new();
         public int ComstarCycle = 0;
         public string ComstarAlly = "";
-        
+
         // 1) All systems are set with a base value based upon the tags.
         // 2) Each empire is totalled to see how many resources are within their sphere of influence.
         // 3) All factions have their total resources elevated to be identical to each other.
@@ -61,7 +76,7 @@ namespace GalaxyatWar
         public WarStatus()
         {
             Logger.LogDebug("WarStatus ctor");
-            
+
             if (Globals.Settings.ISMCompatibility)
                 Globals.Settings.IncludedFactions = new List<string>(Globals.Settings.IncludedFactions_ISM);
 

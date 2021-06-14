@@ -367,7 +367,7 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || sim.IsCampaign && !sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                if (Globals.WarStatusTracker != null && !Globals.WarStatusTracker.StartGameInitialized)
+                if (!Globals.WarStatusTracker.StartGameInitialized)
                 {
                     LogDebug($"Refreshing contracts at RefreshStarmap. ({Globals.Sim.CurSystem.Name})");
                     var cmdCenter = UnityGameInstance.BattleTechGame.Simulation.RoomManager.CmdCenterRoom;

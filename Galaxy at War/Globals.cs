@@ -29,7 +29,7 @@ namespace GalaxyatWar
         public static List<StarSystem> DefenseTargets = new();
         public static int LoopCounter;
         public static Contract LoopContract;
-        public static bool FirstDehydrate = true;
+        //public static bool FirstDehydrate = true;
         internal static ModSettings Settings;
         internal static readonly Random Rng = new();
         internal static readonly Stopwatch T = new();

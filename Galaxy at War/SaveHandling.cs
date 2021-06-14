@@ -267,12 +267,6 @@ namespace GalaxyatWar
                     ConvertToSave();
                     SerializeWar();
                 }
-
-                if (Globals.FirstDehydrate)
-                {
-                    Globals.FirstDehydrate = false;
-                    Globals.WarStatusTracker.StartGameInitialized = false;
-                }
             }
 
             public static void Postfix()
