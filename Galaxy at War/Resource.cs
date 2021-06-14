@@ -94,7 +94,7 @@ namespace GalaxyatWar
                     }
 
                     //Distribute attacking resources to systems.
-                    if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
+                    if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.IsHot(systemStatus.Name))
                     {
                         attackTargets.Remove(systemStatus);
                         if (warFaction.AttackTargets[targetFaction].Count == 0 || !warFaction.AttackTargets.Keys.Contains(targetFaction))
@@ -174,7 +174,7 @@ namespace GalaxyatWar
                     return;
                 }
 
-                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
+                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.IsHot(systemStatus.Name))
                 {
                     warFaction.DefenseTargets.Remove(systemStatus);
                     if (warFaction.DefenseTargets.Count == 0 || warFaction.DefenseTargets == null)
@@ -196,8 +196,8 @@ namespace GalaxyatWar
                         highestFaction = factionStr;
                     }
 
-                if (highest / total >= 0.5)
-                    break;
+                    if (highest / total >= 0.5)
+                        break;
                 }
 
                 if (highestFaction == faction)

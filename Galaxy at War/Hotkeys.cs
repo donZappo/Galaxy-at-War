@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BattleTech;
-using BattleTech.Framework;
+using BattleTech.UI;
 using Harmony;
-using Newtonsoft.Json;
 using UnityEngine;
 using static GalaxyatWar.Logger;
 
@@ -197,8 +196,43 @@ namespace GalaxyatWar
             var hotkeyG = modified && Input.GetKeyDown(KeyCode.G);
             if (hotkeyG)
             {
-                var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15);
-                LogDebug(Helpers.Unzip(Convert.FromBase64String(tag)));
+                var tag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWarSave"))?.Substring(15);
+                if (tag is null) return;
+                File.WriteAllText("mods/GalaxyatWar/tag.json", Helpers.Unzip(Convert.FromBase64String(tag)));
+            }
+
+            var hotkeyC = modified && Input.GetKeyDown(KeyCode.C);
+            if (hotkeyC)
+            {
+                var sim = UnityGameInstance.BattleTechGame.Simulation;
+                var tag = sim.CompanyTags.FirstOrDefault(tag => tag.StartsWith("GalaxyAtWarSave"));
+                if (string.IsNullOrEmpty(tag))
+                {
+                    sim.CompanyTags.Add(Globals.CachedSaveTag);
+                    sim.InterruptQueue.AddInterrupt(new SimGameInterruptManager.GenericPopupEntry("GaW save tag restored.", null, true,
+                        new GenericPopupButtonSettings
+                        {
+                            Content = "OK",
+                            CloseOnPress = true
+                        }));
+                }
+                else
+                {
+                    Globals.CachedSaveTag = tag;
+                    sim.CompanyTags.Remove(tag);
+                    sim.InterruptQueue.AddInterrupt(new SimGameInterruptManager.GenericPopupEntry("GaW save tag cached.", null, true,
+                        new GenericPopupButtonSettings
+                        {
+                            Content = "OK",
+                            CloseOnPress = true
+                        }));
+                }
+            }
+
+            var hotkeyU = modified && Input.GetKeyDown(KeyCode.U);
+            if (hotkeyU)
+            {
+                Globals.WarStatusTracker.Deployment = false;
             }
         }
     }

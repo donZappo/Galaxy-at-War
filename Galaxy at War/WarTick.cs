@@ -127,7 +127,7 @@ namespace GalaxyatWar
                     RefreshContractsEmployersAndTargets(systemStatus);
                 }
 
-                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.Contains(systemStatus))
+                if (systemStatus.Contested || Globals.WarStatusTracker.HotBox.IsHot(systemStatus.Name))
                     continue;
 
                 if (!systemStatus.Owner.Equals("Locals") && systemStatus.InfluenceTracker.Keys.Contains("Locals") &&

@@ -23,14 +23,12 @@ namespace GalaxyatWar
             {
                 WarStatusTracker.PirateResources = WarStatusTracker.MinimumPirateResources;
                 WarStatusTracker.MinimumPirateResources *= 1.1f;
-                Logger.LogDebug($"MinimumPirateResources raised: {WarStatusTracker.MinimumPirateResources}");
             }
             else
             {
                 WarStatusTracker.MinimumPirateResources /= 1.1f;
                 if (WarStatusTracker.MinimumPirateResources < WarStatusTracker.StartingPirateResources)
                     WarStatusTracker.MinimumPirateResources = WarStatusTracker.StartingPirateResources;
-                Logger.LogDebug($"MinimumPirateResources lowered: {WarStatusTracker.MinimumPirateResources}");
             }
 
             foreach (var warFaction in WarStatusTracker.WarFactionTracker)
