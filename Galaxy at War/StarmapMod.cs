@@ -331,7 +331,6 @@ namespace GalaxyatWar
                     {
                         var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
                         var wasVisited = VisitedStarSystems.Contains(__result.name);
-
                         if (Globals.WarStatusTracker.HomeContestedStrings.Contains(__result.name))
                             HighlightSystem(__result, wasVisited, Color.magenta, true);
                         else if (Globals.WarStatusTracker.LostSystems.Contains(__result.name))
@@ -340,9 +339,7 @@ namespace GalaxyatWar
                             HighlightSystem(__result, wasVisited, Color.red, false);
                         else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                             MakeSystemNormal(__result, wasVisited);
-                    }
-                    else
-                    {
+                        
                         // force locals space to white
                         if (ReferenceEquals(FactionEnumeration.GetFactionByName("NoFaction"), __result.system.System.OwnerValue)
                             || ReferenceEquals(FactionEnumeration.GetFactionByName("Locals"), __result.system.System.OwnerValue))
