@@ -13,6 +13,7 @@ namespace GalaxyatWar
         public Dictionary<string, int> NeighborSystems = new();
         public Dictionary<string, float> InfluenceTracker = new();
         public float TotalResources;
+        public float TotalOriginalResources;
         public bool PriorityDefense = false;
         public bool PriorityAttack = false;
         public List<string> CurrentlyAttackedBy = new();
@@ -26,7 +27,9 @@ namespace GalaxyatWar
         public string OriginalOwner;
         public float PirateActivity;
         public float AttackResources;
+        public float AttackResourcesOriginal;
         public float DefenseResources;
+        public float DefenseResourcesOriginal;
         private float trackerSum = -1;
         private StarSystem starSystem;
 

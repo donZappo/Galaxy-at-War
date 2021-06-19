@@ -52,7 +52,7 @@ namespace GalaxyatWar
                     var systemCount = factionSystems[faction].Count;
                     var difficultyCutoff = systemCount / 10;
                     var i = 0;
-                    var orderedSystems = factionSystems[faction].OrderBy(v => v.TotalResources);
+                    var orderedSystems = factionSystems[faction].OrderBy(v => v.TotalOriginalResources);
                     foreach (var systemStatus in orderedSystems)
                     {
                         try
@@ -391,8 +391,8 @@ namespace GalaxyatWar
                 system.Def.OwnerValue = Globals.FactionValues.Find(x => x.Name == faction);
 
                 //Change the Kill List for the factions.
-                var totalAR = GetTotalAttackResources(system);
-                var totalDr = GetTotalDefensiveResources(system);
+                var totalAR = systemStatus.AttackResources;
+                var totalDr = systemStatus.DefenseResources;
 
                 var wfWinner = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == faction);
                 wfWinner.GainedSystem = true;
@@ -449,9 +449,8 @@ namespace GalaxyatWar
 
         public static void ChangeDeathListFromAggression(StarSystem system, string faction, string oldFaction)
         {
-            var totalAR = GetTotalAttackResources(system);
-            var totalDr = GetTotalDefensiveResources(system);
-            var systemValue = totalAR + totalDr;
+            SystemStatus systemStatus = Globals.WarStatusTracker.Systems.Find(x => x.Name == system.Name);
+            var systemValue = systemStatus.TotalOriginalResources;
             var killListDelta = Math.Max(10, systemValue);
             // g - commented out 9/9/20 - deathListTracker will have all factions now
             //if (Globals.WarStatusTracker.deathListTracker.Find(x => x.faction == oldFaction) == null)

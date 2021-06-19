@@ -300,8 +300,8 @@ namespace GalaxyatWar
             }
 
             factionString.AppendLine($"\nPirate Activity: {tracker.PirateActivity:#0.0}%");
-            factionString.AppendLine("\n\nAttack Resources: " + ((100 - tracker.PirateActivity) * tracker.AttackResources / 100).ToString("0.0") +
-                                     "  Defense Resources: " + ((100 - tracker.PirateActivity) * tracker.DefenseResources / 100).ToString("0.0"));
+            factionString.AppendLine("\n\nAttack Resources: " + tracker.AttackResources.ToString("0.0") +
+                                     "  Defense Resources: " + tracker.DefenseResources.ToString("0.0"));
             var BonusString = "Escalation Bonuses:";
             if (tracker.BonusCBills)
                 BonusString = BonusString + "\n\t20% Bonus C-Bills per Mission";
