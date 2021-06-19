@@ -84,6 +84,7 @@ namespace GalaxyatWar
                     // copied from WarStatus - establish any systems that are new
                     AddNewStarSystems();
 
+                    // fixes the Order not appearing after load.  The tag has it, but the game needs to re-add it
                     if (Globals.WarStatusTracker.EscalationOrder is not null)
                     {
                         SetupEscalationOrder();
@@ -91,21 +92,20 @@ namespace GalaxyatWar
 
                     // try to recover from negative DR
                     // temporary code
-                    foreach (var systemStatus in Globals.WarStatusTracker.Systems)
-                    {
-                        if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
-                        {
-                            systemStatus.AttackResources = GetTotalAttackResources(systemStatus.StarSystem);
-                            systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.StarSystem);
-                            systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
-                            systemStatus.PirateActivity = 0;
-                        }
-                    }
+                    //foreach (var systemStatus in Globals.WarStatusTracker.Systems)
+                    //{
+                    //    if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
+                    //    {
+                    //        systemStatus.AttackResources = GetTotalAttackResources(systemStatus.StarSystem);
+                    //        systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.StarSystem);
+                    //        systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
+                    //        systemStatus.PirateActivity = 0;
+                    //    }
+                    //}
 
                     if (Globals.WarStatusTracker.Systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
-                        LogDebug($"{gawTag.Substring(0, 500)}");
                         Spawn();
                     }
                     else
@@ -205,12 +205,10 @@ namespace GalaxyatWar
                     LogDebug("Spawning new instance.");
                     Globals.WarStatusTracker = new WarStatus();
                     LogDebug("New global state created.");
-                    Globals.WarStatusTracker.SystemsByResources =
-                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
                     if (!Globals.WarStatusTracker.StartGameInitialized)
                     {
-                        // bug loading a bad/older tag logs this but leaves 5 basic contracts
-                        // or maybe it's loading any existing game?  that would suck
+                        // bug a warm-start new career doesn't generate any priority contracts
+                        // workaround is to cold-start
                         LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem.Name}).");
                         var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                         Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
@@ -296,8 +294,6 @@ namespace GalaxyatWar
             HotSpots.FullHomeContestedSystems.Clear();
             HotSpots.HomeContestedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
-            Globals.WarStatusTracker.SystemsByResources =
-                Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
             SystemDifficulty();
 
             try

@@ -13,7 +13,6 @@ namespace GalaxyatWar
     public class WarStatus
     {
         public List<SystemStatus> Systems = new();
-        internal List<SystemStatus> SystemsByResources = new();
         public List<DeathListTracker> DeathListTracker = new();
         public List<WarFaction> WarFactionTracker = new();
         public bool JustArrived = true;
@@ -181,7 +180,6 @@ namespace GalaxyatWar
 
             Logger.LogDebug("Full pirate systems created.");
             Systems = Systems.OrderBy(x => x.Name).ToList();
-            SystemsByResources = Systems.OrderBy(x => x.TotalResources).ToList();
             PrioritySystems = new List<string>(Systems.Count);
             Logger.LogDebug("SystemStatus ordered lists created.");
         }
