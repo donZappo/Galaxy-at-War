@@ -42,7 +42,7 @@ namespace GalaxyatWar
         public HashSet<string> FullPirateSystems = new();
         public List<string> PirateHighlight = new();
         public float PirateResources;
-        public float TempPRGain;
+        public float CurrentPRGain;
         public float MinimumPirateResources;
         public float StartingPirateResources;
         public float LastPRGain;
@@ -67,7 +67,7 @@ namespace GalaxyatWar
                 Globals.Settings.IncludedFactions = new List<string>(Globals.Settings.IncludedFactions_ISM);
 
             CurSystem = Globals.Sim.CurSystem.Name;
-            TempPRGain = 0;
+            CurrentPRGain = 0;
             HotBoxTravelling = false;
             HotBox = new List<SystemStatus>();
             if (Globals.Settings.HyadesRimCompatible)
@@ -112,11 +112,19 @@ namespace GalaxyatWar
                 if (Globals.Settings.DefensiveFactions.Contains(faction) && Globals.Settings.DefendersUseARforDR)
                 {
                     if (!Globals.Settings.ISMCompatibility)
+                    {
+                        warFaction.TotalBonusDefensiveResources = Globals.Settings.BonusAttackResources[faction] + Globals.Settings.BonusDefensiveResources[faction] +
+                            maxAR + maxDR - warFaction.DefensiveResources;
                         warFaction.DefensiveResources = maxAR + maxDR + Globals.Settings.BonusAttackResources[faction] +
                                                         Globals.Settings.BonusDefensiveResources[faction];
+                    }
                     else
+                    {
+                        warFaction.TotalBonusDefensiveResources = Globals.Settings.BonusAttackResources_ISM[faction] + Globals.Settings.BonusDefensiveResources_ISM[faction] +
+                            maxAR + maxDR - warFaction.DefensiveResources;
                         warFaction.DefensiveResources = maxAR + maxDR + Globals.Settings.BonusAttackResources_ISM[faction] +
                                                         Globals.Settings.BonusDefensiveResources_ISM[faction];
+                    }
 
                     warFaction.AttackResources = 0;
                 }
@@ -124,11 +132,15 @@ namespace GalaxyatWar
                 {
                     if (!Globals.Settings.ISMCompatibility)
                     {
+                        warFaction.TotalBonusAttackResources = Globals.Settings.BonusAttackResources[faction] + maxAR - warFaction.AttackResources;
+                        warFaction.TotalBonusDefensiveResources = Globals.Settings.BonusDefensiveResources[faction] + maxDR - warFaction.DefensiveResources;
                         warFaction.AttackResources = maxAR + Globals.Settings.BonusAttackResources[faction];
                         warFaction.DefensiveResources = maxDR + Globals.Settings.BonusDefensiveResources[faction];
                     }
                     else
                     {
+                        warFaction.TotalBonusAttackResources = Globals.Settings.BonusAttackResources_ISM[faction] + maxAR - warFaction.AttackResources;
+                        warFaction.TotalBonusDefensiveResources = Globals.Settings.BonusDefensiveResources_ISM[faction] + maxDR - warFaction.DefensiveResources;
                         warFaction.AttackResources = maxAR + Globals.Settings.BonusAttackResources_ISM[faction];
                         warFaction.DefensiveResources = maxDR + Globals.Settings.BonusDefensiveResources_ISM[faction];
                     }
@@ -168,7 +180,7 @@ namespace GalaxyatWar
 
             Logger.LogDebug("Full pirate systems created.");
             Systems = Systems.OrderBy(x => x.Name).ToList();
-            SystemsByResources = Systems.OrderBy(x => x.TotalResources).ToList();
+            SystemsByResources = Systems.OrderBy(x => x.TotalOriginalResources).ToList();
             PrioritySystems = new List<string>(Systems.Count);
             Logger.LogDebug("SystemStatus ordered lists created.");
         }

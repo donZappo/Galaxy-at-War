@@ -19,7 +19,9 @@ namespace GalaxyatWar
         public float DR_Against_Pirates = 0;
         public bool ComstarSupported = false;
         public float AttackResources;
+        public float TotalBonusAttackResources = 0;
         public float DefensiveResources;
+        public float TotalBonusDefensiveResources = 0;
         public readonly Dictionary<string, float> WarFactionAttackResources = new();
         public readonly Dictionary<string, List<SystemStatus>> AttackTargets = new();
         public readonly List<SystemStatus> DefenseTargets = new();

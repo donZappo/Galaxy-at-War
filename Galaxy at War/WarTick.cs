@@ -37,45 +37,38 @@ namespace GalaxyatWar
 
             if (Globals.WarStatusTracker.FirstTickInitialization)
             {
-                var lowestAR = 5000f;
-                var lowestDR = 5000f;
                 var perPlanetAR = 0f;
                 var perPlanetDR = 0f;
                 var sequence = Globals.WarStatusTracker.WarFactionTracker.Where(x =>
                     Globals.IncludedFactions.Contains(x.FactionName)).ToList();
+                var factionPerPlanetAR = new Dictionary<WarFaction, float>();
+                var factionPerPlanetDR = new Dictionary<WarFaction, float>();
+                Logger.LogDebug("Faction Bonus Resources");
+                Logger.LogDebug("=============================");
                 foreach (var faction in sequence)
                 {
                     var systemCount = Globals.WarStatusTracker.Systems.Count(x => x.Owner == faction.FactionName);
-                    if (!Globals.Settings.ISMCompatibility && systemCount != 0)
+                    if (systemCount != 0)
                     {
-                        perPlanetAR = (float) Globals.Settings.BonusAttackResources[faction.FactionName] / systemCount;
-                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources[faction.FactionName] / systemCount;
-                        if (perPlanetAR < lowestAR)
-                            lowestAR = perPlanetAR;
-                        if (perPlanetDR < lowestDR)
-                            lowestDR = perPlanetDR;
+                        perPlanetAR = faction.TotalBonusAttackResources / systemCount;
+                        perPlanetDR = faction.TotalBonusDefensiveResources / systemCount;
+                        factionPerPlanetAR.Add(faction, perPlanetAR);
+                        factionPerPlanetDR.Add(faction, perPlanetDR);
+                        Logger.LogDebug("Faction: " + faction.FactionName + " Bonus AR: " + faction.TotalBonusAttackResources + " Bonus DR: " + faction.TotalBonusDefensiveResources);
+                        Logger.LogDebug("     Systems: " + systemCount + "; perPlanetAR: " + perPlanetAR + "; perPlanetDR: " + perPlanetDR);
                     }
-                    else if (systemCount != 0)
-                    {
-                        perPlanetAR = (float) Globals.Settings.BonusAttackResources_ISM[faction.FactionName] / systemCount;
-                        perPlanetDR = (float) Globals.Settings.BonusDefensiveResources_ISM[faction.FactionName] / systemCount;
-                        if (perPlanetAR < lowestAR)
-                            lowestAR = perPlanetDR;
-                        if (perPlanetDR < lowestDR)
-                            lowestDR = perPlanetDR;
-                    }
-
-                    perPlanetAR = Mathf.Min(perPlanetAR, 2 * lowestAR);
-                    perPlanetDR = Mathf.Min(perPlanetDR, 2 * lowestDR);
                 }
 
                 foreach (var systemStatus in systemStatuses)
                 {
                     //Spread out bonus resources and make them fair game for the taking.
-                    systemStatus.AttackResources += perPlanetAR;
-                    systemStatus.TotalResources += perPlanetAR;
-                    systemStatus.DefenseResources += perPlanetDR;
-                    systemStatus.TotalResources += perPlanetDR;
+                    WarFaction faction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == systemStatus.Owner);
+                    systemStatus.AttackResourcesOriginal = Mathf.Min(systemStatus.AttackResources + factionPerPlanetAR[faction], systemStatus.AttackResources * 2);
+                    systemStatus.DefenseResourcesOriginal = Mathf.Min(systemStatus.DefenseResources + factionPerPlanetDR[faction], systemStatus.DefenseResources * 2);
+                    systemStatus.AttackResources = systemStatus.AttackResourcesOriginal;
+                    systemStatus.DefenseResources = systemStatus.DefenseResourcesOriginal;
+                    systemStatus.TotalOriginalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
+                    systemStatus.TotalResources = systemStatus.TotalOriginalResources;
                 }
             }
 
@@ -162,7 +155,7 @@ namespace GalaxyatWar
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
                 // LogDebug($"{systemStatus.starSystem.Name} total resources: {systemStatus.TotalResources}.  Pirate activity {systemStatus.PirateActivity}");
-                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalResources / 100;
+                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalOriginalResources / 100;
                 if (totalPirates >= pirateSystemFlagValue)
                 {
                     if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.Name))

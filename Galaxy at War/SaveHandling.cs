@@ -79,17 +79,17 @@ namespace GalaxyatWar
                     AddNewStarSystems();
 
                     // try to recover from negative DR
-                    // temporary code
-                    foreach (var systemStatus in Globals.WarStatusTracker.Systems)
-                    {
-                        if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
-                        {
-                            systemStatus.AttackResources = GetTotalAttackResources(systemStatus.StarSystem);
-                            systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.StarSystem);
-                            systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
-                            systemStatus.PirateActivity = 0;
-                        }
-                    }
+                    // temporary code - Removed on 6/15/2021
+                    //foreach (var systemStatus in Globals.WarStatusTracker.Systems)
+                    //{
+                    //    if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
+                    //    {
+                    //        systemStatus.AttackResources = GetTotalAttackResources(systemStatus.StarSystem);
+                    //        systemStatus.DefenseResources = GetTotalDefensiveResources(systemStatus.StarSystem);
+                    //        systemStatus.TotalResources = systemStatus.AttackResources + systemStatus.DefenseResources;
+                    //        systemStatus.PirateActivity = 0;
+                    //    }
+                    //}
 
                     if (Globals.WarStatusTracker.Systems.Count == 0)
                     {
@@ -195,7 +195,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker = new WarStatus();
                     LogDebug("New global state created.");
                     Globals.WarStatusTracker.SystemsByResources =
-                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
+                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalOriginalResources).ToList();
                     if (!Globals.WarStatusTracker.StartGameInitialized)
                     {
                         // bug loading a bad/older tag logs this but leaves 5 basic contracts
@@ -292,7 +292,7 @@ namespace GalaxyatWar
             HotSpots.HomeContestedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
             Globals.WarStatusTracker.SystemsByResources =
-                Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
+                Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalOriginalResources).ToList();
             SystemDifficulty();
 
             try
