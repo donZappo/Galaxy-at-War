@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using Newtonsoft.Json;
@@ -25,7 +24,7 @@ namespace GalaxyatWar
         public bool BonusCBills;
         public string CoreSystemID;
         public int DeploymentTier = 0;
-        public string OriginalOwner = null;
+        public string OriginalOwner;
         public float PirateActivity;
         public float AttackResources;
         public float AttackResourcesOriginal;
@@ -68,7 +67,7 @@ namespace GalaxyatWar
         {
             //  LogDebug("SystemStatus ctor");
             Name = system.Name;
-            Owner = faction;
+            Owner = OriginalOwner = faction;
             StarSystem = system;
             AttackResources = Helpers.GetTotalAttackResources(StarSystem);
             DefenseResources = Helpers.GetTotalDefensiveResources(StarSystem);
@@ -82,6 +81,7 @@ namespace GalaxyatWar
                     PirateActivity = Globals.Settings.StartingPirateActivity;
                 else
                     PirateActivity = Globals.Settings.StartingPirateActivity_ISM;
+
             FindNeighbors();
             CalculateSystemInfluence();
             InitializeContracts();

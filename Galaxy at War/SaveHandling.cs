@@ -4,6 +4,8 @@ using System.Linq;
 using BattleTech;
 using BattleTech.Framework;
 using BattleTech.Save.SaveGameStructure;
+using BattleTech.UI;
+using ErosionBrushPlugin;
 using Harmony;
 using Newtonsoft.Json;
 using TMPro;
@@ -30,11 +32,15 @@ namespace GalaxyatWar
         }
 
         [HarmonyPatch(typeof(Starmap), "PopulateMap", typeof(SimGameState))]
-        public class StarmapPopulateMapPatch
+        public static class StarmapPopulateMapPatch
         {
             private static void Postfix(Starmap __instance)
             {
                 LogDebug("PopulateMap");
+
+                var go = new GameObject();
+                go.AddComponent<DeploymentIndicator>();
+
                 if (Globals.ModInitialized)
                 {
                     return;
@@ -78,8 +84,14 @@ namespace GalaxyatWar
                     // copied from WarStatus - establish any systems that are new
                     AddNewStarSystems();
 
+                    // fixes the Order not appearing after load.  The tag has it, but the game needs to re-add it
+                    if (Globals.WarStatusTracker.EscalationOrder is not null)
+                    {
+                        SetupEscalationOrder();
+                    }
+
                     // try to recover from negative DR
-                    // temporary code - Removed on 6/15/2021
+                    // temporary code
                     //foreach (var systemStatus in Globals.WarStatusTracker.Systems)
                     //{
                     //    if (systemStatus.DefenseResources < 0 || systemStatus.AttackResources < 0)
@@ -94,7 +106,6 @@ namespace GalaxyatWar
                     if (Globals.WarStatusTracker.Systems.Count == 0)
                     {
                         LogDebug("Found tag but it's broken and being respawned:");
-                        LogDebug($"{gawTag.Substring(0, 500)}");
                         Spawn();
                     }
                     else
@@ -195,17 +206,15 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker = new WarStatus();
                     LogDebug("New global state created.");
                     Globals.WarStatusTracker.SystemsByResources =
-                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalOriginalResources).ToList();
+                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
                     if (!Globals.WarStatusTracker.StartGameInitialized)
                     {
-                        // bug loading a bad/older tag logs this but leaves 5 basic contracts
-                        // or maybe it's loading any existing game?  that would suck
+                        // bug a warm-start new career doesn't generate any priority contracts
+                        // workaround is to cold-start
                         LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem.Name}).");
                         var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                         Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                         Globals.WarStatusTracker.StartGameInitialized = true;
-                    }
-
                     SystemDifficulty();
                     Globals.WarStatusTracker.FirstTickInitialization = true;
                     WarTick.Tick(true, true);
@@ -219,7 +228,7 @@ namespace GalaxyatWar
 
         private static void DeserializeWar()
         {
-            LogDebug("DeserializeWar");
+            //LogDebug("DeserializeWar");
             var tag = Globals.Sim.CompanyTags.First(x => x.StartsWith("GalaxyAtWarSave")).Substring(15);
             try
             {
@@ -239,7 +248,7 @@ namespace GalaxyatWar
         {
             public static void Prefix(SimGameState __instance)
             {
-                LogDebug("Dehydrate");
+                //LogDebug("Dehydrate");
                 Globals.Sim = __instance;
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
@@ -276,7 +285,7 @@ namespace GalaxyatWar
 
         internal static void SerializeWar()
         {
-            LogDebug("SerializeWar");
+            //LogDebug("SerializeWar");
             var gawTag = Globals.Sim.CompanyTags.FirstOrDefault(x => x.StartsWith("GalaxyAtWar"));
             Globals.Sim.CompanyTags.Remove(gawTag);
             gawTag = $"GalaxyAtWarSave{Convert.ToBase64String(Zip(JsonConvert.SerializeObject(Globals.WarStatusTracker)))}";
@@ -286,13 +295,13 @@ namespace GalaxyatWar
 
         public static void RebuildState()
         {
-            LogDebug("RebuildState");
+            //LogDebug("RebuildState");
             HotSpots.ExternalPriorityTargets.Clear();
             HotSpots.FullHomeContestedSystems.Clear();
             HotSpots.HomeContestedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
             Globals.WarStatusTracker.SystemsByResources =
-                Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalOriginalResources).ToList();
+                Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
             SystemDifficulty();
 
             try
@@ -301,8 +310,6 @@ namespace GalaxyatWar
                 {
                     Globals.Sim.CompanyTags.Where(tag =>
                         tag.StartsWith("GalaxyAtWar")).Do(x => Globals.Sim.CompanyTags.Remove(x));
-                    return;
-                }
 
                 for (var i = 0; i < Globals.WarStatusTracker.Systems.Count; i++)
                 {
@@ -339,7 +346,6 @@ namespace GalaxyatWar
                         {
                             var tempList = systemDef.SystemShopItems;
                             tempList.Add(Globals.Settings.FactionShops[system.Owner]);
-
                             Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
                         }
 
@@ -386,6 +392,7 @@ namespace GalaxyatWar
                         StarmapPopulateMapPatch.Spawn();
                         break;
                     }
+
                     AdjustDeathList(deathListTracker, true);
                 }
 
@@ -417,7 +424,7 @@ namespace GalaxyatWar
 
         public static void ConvertToSave()
         {
-            LogDebug("ConvertToSave");
+            //LogDebug("ConvertToSave");
             Globals.WarStatusTracker.ExternalPriorityTargets.Clear();
             Globals.WarStatusTracker.FullHomeContestedSystems.Clear();
             Globals.WarStatusTracker.HomeContestedSystems.Clear();

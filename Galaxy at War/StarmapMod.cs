@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using BattleTech;
@@ -33,20 +32,17 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var starSystem = (StarSystem) data;
-                if (starSystem == null)
+                if (data is StarSystem starSystem)
                 {
-                    return;
-                }
+                    __state = starSystem.Def.Description.Details;
+                    if (Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
+                    {
+                        return;
+                    }
 
-                __state = starSystem.Def.Description.Details;
-                if (Globals.Settings.ImmuneToWar.Contains(starSystem.OwnerValue.Name))
-                {
-                    return;
+                    var factionString = BuildInfluenceString(starSystem);
+                    starSystem.Def.Description.Details = factionString;
                 }
-
-                var factionString = BuildInfluenceString(starSystem);
-                starSystem.Def.Description.Details = factionString;
             }
 
             public static void Postfix(object data, string __state)
@@ -54,13 +50,10 @@ namespace GalaxyatWar
                 if (Globals.WarStatusTracker == null || Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
-                var starSystem = (StarSystem) data;
-                if (starSystem == null)
+                if (data is StarSystem starSystem)
                 {
-                    return;
+                    starSystem.Def.Description.Details = __state;
                 }
-
-                starSystem.Def.Description.Details = __state;
             }
         }
 
@@ -136,7 +129,7 @@ namespace GalaxyatWar
 
         private static string BuildRelationString()
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.AppendLine("<line-height=125%>");
             foreach (var tracker in Globals.WarStatusTracker.DeathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.Faction)))
             {
@@ -224,7 +217,8 @@ namespace GalaxyatWar
                     return;
                 }
 
-                if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.R))
+                if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
+                    && Input.GetKeyDown(KeyCode.R))
                 {
                     try
                     {
@@ -332,13 +326,7 @@ namespace GalaxyatWar
 
                     //Make sure that Flashpoint systems have priority display.
                     var flashpoints = Globals.Sim.AvailableFlashpoints;
-                    var isFlashpoint = flashpoints.Any(x => x.CurSystem == __result.system.System);
-                    if (ReferenceEquals(FactionEnumeration.GetFactionByName("NoFaction"), __result.system.System.OwnerValue)
-                        || ReferenceEquals(FactionEnumeration.GetFactionByName("Locals"), __result.system.System.OwnerValue))
-                    {
-                        __result.Init(__result.system, Color.white, __result.CanTravel, Globals.Sim.VisitedStarSystems.Contains(__result.name));
-                    }
-
+                    var isFlashpoint = flashpoints.Any(fp => fp.CurSystem == __result.system.System);
                     if (!isFlashpoint)
                     {
                         var VisitedStarSystems = Globals.Sim.VisitedStarSystems;
@@ -352,6 +340,15 @@ namespace GalaxyatWar
                             HighlightSystem(__result, wasVisited, Color.red, false);
                         else if (__result.systemColor == Color.magenta || __result.systemColor == Color.yellow)
                             MakeSystemNormal(__result, wasVisited);
+                    }
+                    else
+                    {
+                        // force locals space to white
+                        if (ReferenceEquals(FactionEnumeration.GetFactionByName("NoFaction"), __result.system.System.OwnerValue)
+                            || ReferenceEquals(FactionEnumeration.GetFactionByName("Locals"), __result.system.System.OwnerValue))
+                        {
+                            __result.Init(__result.system, Color.white, __result.CanTravel, Globals.Sim.VisitedStarSystems.Contains(__result.name));
+                        }
                     }
                 }
                 catch (Exception ex)
