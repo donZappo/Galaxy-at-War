@@ -205,8 +205,6 @@ namespace GalaxyatWar
                     LogDebug("Spawning new instance.");
                     Globals.WarStatusTracker = new WarStatus();
                     LogDebug("New global state created.");
-                    Globals.WarStatusTracker.SystemsByResources =
-                        Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
                     if (!Globals.WarStatusTracker.StartGameInitialized)
                     {
                         // bug a warm-start new career doesn't generate any priority contracts
@@ -215,6 +213,8 @@ namespace GalaxyatWar
                         var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                         Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                         Globals.WarStatusTracker.StartGameInitialized = true;
+                    }
+
                     SystemDifficulty();
                     Globals.WarStatusTracker.FirstTickInitialization = true;
                     WarTick.Tick(true, true);
@@ -300,8 +300,6 @@ namespace GalaxyatWar
             HotSpots.FullHomeContestedSystems.Clear();
             HotSpots.HomeContestedSystems.Clear();
             var starSystemDictionary = Globals.Sim.StarSystemDictionary;
-            Globals.WarStatusTracker.SystemsByResources =
-                Globals.WarStatusTracker.Systems.OrderBy(x => x.TotalResources).ToList();
             SystemDifficulty();
 
             try
@@ -311,109 +309,110 @@ namespace GalaxyatWar
                     Globals.Sim.CompanyTags.Where(tag =>
                         tag.StartsWith("GalaxyAtWar")).Do(x => Globals.Sim.CompanyTags.Remove(x));
 
-                for (var i = 0; i < Globals.WarStatusTracker.Systems.Count; i++)
-                {
-                    StarSystemDef systemDef;
-                    var system = Globals.WarStatusTracker.Systems[i];
-                    if (starSystemDictionary.ContainsKey(system.CoreSystemID))
+                    for (var i = 0; i < Globals.WarStatusTracker.Systems.Count; i++)
                     {
-                        systemDef = starSystemDictionary[system.CoreSystemID].Def;
-                    }
-                    else
-                    {
-                        LogDebug($"BOMB {system.Name} not in StarSystemDictionary, removing it from WarStatus.systems");
-                        Globals.WarStatusTracker.Systems.Remove(system);
-                        continue;
-                    }
-
-                    var systemOwner = systemDef.OwnerValue.Name;
-                    // needs to be refreshed since original declaration in Mod
-                    var ownerValue = Globals.FactionValues.Find(x => x.Name == system.Owner);
-                    systemDef.OwnerValue = ownerValue;
-                    systemDef.factionShopOwnerID = system.Owner;
-                    RefreshContractsEmployersAndTargets(system);
-                    if (system.InfluenceTracker.Keys.Contains("AuriganPirates") && !system.InfluenceTracker.Keys.Contains("NoFaction"))
-                    {
-                        system.InfluenceTracker.Add("NoFaction", system.InfluenceTracker["AuriganPirates"]);
-                        system.InfluenceTracker.Remove("AuriganPirates");
-                    }
-                    //if (!system.influenceTracker.Keys.Contains("NoFaction"))
-                    //    system.influenceTracker.Add("NoFaction", 0);
-
-                    if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
-                    {
-                        if (systemDef.SystemShopItems.Count != 0)
+                        StarSystemDef systemDef;
+                        var system = Globals.WarStatusTracker.Systems[i];
+                        if (starSystemDictionary.ContainsKey(system.CoreSystemID))
                         {
-                            var tempList = systemDef.SystemShopItems;
-                            tempList.Add(Globals.Settings.FactionShops[system.Owner]);
-                            Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
+                            systemDef = starSystemDictionary[system.CoreSystemID].Def;
+                        }
+                        else
+                        {
+                            LogDebug($"BOMB {system.Name} not in StarSystemDictionary, removing it from WarStatus.systems");
+                            Globals.WarStatusTracker.Systems.Remove(system);
+                            continue;
                         }
 
-                        if (systemDef.FactionShopItems != null)
+                        var systemOwner = systemDef.OwnerValue.Name;
+                        // needs to be refreshed since original declaration in Mod
+                        var ownerValue = Globals.FactionValues.Find(x => x.Name == system.Owner);
+                        systemDef.OwnerValue = ownerValue;
+                        systemDef.factionShopOwnerID = system.Owner;
+                        RefreshContractsEmployersAndTargets(system);
+                        if (system.InfluenceTracker.Keys.Contains("AuriganPirates") && !system.InfluenceTracker.Keys.Contains("NoFaction"))
                         {
-                            systemDef.FactionShopOwnerValue = Globals.FactionValues.Find(x => x.Name == system.Owner);
-                            systemDef.factionShopOwnerID = system.Owner;
-                            var factionShopItems = systemDef.FactionShopItems;
-                            if (factionShopItems.Contains(Globals.Settings.FactionShopItems[systemOwner]))
-                                factionShopItems.Remove(Globals.Settings.FactionShopItems[systemOwner]);
-                            factionShopItems.Add(Globals.Settings.FactionShopItems[system.Owner]);
-                            systemDef.FactionShopItems = factionShopItems;
+                            system.InfluenceTracker.Add("NoFaction", system.InfluenceTracker["AuriganPirates"]);
+                            system.InfluenceTracker.Remove("AuriganPirates");
+                        }
+                        //if (!system.influenceTracker.Keys.Contains("NoFaction"))
+                        //    system.influenceTracker.Add("NoFaction", 0);
+
+                        if (systemDef.OwnerValue.Name != systemOwner && systemOwner != "NoFaction")
+                        {
+                            if (systemDef.SystemShopItems.Count != 0)
+                            {
+                                var tempList = systemDef.SystemShopItems;
+                                tempList.Add(Globals.Settings.FactionShops[system.Owner]);
+                                Traverse.Create(systemDef).Property("SystemShopItems").SetValue(systemDef.SystemShopItems);
+                            }
+
+                            if (systemDef.FactionShopItems != null)
+                            {
+                                systemDef.FactionShopOwnerValue = Globals.FactionValues.Find(x => x.Name == system.Owner);
+                                systemDef.factionShopOwnerID = system.Owner;
+                                var factionShopItems = systemDef.FactionShopItems;
+                                if (factionShopItems.Contains(Globals.Settings.FactionShopItems[systemOwner]))
+                                    factionShopItems.Remove(Globals.Settings.FactionShopItems[systemOwner]);
+                                factionShopItems.Add(Globals.Settings.FactionShopItems[system.Owner]);
+                                systemDef.FactionShopItems = factionShopItems;
+                            }
                         }
                     }
-                }
 
-                foreach (var faction in Globals.WarStatusTracker.ExternalPriorityTargets.Keys)
-                {
-                    HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
-                    foreach (var system in Globals.WarStatusTracker.ExternalPriorityTargets[faction])
-                        HotSpots.ExternalPriorityTargets[faction].Add(starSystemDictionary[system]);
-                }
-
-                foreach (var system in Globals.WarStatusTracker.FullHomeContestedSystems)
-                {
-                    HotSpots.FullHomeContestedSystems.Add(new KeyValuePair<StarSystem, float>(starSystemDictionary[system.Key], system.Value));
-                }
-
-                foreach (var system in Globals.WarStatusTracker.HomeContestedSystems)
-                {
-                    HotSpots.HomeContestedSystems.Add(starSystemDictionary[system]);
-                }
-
-                foreach (var starSystem in Globals.WarStatusTracker.FullPirateSystems)
-                {
-                    PiratesAndLocals.FullPirateListSystems.Add(Globals.WarStatusTracker.Systems.Find(x => x.Name == starSystem));
-                }
-
-                foreach (var deathListTracker in Globals.WarStatusTracker.DeathListTracker)
-                {
-                    if (deathListTracker.WarFaction is null)
+                    foreach (var faction in Globals.WarStatusTracker.ExternalPriorityTargets.Keys)
                     {
-                        LogDebug($"{deathListTracker.Faction} has a null WarFaction, resetting state.");
-                        StarmapPopulateMapPatch.Spawn();
-                        break;
+                        HotSpots.ExternalPriorityTargets.Add(faction, new List<StarSystem>());
+                        foreach (var system in Globals.WarStatusTracker.ExternalPriorityTargets[faction])
+                            HotSpots.ExternalPriorityTargets[faction].Add(starSystemDictionary[system]);
                     }
 
-                    AdjustDeathList(deathListTracker, true);
-                }
-
-                foreach (var defensiveFaction in Globals.Settings.DefensiveFactions)
-                {
-                    if (Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == defensiveFaction) == null)
-                        continue;
-
-                    var targetFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == defensiveFaction);
-
-                    if (targetFaction.AttackResources != 0)
+                    foreach (var system in Globals.WarStatusTracker.FullHomeContestedSystems)
                     {
-                        targetFaction.DefensiveResources += targetFaction.AttackResources;
-                        targetFaction.AttackResources = 0;
+                        HotSpots.FullHomeContestedSystems.Add(new KeyValuePair<StarSystem, float>(starSystemDictionary[system.Key], system.Value));
                     }
-                }
 
-                foreach (var contract in Globals.Sim.CurSystem.activeSystemBreadcrumbs)
-                {
-                    if (Globals.WarStatusTracker.DeploymentContracts.Contains(contract.Override.contractName))
-                        contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
+                    foreach (var system in Globals.WarStatusTracker.HomeContestedSystems)
+                    {
+                        HotSpots.HomeContestedSystems.Add(starSystemDictionary[system]);
+                    }
+
+                    foreach (var starSystem in Globals.WarStatusTracker.FullPirateSystems)
+                    {
+                        PiratesAndLocals.FullPirateListSystems.Add(Globals.WarStatusTracker.Systems.Find(x => x.Name == starSystem));
+                    }
+
+                    foreach (var deathListTracker in Globals.WarStatusTracker.DeathListTracker)
+                    {
+                        if (deathListTracker.WarFaction is null)
+                        {
+                            LogDebug($"{deathListTracker.Faction} has a null WarFaction, resetting state.");
+                            StarmapPopulateMapPatch.Spawn();
+                            break;
+                        }
+
+                        AdjustDeathList(deathListTracker, true);
+                    }
+
+                    foreach (var defensiveFaction in Globals.Settings.DefensiveFactions)
+                    {
+                        if (Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == defensiveFaction) == null)
+                            continue;
+
+                        var targetFaction = Globals.WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == defensiveFaction);
+
+                        if (targetFaction.AttackResources != 0)
+                        {
+                            targetFaction.DefensiveResources += targetFaction.AttackResources;
+                            targetFaction.AttackResources = 0;
+                        }
+                    }
+
+                    foreach (var contract in Globals.Sim.CurSystem.activeSystemBreadcrumbs)
+                    {
+                        if (Globals.WarStatusTracker.DeploymentContracts.Contains(contract.Override.contractName))
+                            contract.Override.contractDisplayStyle = ContractDisplayStyle.BaseCampaignStory;
+                    }
                 }
             }
             catch (Exception ex)

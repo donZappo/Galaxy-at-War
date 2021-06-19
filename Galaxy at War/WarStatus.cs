@@ -178,7 +178,6 @@ namespace GalaxyatWar
 
             Logger.LogDebug("Full pirate systems created.");
             Systems = Systems.OrderBy(x => x.Name).ToList();
-            SystemsByResources = Systems.OrderBy(x => x.TotalResources).ToList();
             PrioritySystems = new List<string>(Systems.Count);
             Logger.LogDebug("SystemStatus ordered lists created.");
         }
