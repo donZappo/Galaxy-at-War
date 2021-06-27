@@ -151,6 +151,20 @@ namespace GalaxyatWar
                     LogDebug(">>> DONE PROC");
                 }
 
+                if (Globals.Settings.Debug)
+                {
+                    Globals.MonthTracker++;
+                    LogDebug("***** Month " + Globals.MonthTracker + " *****");
+                    foreach (var fact in Globals.WarStatusTracker.WarFactionTracker)
+                    {
+                        if (fact.FactionName == "AuriganPirates" || fact.FactionName == "NoFaction" || fact.FactionName == "Locals" || fact.FactionName == "ComStar")
+                            continue;
+                        //LogDebug("Faction: " + fact.FactionName);
+                        //LogDebug("   Monthly Systems: " + fact.MonthlySystemsChanged + "; Total Systems: " + fact.TotalSystemsChanged);
+                        LogDebug(fact.MonthlySystemsChanged);
+                    }
+                }
+
                 ////Variable daily testing zone.
                 //foreach (var x in Globals.WarStatusTracker.systems)
                 //{

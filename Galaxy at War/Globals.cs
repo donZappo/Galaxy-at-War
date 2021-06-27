@@ -12,6 +12,7 @@ namespace GalaxyatWar
 {
     public class Globals
     {
+        public static int MonthTracker = 0;
         public static WarStatus WarStatusTracker;
         public static string TeamFaction;
         public static string EnemyFaction;
