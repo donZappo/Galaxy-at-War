@@ -168,7 +168,8 @@ namespace GalaxyatWar
                     pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
 
                 // LogDebug($"{systemStatus.starSystem.Name} total resources: {systemStatus.TotalResources}.  Pirate activity {systemStatus.PirateActivity}");
-                var totalPirates = systemStatus.PirateActivity * systemStatus.TotalOriginalResources / 100;
+                //var totalPirates = systemStatus.PirateActivity * systemStatus.TotalOriginalResources / 100;
+                var totalPirates = systemStatus.PirateActivity * systemStatus.DifficultyRating / 10;
                 if (totalPirates >= pirateSystemFlagValue)
                 {
                     if (!Globals.WarStatusTracker.PirateHighlight.Contains(systemStatus.Name))
