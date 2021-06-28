@@ -205,19 +205,23 @@ namespace GalaxyatWar
                     LogDebug("Spawning new instance.");
                     Globals.WarStatusTracker = new WarStatus();
                     LogDebug("New global state created.");
+                    SystemDifficulty();
+                    Globals.WarStatusTracker.FirstTickInitialization = true;
+                    WarTick.Tick(true, true);
                     if (!Globals.WarStatusTracker.StartGameInitialized)
                     {
                         // bug a warm-start new career doesn't generate any priority contracts
                         // workaround is to cold-start
                         LogDebug($"Refreshing contracts at spawn ({Globals.Sim.CurSystem.Name}).");
-                        var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
-                        Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
+                        HotSpots.ProcessHotSpots();
+                        //var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
+                        //Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                         Globals.WarStatusTracker.StartGameInitialized = true;
                     }
 
-                    SystemDifficulty();
-                    Globals.WarStatusTracker.FirstTickInitialization = true;
-                    WarTick.Tick(true, true);
+                    
+                    
+                    
                 }
                 catch (Exception ex)
                 {

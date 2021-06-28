@@ -150,6 +150,11 @@ namespace GalaxyatWar
                 Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(1);
                 Globals.WarStatusTracker.DeploymentContracts.Clear();
 
+                if (Globals.Settings.Debug)
+                {
+                    LogDebug("**Contract Generation");
+                    LogDebug("Priority Contracts: " + HomeContestedSystems.Count);
+                }
                 if (HomeContestedSystems.Count != 0 && !Globals.Settings.DefensiveFactions.Contains(Globals.Sim.CurSystem.OwnerValue.Name) && !Globals.WarStatusTracker.Deployment)
                 {
                     var i = 0;
@@ -158,6 +163,7 @@ namespace GalaxyatWar
                     Globals.WarStatusTracker.HomeContestedStrings.Clear();
                     while (HomeContestedSystems.Count != 0)
                     {
+                        LogDebug("Priority Contract Loop: " + i);
                         Traverse.Create(Globals.Sim.CurSystem).Property("CurBreadcrumbOverride").SetValue(i + 1);
                         Traverse.Create(Globals.Sim.CurSystem).Property("CurMaxBreadcrumbs").SetValue(i + 1);
                         if (twiddle == 0)
@@ -1047,6 +1053,7 @@ namespace GalaxyatWar
                 if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
                     return;
 
+                LogDebug("Hold Contracts? - " + Globals.HoldContracts);
                 if (!Globals.HoldContracts && !Globals.WarStatusTracker.StartGameInitialized)
                 {
                     ProcessHotSpots();
