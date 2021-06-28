@@ -218,10 +218,6 @@ namespace GalaxyatWar
                         //Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                         Globals.WarStatusTracker.StartGameInitialized = true;
                     }
-
-                    
-                    
-                    
                 }
                 catch (Exception ex)
                 {

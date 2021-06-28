@@ -50,12 +50,25 @@ namespace GalaxyatWar
                     var systemCount = Globals.WarStatusTracker.Systems.Count(x => x.Owner == faction.FactionName);
                     if (systemCount != 0)
                     {
-                        perPlanetAR = faction.TotalBonusAttackResources / systemCount;
-                        perPlanetDR = faction.TotalBonusDefensiveResources / systemCount;
-                        factionPerPlanetAR.Add(faction, perPlanetAR);
-                        factionPerPlanetDR.Add(faction, perPlanetDR);
-                        Logger.LogDebug("Faction: " + faction.FactionName + " Bonus AR: " + faction.TotalBonusAttackResources + " Bonus DR: " + faction.TotalBonusDefensiveResources);
-                        Logger.LogDebug("     Systems: " + systemCount + "; perPlanetAR: " + perPlanetAR + "; perPlanetDR: " + perPlanetDR);
+                        if (!Globals.Settings.DefensiveFactions.Contains(faction.FactionName))
+                        {
+                            perPlanetAR = faction.TotalBonusAttackResources / systemCount;
+                            perPlanetDR = faction.TotalBonusDefensiveResources / systemCount;
+                            factionPerPlanetAR.Add(faction, perPlanetAR);
+                            factionPerPlanetDR.Add(faction, perPlanetDR);
+                            Logger.LogDebug("Faction: " + faction.FactionName + " Bonus AR: " + faction.TotalBonusAttackResources + " Bonus DR: " + faction.TotalBonusDefensiveResources);
+                            Logger.LogDebug("     Systems: " + systemCount + "; perPlanetAR: " + perPlanetAR + "; perPlanetDR: " + perPlanetDR);
+                        }
+                        else
+                        {
+                            perPlanetAR = faction.TotalBonusDefensiveResources / systemCount / 2;
+                            perPlanetDR = faction.TotalBonusDefensiveResources / systemCount / 2;
+                            factionPerPlanetAR.Add(faction, perPlanetAR);
+                            factionPerPlanetDR.Add(faction, perPlanetDR);
+                            Logger.LogDebug("Faction: " + faction.FactionName + " Bonus AR: " + faction.TotalBonusAttackResources + " Bonus DR: " + faction.TotalBonusDefensiveResources);
+                            Logger.LogDebug("     Systems: " + systemCount + "; perPlanetAR: " + perPlanetAR + "; perPlanetDR: " + perPlanetDR);
+
+                        }
                     }
                 }
 
