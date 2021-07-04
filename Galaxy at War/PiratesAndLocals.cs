@@ -47,7 +47,7 @@ namespace GalaxyatWar
             {
                 var defenseValue = 100 * (warFaction.PirateARLoss + warFaction.PirateDRLoss) /
                                    (warFaction.AttackResources + warFaction.DefensiveResources + warFaction.PirateARLoss + warFaction.PirateDRLoss);
-                if (defenseValue > 5)
+                if (defenseValue > 5 || !warFaction.LostSystem)
                     factionEscalateDefense.Add(warFaction, true);
                 else
                     factionEscalateDefense.Add(warFaction, false);
@@ -58,7 +58,20 @@ namespace GalaxyatWar
             {
                 var warFaction = WarStatusTracker.WarFactionTracker.Find(x => x.FactionName == system.Owner);
                 float PAChange;
-                if (factionEscalateDefense[warFaction])
+
+                //Added some obscure logic for making high pirate systems more sticky.
+                bool fightHighPirates = false;
+                var totalPirates = system.PirateActivity * system.DifficultyRating / 10;
+                var pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue_ISM;
+                if (!Globals.Settings.ISMCompatibility)
+                    pirateSystemFlagValue = Globals.Settings.PirateSystemFlagValue;
+                if (totalPirates >= pirateSystemFlagValue)
+                {
+                    if (Rng.NextDouble() > 0.5)
+                        fightHighPirates = true;
+                }
+
+                if (fightHighPirates || factionEscalateDefense[warFaction])
                     PAChange = (float) (Rng.NextDouble() * (system.PirateActivity - system.PirateActivity / 3) + system.PirateActivity / 3);
                 else
                     PAChange = (float) (Rng.NextDouble() * (system.PirateActivity / 3));
