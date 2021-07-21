@@ -883,6 +883,18 @@ namespace GalaxyatWar
                     trackerFactionDef.Enemies = trackerFactionEnemies.ToArray();
                 }
             }
+            if (trackerFactionDef.Enemies.Contains(trackerFaction))
+            {
+                var tempEnemies = trackerFactionDef.Enemies.ToList();
+                tempEnemies.Remove(trackerFaction);
+                trackerFactionDef.Enemies = tempEnemies.ToArray();
+            }
+            if (trackerFactionDef.Enemies.Contains(trackerFaction))
+            {
+                var tempAllies = trackerFactionDef.Allies.ToList();
+                tempAllies.Remove(trackerFaction);
+                trackerFactionDef.Allies = tempAllies.ToArray();
+            }
 
             var deathListOffensiveFactions = new List<string>(trackerDeathList.Keys.Except(Globals.Settings.DefensiveFactions));
             var warFaction = deathListTracker.WarFaction;

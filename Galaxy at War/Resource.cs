@@ -142,8 +142,12 @@ namespace GalaxyatWar
             if (warFaction.DefenseTargets.Count == 0)
                 return;
 
+            //LogDebug("========= Allocate Defensive Resources =========");
             var faction = warFaction.FactionName;
+            //LogDebug("Faction: " + faction);
+            //LogDebug("Defensive Resources: " + warFaction.DefensiveResources + "; DR Against Pirates: " + warFaction.DR_Against_Pirates);
             var defensiveResources = warFaction.DefensiveResources + warFaction.DR_Against_Pirates;
+            //LogDebug("Comstar Supported: " + warFaction.ComstarSupported);
             if (warFaction.ComstarSupported)
                 defensiveResources += Globals.Settings.GaW_Police_DRBonus;
             warFaction.DR_Against_Pirates = 0;
@@ -151,8 +155,10 @@ namespace GalaxyatWar
                 defensiveResources += Globals.Sim.Constants.Finances.LeopardBaseMaintenanceCost;
             var defensiveCorrection = defensiveResources * (100 * Globals.Settings.GlobalDefenseFactor -
                                                             Globals.Settings.DResourceAdjustmentPerCycle * warFaction.DaysSinceSystemLost) / 100;
+            //LogDebug("Defensive Correction: " + defensiveCorrection);
             defensiveResources = Math.Max(defensiveResources, defensiveCorrection);
             defensiveResources += defensiveResources * (float) (Globals.Rng.Next(-1, 1) * Globals.Settings.ResourceSpread);
+            //LogDebug("New Defensive Resources: " + defensiveResources);
             var startingDefensiveResources = defensiveResources;
             var defenseTargets = warFaction.DefenseTargets.Distinct().ToList();
             // reset the cached state for the next tick
@@ -160,6 +166,8 @@ namespace GalaxyatWar
             // spend and decrement defensiveResources
             while (defensiveResources > 0)
             {
+                //LogDebug("****DEFENSIVE RESOURCES****");
+                //LogDebug("defensive Resources: " + defensiveResources);
                 var highest = 0f;
                 var highestFaction = faction;
                 var drFactor = Random.Range(Globals.Settings.MinimumResourceFactor, Globals.Settings.MaximumResourceFactor);
@@ -217,7 +225,11 @@ namespace GalaxyatWar
                 {
                     var diffRes = systemStatus.InfluenceTracker[highestFaction] / total - systemStatus.InfluenceTracker[faction] / total;
                     var bonusDefense = spendDr + (diffRes * total - Globals.Settings.TakeoverThreshold / 100 * total) / (Globals.Settings.TakeoverThreshold / 100 + 1);
-                    //LogDebug(bonusDefense);
+                    //LogDebug("Bonus Defense: " + bonusDefense);
+                    //LogDebug("   Highest Faction: " + systemStatus.InfluenceTracker[highestFaction]);
+                    //LogDebug("   Current Faction: " + systemStatus.InfluenceTracker[faction]);
+                    //LogDebug("   Total: " + total);
+                    //LogDebug("   diffRes: " + diffRes);
                     if (100 * diffRes > Globals.Settings.TakeoverThreshold)
                         if (defensiveResources >= bonusDefense)
                         {

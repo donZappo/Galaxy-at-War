@@ -1147,12 +1147,12 @@ namespace GalaxyatWar
             if (Globals.MissionResult == MissionResult.Victory)
             {
                 double deltaInfluence = CheckDeltaInfluence(warSystem);
-                if (!Globals.InfluenceMaxed)
+                if (!Globals.InfluenceMaxed && !(Globals.TeamFaction == "AuriganPirates" || Globals.EnemyFaction == "AuriganPirates"))
                 {
                     warSystem.InfluenceTracker[Globals.TeamFaction] += (float) deltaInfluence;
                     warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;
                 }
-                else
+                else if (Globals.InfluenceMaxed && !(Globals.TeamFaction == "AuriganPirates" || Globals.EnemyFaction == "AuriganPirates"))
                 {
                     warSystem.InfluenceTracker[Globals.TeamFaction] += (float) Math.Min(Globals.AttackerInfluenceHolder, 100 - warSystem.InfluenceTracker[Globals.TeamFaction]);
                     warSystem.InfluenceTracker[Globals.EnemyFaction] -= (float) deltaInfluence;

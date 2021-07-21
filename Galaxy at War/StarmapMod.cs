@@ -133,6 +133,9 @@ namespace GalaxyatWar
             sb.AppendLine("<line-height=125%>");
             foreach (var tracker in Globals.WarStatusTracker.DeathListTracker.Where(x => !Globals.Settings.DefensiveFactions.Contains(x.Faction)))
             {
+                if (tracker.Faction == "AuriganPirates")
+                    continue;
+
                 if (!Globals.Settings.FactionNames.ContainsKey(tracker.Faction) || Globals.Settings.HyadesNeverControl.Contains(tracker.Faction)
                                                                                 || Globals.WarStatusTracker.InactiveTHRFactions.Contains(tracker.Faction))
                 {

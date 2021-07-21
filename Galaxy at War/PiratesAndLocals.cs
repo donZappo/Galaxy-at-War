@@ -31,8 +31,14 @@ namespace GalaxyatWar
                     WarStatusTracker.MinimumPirateResources = WarStatusTracker.StartingPirateResources;
             }
 
+            //Logger.LogDebug("****Pirate Resources****");
             foreach (var warFaction in WarStatusTracker.WarFactionTracker)
             {
+                //Logger.LogDebug("Attack Resources " + warFaction.AttackResources);
+                //Logger.LogDebug("Defensive Resources " + warFaction.DefensiveResources);
+                //Logger.LogDebug("Faction: " + warFaction.FactionName);
+                //Logger.LogDebug("PirateARLoss: " + warFaction.PirateARLoss);
+                //Logger.LogDebug("PirateDRLoss: " + warFaction.PirateDRLoss);
                 warFaction.AttackResources += warFaction.PirateARLoss;
                 warFaction.DefensiveResources += warFaction.PirateDRLoss;
             }
@@ -81,11 +87,15 @@ namespace GalaxyatWar
                 if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                     attackResources = warFaction.DefensiveResources;
 
-                var defenseCost = Mathf.Min(PAChange * system.TotalOriginalResources / 100, warFaction.AttackResources * 0.01f);
+                var defenseCost = Mathf.Min(PAChange * system.DifficultyRating / 100, warFaction.AttackResources * 0.005f);
+                //ComStar helps defend
+                var policeBonus = 1f;
+                if (warFaction.ComstarSupported)
+                    policeBonus = 1.5f;
 
                 if (attackResources >= defenseCost)
                 {
-                    PAChange = Math.Min(PAChange, system.PirateActivity);
+                    PAChange = Math.Min(PAChange * policeBonus, system.PirateActivity);
                     system.PirateActivity -= PAChange;
                     if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                         warFaction.DR_Against_Pirates += defenseCost;
@@ -95,7 +105,7 @@ namespace GalaxyatWar
                 }
                 else
                 {
-                    PAChange = Math.Min(attackResources, system.PirateActivity);
+                    PAChange = Math.Min(attackResources * policeBonus, system.PirateActivity);
                     system.PirateActivity -= PAChange;
                     if (Settings.DefendersUseARforDR && Settings.DefensiveFactions.Contains(warFaction.FactionName))
                         warFaction.DR_Against_Pirates += defenseCost;
@@ -161,6 +171,12 @@ namespace GalaxyatWar
                 }
 
             }
+
+            var factionSystemsChanged = new Dictionary<string, int>(); 
+            foreach (var faction in WarStatusTracker.WarFactionTracker)
+            {
+                factionSystemsChanged.Add(faction.FactionName, faction.TotalSystemsChanged);
+            }
             //var noPiracySystemsStrings = Settings.ImmuneToWar.Concat(
             //        WarStatusTracker.FlashpointSystems.Concat(
             //            WarStatusTracker.HyadesRimGeneralPirateSystems.Concat(
@@ -181,10 +197,13 @@ namespace GalaxyatWar
                 const int maxDifficulty = 11;
                 var currentPA = systemStatus.PirateActivity;
                 float basicPA = maxDifficulty - systemStatus.DifficultyRating;
-
                 var bonusPA = currentPA / 50;
+                // Why not preferentially beat up on the good guys some
+                var winningPenalty = Globals.Rng.NextDouble() * factionSystemsChanged[systemStatus.Owner];
+
                 // How much they are going to spend to attack
-                var totalPA = basicPA + bonusPA;
+                var totalPA = basicPA + bonusPA + (float)winningPenalty;
+                totalPA = Math.Max(basicPA, totalPA);
 
                 //var pirateSystemsContainsSystemStatus = WarStatusTracker.FullPirateSystems.Contains(systemStatus.name);
                 if (currentPA + totalPA <= 100)
