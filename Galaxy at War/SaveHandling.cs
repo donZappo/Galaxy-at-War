@@ -298,7 +298,7 @@ namespace GalaxyatWar
 
             try
             {
-                if (Globals.Settings.ResetMap)
+                if (!Globals.Settings.ResetMap)
                 {
                     Globals.Sim.CompanyTags.Where(tag =>
                         tag.StartsWith("GalaxyAtWar")).Do(x => Globals.Sim.CompanyTags.Remove(x));
