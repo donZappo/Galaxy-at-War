@@ -25,7 +25,7 @@ namespace GalaxyatWar
             Log(line);
         }
 
-        private static void Log(object line)
+        public static void Log(object line)
         {
             using (var sw = new StreamWriter(LogFilename, true))
             {

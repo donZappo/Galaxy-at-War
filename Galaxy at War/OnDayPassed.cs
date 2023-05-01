@@ -146,6 +146,8 @@ namespace GalaxyatWar
                             var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                             Globals.Sim.CurSystem.GenerateInitialContracts(() => Traverse.Create(cmdCenter).Method("OnContractsFetched"));
                         }
+                        //Force monthly refresh of contracts
+                        //Globals.Sim.CurSystem.SystemShop.RefreshShop();
                     }
 
                     LogDebug(">>> DONE PROC");
@@ -164,7 +166,7 @@ namespace GalaxyatWar
                         LogDebug(fact.MonthlySystemsChanged);
                     }
                 }
-
+                
                 ////Variable daily testing zone.
                 //foreach (var x in Globals.WarStatusTracker.systems)
                 //{

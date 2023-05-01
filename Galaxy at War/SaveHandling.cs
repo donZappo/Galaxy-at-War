@@ -217,6 +217,7 @@ namespace GalaxyatWar
                         //var cmdCenter = Globals.Sim.RoomManager.CmdCenterRoom;
                         //Globals.Sim.CurSystem.GenerateInitialContracts(() => cmdCenter.OnContractsFetched());
                         Globals.WarStatusTracker.StartGameInitialized = true;
+                        Globals.Sim.CurSystem.SystemShop.RefreshShop();
                     }
                 }
                 catch (Exception ex)
@@ -259,6 +260,7 @@ namespace GalaxyatWar
                     SystemDifficulty();
                     WarTick.Tick(true, true);
                     SerializeWar();
+                    Globals.Sim.CurSystem.SystemShop.RefreshShop();
                 }
                 else
                 {

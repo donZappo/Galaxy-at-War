@@ -656,6 +656,21 @@ namespace GalaxyatWar
             }
         }
 
+        //Force refresh of stores when entering a system to fix an unknonwn bug with certain factions.
+        [HarmonyPatch(typeof(SGTravelManager), "TransitionAnimating_OnExit")]
+        public static class CompletedJumpAnimationPatch
+        {
+            private static void Postfix(SGTravelManager __instance)
+            {
+                if (Globals.Sim.IsCampaign && !Globals.Sim.CompanyTags.Contains("story_complete"))
+                    return;
+
+                if (__instance.PostTransitionState == SimGameTravelStatus.TRANSIT_FROM_JUMP)
+                   Globals.Sim.CurSystem.SystemShop.RefreshShop();
+            }
+        }
+
+
         [HarmonyPatch(typeof(SGTravelManager), "DisplayEnteredOrbitPopup")]
         public static class EnteredOrbitPatch
         {

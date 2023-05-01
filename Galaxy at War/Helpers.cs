@@ -121,23 +121,6 @@ namespace GalaxyatWar
                             systemStatus.StarSystem.Def.DifficultyList = difficultyList;
                             systemStatus.StarSystem.Def.DefaultDifficulty = amount;
                             i++;
-                            //Logger.LogDebug("System: " + systemStatus.Name + ", Faction: " + systemStatus.StarSystem.OwnerDef.Name +
-                            //    ", Difficulty: " + systemStatus.StarSystem.Def.DefaultDifficulty);
-
-                            if (systemStatus.StarSystem.Def.OwnerValue.Name != "NoFaction" && systemStatus.StarSystem.Def.SystemShopItems.Count == 0)
-                            {
-                                var tempList = new List<string>
-                                {
-                                    "itemCollection_minor_Locals"
-                                };
-                                systemStatus.StarSystem.Def.SystemShopItems = tempList;
-                                if (Globals.Sim.CurSystem.Name == systemStatus.StarSystem.Def.Description.Name)
-                                {
-                                    var refreshShop = Shop.RefreshType.RefreshIfEmpty;
-                                    systemStatus.StarSystem.SystemShop.Rehydrate(Globals.Sim, systemStatus.StarSystem, systemStatus.StarSystem.Def.SystemShopItems, refreshShop,
-                                        Shop.ShopType.System);
-                                }
-                            }
                         }
                         catch (Exception ex)
                         {
